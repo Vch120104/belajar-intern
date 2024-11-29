@@ -45,8 +45,13 @@ func (s *ItemPackageDetailServiceImpl) ActivateItemPackageDetail(id string) (boo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemPackageDetailRepo.ActivateItemPackageDetail(tx, id)
@@ -72,8 +77,13 @@ func (s *ItemPackageDetailServiceImpl) DeactiveItemPackageDetail(id string) (boo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemPackageDetailRepo.DeactiveItemPackageDetail(tx, id)
@@ -98,8 +108,13 @@ func (s *ItemPackageDetailServiceImpl) ChangeStatusItemPackageDetail(id int) (bo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 
@@ -131,8 +146,13 @@ func (s *ItemPackageDetailServiceImpl) GetItemPackageDetailByItemPackageId(itemP
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemPackageDetailRepo.GetItemPackageDetailByItemPackageId(tx, itemPackageId, pages)
@@ -157,8 +177,13 @@ func (s *ItemPackageDetailServiceImpl) GetItemPackageDetailById(itemPackageDetai
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemPackageDetailRepo.GetItemPackageDetailById(tx, itemPackageDetailId)
@@ -183,8 +208,13 @@ func (s *ItemPackageDetailServiceImpl) CreateItemPackageDetailByItemPackageId(re
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemPackageDetailRepo.CreateItemPackageDetailByItemPackageId(tx, req)
@@ -209,8 +239,13 @@ func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetail(req masteritempay
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetail(tx, req)

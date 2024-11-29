@@ -42,8 +42,13 @@ func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.Campai
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.PostCampaignMaster(tx, req)
@@ -68,8 +73,13 @@ func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req, id)
@@ -95,8 +105,13 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromHistory(id int, 
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.PostCampaignMasterDetailFromHistory(tx, id, idhead)
@@ -122,8 +137,13 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromPackage(req mast
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.PostCampaignMasterDetailFromPackage(tx, req)
@@ -149,8 +169,13 @@ func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int) (bool, *e
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.ChangeStatusCampaignMaster(tx, id)
@@ -176,8 +201,13 @@ func (s *CampaignMasterServiceImpl) ActivateCampaignMasterDetail(ids string) (bo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.ActivateCampaignMasterDetail(tx, ids)
@@ -203,8 +233,13 @@ func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string) (
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.DeactivateCampaignMasterDetail(tx, ids)
@@ -230,8 +265,13 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (map[string]in
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.GetByIdCampaignMaster(tx, id)
@@ -257,8 +297,13 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[str
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.GetByIdCampaignMasterDetail(tx, id)
@@ -284,8 +329,13 @@ func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (map[st
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.GetByCodeCampaignMaster(tx, code)
@@ -311,8 +361,13 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagina
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.GetAllCampaignMasterCodeAndName(tx, pages)
@@ -338,8 +393,13 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.GetAllCampaignMaster(tx, filtercondition, pages)
@@ -350,7 +410,7 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -365,16 +425,21 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
-	result, page, limit, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
+	result, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
 
 	if err != nil {
-		return result, 0, 0, err
+		return result, err
 	}
-	return result, page, limit, nil
+	return result, nil
 }
 
 func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
@@ -392,8 +457,13 @@ func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req maste
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.UpdateCampaignMasterDetail(tx, id, req)
@@ -419,8 +489,13 @@ func (s *CampaignMasterServiceImpl) GetAllPackageMasterToCopy(pages pagination.P
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.GetAllPackageMasterToCopy(tx, pages)
@@ -446,8 +521,13 @@ func (s *CampaignMasterServiceImpl) SelectFromPackageMaster(id int, idhead int) 
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.CampaignMasterRepo.SelectFromPackageMaster(tx, id, idhead)

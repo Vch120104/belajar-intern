@@ -49,8 +49,13 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, dbErr := s.deductionrepo.GetAllDeduction(tx, filterCondition, pages)
@@ -79,8 +84,13 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, dbErr := s.deductionrepo.GetByIdDeductionDetail(tx, Id)
@@ -107,8 +117,13 @@ func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionLis
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.deductionrepo.SaveDeductionList(tx, req)
@@ -134,8 +149,13 @@ func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionD
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.deductionrepo.SaveDeductionDetail(tx, req, id)
@@ -163,8 +183,13 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagi
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, dbErr := s.deductionrepo.GetDeductionById(tx, Id, paginate)
@@ -191,8 +216,13 @@ func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pa
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	detail_result, detail_err := s.deductionrepo.GetAllDeductionDetail(tx, pages, Id)
@@ -218,8 +248,13 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interfa
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 
@@ -245,8 +280,13 @@ func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.deductionrepo.UpdateDeductionDetail(tx, id, req)

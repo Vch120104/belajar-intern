@@ -90,13 +90,15 @@ type ItemDiscountRequest struct {
 }
 
 type ItemDiscountResponse struct {
-	AgreementItemId          int     `json:"agreement_item_id"`
-	AgreementId              int     `json:"agreement_id"`
-	LineTypeId               int     `json:"line_type_id"`
-	AgreementItemOperationId int     `json:"agreement_item_operation_id"`
-	DiscountPercent          float32 `json:"discount_percent"`
-	MinValue                 int     `json:"min_value"`
-	AgreementRemark          string  `json:"agreement_remark"`
+	AgreementItemId            int     `json:"agreement_item_id"`
+	AgreementId                int     `json:"agreement_id"`
+	LineTypeId                 int     `json:"line_type_id"`
+	AgreementItemOperationId   int     `json:"agreement_item_operation_id"`
+	AgreementItemOperationCode string  `json:"agreement_item_operation_code"`
+	AgreementItemOperationName string  `json:"agreement_item_operation_name"`
+	DiscountPercent            float32 `json:"discount_percent"`
+	MinValue                   int     `json:"min_value"`
+	AgreementRemark            string  `json:"agreement_remark"`
 }
 
 type DiscountValueRequest struct {

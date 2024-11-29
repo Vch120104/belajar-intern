@@ -215,8 +215,13 @@ func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, s
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.itemImportRepo.GetItemImportbyItemIdandSupplierId(tx, itemId, supplierId)
@@ -242,8 +247,13 @@ func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.It
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.itemImportRepo.GetItemImportbyId(tx, Id)
@@ -269,8 +279,13 @@ func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.itemImportRepo.GetAllItemImport(tx, internalFilter, externalFilter, pages)
@@ -296,8 +311,13 @@ func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.itemImportRepo.SaveItemImport(tx, req)
@@ -323,8 +343,13 @@ func (s *ItemImportServiceImpl) UpdateItemImport(req masteritementities.ItemImpo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.itemImportRepo.UpdateItemImport(tx, req)

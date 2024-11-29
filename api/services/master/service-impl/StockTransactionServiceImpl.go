@@ -15,19 +15,19 @@ import (
 
 type StockTransactionServiceImpl struct {
 	StockTransactionRepository transactionsparepartrepository.StockTransactionRepository
-	db                         *gorm.DB
+	DB                         *gorm.DB
 	rdb                        *redis.Client
 }
 
 func StartStockTransactionServiceImpl(StockTransactionRepository transactionsparepartrepository.StockTransactionRepository, db *gorm.DB, rdb *redis.Client) transactionsparepartservice.StockTransactionService {
 	return &StockTransactionServiceImpl{
 		StockTransactionRepository: StockTransactionRepository,
-		db:                         db,
+		DB:                         db,
 		rdb:                        rdb,
 	}
 }
 func (s *StockTransactionServiceImpl) StockTransactionInsert(payloads transactionsparepartpayloads.StockTransactionInsertPayloads) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -41,8 +41,13 @@ func (s *StockTransactionServiceImpl) StockTransactionInsert(payloads transactio
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.StockTransactionRepository.StockTransactionInsert(tx, payloads)

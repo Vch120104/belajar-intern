@@ -17,18 +17,18 @@ import (
 
 type PackageMasterServiceImpl struct {
 	PackageMasterRepo masterrepository.PackageMasterRepository
-	db                *gorm.DB
+	DB                *gorm.DB
 }
 
 func StartPackageMasterService(PackageMasterRepo masterrepository.PackageMasterRepository, db *gorm.DB) masterservice.PackageMasterService {
 	return &PackageMasterServiceImpl{
 		PackageMasterRepo: PackageMasterRepo,
-		db:                db,
+		DB:                db,
 	}
 }
 
 func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -42,8 +42,13 @@ func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.F
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMaster(tx, filtercondition, pages)
@@ -55,7 +60,7 @@ func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.F
 }
 
 func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -69,8 +74,13 @@ func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pa
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx, id, pages)
@@ -82,7 +92,7 @@ func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pa
 }
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -96,8 +106,13 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.GetByIdPackageMaster(tx, id)
@@ -109,7 +124,7 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 }
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -123,8 +138,13 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[strin
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id)
@@ -136,7 +156,7 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[strin
 }
 
 func (s *PackageMasterServiceImpl) GetByCodePackageMaster(code string) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -150,8 +170,13 @@ func (s *PackageMasterServiceImpl) GetByCodePackageMaster(code string) (masteren
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.GetByCodePackageMaster(tx, code)
@@ -163,7 +188,7 @@ func (s *PackageMasterServiceImpl) GetByCodePackageMaster(code string) (masteren
 }
 
 func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -177,8 +202,13 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.PostpackageMaster(tx, req)
@@ -190,7 +220,7 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 }
 
 func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -204,8 +234,13 @@ func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.Pa
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.PostPackageMasterDetail(tx, req, id)
@@ -217,7 +252,7 @@ func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.Pa
 }
 
 func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -231,8 +266,13 @@ func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentiti
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.ChangeStatusItemPackage(tx, id)
@@ -244,7 +284,7 @@ func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentiti
 }
 
 func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -258,8 +298,13 @@ func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx, ids)
@@ -271,7 +316,7 @@ func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string
 }
 
 func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -285,8 +330,13 @@ func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids stri
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx, ids)
@@ -298,7 +348,7 @@ func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids stri
 }
 
 func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel int) (int, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -312,8 +362,13 @@ func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	result, err := s.PackageMasterRepo.CopyToOtherModel(tx, id, name, idmodel)

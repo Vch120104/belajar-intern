@@ -214,7 +214,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	// Fetch data colour from external API
 	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
 	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
+	errColour := utils.Get(colourUrl, &colourResponses, nil)
 	if errColour != nil || len(colourResponses) == 0 {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

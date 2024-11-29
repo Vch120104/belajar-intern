@@ -275,6 +275,28 @@ func ItemLocationRouter(
 	return router
 }
 
+func ItemGroupRouter(
+	ItemGroupController masteritemcontroller.ItemGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	//getall
+	router.Get("/list", ItemGroupController.GetAllItemGroupWithPagination)
+	router.Get("/dropdown", ItemGroupController.GetAllItemGroup)
+	router.Get("/{item_group_id}", ItemGroupController.GetItemGroupById)
+	router.Put("/{item_group_id}", ItemGroupController.UpdateItemGroupById)
+	router.Patch("/{item_group_id}", ItemGroupController.UpdateStatusItemGroupById)
+	router.Get("/multi-id/{item_group_id}", ItemGroupController.GetItemGroupByMultiId)
+	router.Post("/", ItemGroupController.NewItemGroup)
+	router.Delete("/{item_group_id}", ItemGroupController.DeleteItemGroupById)
+	return router
+}
+
 func ItemSubstituteRouter(
 	itemSubstituteController masteritemcontroller.ItemSubstituteController,
 ) chi.Router {

@@ -424,7 +424,6 @@ type PurchaseOrderNewPurchaseOrderPayloads struct {
 type PurchaseOrderNewPurchaseOrderResponses struct {
 	CompanyId                   int        `json:"company_id" parent_entity:"trx_item_purchase_order"`
 	PurchaseOrderSystemNumber   int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
-	PurchaseOrderDocumentNumber string     `json:"purchase_order_document_number" parent_entity:"trx_item_purchase_order"`
 	PurchaseOrderDocumentDate   *time.Time `json:"purchase_order_document_date" parent_entity:"trx_item_purchase_order"`
 	ExternalPurchaseOrderNumber string     `json:"external_purchase_order_number" parent_entity:"trx_item_purchase_order"`
 	PurchaseOrderStatusId       int        `json:"purchase_order_status_id" parent_entity:"trx_item_purchase_order"`

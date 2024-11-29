@@ -3,7 +3,6 @@ package masteritemserviceimpl
 import (
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -20,30 +19,20 @@ import (
 
 type ItemSubstituteServiceImpl struct {
 	itemSubstituteRepo masteritemrepository.ItemSubstituteRepository
-	Db                 *gorm.DB
+	DB                 *gorm.DB
 	RedisClient        *redis.Client // Redis client
 }
 
 func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubstituteRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.ItemSubstituteService {
 	return &ItemSubstituteServiceImpl{
 		itemSubstituteRepo: itemSubstituteRepo,
-		Db:                 db,
+		DB:                 db,
 		RedisClient:        redisClient,
 	}
 }
 
 func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
-	results, page, limit, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return results, 0, 0, err
-	}
-	return results, page, limit, nil
-}
-
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -58,7 +47,33 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]in
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
+		}
+	}()
+	results, page, limit, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, page, limit, nil
+}
+
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
@@ -70,7 +85,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]in
 }
 
 func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -85,7 +100,7 @@ func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, pages, id)
@@ -97,7 +112,7 @@ func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.
 }
 
 func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -112,7 +127,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteri
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstituteDetail(tx, id)
@@ -124,7 +139,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteri
 }
 
 func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) (masteritementities.ItemSubstitute, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -139,7 +154,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.It
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -152,7 +167,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.It
 }
 
 func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -167,7 +182,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -180,7 +195,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 }
 
 func (s *ItemSubstituteServiceImpl) UpdateItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailUpdatePayloads) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -195,7 +210,7 @@ func (s *ItemSubstituteServiceImpl) UpdateItemSubstituteDetail(req masteritempay
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -208,7 +223,7 @@ func (s *ItemSubstituteServiceImpl) UpdateItemSubstituteDetail(req masteritempay
 }
 
 func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -223,7 +238,7 @@ func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *e
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -236,7 +251,7 @@ func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *e
 }
 
 func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -251,7 +266,7 @@ func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) (b
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -264,7 +279,7 @@ func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) (b
 }
 
 func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -279,7 +294,7 @@ func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (boo
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -292,7 +307,7 @@ func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (boo
 }
 
 func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -307,7 +322,7 @@ func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -320,7 +335,7 @@ func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.
 }
 
 func (s *ItemSubstituteServiceImpl) GetItemSubstituteDetailLastSequence(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -335,7 +350,7 @@ func (s *ItemSubstituteServiceImpl) GetItemSubstituteDetailLastSequence(id int) 
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 

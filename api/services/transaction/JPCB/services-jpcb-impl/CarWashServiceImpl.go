@@ -3,14 +3,16 @@ package transactionjpcbserviceimpl
 import (
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,9 +32,30 @@ func NewCarWashServiceImpl(CarWashRepository transactionjpcbrepository.CarWashRe
 
 func (s *CarWashServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, totalPages, totalRows, err := s.CarWashRepository.GetAll(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, 0, 0, err
 	}
@@ -41,9 +64,30 @@ func (s *CarWashServiceImpl) GetAll(filterCondition []utils.FilterCondition, pag
 
 func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.UpdatePriority(tx, workOrderSystemNumber, carWashPriorityId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbentities.CarWash{}, err
 	}
@@ -52,9 +96,30 @@ func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPr
 
 func (s *CarWashServiceImpl) GetAllCarWashPriorityDropDown() ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, err := s.CarWashRepository.GetAllCarWashPriorityDropDown(tx)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +128,30 @@ func (s *CarWashServiceImpl) GetAllCarWashPriorityDropDown() ([]transactionjpcbp
 
 func (s *CarWashServiceImpl) DeleteCarWash(workOrderSystemNumber int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.DeleteCarWash(tx, workOrderSystemNumber)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -74,9 +160,30 @@ func (s *CarWashServiceImpl) DeleteCarWash(workOrderSystemNumber int) (bool, *ex
 
 func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.PostCarWash(tx, workOrderSystemNumber)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashPostResponse{}, err
 	}
@@ -85,9 +192,30 @@ func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transaction
 
 func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, err := s.CarWashRepository.GetAllCarWashScreen(tx, companyId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -96,9 +224,30 @@ func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int) ([]transactionjp
 
 func (s *CarWashServiceImpl) UpdateBayNumberCarWashScreen(bayNumber, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.UpdateBayNumberCarWashScreen(tx, bayNumber, workOrderSystemNumber)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
 	}
@@ -107,9 +256,30 @@ func (s *CarWashServiceImpl) UpdateBayNumberCarWashScreen(bayNumber, workOrderSy
 
 func (s *CarWashServiceImpl) StartCarWash(workOrderSystemNumber int, carWashBayId int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.StartCarWash(tx, workOrderSystemNumber, carWashBayId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
 	}
@@ -118,9 +288,30 @@ func (s *CarWashServiceImpl) StartCarWash(workOrderSystemNumber int, carWashBayI
 
 func (s *CarWashServiceImpl) StopCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.StopCarWash(tx, workOrderSystemNumber)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
 	}
@@ -129,9 +320,30 @@ func (s *CarWashServiceImpl) StopCarWash(workOrderSystemNumber int) (transaction
 
 func (s *CarWashServiceImpl) CancelCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	result, err := s.CarWashRepository.CancelCarWash(tx, workOrderSystemNumber)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
 	}
@@ -140,9 +352,29 @@ func (s *CarWashServiceImpl) CancelCarWash(workOrderSystemNumber int) (transacti
 
 func (s *CarWashServiceImpl) GetCarWashByWorkOrderSystemNumber(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.CarWashRepository.GetCarWashByWorkOrderSystemNumber(tx, workOrderSystemNumber)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashGetAllResponse{}, err
 	}

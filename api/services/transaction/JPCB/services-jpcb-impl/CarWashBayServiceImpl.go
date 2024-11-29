@@ -3,14 +3,16 @@ package transactionjpcbserviceimpl
 import (
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,9 +32,30 @@ func NewCarWashBayServiceImpl(BayRepository transactionjpcbrepository.BayMasterR
 
 func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, totalPages, totalRows, err := s.BayMasterRepository.GetAll(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, 0, 0, err
 	}
@@ -41,9 +64,30 @@ func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCo
 
 func (s *BayMasterServiceImpl) GetAllActiveCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, totalPages, totalRows, err := s.BayMasterRepository.GetAllActive(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, 0, 0, err
 	}
@@ -52,9 +96,30 @@ func (s *BayMasterServiceImpl) GetAllActiveCarWashBay(filterCondition []utils.Fi
 
 func (s *BayMasterServiceImpl) GetAllDeactiveCarWashBay(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, err := s.BayMasterRepository.GetAllDeactive(tx, filterCondition)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -63,8 +128,29 @@ func (s *BayMasterServiceImpl) GetAllDeactiveCarWashBay(filterCondition []utils.
 
 func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpayloads.CarWashBayUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	results, err := s.BayMasterRepository.ChangeStatus(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return transactionjpcbentities.BayMaster{}, err
@@ -74,8 +160,29 @@ func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpay
 
 func (s *BayMasterServiceImpl) GetAllCarWashBayDropDown(filterCondition []utils.FilterCondition) ([]transactionjpcbpayloads.CarWashBayDropDownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	results, err := s.BayMasterRepository.CarWashBayDropDown(tx, filterCondition)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return nil, err
@@ -86,8 +193,29 @@ func (s *BayMasterServiceImpl) GetAllCarWashBayDropDown(filterCondition []utils.
 
 func (s *BayMasterServiceImpl) PostCarWashBay(request transactionjpcbpayloads.CarWashBayPostRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.BayMasterRepository.PostCarWashBay(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return transactionjpcbentities.BayMaster{}, err
@@ -97,8 +225,29 @@ func (s *BayMasterServiceImpl) PostCarWashBay(request transactionjpcbpayloads.Ca
 
 func (s *BayMasterServiceImpl) PutCarWashBay(request transactionjpcbpayloads.CarWashBayPutRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.BayMasterRepository.UpdateCarWashBay(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return transactionjpcbentities.BayMaster{}, err
@@ -108,8 +257,29 @@ func (s *BayMasterServiceImpl) PutCarWashBay(request transactionjpcbpayloads.Car
 
 func (s *BayMasterServiceImpl) GetCarWashBayById(carWashBayId int) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.BayMasterRepository.GetCarWashBayById(tx, carWashBayId)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return transactionjpcbentities.BayMaster{}, err
