@@ -183,7 +183,7 @@ func (i *ItemGroupRepositoryImpl) GetAllItemGroupWithPagination(db *gorm.DB, int
 	Responds := []masteritempayloads.ItemGroupGetAllResponses{}
 	joinTable := db.Model(&Entities).Select("*")
 	WhereQuery := utils.ApplyFilter(joinTable, internalFilter)
-	err := WhereQuery.Scopes(pagination.Paginate(&Entities, &pages, WhereQuery)).Scan(&Responds).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&pages, WhereQuery)).Scan(&Responds).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
