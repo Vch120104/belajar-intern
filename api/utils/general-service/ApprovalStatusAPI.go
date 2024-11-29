@@ -25,7 +25,7 @@ type ApprovalStatusResponse struct {
 func GetApprovalStatusByCode(code string) (ApprovalStatusResponse, *exceptions.BaseErrorResponse) {
 	var getApprovalStatusTemp ApprovalStatusTempResponse
 	var getApprovalStatus ApprovalStatusResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-by-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-code/" + code
 
 	err := utils.CallAPI("GET", url, nil, &getApprovalStatusTemp)
 	if err != nil {
