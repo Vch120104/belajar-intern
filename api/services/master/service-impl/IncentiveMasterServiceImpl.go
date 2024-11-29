@@ -30,7 +30,7 @@ func StartIncentiveMasterService(IncentiveMasterRepo masterrepository.IncentiveM
 	}
 }
 
-func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -54,12 +54,12 @@ func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []uti
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.IncentiveMasterRepo.GetAllIncentiveMaster(tx, filterCondition, pages)
+	results, err := s.IncentiveMasterRepo.GetAllIncentiveMaster(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *IncentiveMasterServiceImpl) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptions.BaseErrorResponse) {

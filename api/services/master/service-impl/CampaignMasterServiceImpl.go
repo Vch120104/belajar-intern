@@ -410,7 +410,7 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -434,12 +434,12 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.
 			}
 		}
 	}()
-	result, page, limit, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
+	result, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
 
 	if err != nil {
-		return result, 0, 0, err
+		return result, err
 	}
-	return result, page, limit, nil
+	return result, nil
 }
 
 func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
