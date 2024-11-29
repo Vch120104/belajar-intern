@@ -2,17 +2,18 @@ package masterserviceimpl
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -45,8 +46,32 @@ func (s *DiscountServiceImpl) UpdateDiscount(id int, req masterpayloads.Discount
 	}
 
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	results, err := s.discountRepo.UpdateDiscount(tx, id, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -55,8 +80,32 @@ func (s *DiscountServiceImpl) UpdateDiscount(id int, req masterpayloads.Discount
 
 func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	results, err := s.discountRepo.GetAllDiscountIsActive(tx)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -65,8 +114,31 @@ func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.Discoun
 
 func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	results, err := s.discountRepo.GetDiscountById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -76,8 +148,32 @@ func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountRe
 
 func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	results, err := s.discountRepo.GetDiscountByCode(tx, Code)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -86,8 +182,32 @@ func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.Dis
 
 func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	results, err := s.discountRepo.GetAllDiscount(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -96,15 +216,39 @@ func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondi
 
 func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.discountRepo.GetDiscountById(tx, Id)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+
+	_, err = s.discountRepo.GetDiscountById(tx, Id)
 
 	if err != nil {
 		return false, err
 	}
 
 	results, err := s.discountRepo.ChangeStatusDiscount(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -113,6 +257,30 @@ func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptions.Ba
 
 func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 
 	if req.DiscountCodeId != 0 {
 		_, err := s.discountRepo.GetDiscountById(tx, req.DiscountCodeId)
@@ -123,7 +291,7 @@ func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) 
 	}
 
 	results, err := s.discountRepo.SaveDiscount(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}

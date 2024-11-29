@@ -23,24 +23,23 @@ func StartOperationCodeRepositoryImpl() masteroperationrepository.OperationCodeR
 
 func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteroperationentities.OperationCode{}
-	//define base model
+
 	baseModelQuery := tx.Model(&entities)
-	//apply where query
+
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
-	if len(entities) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
-	}
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
+
+	if len(entities) == 0 {
+		pages.Rows = []masteroperationentities.OperationCode{}
+		return pages, nil
+	}
 
 	pages.Rows = entities
 

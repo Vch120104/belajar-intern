@@ -13,7 +13,7 @@ import (
 type OperationModelMappingRepository interface {
 	GetOperationModelMappingById(*gorm.DB, int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse)
 	GetOperationModelMappingByBrandModelOperationCode(*gorm.DB, masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse)
-	GetOperationModelMappingLookup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetOperationModelMappingLookup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SaveOperationModelMapping(*gorm.DB, masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationModelMapping(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	SaveOperationModelMappingFrt(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse)

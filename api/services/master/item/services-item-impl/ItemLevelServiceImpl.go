@@ -2,14 +2,16 @@ package masteritemserviceimpl
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masteritemlevelpayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	masteritemlevelservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,8 +32,31 @@ func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository
 // GetItemLevelLookUpbyId implements masteritemservice.ItemLevelService.
 func (s *ItemLevelServiceImpl) GetItemLevelLookUpbyId(filter []utils.FilterCondition, itemLevelId int) (masteritemlevelpayloads.GetItemLevelLookUp, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	get, err := s.structItemLevelRepo.GetItemLevelLookUpbyId(tx, filter, itemLevelId)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -42,8 +67,31 @@ func (s *ItemLevelServiceImpl) GetItemLevelLookUpbyId(filter []utils.FilterCondi
 // GetItemLevelLookUp implements masteritemservice.ItemLevelService.
 func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	get, err := s.structItemLevelRepo.GetItemLevelLookUp(tx, filter, pages, itemClassId)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -54,8 +102,31 @@ func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition
 // GetItemLevelDropDown implements masteritemservice.ItemLevelService.
 func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel int) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	get, err := s.structItemLevelRepo.GetItemLevelDropDown(tx, itemLevel)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -65,6 +136,30 @@ func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel int) ([]masteritem
 
 func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 
 	if request.ItemLevelId != 0 {
 		_, err := s.structItemLevelRepo.GetById(tx, request.ItemLevel, request.ItemLevelId)
@@ -75,7 +170,6 @@ func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLeve
 	}
 
 	save, err := s.structItemLevelRepo.Save(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
@@ -85,8 +179,31 @@ func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLeve
 
 func (s *ItemLevelServiceImpl) GetById(itemLevel int, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	get, err := s.structItemLevelRepo.GetById(tx, itemLevel, itemLevelId)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -96,8 +213,31 @@ func (s *ItemLevelServiceImpl) GetById(itemLevel int, itemLevelId int) (masterit
 
 func (s *ItemLevelServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	get, err := s.structItemLevelRepo.GetAll(tx, filter, pages)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -107,16 +247,38 @@ func (s *ItemLevelServiceImpl) GetAll(filter []utils.FilterCondition, pages pagi
 
 func (s *ItemLevelServiceImpl) ChangeStatus(itemLevel int, itemLevelId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.structItemLevelRepo.GetById(tx, itemLevel, itemLevelId)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+
+	_, err = s.structItemLevelRepo.GetById(tx, itemLevel, itemLevelId)
 
 	if err != nil {
 		return false, err
 	}
 
 	change_status, err := s.structItemLevelRepo.ChangeStatus(tx, itemLevel, itemLevelId)
-	defer helper.CommitOrRollback(tx, err)
-
 	if err != nil {
 		return change_status, err
 	}

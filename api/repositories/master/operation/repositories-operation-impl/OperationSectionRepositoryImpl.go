@@ -6,6 +6,7 @@ import (
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
+	"math"
 	"net/http"
 
 	"after-sales/api/utils"
@@ -21,23 +22,76 @@ func StartOperationSectionRepositoryImpl() masteroperationrepository.OperationSe
 }
 
 func (r *OperationSectionRepositoryImpl) GetAllOperationSectionList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := masteroperationentities.OperationSection{}
+	var entities []masteroperationentities.OperationSection
 	var responses []masteroperationpayloads.OperationSectionListResponse
-	// define table struct
-	tableStruct := masteroperationpayloads.OperationSectionListResponse{}
-	//define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-	//apply pagination and execute
-	rows, _ := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
-	defer rows.Close()
+	tableStruct := masteroperationpayloads.OperationSectionListResponse{}
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	var totalRows int64
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+
+	if err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).
+		Find(&entities).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = responses
+		return pages, nil
+	}
+
+	var operationGroupIds []int
+	for _, entity := range entities {
+		operationGroupIds = append(operationGroupIds, entity.OperationGroupId)
+	}
+
+	var operationGroups []masteroperationentities.OperationGroup
+	if err := tx.Where("operation_group_id IN ?", operationGroupIds).Find(&operationGroups).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	operationGroupMap := make(map[int]masteroperationentities.OperationGroup)
+	for _, group := range operationGroups {
+		operationGroupMap[group.OperationGroupId] = group
+	}
+
+	for _, entity := range entities {
+		response := masteroperationpayloads.OperationSectionListResponse{
+			IsActive:                    entity.IsActive,
+			OperationSectionId:          entity.OperationSectionId,
+			OperationSectionCode:        entity.OperationSectionCode,
+			OperationSectionDescription: entity.OperationSectionDescription,
+			OperationGroupId:            entity.OperationGroupId,
+		}
+
+		if operationGroup, exists := operationGroupMap[entity.OperationGroupId]; exists {
+			response.OperationGroupCode = operationGroup.OperationGroupCode
+			response.OperationGroupDescription = operationGroup.OperationGroupDescription
+		}
+
+		responses = append(responses, response)
+	}
 
 	pages.Rows = responses
 
 	return pages, nil
-
 }
 
 func (r *OperationSectionRepositoryImpl) GetOperationSectionName(tx *gorm.DB, GroupId int, SectionCode string) (masteroperationpayloads.OperationSectionNameResponse, *exceptions.BaseErrorResponse) {

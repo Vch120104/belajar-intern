@@ -34,8 +34,8 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnician(tx *gorm.DB, f
 	}
 
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -75,7 +75,7 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 			trx_setting_technician_detail.is_booking`).
 		Joins("INNER JOIN mtr_shift_schedule mss ON mss.shift_schedule_id = trx_setting_technician_detail.shift_group_id")
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

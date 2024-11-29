@@ -9,10 +9,10 @@ import (
 )
 
 type LandedCostMasterService interface {
-	GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{},int,int, *exceptions.BaseErrorResponse)
+	GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdLandedCost(id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	SaveLandedCost(req masteritempayloads.LandedCostMasterRequest) (masteritementities.LandedCost, *exceptions.BaseErrorResponse)
 	DeactivateLandedCostMaster(id string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
 	ActivateLandedCostMaster(id string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
-	UpdateLandedCostMaster(id int,req masteritempayloads.LandedCostMasterUpdateRequest)(masteritementities.LandedCost,*exceptions.BaseErrorResponse)
+	UpdateLandedCostMaster(id int, req masteritempayloads.LandedCostMasterUpdateRequest) (masteritementities.LandedCost, *exceptions.BaseErrorResponse)
 }

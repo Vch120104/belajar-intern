@@ -35,7 +35,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	var entities []transactionworkshoppayloads.QualityControlRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.QualityControlRequest{})
-	whereQuery := utils.ApplyFilterSearch(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	whereQuery = whereQuery.Where("work_order_status_id = ?", utils.WoStatStop) // 40 Stop
 
 	if err := whereQuery.Find(&entities).Error; err != nil {
