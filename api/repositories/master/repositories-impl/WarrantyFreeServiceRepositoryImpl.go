@@ -8,11 +8,10 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	"errors"
+	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"net/http"
-	"reflect"
 	"strconv"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -24,135 +23,80 @@ func StartWarrantyFreeServiceRepositoryImpl() masterrepository.WarrantyFreeServi
 	return &WarrantyFreeServiceRepositoryImpl{}
 }
 
-func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masterpayloads.WarrantyFreeServiceListResponse
-	var getBrandResponse []masterpayloads.BrandResponse
-	var getModelResponse []masterpayloads.UnitModelResponse
-	var getWarrantyFreeServiceTypeResponse []masterpayloads.WarrantyFreeServiceTypeResponse
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var brandCode string
-	var modelCode string
-	var warrantyFreeServiceTypeCode string
-	responseStruct := reflect.TypeOf(masterpayloads.WarrantyFreeServiceListResponse{})
+func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []masterpayloads.WarrantyFreeServiceResponse
 
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		}
-	}
+	baseModelQuery := tx.Model(&masterentities.WarrantyFreeService{})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		if strings.Contains(externalServiceFilter[i].ColumnField, "brand_code") {
-			brandCode = externalServiceFilter[i].ColumnValue
-		} else if strings.Contains(externalServiceFilter[i].ColumnField, "warranty_free_service_type_code") {
-			warrantyFreeServiceTypeCode = externalServiceFilter[i].ColumnValue
-		} else {
-			modelCode = externalServiceFilter[i].ColumnValue
-		}
-	}
-
-	result := tx.Model(masterentities.WarrantyFreeService{})
-
-	// define table struct
-	// tableStruct := masterpayloads.WarrantyFreeServiceListResponse{}
-	//define join table
-	// joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilter(result, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
-
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	// join with mtr_brand
-
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_code=" + brandCode
-
-	errUrlUnitBrand := utils.Get(unitBrandUrl, &getBrandResponse, nil)
-
-	if errUrlUnitBrand != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+	var results []map[string]interface{}
+	for _, response := range responses {
+		// Fetch Brand data
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        brandErr.Err,
+			}
 		}
+
+		// Fetch Model data
+		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		if modelErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        modelErr.Err,
+			}
+		}
+
+		// Fetch Warranty Free Service Type data
+		warrantyFreeServiceTypeResponse, wfstErr := generalserviceapiutils.GetWarrantyFreeServiceTypeById(response.WarrantyFreeServiceTypeId)
+		if wfstErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        wfstErr.Err,
+			}
+		}
+
+		result := map[string]interface{}{
+			"warranty_free_service_id":               response.WarrantyFreeServicesId,
+			"brand_id":                               response.BrandId,
+			"brand_name":                             brandResponse.BrandName,
+			"model_id":                               response.ModelId,
+			"model_name":                             modelResponse.ModelName,
+			"warranty_free_service_type_id":          response.WarrantyFreeServiceTypeId,
+			"warranty_free_service_type_code":        warrantyFreeServiceTypeResponse.WarrantyFreeServiceTypeCode,
+			"warranty_free_service_type_description": warrantyFreeServiceTypeResponse.WarrantyFreeServiceTypeName,
+			"effective_date":                         response.EffectiveDate,
+			"expire_mileage":                         response.ExpireMileage,
+			"expire_month":                           response.ExpireMonth,
+			"variant_id":                             response.VariantId,
+			"expire_mileage_extended_warranty":       response.ExpireMileageExtendedWarranty,
+			"expire_month_extended_warranty":         response.ExpireMonthExtendedWarranty,
+			"remark":                                 response.Remark,
+			"extended_warranty":                      response.ExtendedWarranty,
+			"is_active":                              response.IsActive,
+		}
+
+		results = append(results, result)
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
+	pages.Rows = results
 
-	// join with mtr_unit_model
-
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=100000&model_code=" + modelCode
-
-	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
-
-	if errUrlUnitModel != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	// join with mtr_warranty_free_service_type
-
-	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
-
-	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
-
-	if errUrlWarrantyFreeServiceType != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getWarrantyFreeServiceTypeResponse, "WarrantyFreeServiceTypeId")
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData3, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
