@@ -262,6 +262,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 	var BrandId string
 	var JobTypeId string
 	var BillToId string
+	emptyData := []map[string]interface{}{}
 
 	for i := 0; i < len(filter); i++ {
 		// flag := false
@@ -282,14 +283,14 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 			BrandId = ServiceFilter[i].ColumnValue
 		} else if strings.Contains(ServiceFilter[i].ColumnField, "job_type_id") {
 			JobTypeId = ServiceFilter[i].ColumnValue
-		} else if strings.Contains(ServiceFilter[i].ColumnField, "bill_to_id"){
+		} else if strings.Contains(ServiceFilter[i].ColumnField, "bill_to_id") {
 			BillToId = ServiceFilter[i].ColumnValue
 		}
 	}
 
 	query := tx.Model(entities)
 
-	filterQuery := utils.ApplyFilterExact(query, filter)
+	filterQuery := utils.ApplyFilter(query, filter)
 
 	// if err := filterQuery.Scopes(pagination.Paginate(entities, &pages, filterQuery)).Scan(&responses).Error; err != nil {
 	// 	return pages, &exceptions.BaseErrorResponse{
@@ -308,10 +309,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		return emptyData, 0, 0, nil
 	}
 
 	defer rows.Close()

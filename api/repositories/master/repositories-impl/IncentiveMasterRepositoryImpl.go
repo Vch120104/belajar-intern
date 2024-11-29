@@ -75,7 +75,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 
 	defer rows.Close()
 
-	jobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "role?role_id=" + jobPositionId
+	jobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "roles?role_id=" + jobPositionId
 
 	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
 

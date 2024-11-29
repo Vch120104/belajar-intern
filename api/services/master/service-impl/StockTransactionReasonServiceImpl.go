@@ -9,7 +9,11 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -22,10 +26,31 @@ type StockTransactionReasonServiceImpl struct {
 func StartStockTransactionReasonServiceImpl(StockTransactionRepo masterrepository.StockTransactionReasonRepository, DB *gorm.DB, Redis *redis.Client) masterservice.StockTransactionReasonService {
 	return &StockTransactionReasonServiceImpl{StockTransactionRepo: StockTransactionRepo, DB: DB, Redis: Redis}
 }
-func (service *StockTransactionReasonServiceImpl) GetStockTransactionReasonByCode(Code string) (masterentities.StockTransactionReason, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.StockTransactionRepo.GetStockTransactionReasonByCode(tx, Code)
-	defer helper.CommitOrRollbackTrx(tx)
+func (s *StockTransactionReasonServiceImpl) GetStockTransactionReasonByCode(Code string) (masterentities.StockTransactionReason, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.StockTransactionRepo.GetStockTransactionReasonByCode(tx, Code)
 	if err != nil {
 		return result, err
 	}

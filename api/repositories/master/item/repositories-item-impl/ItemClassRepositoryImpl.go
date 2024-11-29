@@ -189,7 +189,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 	joinTable := utils.CreateJoinSelectStatement(tx, masteritempayloads.ItemClassGetAllResponse{})
 	whereQuery := utils.ApplyFilter(joinTable, internalFilter)
 
-	if err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Error; err != nil {
+	if err := joinTable.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&entities).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -210,7 +210,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 
 	// Get item group names based on itemGroupIds
 	if len(itemGroupIds) > 0 {
-		groupServiceURL := fmt.Sprintf("%sitem-group?page=0&limit=100&item_group_ids=%s", config.EnvConfigs.GeneralServiceUrl, strings.Join(toStringList(itemGroupIds), ","))
+		groupServiceURL := fmt.Sprintf("%sitem-group-multi-id/%s", config.EnvConfigs.GeneralServiceUrl, strings.Join(toStringList(itemGroupIds), ","))
 		var itemGroups []masteritempayloads.ItemGroupResponse
 
 		if err := utils.Get(groupServiceURL, &itemGroups, nil); err != nil {
@@ -234,7 +234,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 
 	// Get line type names based on lineTypeIds
 	if len(lineTypeIds) > 0 {
-		lineTypeURL := fmt.Sprintf("%sline-types?page=0&limit=100&line_type_ids=%s", config.EnvConfigs.GeneralServiceUrl, strings.Join(toStringList(lineTypeIds), ","))
+		lineTypeURL := fmt.Sprintf("%sline-type-list?page=0&limit=100&line_type_ids=%s", config.EnvConfigs.GeneralServiceUrl, strings.Join(toStringList(lineTypeIds), ","))
 		var lineTypes []masteritempayloads.LineTypeResponse
 
 		if err := utils.Get(lineTypeURL, &lineTypes, nil); err != nil {

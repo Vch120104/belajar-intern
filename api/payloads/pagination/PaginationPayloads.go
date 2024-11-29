@@ -47,26 +47,7 @@ func (p *Pagination) GetSortBy() string {
 	return p.SortBy
 }
 
-func Paginate(value interface{}, pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
-	var totalRows int64
-	var sort string = ""
-	if pagination.GetSortBy() != "" {
-		sort = pagination.GetSortBy() + " " + pagination.GetSortOf()
-	}
-	db.Model(value).Count(&totalRows)
-
-	pagination.TotalRows = totalRows
-	totalPages := 0
-	if totalRows != 0 {
-		totalPages = int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
-	}
-	pagination.TotalPages = totalPages
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(sort)
-	}
-}
-
-func PaginateDistinct(pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
+func Paginate(pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
 	var sort string = ""
 	if pagination.GetSortBy() != "" {
@@ -75,11 +56,13 @@ func PaginateDistinct(pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *go
 
 	tx := db.Session(&gorm.Session{NewDB: true})
 	tx.Table("(?) as a", db).Count(&totalRows)
+	// db.Count(&totalRows)
 
 	pagination.TotalRows = totalRows
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
 	pagination.TotalPages = totalPages
 	return func(db *gorm.DB) *gorm.DB {
+		// return db.Order(sort)
 		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(sort)
 	}
 }

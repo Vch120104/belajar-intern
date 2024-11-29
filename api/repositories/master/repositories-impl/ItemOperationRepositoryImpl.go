@@ -23,10 +23,10 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 	var responses []masterpayloads.ItemOperationPost
 	var entities masterentities.ItemOperation
 
-	query := tx.Select("*").Table("mtr_item_operation")
+	query := tx.Model(&entities).Select("mtr_item_operation.*").Table("mtr_item_operation")
 	WhereQuery := utils.ApplyFilter(query, filterCondition)
 
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&pages, query)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

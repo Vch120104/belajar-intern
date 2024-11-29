@@ -63,13 +63,13 @@ type SupplierMasterGetAllResponse struct {
 	Data       []SupplierMasterResponse `json:"data"`
 }
 
-func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResponse, *exceptions.BaseErrorResponse) {
-	var getSupplierMaster SupplierMasterGetAllResponse
+func GetAllSupplierMaster(params SupplierMasterParams) ([]SupplierMasterResponse, *exceptions.BaseErrorResponse) {
+	var getSupplierMaster []SupplierMasterResponse
 	if params.Limit == 0 {
 		params.Limit = 1000000
 	}
 
-	baseURL := config.EnvConfigs.GeneralServiceUrl + "supplier"
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "supplier-list"
 
 	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
 
@@ -86,7 +86,7 @@ func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResp
 
 	url := baseURL + "?" + queryParams
 
-	err := utils.GetArray(url, nil, &getSupplierMaster)
+	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve supplier master due to an external service error"
@@ -108,7 +108,7 @@ func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResp
 
 func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
 	var getSupplierMaster SupplierMasterResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "supplier-by-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "supplier-code/" + code
 
 	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {

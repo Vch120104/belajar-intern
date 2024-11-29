@@ -589,7 +589,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
 			Where("A.is_active = ?", 1).
 			Where(filterQuery, filterValues...).
-			Group("A.package_id ,A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
+			Group("A.package_id ,A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
+			Order("A.package_id")
 
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
@@ -608,7 +609,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
 			Where("oc.is_active = ?", 1).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("oc.operation_id, oc.operation_code, oc.operation_name, ofrt.frt_hour, oe.operation_entries_code, oe.operation_entries_description, ok.operation_key_code, ok.operation_key_description").
+			Order("oc.operation_id")
 
 	case utils.LinetypeSparepart:
 		ItmCls = 69 // "SP"
@@ -637,7 +640,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeOil:
 		ItmCls = 70 // "OL"
@@ -666,7 +671,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeMaterial:
 		ItmCls = 71        // "MT"
@@ -694,7 +701,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeConsumableMaterial:
 		ItmCls = 75 // "CM"
@@ -721,7 +729,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeFee:
 		ItmCls = 73           // "WF"
@@ -750,7 +759,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeAccesories:
 		ItmCls = 74 // "AC"
@@ -777,7 +787,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeSouvenir:
 		ItmCls = 77 // "SV"
@@ -804,7 +815,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	default:
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -935,7 +947,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
 			Where("oc.is_active = ? ", 1).
-			Where("oc.operation_code = ?", oprItemCode)
+			Where("oc.operation_code = ?", oprItemCode).
+			Group("oc.operation_id, oc.operation_code, oc.operation_name, ofrt.frt_hour, oe.operation_entries_code, oe.operation_entries_description, ok.operation_key_code, ok.operation_key_description").
+			Order("oc.operation_id")
 
 	case utils.LinetypeSparepart:
 		ItmCls = 69 // "SP"
@@ -961,7 +975,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where("A.item_code = ?", oprItemCode)
+			Where("A.item_code = ?", oprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeOil:
 		ItmCls = 70 // "OL"
@@ -987,7 +1003,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where("A.item_code = ?", oprItemCode)
+			Where("A.item_code = ?", oprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeMaterial:
 		ItmCls = 71        // "MT"
@@ -1014,7 +1032,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where("A.item_code = ?", oprItemCode).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeConsumableMaterial:
 		ItmCls = 75 // "CM"
@@ -1041,7 +1060,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_code = ?", oprItemCode).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeFee:
 		ItmCls = 73           // "WF"
@@ -1069,7 +1089,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where("A.item_code = ?", oprItemCode).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeAccesories:
 		ItmCls = 74 // "AC"
@@ -1095,7 +1116,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where("A.item_code = ?", oprItemCode).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeSouvenir:
 		ItmCls = 77 // "SV"
@@ -1121,7 +1143,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where("A.item_code = ?", oprItemCode).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 	default:
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1224,7 +1247,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where("A.is_active = ?", 1).
 			Where("A.package_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
-			Group("A.package_id,A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
+			Group("A.package_id,A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
+			Order("A.package_id")
 
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
@@ -1244,7 +1268,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
 			Where("oc.is_active = ? ", 1).
 			Where("oc.operation_id = ?", oprItemId).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("oc.operation_id, oc.operation_code, oc.operation_name, ofrt.frt_hour, oe.operation_entries_code, oe.operation_entries_description, ok.operation_key_code, ok.operation_key_description").
+			Order("oc.operation_id")
 
 	case utils.LinetypeSparepart:
 		ItmCls = 69 // "SP"
@@ -1271,7 +1297,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_id = ?", oprItemId).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeOil:
 		ItmCls = 70 // "OL"
@@ -1298,7 +1326,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_id = ?", oprItemId).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeMaterial:
 		ItmCls = 71        // "MT"
@@ -1327,7 +1357,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeConsumableMaterial:
 		ItmCls = 75 // "CM"
@@ -1354,7 +1385,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_id = ?", oprItemId).
-			Where(filterQuery, filterValues...)
+			Where(filterQuery, filterValues...).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeFee:
 		ItmCls = 73           // "WF"
@@ -1384,7 +1417,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeAccesories:
 		ItmCls = 74 // "AC"
@@ -1412,7 +1446,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	case utils.LinetypeSouvenir:
 		ItmCls = 77 // "SV"
@@ -1440,7 +1475,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
 
 	default:
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -2855,7 +2891,9 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 
 // usp_comLookUp IF @strEntity = 'ListItemLocation'
 func (r *LookupRepositoryImpl) ListItemLocation(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	response := []masterpayloads.WarehouseMasterForItemLookupResponse{}
+
 	entities := masterwarehouseentities.WarehouseMaster{}
 
 	baseModelQuery := tx.Model(&entities).
@@ -2871,13 +2909,19 @@ func (r *LookupRepositoryImpl) ListItemLocation(tx *gorm.DB, companyId int, filt
 		Where("mtr_warehouse_master.company_id = ?", companyId)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&response).Error
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&response).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
+	}
+
+	if len(response) == 0 {
+		pages.Rows = []masterpayloads.WarehouseMasterForItemLookupResponse{}
+		return pages, nil
 	}
 
 	pages.Rows = response
@@ -2933,7 +2977,7 @@ func (r *LookupRepositoryImpl) ItemListTrans(tx *gorm.DB, filterCondition []util
 		Where("mtr_item.is_active = ?", true)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2987,7 +3031,7 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
 	}
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

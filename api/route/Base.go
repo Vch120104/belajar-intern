@@ -58,6 +58,9 @@ func CarWashBayRouter(
 	router.Get("/deactive", bayController.GetAllDeactiveCarWashBay)
 	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
 	router.Get("/dropdown", bayController.GetAllCarWashBayDropDown)
+	router.Post("/", bayController.PostCarWashBay)
+	router.Put("/", bayController.PutCarWashBay)
+	router.Get("/{car_wash_bay_id}", bayController.GetCarWashBayById)
 
 	return router
 }
@@ -226,7 +229,6 @@ func ItemRouter(
 	router.Get("/by-code", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
-	router.Get("/search", itemController.GetAllItem)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem
@@ -273,6 +275,28 @@ func ItemLocationRouter(
 	return router
 }
 
+func ItemGroupRouter(
+	ItemGroupController masteritemcontroller.ItemGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	//getall
+	router.Get("/list", ItemGroupController.GetAllItemGroupWithPagination)
+	router.Get("/dropdown", ItemGroupController.GetAllItemGroup)
+	router.Get("/{item_group_id}", ItemGroupController.GetItemGroupById)
+	router.Put("/{item_group_id}", ItemGroupController.UpdateItemGroupById)
+	router.Patch("/{item_group_id}", ItemGroupController.UpdateStatusItemGroupById)
+	router.Get("/multi-id/{item_group_id}", ItemGroupController.GetItemGroupByMultiId)
+	router.Post("/", ItemGroupController.NewItemGroup)
+	router.Delete("/{item_group_id}", ItemGroupController.DeleteItemGroupById)
+	return router
+}
+
 func ItemSubstituteRouter(
 	itemSubstituteController masteritemcontroller.ItemSubstituteController,
 ) chi.Router {
@@ -289,10 +313,12 @@ func ItemSubstituteRouter(
 	router.Get("/detail/by-id/{item_substitute_detail_id}", itemSubstituteController.GetByIdItemSubstituteDetail)
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
+	router.Put("/detail", itemSubstituteController.UpdateItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
+	router.Get("/detail/last-sequence/{item_substitute_id}", itemSubstituteController.GetItemSubstituteDetailLastSequence)
 	return router
 }
 
@@ -901,6 +927,7 @@ func WarehouseMasterRouter(
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
+	router.Get("/by-code-company/{warehouse_code}/{company_id}", warehouseMasterController.GetWarehouseMasterByCodeCompany)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
 	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
 	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
@@ -1018,6 +1045,7 @@ func AgreementRouter(
 
 	router.Get("/", AgreementController.GetAllAgreement)
 	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
+	router.Get("/by-code/{agreement_code}", AgreementController.GetAgreementByCode)
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Put("/{agreement_id}", AgreementController.UpdateAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
@@ -1283,8 +1311,9 @@ func DiscountRouter(
 
 	router.Get("/", discountController.GetAllDiscount)
 	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-code/{discount_code}", discountController.GetDiscountByCode)
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
+	router.Put("/{id}", discountController.UpdateDiscount)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)
 
@@ -1312,7 +1341,7 @@ func CampaignMasterRouter(
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
 	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
-	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
 	router.Post("/detail/save-from-package", campaignmastercontroller.SaveCampaignMasterDetailFromPackage)
 

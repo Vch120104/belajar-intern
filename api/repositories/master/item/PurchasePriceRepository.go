@@ -19,10 +19,11 @@ type PurchasePriceRepository interface {
 
 	GetAllPurchasePriceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetPurchasePriceDetailById(tx *gorm.DB, Id int) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse)
-	GetPurchasePriceDetailByParam(tx *gorm.DB, curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse)
+	GetPurchasePriceDetailByParam(tx *gorm.DB, curId int, supId int, effectiveDate string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	AddPurchasePrice(tx *gorm.DB, req masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse)
 	UpdatePurchasePriceDetail(tx *gorm.DB, Id int, req masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse)
 	DeletePurchasePrice(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
 	ActivatePurchasePriceDetail(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
 	DeactivatePurchasePriceDetail(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
+	CheckPurchasePriceDetailExistence(tx *gorm.DB, Id int, itemId int) (bool, *exceptions.BaseErrorResponse)
 }

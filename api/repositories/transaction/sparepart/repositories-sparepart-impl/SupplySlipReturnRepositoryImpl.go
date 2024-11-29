@@ -91,7 +91,7 @@ func (r *SupplySlipReturnRepositoryImpl) GetAllSupplySlipReturn(tx *gorm.DB, int
 		Select("trx_supply_slip_return.supply_return_system_number, trx_supply_slip_return.supply_return_document_number, trx_supply_slip_return.supply_return_date, trx_supply_slip.supply_document_number, trx_work_order.work_order_document_number, trx_work_order.customer_id, trx_supply_slip_return.supply_return_status_id")
 
 	//apply filter
-	whereQuery := utils.ApplyFilterSearch(joinTable, internalFilter)
+	whereQuery := utils.ApplyFilter(joinTable, internalFilter)
 
 	// Execute the query
 	rows, err := whereQuery.Rows()
@@ -342,4 +342,3 @@ func (r *SupplySlipReturnRepositoryImpl) GetSupplySlipId(tx *gorm.DB, Id int) (i
 	return response.SupplySystemNumber, nil
 
 }
-

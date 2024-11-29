@@ -16,6 +16,7 @@ import (
 	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 	// "log"
@@ -292,6 +293,28 @@ func (s *WarehouseLocationServiceImpl) GenerateTemplateFile() (*excelize.File, *
 
 func (s *WarehouseLocationServiceImpl) Save(request masterwarehouseentities.WarehouseLocation) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	if request.WarehouseLocationId != 0 {
 		_, err := s.warehouseLocationRepo.GetById(tx, request.WarehouseLocationId)
@@ -302,7 +325,6 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehouseentities.Ware
 	}
 
 	save, err := s.warehouseLocationRepo.Save(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
@@ -312,8 +334,29 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehouseentities.Ware
 
 func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	get, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -323,8 +366,29 @@ func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterw
 
 func (s *WarehouseLocationServiceImpl) GetByCode(warehouseLocationCode string) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	get, err := s.warehouseLocationRepo.GetByCode(tx, warehouseLocationCode)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -334,8 +398,29 @@ func (s *WarehouseLocationServiceImpl) GetByCode(warehouseLocationCode string) (
 
 func (s *WarehouseLocationServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	get, err := s.warehouseLocationRepo.GetAll(tx, filter, pages)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -345,15 +430,36 @@ func (s *WarehouseLocationServiceImpl) GetAll(filter []utils.FilterCondition, pa
 
 func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	_, err = s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 
 	if err != nil {
 		return false, err
 	}
 
 	change_status, err := s.warehouseLocationRepo.ChangeStatus(tx, warehouseLocationId)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return change_status, err

@@ -9,6 +9,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,6 +20,26 @@ import (
 )
 
 type PurchasePriceRepositoryImpl struct {
+}
+
+// return false if purchase price detail does not exists
+func (r *PurchasePriceRepositoryImpl) CheckPurchasePriceDetailExistence(tx *gorm.DB, Id int, itemId int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.PurchasePriceDetail
+	var count int64
+
+	err := tx.Model(&entities).Where(masteritementities.PurchasePriceDetail{PurchasePriceId: Id, ItemId: itemId}).Count(&count).Error
+	if err != nil {
+		return true, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when checking purchase price detail existence",
+			Err:        err,
+		}
+	}
+
+	if count > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func StartPurchasePriceRepositoryImpl() masteritemrepository.PurchasePriceRepository {
@@ -60,20 +81,23 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	if supplierCode != "" || supplierName != "" {
 		var supplierIds []int
-		supplierName = strings.ReplaceAll(supplierName, " ", "%20")
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=1000000&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
-		var supplierResponse []masteritempayloads.PurchasePriceSupplierResponse
-		if err := utils.GetArray(supplierUrl, &supplierResponse, nil); err != nil {
+		supplierParams := generalserviceapiutils.SupplierMasterParams{
+			Page:         0,
+			Limit:        1000,
+			SupplierCode: supplierCode,
+			SupplierName: supplierName,
+		}
+		supplierResponse, supplierError := generalserviceapiutils.GetAllSupplierMaster(supplierParams)
+		if supplierError != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Message:    "Error fetching supplier filter data",
+				Err:        supplierError.Err,
 			}
 		}
 
 		for _, supplier := range supplierResponse {
-			if isNotInList(supplierIds, supplier.SupplierId) {
-				supplierIds = append(supplierIds, supplier.SupplierId)
-			}
+			supplierIds = append(supplierIds, supplier.SupplierId)
 		}
 
 		if len(supplierIds) == 0 {
@@ -85,19 +109,18 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	if currencyCode != "" {
 		var currencyIds []int
-		currencyCodeUrl := config.EnvConfigs.FinanceServiceUrl + "currency-code?currency_code=" + currencyCode
-		var currencyCodeResponse []masteritempayloads.CurrencyResponse
-		if err := utils.GetArray(currencyCodeUrl, &currencyCodeResponse, nil); err != nil {
+		currencyParams := financeserviceapiutils.CurrencyParams{CurrencyCode: currencyCode}
+		currencyCodeResponse, currencyError := financeserviceapiutils.GetAllCurrency(currencyParams)
+		if currencyError != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Message:    "Error fetching currency code filter data",
+				Err:        currencyError.Err,
 			}
 		}
 
 		for _, currency := range currencyCodeResponse {
-			if isNotInList(currencyIds, currency.CurrencyId) {
-				currencyIds = append(currencyIds, currency.CurrencyId)
-			}
+			currencyIds = append(currencyIds, currency.CurrencyId)
 		}
 
 		if len(currencyIds) == 0 {
@@ -664,59 +687,37 @@ func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id 
 	return entity, nil
 }
 
-func isNotInList(list []int, value int) bool {
-	for _, v := range list {
-		if v == value {
-			return false
-		}
-	}
-	return true
-}
-
-func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailByParam(tx *gorm.DB, curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailByParam(tx *gorm.DB, curId int, supId int, effectiveDate string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.PurchasePriceDetail
+	response := []masteritempayloads.GetPurchasePriceDetailByParamResponse{}
 
 	// Fetch PurchasePrice data
-	err := tx.Model(&masteritementities.PurchasePriceDetail{}).
-		Where("purchase_price_id = ? AND supplier_id = ? AND purchase_price_effective_date = ?", curId, supId, effectiveDate).
-		First(&entities).Error
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			mtr_purchase_price_detail.purchase_price_detail_id,
+			mtr_purchase_price_detail.purchase_price_id,
+			mi.item_id,
+			mi.item_code,
+			mi.item_name,
+			mtr_purchase_price_detail.is_active,
+			mtr_purchase_price_detail.purchase_price
+		`).
+		Joins("INNER JOIN mtr_purchase_price mpp ON mpp.purchase_price_id = mtr_purchase_price_detail.purchase_price_id").
+		Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_purchase_price_detail.item_id").
+		Where("mpp.currency_id = ?", curId).
+		Where("mpp.supplier_id = ?", supId).
+		Where("mpp.purchase_price_effective_date >= ? AND mpp.purchase_price_effective_date <= ?", effectiveDate+" 00:00:00.000", effectiveDate+" 23:59:59.999")
+	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Scan(&response).Error
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "Purchase price detail data not found",
-				Err:        fmt.Errorf("purchase price detail with ID %d not found", curId),
-			}
-		}
-		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Internal server error while fetching purchase price detail",
 			Err:        err,
 		}
 	}
 
-	// Fetch Item data from external service
-	ItemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entities.ItemId)
-	var getItemResponse masteritempayloads.PurchasePriceItemResponse
-	if err := utils.Get(ItemURL, &getItemResponse, nil); err != nil {
-		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Internal server error while fetching item data",
-			Err:        err,
-		}
-	}
+	pages.Rows = response
 
-	// Prepare response payload
-	payloads := masteritempayloads.PurchasePriceDetailResponses{
-		PurchasePriceDetailId: entities.PurchasePriceDetailId,
-		PurchasePriceId:       entities.PurchasePriceId,
-		ItemId:                entities.ItemId,
-		ItemCode:              getItemResponse.ItemCode,
-		ItemName:              getItemResponse.ItemName,
-		IsActive:              entities.IsActive,
-		PurchasePrice:         entities.PurchasePrice,
-	}
-
-	return payloads, nil
+	return pages, nil
 }

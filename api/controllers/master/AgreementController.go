@@ -21,6 +21,7 @@ import (
 
 type AgreementController interface {
 	GetAgreementById(writer http.ResponseWriter, request *http.Request)
+	GetAgreementByCode(writer http.ResponseWriter, request *http.Request)
 	SaveAgreement(writer http.ResponseWriter, request *http.Request)
 	UpdateAgreement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request)
@@ -203,9 +204,29 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"mtr_agreement.agreement_id": queryValues.Get("agreement_id"),
-		"mtr_agreement.brand_id":     queryValues.Get("brand_id"),
-		"mtr_agreement.customer_id":  queryValues.Get("customer_id"),
+		"mtr_agreement.agreement_id":           queryValues.Get("agreement_id"),
+		"mtr_agreement.brand_id":               queryValues.Get("brand_id"),
+		"mtr_agreement.customer_id":            queryValues.Get("customer_id"),
+		"mtr_customer.customer_name":           queryValues.Get("customer_name"),
+		"mtr_customer.customer_code":           queryValues.Get("customer_code"),
+		"mtr_agreement.profit_center_id":       queryValues.Get("profit_center_id"),
+		"mtr_profit_center.profit_center_name": queryValues.Get("profit_center_name"),
+		"mtr_agreement.company_id":             queryValues.Get("dealer_id"),
+		"mtr_agreement.top_id":                 queryValues.Get("top_id"),
+		"mtr_agreement.is_active":              queryValues.Get("is_active"),
+		"mtr_agreement.agreement_code":         queryValues.Get("agreement_code"),
+		"mtr_agreement.date_from":              queryValues.Get("date_from"),
+		"mtr_agreement.date_to":                queryValues.Get("date_to"),
+	}
+
+	if customerName := queryValues.Get("customer_name"); customerName != "" {
+		queryParams["customer_name"] = customerName
+	}
+	if customerCode := queryValues.Get("customer_code"); customerCode != "" {
+		queryParams["customer_code"] = customerCode
+	}
+	if profitCenterName := queryValues.Get("profit_center_name"); profitCenterName != "" {
+		queryParams["profit_center_name"] = profitCenterName
 	}
 
 	paginate := pagination.Pagination{
@@ -748,6 +769,27 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 	}
 
 	result, err := r.AgreementService.GetDiscountValueAgreementById(int(agreementID), int(valueID))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @GetAgreementByCode Get Agreement By Code
+// @Description Retrieve an agreement by its code
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_code path string true "Agreement Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/by-code/{agreement_code} [get]
+func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter, request *http.Request) {
+	agreementCode := chi.URLParam(request, "agreement_code")
+
+	result, err := r.AgreementService.GetAgreementByCode(agreementCode)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

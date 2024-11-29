@@ -3,32 +3,56 @@ package masterserviceimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type PackageMasterServiceImpl struct {
 	PackageMasterRepo masterrepository.PackageMasterRepository
-	db                *gorm.DB
+	DB                *gorm.DB
 }
 
 func StartPackageMasterService(PackageMasterRepo masterrepository.PackageMasterRepository, db *gorm.DB) masterservice.PackageMasterService {
 	return &PackageMasterServiceImpl{
 		PackageMasterRepo: PackageMasterRepo,
-		db:                db,
+		DB:                db,
 	}
 }
 
 func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMaster(tx, filtercondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -36,9 +60,31 @@ func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.F
 }
 
 func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx, id, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -46,9 +92,31 @@ func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pa
 }
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.GetByIdPackageMaster(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -56,9 +124,31 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 }
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -66,9 +156,31 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[strin
 }
 
 func (s *PackageMasterServiceImpl) GetByCodePackageMaster(code string) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.GetByCodePackageMaster(tx, code)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -76,9 +188,31 @@ func (s *PackageMasterServiceImpl) GetByCodePackageMaster(code string) (masteren
 }
 
 func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.PostpackageMaster(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return masterentities.PackageMaster{}, err
 	}
@@ -86,9 +220,31 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 }
 
 func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.PostPackageMasterDetail(tx, req, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return masterentities.PackageMasterDetail{}, err
 	}
@@ -96,9 +252,31 @@ func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.Pa
 }
 
 func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.ChangeStatusItemPackage(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return masterentities.PackageMaster{}, err
 	}
@@ -106,9 +284,31 @@ func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentiti
 }
 
 func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx, ids)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
@@ -116,9 +316,31 @@ func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string
 }
 
 func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx, ids)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
@@ -126,9 +348,31 @@ func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids stri
 }
 
 func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel int) (int, *exceptions.BaseErrorResponse) {
-	tx := s.db.Begin()
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.PackageMasterRepo.CopyToOtherModel(tx, id, name, idmodel)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return 0, err
 	}

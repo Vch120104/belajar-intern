@@ -21,29 +21,27 @@ func StartSkillLevelRepositoryImpl() masterrepository.SkillLevelRepository {
 }
 
 func (r *SkillLevelRepositoryImpl) GetAllSkillLevel(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	entities := masterentities.SkillLevel{}
 	responses := []masterpayloads.SkillLevelResponse{}
 
-	//define base model
-	baseModelQuery := tx.Model(&entities).Scan(&responses)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+	baseModelQuery := tx.Model(&entities)
 
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+
+	// If no records were found
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
+		pages.Rows = []masterpayloads.SkillLevelResponse{}
+		return pages, nil
 	}
-	defer rows.Close()
 
 	pages.Rows = responses
 

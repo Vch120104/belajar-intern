@@ -90,29 +90,36 @@ func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 	var vehicleResponse VehicleListResponse
 
 	baseURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master"
-
 	params := VehicleParams{
 		Page:      0,
-		Limit:     100000,
+		Limit:     10,
 		VehicleID: id,
 	}
 
 	finalURL := fmt.Sprintf("%s?page=%d&limit=%d&vehicle_id=%d", baseURL, params.Page, params.Limit, params.VehicleID)
-	//log.Printf("Final URL: %s", finalURL)
 
-	// Make the GET request
-	err := utils.GetArray(finalURL, nil, &vehicleResponse) // Ensure you pass nil if no body is needed
+	err := utils.Get(finalURL, nil, &vehicleResponse)
 	if err != nil {
+		// Default to 502 Bad Gateway
+		status := http.StatusBadGateway
+		message := "Failed to retrieve vehicle data from the external API"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "Vehicle service is temporarily unavailable"
+		}
+
 		return VehicleResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external vehicle API: " + err.Error(),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting vehicle by ID"),
 		}
 	}
 
 	if len(vehicleResponse.Data) == 0 {
 		return VehicleResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "vehicle not found",
+			Message:    "Vehicle not found",
 		}
 	}
 
