@@ -9,10 +9,11 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"fmt"
+	"net/http"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 type ItemGroupServiceImpl struct {
@@ -24,7 +25,6 @@ type ItemGroupServiceImpl struct {
 func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-	results, err := i.repository.GetAllItemGroupWithPagination(tx, internalFilter, pages)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -36,10 +36,18 @@ func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []ut
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.GetAllItemGroupWithPagination(tx, internalFilter, pages)
 	if err != nil {
 		return results, err
 	}
@@ -49,8 +57,6 @@ func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []ut
 func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	results, err := i.repository.GetAllItemGroup(tx, code)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -62,10 +68,19 @@ func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementitie
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+
+	results, err := i.repository.GetAllItemGroup(tx, code)
 	if err != nil {
 		return results, err
 	}
@@ -75,8 +90,6 @@ func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementitie
 func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	results, err := i.repository.GetItemGroupById(tx, id)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -88,10 +101,18 @@ func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.Item
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.GetItemGroupById(tx, id)
 	if err != nil {
 		return results, err
 	}
@@ -101,8 +122,6 @@ func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.Item
 func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	results, err := i.repository.DeleteItemGroupById(tx, id)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -114,10 +133,18 @@ func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.Ba
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.DeleteItemGroupById(tx, id)
 	if err != nil {
 		return results, err
 	}
@@ -127,8 +154,6 @@ func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.Ba
 func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.ItemGroupUpdatePayload, id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	results, err := i.repository.UpdateItemGroupById(tx, payload, id)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -140,10 +165,18 @@ func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.It
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.UpdateItemGroupById(tx, payload, id)
 	if err != nil {
 		return results, err
 	}
@@ -153,8 +186,6 @@ func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.It
 func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	results, err := i.repository.UpdateStatusItemGroupById(tx, id)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -166,10 +197,18 @@ func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementi
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.UpdateStatusItemGroupById(tx, id)
 	if err != nil {
 		return results, err
 	}
@@ -179,8 +218,6 @@ func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementi
 func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	results, err := i.repository.GetItemGroupByMultiId(tx, multiId)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -192,10 +229,18 @@ func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masterit
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.GetItemGroupByMultiId(tx, multiId)
 	if err != nil {
 		return results, err
 	}
@@ -205,8 +250,6 @@ func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masterit
 func (i *ItemGroupServiceImpl) NewItemGroup(payload masteritempayloads.NewItemGroupPayload) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
 	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-	
-	results, err := i.repository.NewItemGroup(tx, payload)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -218,10 +261,18 @@ func (i *ItemGroupServiceImpl) NewItemGroup(payload masteritempayloads.NewItemGr
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
+	results, err := i.repository.NewItemGroup(tx, payload)
 	if err != nil {
 		return results, err
 	}
