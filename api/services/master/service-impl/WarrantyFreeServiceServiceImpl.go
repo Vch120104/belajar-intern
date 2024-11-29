@@ -45,8 +45,15 @@ func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterConditi
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, totalPages, totalRows, err := s.warrantyFreeServiceRepo.GetAllWarrantyFreeService(tx, filterCondition, pages)
@@ -72,8 +79,15 @@ func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
@@ -99,8 +113,15 @@ func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpaylo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 
@@ -127,8 +148,15 @@ func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int)
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 
@@ -161,8 +189,15 @@ func (s *WarrantyFreeServiceServiceImpl) UpdateWarrantyFreeService(req masterent
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	result, err := s.warrantyFreeServiceRepo.UpdateWarrantyFreeService(tx, req, id)

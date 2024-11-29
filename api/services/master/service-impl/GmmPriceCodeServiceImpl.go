@@ -40,8 +40,15 @@ func (s *GmmPriceCodeServiceImpl) GetAllGmmPriceCode() ([]masterpayloads.GmmPric
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.GetAllGmmPriceCode(tx)
@@ -67,8 +74,15 @@ func (s *GmmPriceCodeServiceImpl) GetGmmPriceCodeById(id int) (masterpayloads.Gm
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.GetGmmPriceCodeById(tx, id)
@@ -94,8 +108,15 @@ func (s *GmmPriceCodeServiceImpl) GetGmmPriceCodeDropdown() ([]masterpayloads.Gm
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.GetGmmPriceCodeDropdown(tx)
@@ -121,8 +142,15 @@ func (s *GmmPriceCodeServiceImpl) SaveGmmPriceCode(req masterpayloads.GmmPriceCo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.SaveGmmPriceCode(tx, req)
@@ -148,8 +176,15 @@ func (s *GmmPriceCodeServiceImpl) UpdateGmmPriceCode(id int, req masterpayloads.
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.UpdateGmmPriceCode(tx, id, req)
@@ -175,8 +210,15 @@ func (s *GmmPriceCodeServiceImpl) ChangeStatusGmmPriceCode(id int) (masterentiti
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.ChangeStatusGmmPriceCode(tx, id)
@@ -202,8 +244,15 @@ func (s *GmmPriceCodeServiceImpl) DeleteGmmPriceCode(id int) (bool, *exceptions.
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.GmmPriceCodeRepo.DeleteGmmPriceCode(tx, id)

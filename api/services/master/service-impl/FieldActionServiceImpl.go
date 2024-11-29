@@ -48,8 +48,15 @@ func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.Filte
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
@@ -75,8 +82,15 @@ func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionR
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.SaveFieldAction(tx, req)
@@ -102,8 +116,15 @@ func (s *FieldActionServiceImpl) GetFieldActionHeaderById(Id int) (masterpayload
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.GetFieldActionHeaderById(tx, Id)
@@ -129,8 +150,15 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, page
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	pages, err = s.FieldActionRepo.GetAllFieldActionVehicleDetailById(tx, Id, pages, filterCondition)
@@ -156,8 +184,15 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (master
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.GetFieldActionVehicleDetailById(tx, Id)
@@ -183,8 +218,15 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, 
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	result, totalpage, totalrows, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, pages)
@@ -210,8 +252,15 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int, lin
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.GetFieldActionVehicleItemDetailById(tx, Id, linetypeid)
@@ -237,8 +286,15 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req ma
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.PostFieldActionVehicleItemDetail(tx, req, Id)
@@ -264,8 +320,15 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleDetail(Id int, req master
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.PostFieldActionVehicleDetail(tx, req, Id)
@@ -291,8 +354,15 @@ func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id stri
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.PostMultipleVehicleDetail(tx, headerId, id)
@@ -318,8 +388,15 @@ func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId in
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 	results, err := s.FieldActionRepo.PostVehicleItemIntoAllVehicleDetail(tx, headerId, req)
@@ -345,8 +422,15 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldAction(id int) (bool, *excepti
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 
@@ -373,8 +457,15 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicle(id int) (bool, *
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 
@@ -401,8 +492,15 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicleItem(id int) (boo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
 		}
 	}()
 
