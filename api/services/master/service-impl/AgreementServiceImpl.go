@@ -173,7 +173,7 @@ func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agr
 	return entity, nil
 }
 
-func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -197,11 +197,11 @@ func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCon
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.AgreementRepo.GetAllAgreement(tx, filterCondition, pages)
+	results, err := s.AgreementRepo.GetAllAgreement(tx, filterCondition, pages)
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
@@ -486,7 +486,7 @@ func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) 
 	return nil
 }
 
-func (s *AgreementServiceImpl) GetAllDiscountGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAllDiscountGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -510,15 +510,15 @@ func (s *AgreementServiceImpl) GetAllDiscountGroup(filterCondition []utils.Filte
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.AgreementRepo.GetAllDiscountGroup(tx, filterCondition, pages)
+	results, err := s.AgreementRepo.GetAllDiscountGroup(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
-func (s *AgreementServiceImpl) GetAllItemDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAllItemDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -542,15 +542,15 @@ func (s *AgreementServiceImpl) GetAllItemDiscount(filterCondition []utils.Filter
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.AgreementRepo.GetAllItemDiscount(tx, filterCondition, pages)
+	results, err := s.AgreementRepo.GetAllItemDiscount(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
-func (s *AgreementServiceImpl) GetAllDiscountValue(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAllDiscountValue(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -574,12 +574,12 @@ func (s *AgreementServiceImpl) GetAllDiscountValue(filterCondition []utils.Filte
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.AgreementRepo.GetAllDiscountValue(tx, filterCondition, pages)
+	results, err := s.AgreementRepo.GetAllDiscountValue(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *AgreementServiceImpl) GetDiscountGroupAgreementById(agreementID, groupID int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {

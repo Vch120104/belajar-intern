@@ -133,7 +133,7 @@ func (s *ForecastMasterServiceImpl) ChangeStatusForecastMaster(Id int) (bool, *e
 	return true, nil
 }
 
-func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -157,12 +157,12 @@ func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.ForecastMasterRepo.GetAllForecastMaster(tx, filterCondition, pages)
+	results, err := s.ForecastMasterRepo.GetAllForecastMaster(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int) (masterentities.ForecastMaster, *exceptions.BaseErrorResponse) {

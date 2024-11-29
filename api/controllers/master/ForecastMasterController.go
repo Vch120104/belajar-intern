@@ -138,6 +138,7 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 
 	queryParams := map[string]string{
 		"supplier_name": queryValues.Get("supplier_name"),
+		"company_id":    queryValues.Get("company_id"),
 		"mtr_moving_code.moving_code_description":           queryValues.Get("moving_code_description"),
 		"order_type_name":                                   queryValues.Get("order_type_name"),
 		"mtr_forecast_master.forecast_master_lead_time":     queryValues.Get("forecast_master_lead_time"),
@@ -152,16 +153,24 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 		SortOf: chi.URLParam(request, "sort_of"),
 		SortBy: chi.URLParam(request, "sort_by"),
 	}
-	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
+	result, err := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.ResponseWriter, request *http.Request) {
