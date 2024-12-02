@@ -4,6 +4,7 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
@@ -32,6 +33,16 @@ func (i *ItemInquiryServiceImpl) GetAllItemInquiry(filterCondition []utils.Filte
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return pages, err
+	}
+	return result, nil
+}
+
+func (i *ItemInquiryServiceImpl) GetByIdItemInquiry(filter transactionsparepartpayloads.ItemInquiryGetByIdFilter) (transactionsparepartpayloads.ItemInquiryGetByIdResponse, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
+	result, err := i.ItemInquiryRepo.GetByIdItemInquiry(tx, filter)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
 	}
 	return result, nil
 }

@@ -688,6 +688,7 @@ func ItemInquiryRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", ItemInquiryController.GetAllItemInquiry)
+	router.Get("/by-id", ItemInquiryController.GetByIdItemInquiry)
 
 	return router
 }
