@@ -197,7 +197,7 @@ func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, 
 	return entity, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -221,12 +221,12 @@ func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterConditio
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.BomRepository.GetBomDetailList(tx, filterCondition, pages)
+	results, err := s.BomRepository.GetBomDetailList(tx, filterCondition, pages)
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *BomServiceImpl) GetBomDetailById(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -387,7 +387,6 @@ func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResp
 func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	// Generate template file
 	f := excelize.NewFile()
 	sheetName := "Sheet1"
 	defer func() {
@@ -396,13 +395,11 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 		}
 	}()
 
-	// Create a new sheet.
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
-	// Set value of a cell.
 	f.SetCellValue(sheetName, "A1", "BOM_CODE")
 	f.SetCellValue(sheetName, "B1", "EFFECTIVE_DATE")
 	f.SetCellValue(sheetName, "C1", "QTY")
@@ -413,68 +410,56 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 	f.SetCellValue(sheetName, "H1", "COSTING_PERCENTAGE")
 	f.SetColWidth(sheetName, "A", "H", 21.5)
 
-	// Create a style with bold font and border
 	style, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{Horizontal: "left"},
 		Font: &excelize.Font{
 			Bold: true,
 		},
 		Border: []excelize.Border{
-			{
-				Type:  "left",
-				Color: "000000",
-				Style: 1,
-			},
-			{
-				Type:  "top",
-				Color: "000000",
-				Style: 1,
-			},
-			{
-				Type:  "bottom",
-				Color: "000000",
-				Style: 1,
-			},
-			{
-				Type:  "right",
-				Color: "000000",
-				Style: 1,
-			},
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
 		},
 	})
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
-	// Apply the style to the header cells
 	for col := 'A'; col <= 'H'; col++ {
 		cell := string(col) + "1"
 		f.SetCellStyle(sheetName, cell, cell, style)
 	}
 
-	// Fetch data for the template
 	internalFilterCondition := []utils.FilterCondition{}
 	paginate := pagination.Pagination{
 		Limit: 10,
 		Page:  0,
 	}
 
-	results, _, _, errResp := s.BomRepository.GetBomDetailList(tx, internalFilterCondition, paginate)
+	results, errResp := s.BomRepository.GetBomDetailList(tx, internalFilterCondition, paginate)
 	if errResp != nil {
 		return nil, errResp
 	}
 
-	if results == nil {
-		results = []map[string]interface{}{}
+	rows, ok := results.Rows.([]map[string]interface{})
+	if !ok {
+		return nil, &exceptions.BaseErrorResponse{
+			Err:        fmt.Errorf("invalid data type for rows, expected []map[string]interface{}"),
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	data, err := ConvertBomMapToStruct(results)
+	if len(rows) == 0 {
+		rows = []map[string]interface{}{}
+	}
+
+	data, err := ConvertBomMapToStruct(rows)
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
 	for i, value := range data {
-		// Check if BomDetails.Data has at least one item before accessing it
 		if len(value.BomDetails.Data) > 0 {
 			f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), value.ItemCode)
 			f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), value.BomMasterEffectiveDate)
@@ -485,7 +470,6 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 			f.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), value.BomDetails.Data[0].BomDetailRemark)
 			f.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), value.BomDetails.Data[0].BomDetailCostingPercent)
 		} else {
-			// Handle case where BomDetails.Data is empty
 			f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), value.ItemCode)
 			f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), value.BomMasterEffectiveDate)
 			f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), value.BomMasterQty)
@@ -497,7 +481,6 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 		}
 	}
 
-	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
 	return f, nil
 }

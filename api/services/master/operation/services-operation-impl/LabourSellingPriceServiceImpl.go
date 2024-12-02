@@ -135,7 +135,7 @@ func (s *LabourSellingPriceServiceImpl) Duplicate(headerId int) ([]map[string]in
 }
 
 // GetAllSellingPrice implements masteroperationservice.LabourSellingPriceService.
-func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -159,12 +159,12 @@ func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.Filter
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.labourSellingPriceRepo.GetAllSellingPrice(tx, filter, pages)
+	results, err := s.labourSellingPriceRepo.GetAllSellingPrice(tx, filter, pages)
 
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *LabourSellingPriceServiceImpl) GetLabourSellingPriceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
@@ -199,7 +199,7 @@ func (s *LabourSellingPriceServiceImpl) GetLabourSellingPriceById(Id int) (map[s
 	return results, nil
 }
 
-func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(headerId int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -223,12 +223,12 @@ func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(heade
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.labourSellingPriceRepo.GetAllSellingPriceDetailByHeaderId(tx, headerId, pages)
+	results, err := s.labourSellingPriceRepo.GetAllSellingPriceDetailByHeaderId(tx, headerId, pages)
 
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPrice(req masteroperationpayloads.LabourSellingPriceRequest) (int, *exceptions.BaseErrorResponse) {

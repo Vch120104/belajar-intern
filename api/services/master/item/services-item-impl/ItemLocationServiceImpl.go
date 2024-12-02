@@ -79,7 +79,7 @@ func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads
 	return entity, nil
 }
 
-func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -103,12 +103,12 @@ func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []uti
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocationDetail(tx, filterCondition, pages)
+	results, err := s.ItemLocationRepo.GetAllItemLocationDetail(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -174,7 +174,7 @@ func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptions.BaseErr
 	return nil
 }
 
-func (s *ItemLocationServiceImpl) GetAllItemLoc(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) GetAllItemLoc(filtercondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -198,11 +198,11 @@ func (s *ItemLocationServiceImpl) GetAllItemLoc(filtercondition []utils.FilterCo
 			}
 		}
 	}()
-	result, totalpages, totalrows, err := s.ItemLocationRepo.GetAllItemLoc(tx, filtercondition, pages)
+	result, err := s.ItemLocationRepo.GetAllItemLoc(tx, filtercondition, pages)
 	if err != nil {
-		return result, 0, 0, err
+		return result, err
 	}
-	return result, totalpages, totalrows, nil
+	return result, nil
 }
 
 func (s *ItemLocationServiceImpl) GetByIdItemLoc(id int) (masteritempayloads.ItemLocationGetByIdResponse, *exceptions.BaseErrorResponse) {

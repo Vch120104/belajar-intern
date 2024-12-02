@@ -12,7 +12,7 @@ import (
 type WorkOrderJobType struct {
 	JobTypeId   int    `json:"work_order_job_type_id"`
 	JobTypeCode string `json:"work_order_job_type_code"`
-	JobTypeName string `json:"work_order_job_type_name"`
+	JobTypeName string `json:"work_order_job_type_description"`
 }
 
 func GetJobTransactionTypeByID(id int) (WorkOrderJobType, *exceptions.BaseErrorResponse) {
