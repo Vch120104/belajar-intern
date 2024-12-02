@@ -9,7 +9,7 @@ type LabourSellingPriceResponse struct {
 	BrandId              int    `json:"brand_id"`
 	JobTypeId            int    `json:"job_type_id"`
 	EffectiveDate        string `json:"effective_date"`
-	BillToId             string `json:"bill_to_id"`
+	BillToId             int    `json:"bill_to_id"`
 	Description          string `json:"description"`
 }
 

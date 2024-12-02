@@ -234,7 +234,7 @@ func (s *WarehouseMasterServiceImpl) Update(warehouseId int, companyId int, requ
 	return update, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetById(warehouseId int, pagination pagination.Pagination) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -258,7 +258,7 @@ func (s *WarehouseMasterServiceImpl) GetById(warehouseId int, pagination paginat
 			}
 		}
 	}()
-	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId, pagination)
+	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
 
 	if err != nil {
 		return get, err
@@ -491,7 +491,7 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwareho
 	return change_status, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -516,12 +516,12 @@ func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(filterCondition []utils.Fi
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.warehouseMasterRepo.GetAuthorizeUser(tx, filterCondition, pages)
+	results, repoErr := s.warehouseMasterRepo.GetAuthorizeUser(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 
 }
 
