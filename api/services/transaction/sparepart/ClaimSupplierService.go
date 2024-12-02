@@ -13,4 +13,6 @@ type ClaimSupplierService interface {
 	InsertItemClaimDetail(payloads transactionsparepartpayloads.ClaimSupplierInsertDetailPayload) (transactionsparepartentities.ItemClaimDetail, *exceptions.BaseErrorResponse)
 	GetItemClaimById(itemClaimId int) (transactionsparepartpayloads.ClaimSupplierGetByIdResponse, *exceptions.BaseErrorResponse)
 	GetItemClaimDetailByHeaderId(Paginations pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	SubmitItemClaim(claimId int) (bool, *exceptions.BaseErrorResponse)
+	GetAllItemClaim(page pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

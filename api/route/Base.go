@@ -1662,6 +1662,8 @@ func ClaimSupplierRouter(
 	router.Post("/", ClaimSupplierController.InsertItemClaim)
 	router.Get("/by-id/{claim_system_number}", ClaimSupplierController.GetItemClaimById)
 	router.Get("/detail", ClaimSupplierController.GetItemClaimDetailByHeaderId)
+	router.Get("/", ClaimSupplierController.GetAllItemClaim)
+	router.Post("/submit/{claim_system_number}", ClaimSupplierController.SubmitItemClaim)
 	return router
 }
 func QualityControlRouter(

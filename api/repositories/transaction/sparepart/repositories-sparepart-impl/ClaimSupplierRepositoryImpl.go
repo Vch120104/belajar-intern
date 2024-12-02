@@ -312,7 +312,7 @@ func (c *ClaimSupplierRepositoryImpl) GetItemClaimDetailByHeaderId(db *gorm.DB, 
 	var response []transactionsparepartpayloads.ClaimSupplierGetAllDetailResponse
 	JoinTable := db.Model(&entities).Select("*")
 	whereQuery := utils.ApplyFilter(JoinTable, filter)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &Paginations, whereQuery)).Scan(&response).Error
+	err := whereQuery.Scopes(pagination.Paginate(&Paginations, whereQuery)).Scan(&response).Error
 	if err != nil {
 		return Paginations, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -618,6 +618,33 @@ func (c *ClaimSupplierRepositoryImpl) GetAllItemClaim(db *gorm.DB, page paginati
 				reference_document_number,
 				supplier_id,
 				claim_status_id`)
-	//WhereQuery := utils.ApplyFilter(joinTable, filter)
-	//err:=WhereQuery.Scan(pagination.Paginate())
+	WhereQuery := utils.ApplyFilter(joinTable, filter)
+	err := WhereQuery.Scopes(pagination.Paginate(&page, WhereQuery)).Scan(&response).Error
+	if err != nil {
+		return page, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get claim supplier data",
+			Err:        err,
+		}
+	}
+	if len(response) == 0 {
+		page.Rows = []string{}
+		return page, nil
+	}
+	for i, item := range response {
+		//get supplier
+		supplier, supplierErr := generalserviceapiutils.GetSupplierMasterByID(item.SupplierId)
+		if supplierErr != nil {
+			return page, supplierErr
+		}
+		//get document status
+		documentStatus, DocumentStatusErr := generalserviceapiutils.GetDocumentStatusById(item.ClaimStatusId)
+		if DocumentStatusErr != nil {
+			return page, DocumentStatusErr
+		}
+		response[i].SupplierName = supplier.SupplierName
+		response[i].ClaimStatus = documentStatus.DocumentStatusDescription
+	}
+	page.Rows = response
+	return page, nil
 }
