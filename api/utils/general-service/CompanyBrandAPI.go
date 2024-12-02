@@ -24,24 +24,14 @@ type CompanyBrandResponse struct {
 	GenerateAccPo    bool   `json:"generate_acc_po"`
 }
 
-type CompanyBrandByCompanyResponse struct {
-	StatusCode int                    `json:"status_code"`
-	Message    string                 `json:"message"`
-	Page       int                    `json:"page"`
-	PageLimit  int                    `json:"limit"`
-	TotalRows  int                    `json:"total_rows"`
-	TotalPages int                    `json:"total_pages"`
-	Data       []CompanyBrandResponse `json:"data"`
-}
-
-func GetCompanyBrandByCompanyPagination(id int, params CompanyBrandParams) (CompanyBrandByCompanyResponse, *exceptions.BaseErrorResponse) {
-	var getCompanyBrand CompanyBrandByCompanyResponse
+func GetCompanyBrandByCompanyPagination(id int, params CompanyBrandParams) ([]CompanyBrandResponse, *exceptions.BaseErrorResponse) {
+	var getCompanyBrand []CompanyBrandResponse
 	if params.Limit == 0 {
 		params.Limit = 100000
 	}
 	url := config.EnvConfigs.GeneralServiceUrl + "company-brand-list/" + strconv.Itoa(id) + "?page=" + strconv.Itoa(params.Page) + "&limit=" + strconv.Itoa(params.Limit)
 
-	err := utils.GetArray(url, nil, &getCompanyBrand)
+	err := utils.CallAPI("GET", url, nil, &getCompanyBrand)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve company brand due to an external service error"

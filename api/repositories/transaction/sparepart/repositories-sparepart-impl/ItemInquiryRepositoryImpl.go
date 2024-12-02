@@ -355,19 +355,21 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		baseModelQuery = baseModelQuery.Joins("LEFT JOIN (SELECT '' AS available_in_other_dealer) O ON O.available_in_other_dealer = ''")
 	}
 
-	itemGroupParams := generalserviceapiutils.GetAllItemGroupParams{Page: 0, Limit: 1, ItemGroupCode: "IN"}
-	itemGroupResponse, itemGroupError := generalserviceapiutils.GetAllItemGroup(itemGroupParams)
-	if itemGroupError != nil || len(itemGroupResponse.Data) == 0 {
+	var itemGroupInventoryId int
+	err = tx.Model(&masteritementities.ItemGroup{}).
+		Where(masteritementities.ItemGroup{ItemGroupCode: "IN"}).
+		Pluck("item_group_id", &itemGroupInventoryId).Error
+	if err != nil || itemGroupInventoryId == 0 {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("item group inventory is not found"),
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching item group inventory data",
+			Err:        errors.New("error fetching item group inventory data"),
 		}
 	}
-	itemGroupInventoryId := itemGroupResponse.Data[0].ItemGroupId
 
 	companyBrandParams := generalserviceapiutils.CompanyBrandParams{Page: 0, Limit: 1000000}
 	companyBrandResponse, companyBrandError := generalserviceapiutils.GetCompanyBrandByCompanyPagination(companyId, companyBrandParams)
-	if companyBrandError != nil || len(companyBrandResponse.Data) == 0 {
+	if companyBrandError != nil || len(companyBrandResponse) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "company brand does not exist",
@@ -375,7 +377,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		}
 	}
 	companyBrandIds := []int{}
-	for _, companyBrand := range companyBrandResponse.Data {
+	for _, companyBrand := range companyBrandResponse {
 		companyBrandIds = append(companyBrandIds, companyBrand.BrandId)
 	}
 
