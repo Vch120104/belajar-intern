@@ -59,10 +59,12 @@ func GetUnitBrandById(id int) (UnitBrandResponse, *exceptions.BaseErrorResponse)
 	return unitBrand, nil
 }
 
-func GetUnitBrandByMultiId(ids []int, abstractType interface{}) *exceptions.BaseErrorResponse {
+func GetUnitBrandByMultiId(ids []int) ([]UnitBrandResponse, *exceptions.BaseErrorResponse) {
+	var unitBrand []UnitBrandResponse
+
 	ids = utils.RemoveDuplicateIds(ids)
 	if len(ids) == 0 {
-		return nil
+		return unitBrand, nil
 	}
 
 	var strIds string
@@ -78,7 +80,7 @@ func GetUnitBrandByMultiId(ids []int, abstractType interface{}) *exceptions.Base
 	}
 
 	url := config.EnvConfigs.SalesServiceUrl + "unit-brand-multi-id/" + strIds
-	err := utils.CallAPI("GET", url, nil, &abstractType)
+	err := utils.CallAPI("GET", url, nil, &unitBrand)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve brand due to an external service error"
@@ -88,11 +90,11 @@ func GetUnitBrandByMultiId(ids []int, abstractType interface{}) *exceptions.Base
 			message = "brand service is temporarily unavailable"
 		}
 
-		return &exceptions.BaseErrorResponse{
+		return unitBrand, &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting brand by multi ID"),
 		}
 	}
-	return nil
+	return unitBrand, nil
 }

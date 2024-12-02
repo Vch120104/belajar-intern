@@ -12,6 +12,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -442,7 +443,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 	pages.TotalPages = totalPages
 	pages.TotalRows = int64(totalRows)
 
-	finalJoinedData := []map[string]interface{}{}
+	finalJoinedData := []transactionsparepartpayloads.ItemInquiryGetAllResponse{}
 
 	if len(paginatedData) > 0 {
 		brandIds := []int{}
@@ -450,15 +451,13 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 			brandIds = append(brandIds, data["BrandId"].(int))
 		}
 
-		var brandResponse []map[string]any
-		brandError := salesserviceapiutils.GetUnitBrandByMultiId(brandIds, &brandResponse)
+		brandResponse, brandError := salesserviceapiutils.GetUnitBrandByMultiId(brandIds)
 		if brandError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errors.New("error fetching unit brand data"),
 			}
 		}
-
 		if len(brandResponse) == 0 {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNoContent,
@@ -466,17 +465,8 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 			}
 		}
 
-		pascalBrandResponse := []map[string]interface{}{}
-		for _, brand := range brandResponse {
-			temp := map[string]interface{}{
-				"BrandId":   brand["brand_id"],
-				"BrandCode": brand["brand_code"],
-				"BrandName": brand["brand_name"],
-			}
-			pascalBrandResponse = append(pascalBrandResponse, temp)
-		}
-
-		joinedData := utils.DataFrameLeftJoin(paginatedData, pascalBrandResponse, "BrandId")
+		joinedData := utils.DataFrameLeftJoin(paginatedData, brandResponse, "BrandId")
+		fmt.Printf("%T", joinedData[0]["QuantityAvailable"])
 
 		// start usp_comToolTip @strEntity = 'ItemInquiryBrandModel'
 		itemIds := []int{}
@@ -510,8 +500,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				ttpModelids = append(ttpModelids, dataa.ModelId)
 			}
 
-			ttpBrandResponse := []map[string]interface{}{}
-			ttpBrandError := salesserviceapiutils.GetUnitBrandByMultiId(ttpBrandIds, &ttpBrandResponse)
+			ttpBrandResponse, ttpBrandError := salesserviceapiutils.GetUnitBrandByMultiId(ttpBrandIds)
 			if ttpBrandError != nil {
 				return pages, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -519,18 +508,10 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 					Err:        err,
 				}
 			}
-			ttpBrandResponseStruct := []transactionsparepartpayloads.ItemInquiryBrandResponse{}
-			for _, resp := range ttpBrandResponse {
-				temp := transactionsparepartpayloads.ItemInquiryBrandResponse{
-					BrandId:   resp["brand_id"].(int),
-					BrandCode: resp["brand_code"].(string),
-				}
-				ttpBrandResponseStruct = append(ttpBrandResponseStruct, temp)
-			}
-			if len(ttpBrandResponseStruct) == 0 {
+			if len(ttpBrandResponse) == 0 {
 				return pages, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
-					Err:        errors.New("ttp unit brand does not exist"),
+					Message:    "ttp unit model doesn not exist",
 				}
 			}
 
@@ -569,7 +550,29 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				}
 			}
 		}
-		finalJoinedData = joinedData
+
+		for i := 0; i < len(joinedData); i++ {
+			temp := transactionsparepartpayloads.ItemInquiryGetAllResponse{
+				ItemDetailId:           joinedData[i]["ItemDetailId"].(int),
+				ItemId:                 joinedData[i]["ItemId"].(int),
+				ItemCode:               joinedData[i]["ItemCode"].(string),
+				ItemName:               joinedData[i]["ItemName"].(string),
+				ItemClassCode:          joinedData[i]["ItemClassCode"].(string),
+				BrandId:                joinedData[i]["BrandId"].(int),
+				BrandCode:              joinedData[i]["BrandCode"].(string),
+				ModelCode:              joinedData[i]["ModelCode"].(string),
+				WarehouseGroupCode:     joinedData[i]["WarehouseGroupCode"].(string),
+				WarehouseCode:          joinedData[i]["WarehouseCode"].(string),
+				WarehouseLocationCode:  joinedData[i]["WarehouseLocationCode"].(string),
+				SalesPrice:             joinedData[i]["SalesPrice"],
+				QuantityAvailable:      joinedData[i]["QuantityAvailable"],
+				ItemSubstitute:         joinedData[i]["ItemSubstitute"].(string),
+				MovingCode:             joinedData[i]["MovingCode"].(string),
+				AvailableInOtherDealer: joinedData[i]["AvailableInOtherDealer"].(string),
+				Tooltip:                joinedData[i]["Tooltip"].([]map[string]interface{}),
+			}
+			finalJoinedData = append(finalJoinedData, temp)
+		}
 	}
 	pages.Rows = finalJoinedData
 

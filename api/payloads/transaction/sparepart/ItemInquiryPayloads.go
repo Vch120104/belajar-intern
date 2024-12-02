@@ -51,6 +51,26 @@ type ItemInquiryGetAllPayloads struct {
 	AvailableInOtherDealer string  `json:"available_in_other_dealer"`
 }
 
+type ItemInquiryGetAllResponse struct {
+	ItemDetailId           int                      `json:"item_detail_id"`
+	ItemId                 int                      `json:"item_id"`
+	ItemCode               string                   `json:"item_code"`
+	ItemName               string                   `json:"item_name"`
+	ItemClassCode          string                   `json:"item_class_code"`
+	BrandId                int                      `json:"brand_id"`
+	BrandCode              string                   `json:"brand_code"`
+	ModelCode              string                   `json:"model_code"`
+	WarehouseGroupCode     string                   `json:"warehouse_group_code"`
+	WarehouseCode          string                   `json:"warehouse_code"`
+	WarehouseLocationCode  string                   `json:"warehouse_location_code"`
+	SalesPrice             interface{}              `json:"sales_price"`
+	QuantityAvailable      interface{}              `json:"quantity_available"`
+	ItemSubstitute         string                   `json:"item_substitute"`
+	MovingCode             string                   `json:"moving_code"`
+	AvailableInOtherDealer string                   `json:"available_in_other_dealer"`
+	Tooltip                []map[string]interface{} `json:"tooltip"`
+}
+
 type ItemInquiryBrandResponse struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`
