@@ -179,15 +179,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		return
 	}
 
-	queryValues := request.URL.Query()
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	getbyid, baseErr := r.WarehouseMasterService.GetById(warehouseId, paginate)
+	getbyid, baseErr := r.WarehouseMasterService.GetById(warehouseId)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Warehouse ID not found", http.StatusNotFound)
@@ -410,13 +402,22 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 
 	filterCondition := utils.BuildFilterCondition(filter)
 
-	get, totalPages, totalRows, err := r.WarehouseMasterService.GetAuthorizeUser(filterCondition, pagination)
+	result, err := r.WarehouseMasterService.GetAuthorizeUser(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, get, "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {

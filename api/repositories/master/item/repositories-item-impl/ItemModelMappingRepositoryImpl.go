@@ -8,12 +8,11 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 
 	"gorm.io/gorm"
 )
@@ -22,126 +21,76 @@ type ItemModelMappingRepositoryImpl struct {
 }
 
 // GetItemModelMappingByItemId implements masteritemrepository.ItemModelMappingRepository.
-func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemModelMappingReponses
-	var brandResponses []masteritempayloads.UnitBrandResponses
-	var modelResponses []masteritempayloads.UnitModelResponses
-	var variantResponses []masteritempayloads.UnitVariantResponses
 
-	model := masteritementities.ItemDetail{}
-	baseModelQuery := tx.Model(&model).Where(masteritementities.ItemDetail{ItemId: itemId})
+	// Query data dari database
+	baseModelQuery := tx.Model(&masteritementities.ItemDetail{}).Where("item_id = ?", itemId)
+	whereQuery := utils.ApplyFilter(baseModelQuery, nil)
 
-	rows, err := baseModelQuery.Scan(&responses).Rows()
-
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
+	// Jika tidak ada data ditemukan
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	var wg sync.WaitGroup
-
-	//// Brand
-	wg.Add(1)
-	go func() *exceptions.BaseErrorResponse {
-
-		defer wg.Done()
-
-		brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand-dropdown"
-
-		if errBrand := utils.Get(brandUrl, &brandResponses, nil); errBrand != nil {
-			return &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+	var results []map[string]interface{}
+	for _, response := range responses {
+		// Fetch Brand data
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: brandErr.StatusCode,
+				Message:    "Failed to fetch brand data",
+				Err:        brandErr.Err,
 			}
 		}
-		return nil
-	}()
 
-	//// Unit Model
-	wg.Add(1)
-	go func() *exceptions.BaseErrorResponse {
-
-		defer wg.Done()
-
-		unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model-dropdown"
-
-		if errModel := utils.Get(unitModelUrl, &modelResponses, nil); errModel != nil {
-			return &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+		// Fetch Model data
+		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		if modelErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: modelErr.StatusCode,
+				Message:    "Failed to fetch model data",
+				Err:        modelErr.Err,
 			}
 		}
-		return nil
-	}()
 
-	//// Unit Variant
-	wg.Add(1)
-	go func() *exceptions.BaseErrorResponse {
-
-		defer wg.Done()
-
-		ids := ""
-
-		for _, value := range responses {
-			ids += fmt.Sprintf("%d,", value.VariantId)
-		}
-
-		unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + ids
-
-		if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
-			return &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+		// Fetch Variant data
+		variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
+		if variantErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: variantErr.StatusCode,
+				Message:    "Failed to fetch variant data",
+				Err:        variantErr.Err,
 			}
 		}
-		return nil
-	}()
 
-	//AWAIT Goroutines
-	wg.Wait()
-
-	joinedDataBrand, errdf := utils.DataFrameInnerJoin(responses, brandResponses, "BrandId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+		result := map[string]interface{}{
+			"item_id":      response.ItemId,
+			"brand_id":     response.BrandId,
+			"brand_name":   brandResponse.BrandName,
+			"model_id":     response.ModelId,
+			"model_name":   modelResponse.ModelName,
+			"variant_id":   response.VariantId,
+			"variant_name": variantResponse.VariantName,
+			"is_active":    response.IsActive,
 		}
+
+		results = append(results, result)
 	}
 
-	joinedDataModel, errdf := utils.DataFrameInnerJoin(joinedDataBrand, modelResponses, "ModelId")
+	pages.Rows = results
 
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	joinedDataVariant, errdf := utils.DataFrameInnerJoin(joinedDataModel, variantResponses, "VariantId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataVariant, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
-
+	return pages, nil
 }
 
 // UpdateItemModelMapping implements masteritemrepository.ItemModelMappingRepository.

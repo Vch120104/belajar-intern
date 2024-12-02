@@ -12,7 +12,6 @@ type PurchasePrice struct {
 	SupplierId                 int                   `gorm:"column:supplier_id;size:30;not null" json:"supplier_id"`
 	CurrencyId                 int                   `gorm:"column:currency_id;size:30;not null" json:"currency_id"`
 	PurchasePriceEffectiveDate time.Time             `gorm:"column:purchase_price_effective_date;size:30;not null;type:datetime" json:"purchase_price_effective_date"`
-	IdentitySystemNumber       string                `gorm:"column:identity_system_number;size:30" json:"identity_system_number"`
 	PurchasePriceDetail        []PurchasePriceDetail `gorm:"foreignKey:PurchasePriceId" json:"detail_purchase_price"`
 }
 

@@ -55,13 +55,22 @@ func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWr
 
 	filter := utils.BuildFilterCondition(filterParams)
 
-	results, totalPages, totalRows, err := r.ItemPriceCodeService.GetAllItemPriceCode(filter, pagination)
+	result, err := r.ItemPriceCodeService.GetAllItemPriceCode(filter, pagination)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, results, "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseWriter, request *http.Request) {

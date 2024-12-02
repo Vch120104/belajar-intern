@@ -49,18 +49,29 @@ func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http
 	}
 
 	paginate := pagination.Pagination{
-		Limit: utils.NewGetQueryInt(queryValues, "limit"),
-		Page:  utils.NewGetQueryInt(queryValues, "page"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
 	}
 
-	paginatedData, totalPages, totalRows, err := r.ItemModelMappingService.GetItemModelMappingByItemId(itemId, paginate)
+	result, err := r.ItemModelMappingService.GetItemModelMappingByItemId(itemId, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // UpdateItemModelMapping implements ItemModelMappingController.

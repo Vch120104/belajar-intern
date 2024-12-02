@@ -383,7 +383,7 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorR
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -408,12 +408,12 @@ func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterConditi
 			}
 		}
 	}()
-	results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItemDetail(tx, filterCondition, pages)
+	results, repoErr := s.itemRepo.GetAllItemDetail(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 
 }
 
