@@ -52,8 +52,6 @@ func (s *SkillLevelServiceImpl) GetSkillLevelById(id int) (masterpayloads.SkillL
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -86,8 +84,6 @@ func (s *SkillLevelServiceImpl) GetSkillLevelByCode(code string) (masterpayloads
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -120,8 +116,6 @@ func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterC
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -154,8 +148,6 @@ func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (masterpayloads.S
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -195,8 +187,6 @@ func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -230,8 +220,6 @@ func (s *SkillLevelServiceImpl) UpdateSkillLevel(req masterpayloads.SkillLevelRe
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

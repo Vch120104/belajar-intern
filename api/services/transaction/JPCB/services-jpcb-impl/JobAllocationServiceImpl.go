@@ -51,8 +51,6 @@ func (s *JobAllocationServiceImpl) GetAllJobAllocation(filterCondition []utils.F
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *JobAllocationServiceImpl) GetJobAllocationById(technicianAllocationSyst
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -117,8 +113,6 @@ func (s *JobAllocationServiceImpl) UpdateJobAllocation(technicianAllocationSyste
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -154,8 +148,6 @@ func (s *JobAllocationServiceImpl) DeleteJobAllocation(technicianAllocationSyste
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

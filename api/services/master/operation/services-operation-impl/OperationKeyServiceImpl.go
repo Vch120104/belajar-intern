@@ -50,8 +50,6 @@ func (s *OperationKeyServiceImpl) GetAllOperationKeyList(filterCondition []utils
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -83,8 +81,6 @@ func (s *OperationKeyServiceImpl) GetOperationKeyById(id int) (masteroperationpa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -116,8 +112,6 @@ func (s *OperationKeyServiceImpl) GetOperationKeyName(req masteroperationpayload
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -151,8 +145,6 @@ func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.O
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -193,8 +185,6 @@ func (s *OperationKeyServiceImpl) ChangeStatusOperationKey(Id int) (bool, *excep
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -226,8 +216,6 @@ func (s *OperationKeyServiceImpl) GetOperationKeyDropdown(operationGroupId int, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

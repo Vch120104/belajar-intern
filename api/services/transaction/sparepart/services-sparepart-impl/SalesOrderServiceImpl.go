@@ -49,8 +49,6 @@ func (s *SalesOrderServiceImpl) GetSalesOrderByID(tx *gorm.DB, id int) (transact
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

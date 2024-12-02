@@ -48,8 +48,6 @@ func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.Campai
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -81,8 +79,6 @@ func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -115,8 +111,6 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromHistory(id int, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -149,8 +143,6 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromPackage(req mast
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -183,8 +175,6 @@ func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int) (bool, *e
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -217,8 +207,6 @@ func (s *CampaignMasterServiceImpl) ActivateCampaignMasterDetail(ids string) (bo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -251,8 +239,6 @@ func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string) (
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -285,8 +271,6 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (map[string]in
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -319,8 +303,6 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[str
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -353,8 +335,6 @@ func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (map[st
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -387,8 +367,6 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagina
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -421,8 +399,6 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -434,7 +410,7 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -455,17 +431,15 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
-	result, page, limit, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
+	result, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
 
 	if err != nil {
-		return result, 0, 0, err
+		return result, err
 	}
-	return result, page, limit, nil
+	return result, nil
 }
 
 func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
@@ -489,8 +463,6 @@ func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req maste
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -523,8 +495,6 @@ func (s *CampaignMasterServiceImpl) GetAllPackageMasterToCopy(pages pagination.P
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -557,8 +527,6 @@ func (s *CampaignMasterServiceImpl) SelectFromPackageMaster(id int, idhead int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

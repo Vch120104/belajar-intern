@@ -27,7 +27,7 @@ func StartPackageMasterService(PackageMasterRepo masterrepository.PackageMasterR
 	}
 }
 
-func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -48,20 +48,18 @@ func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.F
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
-	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMaster(tx, filtercondition, pages)
+	result, err := s.PackageMasterRepo.GetAllPackageMaster(tx, filtercondition, pages)
 
 	if err != nil {
-		return nil, 0, 0, err
+		return result, err
 	}
-	return result, totalPages, totalRows, nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -82,17 +80,15 @@ func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
-	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx, id, pages)
+	result, err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx, id, pages)
 
 	if err != nil {
-		return nil, 0, 0, err
+		return result, err
 	}
-	return result, totalPages, totalRows, nil
+	return result, nil
 }
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
@@ -116,8 +112,6 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -150,8 +144,6 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[strin
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -184,8 +176,6 @@ func (s *PackageMasterServiceImpl) GetByCodePackageMaster(code string) (masteren
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -218,8 +208,6 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -252,8 +240,6 @@ func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.Pa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -286,8 +272,6 @@ func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentiti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -320,8 +304,6 @@ func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -354,8 +336,6 @@ func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids stri
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -388,8 +368,6 @@ func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

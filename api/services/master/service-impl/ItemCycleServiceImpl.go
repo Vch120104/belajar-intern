@@ -47,8 +47,6 @@ func (s *ItemCycleServiceImpl) ItemCycleInsert(payloads masterpayloads.ItemCycle
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

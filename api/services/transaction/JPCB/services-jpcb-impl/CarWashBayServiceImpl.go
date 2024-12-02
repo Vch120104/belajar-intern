@@ -51,8 +51,6 @@ func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *BayMasterServiceImpl) GetAllActiveCarWashBay(filterCondition []utils.Fi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -119,8 +115,6 @@ func (s *BayMasterServiceImpl) GetAllDeactiveCarWashBay(filterCondition []utils.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -153,8 +147,6 @@ func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpay
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -187,8 +179,6 @@ func (s *BayMasterServiceImpl) GetAllCarWashBayDropDown(filterCondition []utils.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -222,8 +212,6 @@ func (s *BayMasterServiceImpl) PostCarWashBay(request transactionjpcbpayloads.Ca
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -256,8 +244,6 @@ func (s *BayMasterServiceImpl) PutCarWashBay(request transactionjpcbpayloads.Car
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -290,8 +276,6 @@ func (s *BayMasterServiceImpl) GetCarWashBayById(carWashBayId int) (transactionj
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

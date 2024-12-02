@@ -50,8 +50,6 @@ func (s *OperationGroupServiceImpl) GetOperationGroupDropDown() ([]masteroperati
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) (masteroperati
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -117,8 +113,6 @@ func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) (master
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -157,8 +151,6 @@ func (s *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -191,8 +183,6 @@ func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) (bool,
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -232,8 +222,6 @@ func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

@@ -54,8 +54,6 @@ func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.Filte
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -88,8 +86,6 @@ func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionR
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -122,8 +118,6 @@ func (s *FieldActionServiceImpl) GetFieldActionHeaderById(Id int) (masterpayload
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -156,8 +150,6 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, page
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -190,8 +182,6 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (master
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -224,8 +214,6 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -258,8 +246,6 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int, lin
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -292,8 +278,6 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req ma
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -326,8 +310,6 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleDetail(Id int, req master
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -360,8 +342,6 @@ func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id stri
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -394,8 +374,6 @@ func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId in
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -428,8 +406,6 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldAction(id int) (bool, *excepti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -463,8 +439,6 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicle(id int) (bool, *
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -498,8 +472,6 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicleItem(id int) (boo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

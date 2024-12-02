@@ -48,8 +48,6 @@ func (s *GoodsReceiveServiceImpl) GetAllGoodsReceive(filter []utils.FilterCondit
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -81,8 +79,6 @@ func (s *GoodsReceiveServiceImpl) GetGoodsReceiveById(GoodsReceiveId int) (trans
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -114,8 +110,6 @@ func (s *GoodsReceiveServiceImpl) InsertGoodsReceive(payloads transactionsparepa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -147,8 +141,6 @@ func (s *GoodsReceiveServiceImpl) UpdateGoodsReceive(payloads transactionsparepa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -180,8 +172,6 @@ func (s *GoodsReceiveServiceImpl) InsertGoodsReceiveDetail(payloads transactions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -213,8 +203,6 @@ func (s *GoodsReceiveServiceImpl) UpdateGoodsReceiveDetail(payloads transactions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -246,8 +234,6 @@ func (s *GoodsReceiveServiceImpl) LocationItemGoodsReceive(filter []utils.Filter
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -279,8 +265,6 @@ func (s *GoodsReceiveServiceImpl) SubmitGoodsReceive(GoodsReceiveId int) (bool, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -312,8 +296,6 @@ func (s *GoodsReceiveServiceImpl) DeleteGoodsReceive(goodsReceivesId int) (bool,
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -345,8 +327,6 @@ func (s *GoodsReceiveServiceImpl) DeleteGoodsReceiveDetail(goodsReceivesDetailId
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

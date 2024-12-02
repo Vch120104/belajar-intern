@@ -52,8 +52,6 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingById(id int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingLookup(filter
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -118,8 +114,6 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingByBrandModelO
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -151,8 +145,6 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMapping(req mastero
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -184,8 +176,6 @@ func (s *OperationModelMappingServiceImpl) ChangeStatusOperationModelMapping(Id 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -217,8 +207,6 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -250,8 +238,6 @@ func (s *OperationModelMappingServiceImpl) DeleteOperationLevel(ids []int) (bool
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -283,8 +269,6 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -316,8 +300,6 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationFrt(id string) (bool
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -349,8 +331,6 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -382,8 +362,6 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -415,8 +393,6 @@ func (s *OperationModelMappingServiceImpl) GetOperationDocumentRequirementById(i
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -448,8 +424,6 @@ func (s *OperationModelMappingServiceImpl) GetOperationFrtById(id int) (masterop
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -481,8 +455,6 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingDocumentRequ
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -514,8 +486,6 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationDocumentRequiremen
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -547,8 +517,6 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationDocumentRequirement(
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -580,8 +548,6 @@ func (s *OperationModelMappingServiceImpl) SaveOperationLevel(request masteroper
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -613,8 +579,6 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationLevel(id int, pages pa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -646,8 +610,6 @@ func (s *OperationModelMappingServiceImpl) GetOperationLevelById(id int) (master
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -679,8 +641,6 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationLevel(id string) (
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -712,8 +672,6 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationLevel(id string) (bo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -745,8 +703,6 @@ func (s *OperationModelMappingServiceImpl) UpdateOperationModelMapping(operation
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -780,8 +736,6 @@ func (s *OperationModelMappingServiceImpl) UpdateOperationFrt(operationFrtId int
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -815,8 +769,6 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingAndFRT(reque
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -863,8 +815,6 @@ func (s *OperationModelMappingServiceImpl) CopyOperationModelMappingToOtherModel
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
