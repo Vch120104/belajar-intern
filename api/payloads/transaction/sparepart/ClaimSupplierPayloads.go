@@ -56,3 +56,39 @@ type ClaimSupplierGetByIdResponse struct {
 	WarehouseCode                 string    `json:"warehouse_code"`
 	WarehouseName                 string    `json:"warehouse_name"`
 }
+
+type ClaimSupplierGetAllDetailResponse struct {
+	LocationItemId        int     `json:"location_item_id"`
+	ItemId                int     `json:"item_id"`
+	ItemUnitOfMeasurement string  `json:"item_unit_of_measurement"`
+	ItemPrice             float64 `json:"item_price"`
+	QuantityShort         float64 `json:"quantity_short"`
+	QuantityDamaged       float64 `json:"quantity_damaged"`
+	QuantityOver          float64 `json:"quantity_over"`
+	QuantityWrong         float64 `json:"quantity_wrong"`
+	QuantityClaimed       float64 `json:"quantity_claimed"`
+	QuantityGoodsReceive  float64 `json:"quantity_goods_receive"`
+	Remark                string  `json:"remark"`
+	CaseNumber            string  `json:"case_number"`
+	ItemName              string  `json:"item_name"`
+}
+
+type ClaimSupplierDetailSubmitCursor struct {
+	LocationItemId                 int     `gorm:"column:location_item_id;null"        json:"location_item_id"`
+	ItemId                         int     `gorm:"column:item_id;null;size:30"        json:"item_id"`
+	ItemUnitOfMeasurement          string  `gorm:"column:item_unit_of_measurement;null;size:3"        json:"item_unit_of_measurement"`
+	ItemPrice                      float64 `gorm:"column:item_price;null"        json:"item_price"`
+	GoodsReceiveSystemNumber       int     `gorm:"column:goods_receive_system_number;null"        json:"goods_receive_system_number"`
+	GoodsReceiveDetailSystemNumber int     `gorm:"column:goods_receive_detail_system_number;null"        json:"goods_receive_detail_system_number"`
+	QuantityVariance               float64 `json:"quantity_variance"`
+}
+type ClaimSupplierGetAllResponds struct {
+	ClaimSystemNumber          int    `gorm:"column:claim_system_number;not null;primaryKey;size:30" json:"claim_system_number"`
+	GoodsReceiveDocumentNumber string `gorm:"column:goods_receive_document_number;null;size:25" json:"goods_receive_document_number"`
+	ClaimDocumentNumber        string `gorm:"column:claim_document_number;null;size:25" json:"claim_document_number"`
+	SupplierId                 int    `gorm:"column:supplier_id;null;size:30" json:"supplier_id"`
+	ReferenceDocumentNumber    string `gorm:"column:reference_document_number;null;size:25" json:"reference_document_number"`
+	ClaimStatusId              int    `gorm:"column:claim_status_id;null;size:30" json:"claim_status_id"`
+	ClaimStatus                string `gorm:"column:claim_status;null" json:"claim_status"`
+	SupplierName               string `json:"supplier_name"`
+}

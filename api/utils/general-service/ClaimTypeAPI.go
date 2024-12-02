@@ -4,6 +4,7 @@ import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -18,6 +19,7 @@ type ItemClaimTypeMasterResponse struct {
 func GetItemClaimTypeMasterById(id int) (ItemClaimTypeMasterResponse, *exceptions.BaseErrorResponse) {
 	var response ItemClaimTypeMasterResponse
 	urlGetClaimTypeMaster := config.EnvConfigs.GeneralServiceUrl + "item-claim-type/" + strconv.Itoa(id)
+	fmt.Println(urlGetClaimTypeMaster)
 	err := utils.CallAPI("GET", urlGetClaimTypeMaster, nil, &response)
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{

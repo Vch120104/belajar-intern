@@ -2,7 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-	masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -158,7 +157,7 @@ func Migrate() {
 		//&masterentities.MovingItemCode{},
 		//&masterentities.BinningTypeMaster{},
 		//&masterentities.BinningReferenceTypeMaster{},
-		&masterentities.ItemClaimType{},
+		//&masterentities.ItemClaimType{},
 		//&masterentities.GoodsReceiveReferenceType{},
 		//&masterentities.GoodsReceiveDocumentStatus{},
 		//&masterwarehouseentities.WarehouseCostingType{},
@@ -226,7 +225,7 @@ func Migrate() {
 		//&transactionsparepartentities.BinningStockDetail{},
 		//&transactionsparepartentities.PurchaseOrderLimit{},
 		//&transactionsparepartentities.ItemClaim{},
-		//transactionsparepartentities.ItemClaimDetail{},
+		//&transactionsparepartentities.ItemClaimDetail{},
 		//&transactionsparepartentities.StockTransaction{},
 		//&transactionsparepartentities.GoodsReceiveDetail{},
 		// &transactionsparepartentities.GoodsReceive{},

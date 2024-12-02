@@ -4,9 +4,11 @@ import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
+	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
+	"after-sales/api/utils"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -47,6 +49,15 @@ func (service *ClaimSupplierServiceImpl) InsertItemClaimDetail(payloads transact
 func (service *ClaimSupplierServiceImpl) GetItemClaimById(itemClaimId int) (transactionsparepartpayloads.ClaimSupplierGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := service.DB.Begin()
 	result, err := service.claimRepository.GetItemClaimById(tx, itemClaimId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *ClaimSupplierServiceImpl) GetItemClaimDetailByHeaderId(Paginations pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.claimRepository.GetItemClaimDetailByHeaderId(tx, Paginations, filter)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
