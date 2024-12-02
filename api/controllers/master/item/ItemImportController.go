@@ -232,14 +232,23 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
 	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	paginatedData, totalPages, totalRows, err := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
+	paginatedData, err := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		utils.ModifyKeysInResponse(paginatedData.Rows),
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // SaveItemImport implements ItemImportController.

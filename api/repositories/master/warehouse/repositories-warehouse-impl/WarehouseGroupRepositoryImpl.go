@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	utils "after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
 
@@ -87,7 +88,7 @@ func (r *WarehouseGroupImpl) GetWarehouseGroupDropdown(tx *gorm.DB) ([]masterwar
 func (r *WarehouseGroupImpl) SaveWarehouseGroup(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 
 	var warehouseGroup = masterwarehouseentities.WarehouseGroup{
-		IsActive:           utils.BoolPtr(request.IsActive),
+		IsActive:           request.IsActive,
 		WarehouseGroupId:   request.WarehouseGroupId,
 		WarehouseGroupCode: request.WarehouseGroupCode,
 		WarehouseGroupName: request.WarehouseGroupName,
@@ -114,10 +115,9 @@ func (r *WarehouseGroupImpl) GetByIdWarehouseGroup(tx *gorm.DB, warehouseGroupId
 	entity := masterwarehouseentities.WarehouseGroup{}
 	response := masterwarehousepayloads.GetWarehouseGroupResponse{}
 
-	rows, err := tx.Model(&entity).
+	err := tx.Model(&entity).
 		Where("warehouse_group_id = ?", warehouseGroupId).
-		First(&response).
-		Rows()
+		First(&entity).Error
 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -126,7 +126,22 @@ func (r *WarehouseGroupImpl) GetByIdWarehouseGroup(tx *gorm.DB, warehouseGroupId
 		}
 	}
 
-	defer rows.Close()
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entity.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	response = masterwarehousepayloads.GetWarehouseGroupResponse{
+		IsActive:           entity.IsActive,
+		WarehouseGroupId:   entity.WarehouseGroupId,
+		WarehouseGroupCode: entity.WarehouseGroupCode,
+		WarehouseGroupName: entity.WarehouseGroupName,
+		ProfitCenterId:     entity.ProfitCenterId,
+		ProfitCenter:       masterwarehousepayloads.ProfitCenterResponse(profitCenterResponse), // Attach the full ProfitCenter data
+	}
 
 	return response, nil
 }
@@ -134,30 +149,45 @@ func (r *WarehouseGroupImpl) GetByIdWarehouseGroup(tx *gorm.DB, warehouseGroupId
 func (r *WarehouseGroupImpl) GetAllWarehouseGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masterwarehouseentities.WarehouseGroup{}
 
-	//ON PROGRESS JOIN WAREHOUSMASTER AND WAREHOUSELOCATION
 	baseModelQuery := tx.Model(&entities)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+	err := whereQuery.
+		Preload("WarehouseMaster").
+		Preload("WarehouseMaster.WarehouseCostingType").
+		//Preload("WarehouseMaster.WarehouseAuthorized").
+		Scopes(pagination.Paginate(&pages, whereQuery)).
+		Find(&entities).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(entities) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
+	var response []masterwarehousepayloads.WarehouseGroupWithProfitCenterResponse
+	for _, entity := range entities {
+		profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entity.ProfitCenterId)
+		if profitCenterErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        profitCenterErr.Err,
+			}
 		}
+
+		response = append(response, masterwarehousepayloads.WarehouseGroupWithProfitCenterResponse{
+			IsActive:           entity.IsActive,
+			WarehouseGroupId:   entity.WarehouseGroupId,
+			WarehouseGroupCode: entity.WarehouseGroupCode,
+			WarehouseGroupName: entity.WarehouseGroupName,
+			ProfitCenterId:     entity.ProfitCenterId,
+			ProfitCenter:       masterwarehousepayloads.ProfitCenterResponse(profitCenterResponse), // Attach the full ProfitCenter data
+		})
 	}
 
-	defer rows.Close()
-
-	pages.Rows = entities
+	pages.Rows = response
 
 	return pages, nil
 }

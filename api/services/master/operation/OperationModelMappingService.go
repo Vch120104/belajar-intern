@@ -10,7 +10,7 @@ import (
 
 type OperationModelMappingService interface {
 	GetOperationModelMappingById(int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse)
-	GetOperationModelMappingLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetOperationModelMappingLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetOperationModelMappingByBrandModelOperationCode(request masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse)
 	SaveOperationModelMapping(masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationModelMapping(int) (bool, *exceptions.BaseErrorResponse)

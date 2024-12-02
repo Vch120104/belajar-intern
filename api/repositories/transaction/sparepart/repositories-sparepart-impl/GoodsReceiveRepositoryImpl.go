@@ -38,7 +38,7 @@ func NewGoodsReceiveRepositoryImpl() transactionsparepartrepository.GoodsReceive
 func (repository *GoodsReceiveRepositoryImpl) GetAllGoodsReceive(db *gorm.DB, filter []utils.FilterCondition, paginations pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionsparepartpayloads.GoodsReceivesGetAllPayloads
 	Entities := transactionsparepartentities.GoodsReceive{}
-	JoinTable := db.Table("trx_goods_receive IG").
+	JoinTable := db.Model(&Entities).
 		Joins(`LEFT OUTER JOIN trx_goods_receive_detail IG1 ON IG.goods_receive_system_number = ig1.goods_receive_system_number`).
 		Joins("LEFT OUTER JOIN mtr_item_group itemgroup ON IG.item_group_id = itemgroup.item_group_id").
 		Joins(`INNER JOIN mtr_reference_type_goods_receive reftype ON reftype.reference_type_good_receive_id = ig.reference_type_good_receive_id`).
@@ -77,7 +77,7 @@ func (repository *GoodsReceiveRepositoryImpl) GetAllGoodsReceive(db *gorm.DB, fi
 	//	}
 	//responses[i].SupplierName = SupplierData.SupplierName
 	//}
-	err := WhereQuery.Scopes(pagination.Paginate(&Entities, &paginations, WhereQuery)).Scan(&responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginations, WhereQuery)).Scan(&responses).Error
 	if err != nil {
 		return paginations, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -748,7 +748,7 @@ func (repository *GoodsReceiveRepositoryImpl) UpdateGoodsReceiveDetail(db *gorm.
 func (repository *GoodsReceiveRepositoryImpl) LocationItemGoodsReceive(db *gorm.DB, filter []utils.FilterCondition, PaginationParams pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	ItemLocationEntities := masteritementities.ItemLocation{}
 	var Responses []transactionsparepartpayloads.GetAllLocationGRPOResponse
-	joinTable := db.Table("mtr_location_item A").
+	joinTable := db.Model(&ItemLocationEntities).
 		Joins(`LEFT JOIN mtr_warehouse_location B ON A.warehouse_id = B.warehouse_id AND B.warehouse_location_id = A.warehouse_location_id`).
 		Joins(`LEFT JOIN mtr_warehouse_master whs on A.warehouse_id = whs.warehouse_id`).
 		Joins(`INNER JOIN mtr_item item on A.item_id = item.item_id`).
@@ -762,7 +762,7 @@ func (repository *GoodsReceiveRepositoryImpl) LocationItemGoodsReceive(db *gorm.
 				whs.warehouse_code
 				`)
 	whereQuery := utils.ApplyFilter(joinTable, filter)
-	err := whereQuery.Scopes(pagination.Paginate(&ItemLocationEntities, &PaginationParams, whereQuery)).Order("warehouse_code").Scan(&Responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&PaginationParams, whereQuery)).Order("warehouse_code").Scan(&Responses).Error
 	if err != nil {
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

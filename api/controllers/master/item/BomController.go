@@ -85,18 +85,22 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.BomService.GetBomMasterList(criteria, paginate)
+	paginatedData, err := r.BomService.GetBomMasterList(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	// Construct the response
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, err)
-	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		paginatedData.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // @Summary Get Bom Master By ID
@@ -260,7 +264,6 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	// Define query parameters
 	queryParams := map[string]string{
 		"mtr_bom_detail.bom_detail_id":              queryValues.Get("bom_detail_id"), // Ambil nilai bom_detail_id tanpa mtr_bom_detail.
 		"mtr_bom_detail.bom_master_id":              queryValues.Get("bom_master_id"),
@@ -269,7 +272,6 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 		"mtr_bom_detail.bom_detail_costing_percent": queryValues.Get("bom_detail_costing_percent"),
 	}
 
-	// Extract pagination parameters
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -277,23 +279,24 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Build filter condition based on query parameters
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.BomService.GetBomDetailList(criteria, paginate)
+	result, err := r.BomService.GetBomDetailList(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	// Construct the response
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Bom Detail By ID

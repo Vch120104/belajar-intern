@@ -29,7 +29,7 @@ func (r *JobAllocationRepositoryImpl) GetAllJobAllocation(tx *gorm.DB, filterCon
 
 	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=OJ"
 	itemGroupPayloads := []transactionjpcbpayloads.ItemGroupPayload{}
-	if err := utils.GetArray(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
+	if err := utils.Get(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("fail to retrieve item group data"),
@@ -68,7 +68,7 @@ func (r *JobAllocationRepositoryImpl) GetAllJobAllocation(tx *gorm.DB, filterCon
 		Where("trx_work_order_allocation.operation_code IS NOT NULL AND trx_work_order_allocation.operation_code != ''").
 		Where("moc.operation_name IS NOT NULL OR mi.item_name IS NOT NULL")
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -148,7 +148,7 @@ func (r *JobAllocationRepositoryImpl) GetJobAllocationById(tx *gorm.DB, technici
 
 	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=OJ"
 	itemGroupPayloads := []transactionjpcbpayloads.ItemGroupPayload{}
-	if err := utils.GetArray(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
+	if err := utils.Get(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
 		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("fail to retrieve item group data"),

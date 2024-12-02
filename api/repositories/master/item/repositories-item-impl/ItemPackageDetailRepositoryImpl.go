@@ -6,7 +6,6 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
-	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -113,7 +112,7 @@ func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx
 		InnerJoins("ItemPackageDetail.Item", tx.Select("1")).
 		InnerJoins("ItemPackageDetail.Item.ItemClass", tx.Select("1"))
 
-	rows, err := query.Scopes(pagination.Paginate(&model, &pages, query)).Scan(&responses).Rows()
+	rows, err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&responses).Rows()
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -123,10 +122,8 @@ func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx
 	}
 
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []masteritempayloads.ItemPackageDetailResponse{}
+		return pages, nil
 	}
 
 	defer rows.Close()

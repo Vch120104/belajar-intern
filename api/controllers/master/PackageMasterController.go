@@ -61,12 +61,21 @@ func (r *PackageMasterControllerImpl) GetAllPackageMaster(writer http.ResponseWr
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, totalPages, totalRows, err := r.PackageMasterService.GetAllPackageMaster(filterCondition, pagination)
+	result, err := r.PackageMasterService.GetAllPackageMaster(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *PackageMasterControllerImpl) GetAllPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
@@ -83,12 +92,21 @@ func (r *PackageMasterControllerImpl) GetAllPackageMasterDetail(writer http.Resp
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, totalPages, totalRows, err := r.PackageMasterService.GetAllPackageMasterDetail(pagination, PackageMasterId)
+	result, err := r.PackageMasterService.GetAllPackageMasterDetail(pagination, PackageMasterId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *PackageMasterControllerImpl) GetByIdPackageMaster(writer http.ResponseWriter, request *http.Request) {

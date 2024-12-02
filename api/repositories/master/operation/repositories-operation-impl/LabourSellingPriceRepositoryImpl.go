@@ -7,11 +7,13 @@ import (
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
+	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
+
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -251,156 +253,81 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllDetailbyHeaderId(tx *gorm.DB, h
 }
 
 // GetAllSellingPrice implements masteroperationrepository.LabourSellingPriceRepository.
-func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	entities := masteroperationentities.LabourSellingPrice{}
+func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteroperationpayloads.LabourSellingPriceResponse
-	var getBrandResponse []masteroperationpayloads.BrandLabourSellingPriceResponse
-	var getjobTypeResponse []masteroperationpayloads.JobTypeLabourSellingPriceResponse
-	var getBillToResponse []masteroperationpayloads.BillToLabourSellingPriceResponse
-	var ServiceFilter []utils.FilterCondition
-	responseStruct := reflect.TypeOf(masteroperationpayloads.LabourSellingPriceResponse{})
-	var BrandId string
-	var JobTypeId string
-	var BillToId string
-	emptyData := []map[string]interface{}{}
 
-	for i := 0; i < len(filter); i++ {
-		// flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filter[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				ServiceFilter = append(ServiceFilter, filter[i])
-				// flag = true
-				break
+	// Base query for LabourSellingPrice
+	baseModelQuery := tx.Model(&masteroperationentities.LabourSellingPrice{})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	// Apply pagination and find the responses
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// If no records found, return empty response
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	// Initialize results
+	var results []map[string]interface{}
+	for _, response := range responses {
+		// Fetch Brand data
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        brandErr.Err,
 			}
 		}
-		// if !flag {
-		// 	externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		// }
-	}
 
-	for i := 0; i < len(ServiceFilter); i++ {
-		if strings.Contains(ServiceFilter[i].ColumnField, "brand_id") {
-			BrandId = ServiceFilter[i].ColumnValue
-		} else if strings.Contains(ServiceFilter[i].ColumnField, "job_type_id") {
-			JobTypeId = ServiceFilter[i].ColumnValue
-		} else if strings.Contains(ServiceFilter[i].ColumnField, "bill_to_id"){
-			BillToId = ServiceFilter[i].ColumnValue
+		// Fetch Job Type data
+		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeByID(response.JobTypeId)
+		if jobTypeErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        jobTypeErr.Err,
+			}
 		}
-	}
 
-	query := tx.Model(entities)
-
-	filterQuery := utils.ApplyFilterExact(query, filter)
-
-	// if err := filterQuery.Scopes(pagination.Paginate(entities, &pages, filterQuery)).Scan(&responses).Error; err != nil {
-	// 	return pages, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
-
-	rows, err := filterQuery.Scan(&responses).Rows()
-
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		// Fetch BillTo (Supplier) data
+		billToResponse, billToErr := generalserviceapiutils.GetSupplierMasterByID(response.BillToId)
+		if billToErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        billToErr.Err,
+			}
 		}
-	}
 
-	if len(responses) == 0 {
-		return emptyData, 0, 0, nil
-	}
-
-	defer rows.Close()
-
-	// join with mtr_brand
-
-	var unitBrandUrl string
-
-	if BrandId == "" {
-		unitBrandUrl = config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000000"
-	} else {
-		unitBrandUrl = config.EnvConfigs.SalesServiceUrl + "unit-brand/" + BrandId
-	}
-
-	errUrlUnitBrand := utils.Get(unitBrandUrl, &getBrandResponse, nil)
-
-	if errUrlUnitBrand != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		// Prepare the result map with all necessary fields
+		result := map[string]interface{}{
+			"labour_selling_price_id": response.LabourSellingPriceId,
+			"company_id":              response.CompanyId,
+			"brand_id":                response.BrandId,
+			"brand_name":              brandResponse.BrandName,
+			"job_type_id":             response.JobTypeId,
+			"job_type_name":           jobTypeResponse.JobTypeName,
+			"effective_date":          response.EffectiveDate,
+			"bill_to_id":              response.BillToId,
+			"bill_to_name":            billToResponse.SupplierName,
+			"description":             response.Description,
+			"is_active":               response.IsActive,
 		}
+
+		// Add the result to the results slice
+		results = append(results, result)
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
+	// Set the results in the pagination
+	pages.Rows = results
 
-	// join with mtr_job_type
-
-	var jobTypeUrl string
-
-	if JobTypeId == "" {
-		jobTypeUrl = config.EnvConfigs.GeneralServiceUrl + "job-type"
-	} else {
-		jobTypeUrl = config.EnvConfigs.GeneralServiceUrl + "job-type/" + JobTypeId
-	}
-
-	errUrljobType := utils.Get(jobTypeUrl, &getjobTypeResponse, nil)
-
-	if errUrljobType != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getjobTypeResponse, "JobTypeId")
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	// join with mtr_supplier
-
-	var BillToUrl string
-
-	if BillToId == "" {
-		BillToUrl = config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=10000000000"
-	} else {
-		BillToUrl = config.EnvConfigs.GeneralServiceUrl + "supplier/" + BillToId
-	}
-
-	errUrlBillTo := utils.Get(BillToUrl, &getBillToResponse, nil)
-
-	if errUrlBillTo != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getBillToResponse, "BillToId")
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData3, &pages)
-
-	// pages.Rows = responses
-
-	return dataPaginate, totalPages, totalRows, nil
-
+	return pages, nil
 }
 
 func isNotInList(list []int, value int) bool {
@@ -499,118 +426,102 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 	return result, nil
 }
 
-func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx *gorm.DB, headerId int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	entities := []masteroperationentities.LabourSellingPriceDetail{}
-	responses := []masteroperationpayloads.LabourSellingPriceDetailResponse{}
+func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []masteroperationpayloads.LabourSellingPriceDetailResponse
+	var results []map[string]interface{}
 	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
 	var getVariantResponse []masteroperationpayloads.VariantResponse
 
-	var ModelIds string
-	var VariantIds string
-	//define base model
-	query := tx.
-		Model(&entities).
+	var ModelIds, VariantIds string
+	models_ids := []int{}
+	variant_ids := []int{}
+
+	query := tx.Model(&masteroperationentities.LabourSellingPriceDetail{}).
 		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId})
 
-	fmt.Print(headerId)
-
-	//apply pagination and execute
-	rows, err := query.Scan(&responses).Rows()
-
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
-	}
-
+	err := query.Scopes(pagination.Paginate(&pages, query)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
-	models_ids := []int{}
-	variant_ids := []int{}
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
 	for _, response := range responses {
 		if isNotInList(models_ids, response.ModelId) {
-			str := strconv.Itoa(response.ModelId)
-			ModelIds += str + ","
+			ModelIds += strconv.Itoa(response.ModelId) + ","
 			models_ids = append(models_ids, response.ModelId)
 		}
 		if isNotInList(variant_ids, response.VariantId) {
-			str := strconv.Itoa(response.VariantId)
-			VariantIds += str + ","
+			VariantIds += strconv.Itoa(response.VariantId) + ","
 			variant_ids = append(variant_ids, response.VariantId)
 		}
-
 	}
 
-	// join with mtr_unit_model
-
+	// Fetch model data
 	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + ModelIds
-
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
-
 	if errUrlUnitModel != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errUrlUnitModel,
 		}
 	}
 
 	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
-
 	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errdf,
 		}
 	}
 
-	//JOIN UNIT VARIANT
-
 	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + VariantIds
-
 	errUrlunitVariant := utils.Get(unitVariantUrl, &getVariantResponse, nil)
-
 	if errUrlunitVariant != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitModel,
-		}
-	}
-
-	if len(getVariantResponse) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
+			Err:        errUrlunitVariant,
 		}
 	}
 
 	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
-
 	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errdf,
 		}
 	}
 
 	if len(joinedData2) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+	for _, data := range joinedData2 {
+		result := map[string]interface{}{
+			"labour_selling_price_id": data["LabourSellingPriceId"],
+			"model_id":                data["ModelId"],
+			"model_name":              data["ModelName"],
+			"variant_id":              data["VariantId"],
+			"variant_name":            data["VariantName"],
+			"price":                   data["Price"],
+			"effective_date":          data["EffectiveDate"],
+			"expire_mileage":          data["ExpireMileage"],
+			"expire_month":            data["ExpireMonth"],
+			"extended_warranty":       data["ExtendedWarranty"],
+			"is_active":               data["IsActive"],
+		}
+		results = append(results, result)
+	}
 
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = results
+	return pages, nil
 }
 
 func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceRequest) (int, *exceptions.BaseErrorResponse) {

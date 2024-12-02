@@ -35,7 +35,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	var entities []transactionworkshoppayloads.QualityControlRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.QualityControlRequest{})
-	whereQuery := utils.ApplyFilterSearch(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	whereQuery = whereQuery.Where("work_order_status_id = ?", utils.WoStatStop) // 40 Stop
 
 	if err := whereQuery.Find(&entities).Error; err != nil {
@@ -214,7 +214,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	// Fetch data colour from external API
 	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
 	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
+	errColour := utils.Get(colourUrl, &colourResponses, nil)
 	if errColour != nil || len(colourResponses) == 0 {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

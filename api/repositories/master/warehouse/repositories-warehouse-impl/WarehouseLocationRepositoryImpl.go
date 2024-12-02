@@ -9,6 +9,7 @@ import (
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	utils "after-sales/api/utils"
 	"errors"
+	"math"
 	"net/http"
 	"strings"
 
@@ -156,10 +157,10 @@ func (r *WarehouseLocationImpl) GetByCode(tx *gorm.DB, warehouseLocationCode str
 }
 
 func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var entities masterwarehouseentities.WarehouseLocation
+
 	var responses []masterwarehousepayloads.GetAllWarehouseLocationResponse
 
-	query := tx.Model(entities).
+	query := tx.Model(&masterwarehouseentities.WarehouseLocation{}).
 		Select(`"mtr_warehouse_location"."is_active",
 		"mtr_warehouse_location"."warehouse_location_id",
 		mtr_warehouse_master.company_id,
@@ -176,27 +177,39 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
 		mtr_warehouse_master.warehouse_code,
 		mtr_warehouse_master.warehouse_name`).
 		Joins("JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
-		Joins("JOIN mtr_warehouse_master ON mtr_warehouse_location.warehouse_id  = mtr_warehouse_master.warehouse_id")
+		Joins("JOIN mtr_warehouse_master ON mtr_warehouse_location.warehouse_id = mtr_warehouse_master.warehouse_id")
 
 	filterQuery := utils.ApplyFilter(query, filter)
 
-	err := filterQuery.Scopes(pagination.Paginate(&entities, &pages, filterQuery)).Scan(&responses).Error
-
+	var totalRows int64
+	err := filterQuery.Count(&totalRows).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+
+	err = filterQuery.Scopes(pagination.Paginate(&pages, filterQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []masterwarehousepayloads.GetAllWarehouseLocationResponse{}
+		pages.TotalRows = totalRows
+		pages.TotalPages = totalPages
+		return pages, nil
 	}
 
 	pages.Rows = responses
+	pages.TotalRows = totalRows
+	pages.TotalPages = totalPages
 
 	return pages, nil
 }
