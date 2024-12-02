@@ -9,8 +9,8 @@ import (
 )
 
 type PackageMasterService interface {
-	GetAllPackageMaster([]utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAllPackageMasterDetail(pagination.Pagination, int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllPackageMaster([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllPackageMasterDetail(pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPackageMaster(int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByIdPackageMasterDetail(int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByCodePackageMaster(string) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
