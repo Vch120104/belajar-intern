@@ -74,11 +74,11 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 				Err:        err,
 			}
 		}
-
-		RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
-		if RequestByErr != nil {
-			return paginationResponses, RequestByErr
-		}
+		//dummy request by for testing
+		//RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
+		//if RequestByErr != nil {
+		//	return paginationResponses, RequestByErr
+		//}
 
 		var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
 		ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(res.ItemGroupId)
@@ -125,7 +125,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			ReferenceNo:                   res.ReferenceDocumentNumber,
 			ExpectedArrivalDate:           res.ExpectedArrivalDate,
 			Status:                        purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-			RequestBy:                     RequestBy.EmployeeName,
+			RequestBy:                     "dummy employee name",
 		}
 		result = append(result, tempRes)
 	}
@@ -268,16 +268,17 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	//		Err:        err,
 	//	}
 	//}
-	RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
-	if RequestByErr != nil {
-		return response, RequestByErr
-	}
+
+	//RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	//if RequestByErr != nil {
+	//	return response, RequestByErr
+	//}
 
 	//var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
-	if UpdatedByerr != nil {
-		return response, UpdatedByerr
-	}
+	//UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
+	//if UpdatedByerr != nil {
+	//	return response, UpdatedByerr
+	//}
 
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
 	if response.ReferenceTypeId != 0 {
@@ -318,9 +319,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		SetOrder:                   response.SetOrder,
 		Currency:                   GetCcyName.CurrencyName,
 		ChangeNo:                   0,
-		CreatedByUser:              RequestBy.EmployeeName,
+		CreatedByUser:              "dummy created user",
 		CreatedDate:                response.CreatedDate,
-		UpdatedByUser:              UpdatedBy.EmployeeName,
+		UpdatedByUser:              "dummy updated user",
 		UpdatedDate:                response.UpdatedDate,
 	}
 	fmt.Println(result)
@@ -958,49 +959,49 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 
 	year := PeriodResponse.PeriodYear
 	month := PeriodResponse.PeriodMonth
-	JoinTable := db.Model(&entities).Select("A.item_id,"+
-		"A.item_code,"+
-		"A.item_name,"+
-		"A.item_name,"+
+	JoinTable := db.Model(&entities).Select("mtr_item.item_id,"+
+		"mtr_item.item_code,"+
+		"mtr_item.item_name,"+
+		"mtr_item.item_name,"+
 		"Z.item_class_name,"+
-		"A.item_type_id,"+
-		"A.item_level_1_id,"+
-		"A.item_level_2_id,"+
-		"A.item_level_3_id,"+
+		" .item_type_id,"+
+		"mtr_item.item_level_1_id,"+
+		"mtr_item.item_level_2_id,"+
+		"mtr_item.item_level_3_id,"+
 		"L1.item_level_1_code as item_level_1,"+
 		"L2.item_level_2_code as item_level_2,"+
 		"L3.item_level_3_code as item_level_3,"+
 		"L4.item_level_4_code as item_level_4,"+
 		"IT.item_type_code,"+
-		"A.item_level_4_id,A.unit_of_measurement_type_id,"+
+		"mtr_item.item_level_4_id,mtr_item.unit_of_measurement_type_id,"+
 		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
-		Joins(`LEFT JOIN mtr_item_detail DT ON A.item_id = DT.item_id`).
-		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
-		Joins(`LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_3 L3 ON A.item_level_3_id = L3.item_level_3_id AND A.item_level_3_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_4 L4 ON A.item_level_4_id = L4.item_level_4_id AND A.item_level_4_id <> 0`).
-		Joins("LEFT JOIN mtr_item_type IT ON IT.item_type_id = a.item_type_id").
-		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
+		Joins(`LEFT JOIN mtr_item_detail DT ON mtr_item.item_id = DT.item_id`).
+		Joins("LEFT JOIN mtr_item_class Z on mtr_item.item_class_id = Z.item_class_id").
+		Joins(`LEFT JOIN mtr_item_level_1 L1 ON mtr_item.item_level_1_id = L1.item_level_1_id AND mtr_item.item_level_1_id <> 0`).
+		Joins(`LEFT JOIN mtr_item_level_2 L2 ON mtr_item.item_level_2_id = L2.item_level_2_id AND mtr_item.item_level_2_id <> 0`).
+		Joins(`LEFT JOIN mtr_item_level_3 L3 ON mtr_item.item_level_3_id = L3.item_level_3_id AND mtr_item.item_level_3_id <> 0`).
+		Joins(`LEFT JOIN mtr_item_level_4 L4 ON mtr_item.item_level_4_id = L4.item_level_4_id AND mtr_item.item_level_4_id <> 0`).
+		Joins("LEFT JOIN mtr_item_type IT ON IT.item_type_id = mtr_item.item_type_id").
+		Joins("LEFT JOIN mtr_location_stock x ON mtr_item.item_id = x.item_id and x.company_id = ? and period_year =?"+
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
 			" AND whs.warehouse_costing_type_id <> 'NON' "+
 			" AND whs.warehouse_id = x.warehouse_id) ", companyid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
-		Group("A.item_id,A.item_code," +
-			"A.item_name," +
+		Group("mtr_item.item_id,A.item_code," +
+			"mtr_item.item_name," +
 			"Z.item_class_name," +
-			"A.item_type_id," +
-			"A.item_level_1_id," +
-			"A.item_level_2_id," +
-			"A.item_level_3_id," +
-			"A.item_level_4_id," +
+			"mtr_item.item_type_id," +
+			"mtr_item.item_level_1_id," +
+			"mtr_item.item_level_2_id," +
+			"mtr_item.item_level_3_id," +
+			"mtr_item.item_level_4_id," +
 			"L1.item_level_1_code," +
 			"L2.item_level_2_code," +
 			"L3.item_level_3_code," +
 			"L4.item_level_4_code," +
-			"A.unit_of_measurement_type_id," +
+			"mtr_item.unit_of_measurement_type_id," +
 			"IT.item_type_code")
 	//.Order("A.item_id")
 	WhereQuery := utils.ApplyFilter(JoinTable, conditions)
