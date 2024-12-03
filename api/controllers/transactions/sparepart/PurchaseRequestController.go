@@ -139,20 +139,25 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequest(writer ht
 		"purchase_request_date_from": queryValues.Get("purchase_request_date_from"),
 		"purchase_request_date_to":   queryValues.Get("purchase_request_date_to"),
 	}
-	purchase_request_date_from, errsparseTime := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_from"])
-	if errsparseTime != nil {
-		payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
-		return
-	}
-	DateParams["purchase_request_date_from"] = purchase_request_date_from.Format("2006-01-02")
+	if DateParams["purchase_request_date_from"] != "" {
+		purchase_request_date_from, errsparseTime := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_from"])
+		if errsparseTime != nil {
+			payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+			return
+		}
+		DateParams["purchase_request_date_from"] = purchase_request_date_from.Format("2006-01-02")
 
-	purchase_request_date_to, errsparse := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_to"])
-	if errsparse != nil {
-		payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
-		return
 	}
-	DateParams["purchase_request_date_to"] = purchase_request_date_to.Format("2006-01-02")
-	DateParams["purchase_request_date_to"] = DateParams["purchase_request_date_to"] + " 23:59:59.999"
+	if DateParams["purchase_request_date_to"] != "" {
+
+		purchase_request_date_to, errsparse := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_to"])
+		if errsparse != nil {
+			payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+			return
+		}
+		DateParams["purchase_request_date_to"] = purchase_request_date_to.Format("2006-01-02")
+		DateParams["purchase_request_date_to"] = DateParams["purchase_request_date_to"] + " 23:59:59.999"
+	}
 
 	fmt.Println(DateParams["purchase_request_date_to"])
 	pagination := pagination.Pagination{

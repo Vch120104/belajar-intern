@@ -962,9 +962,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 	JoinTable := db.Model(&entities).Select("mtr_item.item_id,"+
 		"mtr_item.item_code,"+
 		"mtr_item.item_name,"+
-		"mtr_item.item_name,"+
 		"Z.item_class_name,"+
-		" .item_type_id,"+
+		"mtr_item.item_type_id,"+
 		"mtr_item.item_level_1_id,"+
 		"mtr_item.item_level_2_id,"+
 		"mtr_item.item_level_3_id,"+
@@ -989,7 +988,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			" AND whs.warehouse_costing_type_id <> 'NON' "+
 			" AND whs.warehouse_id = x.warehouse_id) ", companyid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
-		Group("mtr_item.item_id,A.item_code," +
+		Group("mtr_item.item_id,mtr_item.item_code," +
 			"mtr_item.item_name," +
 			"Z.item_class_name," +
 			"mtr_item.item_type_id," +
