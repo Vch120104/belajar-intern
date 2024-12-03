@@ -91,7 +91,6 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		for _, supplier := range supplierResponse {
 			supplierIds = append(supplierIds, supplier.SupplierId)
 		}
-
 		if len(supplierIds) > 0 {
 			baseModelQuery = baseModelQuery.Where("supplier_id IN ?", supplierIds)
 		} else {
