@@ -108,6 +108,7 @@ type ItemInquiryGetByIdFilter struct {
 }
 
 type ItemInquiryGetByIdResponse struct {
+	ItemDetailId           int     `json:"item_detail_id"`
 	CompanyId              int     `json:"company_id"`
 	PeriodYear             string  `json:"period_year"`
 	PeriodMonth            string  `json:"period_month"`

@@ -829,6 +829,7 @@ func (i *ItemInquiryRepositoryImpl) GetByIdItemInquiry(tx *gorm.DB, filter trans
 
 		baseModelQuery = tx.Model(&masteritementities.ItemDetail{}).
 			Select(`
+			mtr_item_detail.item_detail_id,
 			ISNULL(mwm.company_id, ?) company_id,
 			? AS period_year,
 			? AS period_month,
@@ -926,6 +927,7 @@ func (i *ItemInquiryRepositoryImpl) GetByIdItemInquiry(tx *gorm.DB, filter trans
 
 		baseModelQuery = tx.Model(&masteritementities.ItemDetail{}).
 			Select(`
+				mtr_item_detail.item_detail_id,
 				ISNULL(mwm.company_id, ?) company_id,
 				? AS period_year,
 				? AS period_month,
