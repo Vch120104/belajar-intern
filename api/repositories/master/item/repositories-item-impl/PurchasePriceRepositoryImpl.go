@@ -52,7 +52,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	baseModelQuery := tx.Model(&masteritementities.PurchasePrice{})
 
-	var supplierCode, supplierName, currencyCode, currencyName string
+	var supplierCode, supplierName, currencyCode, currencyName, effectiveDate string
 
 	for _, filter := range filterCondition {
 		switch {
@@ -64,6 +64,8 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			currencyCode = filter.ColumnValue
 		case strings.Contains(filter.ColumnField, "currency_name"):
 			currencyName = filter.ColumnValue
+		case strings.Contains(filter.ColumnField, "purchase_price_effective_date"):
+			baseModelQuery = baseModelQuery.Where("purchase_price_effective_date = ?", filter.ColumnValue)
 		}
 	}
 
@@ -127,6 +129,10 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			pages.Rows = []map[string]interface{}{}
 			return pages, nil
 		}
+	}
+
+	if effectiveDate != "" {
+		baseModelQuery = baseModelQuery.Where("FORMAT(purchase_price_effective_date, 'd MMM yyyy') LIKE (?)", "%"+effectiveDate+"%")
 	}
 
 	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&responses).Error

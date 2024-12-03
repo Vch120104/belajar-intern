@@ -127,17 +127,22 @@ func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, requ
 		}
 	}
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllRequest(filterConditions, paginate)
+	result, err := r.WorkOrderService.GetAllRequest(filterConditions, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetServiceById gets a service of a work order by ID
@@ -397,17 +402,22 @@ func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWrite
 		}
 	}
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllVehicleService(filterConditions, paginate)
+	result, err := r.WorkOrderService.GetAllVehicleService(filterConditions, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetVehicleServiceById gets a vehicle service of a work order by ID
@@ -644,17 +654,22 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAll(criteria, paginate)
+	result, err := r.WorkOrderService.GetAll(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 
 }
 
@@ -933,17 +948,22 @@ func (r *WorkOrderControllerImpl) GetAllDetailWorkOrder(writer http.ResponseWrit
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllDetailWorkOrder(criteria, paginate)
+	result, err := r.WorkOrderService.GetAllDetailWorkOrder(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 
 }
 
@@ -1180,17 +1200,22 @@ func (r *WorkOrderControllerImpl) GetAllBooking(writer http.ResponseWriter, requ
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllBooking(criteria, paginate)
+	result, err := r.WorkOrderService.GetAllBooking(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetWorkOrderBookingById gets a work
@@ -1317,17 +1342,22 @@ func (r *WorkOrderControllerImpl) GetAllAffiliated(writer http.ResponseWriter, r
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllAffiliated(criteria, paginate)
+	result, err := r.WorkOrderService.GetAllAffiliated(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetAffiliatedById gets an affiliated work order by ID

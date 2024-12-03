@@ -22,66 +22,41 @@ func NewCarWashBayRepositoryImpl() transactionjpcbrepository.BayMasterRepository
 	return &BayMasterImpl{}
 }
 
-func (*BayMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	responses := []transactionjpcbpayloads.CarWashBayGetAllResponse{}
+func (*BayMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionjpcbpayloads.CarWashBayGetAllResponse
 
-	keyAttributes := []string{
-		"car_wash_bay_id",
-		"car_wash_bay_code",
-		"is_active",
-		"car_wash_bay_description",
-	}
+	baseModelQuery := tx.Model(&transactionjpcbentities.BayMaster{})
 
-	query := tx.Model(&transactionjpcbentities.BayMaster{}).Select(keyAttributes)
-	whereQuery := utils.ApplyFilter(query, filterCondition)
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	rows, err := whereQuery.Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
-	for rows.Next() {
-		var carWashBayId int
-		var carWashBayCode, carWashBayDescription string
-		var isActive bool
-
-		err := rows.Scan(&carWashBayId, &carWashBayCode, &isActive, &carWashBayDescription)
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		responseMap := transactionjpcbpayloads.CarWashBayGetAllResponse{
-			CarWashBayId:          carWashBayId,
-			CarWashBayCode:        carWashBayCode,
-			IsActive:              isActive,
-			CarWashBayDescription: carWashBayDescription,
-		}
-		responses = append(responses, responseMap)
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	var mapResponses []map[string]interface{}
-
+	var results []map[string]interface{}
 	for _, response := range responses {
-		responseMap := map[string]interface{}{
+		result := map[string]interface{}{
 			"car_wash_bay_id":          response.CarWashBayId,
 			"car_wash_bay_code":        response.CarWashBayCode,
 			"is_active":                response.IsActive,
 			"car_wash_bay_description": response.CarWashBayDescription,
 		}
-		mapResponses = append(mapResponses, responseMap)
+
+		results = append(results, result)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = results
+
+	return pages, nil
 }
 
 func (r *BayMasterImpl) GetCarWashBayById(tx *gorm.DB, carWashBayId int) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {

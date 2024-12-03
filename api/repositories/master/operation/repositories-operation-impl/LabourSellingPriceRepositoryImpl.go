@@ -256,11 +256,21 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllDetailbyHeaderId(tx *gorm.DB, h
 func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteroperationpayloads.LabourSellingPriceResponse
 
-	// Base query for LabourSellingPrice
 	baseModelQuery := tx.Model(&masteroperationentities.LabourSellingPrice{})
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Apply pagination and find the responses
+	var effectiveDate string
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "effective_date") {
+			effectiveDate = filter.ColumnValue
+			break
+		}
+	}
+
+	if effectiveDate != "" {
+		whereQuery = whereQuery.Where("FORMAT(effective_date, 'd MMM yyyy') LIKE ?", "%"+effectiveDate+"%")
+	}
+
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -269,13 +279,11 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 		}
 	}
 
-	// If no records found, return empty response
 	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	// Initialize results
 	var results []map[string]interface{}
 	for _, response := range responses {
 		// Fetch Brand data
@@ -305,7 +313,6 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 			}
 		}
 
-		// Prepare the result map with all necessary fields
 		result := map[string]interface{}{
 			"labour_selling_price_id": response.LabourSellingPriceId,
 			"company_id":              response.CompanyId,
@@ -320,11 +327,9 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 			"is_active":               response.IsActive,
 		}
 
-		// Add the result to the results slice
 		results = append(results, result)
 	}
 
-	// Set the results in the pagination
 	pages.Rows = results
 
 	return pages, nil
@@ -429,10 +434,8 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteroperationpayloads.LabourSellingPriceDetailResponse
 	var results []map[string]interface{}
-	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
-	var getVariantResponse []masteroperationpayloads.VariantResponse
 
-	var ModelIds, VariantIds string
+	var modelIds, variantIds string
 	models_ids := []int{}
 	variant_ids := []int{}
 
@@ -453,71 +456,96 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 	}
 
 	for _, response := range responses {
-		if isNotInList(models_ids, response.ModelId) {
-			ModelIds += strconv.Itoa(response.ModelId) + ","
+
+		if !strings.Contains(modelIds, strconv.Itoa(response.ModelId)+",") {
+			modelIds += strconv.Itoa(response.ModelId) + ","
 			models_ids = append(models_ids, response.ModelId)
 		}
-		if isNotInList(variant_ids, response.VariantId) {
-			VariantIds += strconv.Itoa(response.VariantId) + ","
+
+		if !strings.Contains(variantIds, strconv.Itoa(response.VariantId)+",") {
+			variantIds += strconv.Itoa(response.VariantId) + ","
 			variant_ids = append(variant_ids, response.VariantId)
 		}
 	}
 
-	// Fetch model data
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + ModelIds
-	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
-	if errUrlUnitModel != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitModel,
+	if len(models_ids) > 0 {
+		unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + modelIds
+		var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
+		err := utils.Get(unitModelUrl, &getModelResponse, nil)
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
-	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
-	if errdf != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+		joinedData1, err := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
-	}
 
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + VariantIds
-	errUrlunitVariant := utils.Get(unitVariantUrl, &getVariantResponse, nil)
-	if errUrlunitVariant != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlunitVariant,
+		if len(variant_ids) > 0 {
+			unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + variantIds
+			var getVariantResponse []masteroperationpayloads.VariantResponse
+			err := utils.Get(unitVariantUrl, &getVariantResponse, nil)
+			if err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+
+			joinedData2, err := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
+			if err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+
+			for _, data := range joinedData2 {
+				result := map[string]interface{}{
+					"labour_selling_price_id": data["LabourSellingPriceId"],
+					"model_id":                data["ModelId"],
+					"model_code":              data["ModelCode"],
+					"model_description":       data["ModelDescription"],
+					"variant_id":              data["VariantId"],
+					"variant_code":            data["VariantCode"],
+					"variant_description":     data["VariantDescription"],
+					"selling_price":           data["SellingPrice"],
+					// "effective_date":          data["EffectiveDate"],
+					// "expire_mileage":          data["ExpireMileage"],
+					// "expire_month":            data["ExpireMonth"],
+					// "extended_warranty":       data["ExtendedWarranty"],
+					"is_active": data["IsActive"],
+				}
+				results = append(results, result)
+			}
+
+		} else {
+
+			for _, data := range joinedData1 {
+				result := map[string]interface{}{
+					"labour_selling_price_id": data["LabourSellingPriceId"],
+					"model_id":                data["ModelId"],
+					"model_code":              data["ModelCode"],
+					"model_description":       data["ModelDescription"],
+					"variant_id":              data["VariantId"],
+					"variant_code":            data["VariantCode"],
+					"variant_description":     data["VariantDescription"],
+					"selling_price":           data["SellingPrice"],
+					"effective_date":          data["EffectiveDate"],
+					"expire_mileage":          data["ExpireMileage"],
+					"expire_month":            data["ExpireMonth"],
+					"extended_warranty":       data["ExtendedWarranty"],
+					"is_active":               data["IsActive"],
+				}
+				results = append(results, result)
+			}
 		}
-	}
-
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
-	if errdf != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	if len(joinedData2) == 0 {
-		pages.Rows = []map[string]interface{}{}
-		return pages, nil
-	}
-
-	for _, data := range joinedData2 {
-		result := map[string]interface{}{
-			"labour_selling_price_id": data["LabourSellingPriceId"],
-			"model_id":                data["ModelId"],
-			"model_name":              data["ModelName"],
-			"variant_id":              data["VariantId"],
-			"variant_name":            data["VariantName"],
-			"price":                   data["Price"],
-			"effective_date":          data["EffectiveDate"],
-			"expire_mileage":          data["ExpireMileage"],
-			"expire_month":            data["ExpireMonth"],
-			"extended_warranty":       data["ExtendedWarranty"],
-			"is_active":               data["IsActive"],
-		}
-		results = append(results, result)
 	}
 
 	pages.Rows = results

@@ -1802,6 +1802,11 @@ func SupplySlipRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
 	router.Get("/", SupplySlipController.GetAllSupplySlip)
 	router.Get("/detail/{supply_detail_system_number}", SupplySlipController.GetSupplySlipDetailByID)
@@ -1818,6 +1823,11 @@ func SupplySlipReturnRouter(
 	SupplySlipReturnController transactionsparepartcontroller.SupplySlipReturnController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Post("/", SupplySlipReturnController.SaveSupplySlipReturn)
 	router.Post("/detail", SupplySlipReturnController.SaveSupplySlipReturnDetail)

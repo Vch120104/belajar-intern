@@ -172,8 +172,7 @@ func GetTimeZone(currentDate time.Time, companyCode int) (time.Time, error) {
 	return adjustedTime, nil
 }
 
-func (r *ServiceBodyshopRepositoryImpl) GetAllByTechnicianWOBodyshop(tx *gorm.DB, idTech int, idSysWo int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionbodyshoppayloads.ServiceBodyshopDetailResponse, *exceptions.BaseErrorResponse) {
-
+func (r *ServiceBodyshopRepositoryImpl) GetAllByTechnicianWOBodyshop(tx *gorm.DB, idTech int, idSysWo int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entity transactionbodyshoppayloads.ServiceBodyshopRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, entity)
@@ -182,13 +181,13 @@ func (r *ServiceBodyshopRepositoryImpl) GetAllByTechnicianWOBodyshop(tx *gorm.DB
 
 	if err := whereQuery.Find(&entity).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Work order not found",
 				Err:        err,
 			}
 		}
-		return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch entity",
 			Err:        err,
@@ -203,38 +202,37 @@ func (r *ServiceBodyshopRepositoryImpl) GetAllByTechnicianWOBodyshop(tx *gorm.DB
 		utils.SrvStatStop:    true,
 	}
 	if !validStatuses[entity.ServiceStatusId] {
-		return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Service status not found",
 		}
 	}
 
-	// Fetch data work order from external API
+	// Fetch work order data from external API
 	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(entity.WorkOrderSystemNumber)
 	var workOrderResponses transactionbodyshoppayloads.ServiceBodyshopWoResponse
 	errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
 	if errWorkOrder != nil {
-		return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve work order data from the external API",
 			Err:        errWorkOrder,
 		}
 	}
 
-	var serviceDetails []transactionbodyshoppayloads.ServiceBodyshopResponse
-
 	var totalRows int64
 	totalRowsQuery := tx.Model(&transactionworkshopentities.ServiceLog{}).
 		Where("service_log_system_number = ?", entity.ServiceLogSystemNumber).
 		Count(&totalRows).Error
 	if totalRowsQuery != nil {
-		return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count service details",
 			Err:        totalRowsQuery,
 		}
 	}
 
+	var serviceDetails []transactionbodyshoppayloads.ServiceBodyshopResponse
 	query := tx.Model(&transactionworkshopentities.ServiceLog{}).
 		Joins("INNER JOIN trx_work_order_allocation AS WTA ON trx_service_log.technician_allocation_system_number = WTA.technician_allocation_system_number").
 		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_service_status AS stat ON trx_service_log.service_status_id = stat.service_status_id").
@@ -244,34 +242,40 @@ func (r *ServiceBodyshopRepositoryImpl) GetAllByTechnicianWOBodyshop(tx *gorm.DB
 		Limit(pages.GetLimit())
 
 	if err := query.Find(&serviceDetails).Error; err != nil {
-
-		return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get service details",
 			Err:        err,
 		}
 	}
 
-	response := transactionbodyshoppayloads.ServiceBodyshopDetailResponse{
-		ServiceTypeName:         "Bodyshop",
-		TechnicianId:            entity.TechnicianId,
-		WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
-		WorkOrderDate:           workOrderResponses.WorkOrderDate,
-		ModelName:               workOrderResponses.ModelName,
-		VariantName:             workOrderResponses.VariantName,
-		VehicleCode:             workOrderResponses.VehicleCode,
-		VehicleTnkb:             workOrderResponses.VehicleTnkb,
-		ServiceDetails: transactionbodyshoppayloads.ServiceBodyshopDetailsResponse{
-			Page:       pages.GetPage(),
-			Limit:      pages.GetLimit(),
-			TotalPages: int(math.Ceil(float64(totalRows) / float64(pages.GetLimit()))),
-			TotalRows:  int(totalRows),
-			Data:       serviceDetails,
-		},
+	mapResponses := []map[string]interface{}{}
+	for _, serviceDetail := range serviceDetails {
+		serviceMap := map[string]interface{}{
+			"technician_allocation_system_number": serviceDetail.TechnicianAllocationSystemNumber,
+			"start_datetime":                      serviceDetail.StartDatetime,
+			"operation_code":                      serviceDetail.OperationItemCode,
+			"frt":                                 serviceDetail.Frt,
+			"service_status_id":                   serviceDetail.ServiceStatusId,
+			"service_status_description":          serviceDetail.ServiceStatusDescription,
+			"serv_actual_time":                    serviceDetail.ServActualTime,
+			"serv_pending_time":                   serviceDetail.ServPendingTime,
+			"serv_progress_time":                  serviceDetail.ServProgressTime,
+			"tech_alloc_start_date":               serviceDetail.TechAllocStartDate,
+			"tech_alloc_start_time":               serviceDetail.TechAllocStartTime,
+			"tech_alloc_end_date":                 serviceDetail.TechAllocEndDate,
+			"tech_alloc_end_time":                 serviceDetail.TechAllocEndTime,
+		}
+		mapResponses = append(mapResponses, serviceMap)
 	}
 
-	return response, nil
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+
+	pages.Rows = mapResponses
+	pages.TotalRows = totalRows
+	pages.TotalPages = totalPages
+
+	return pages, nil
 }
 
 // uspg_wtServiceLog_Insert
