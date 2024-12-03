@@ -41,7 +41,7 @@ func StartPurchasePriceService(PurchasePriceRepo masteritemrepository.PurchasePr
 	}
 }
 
-func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -65,11 +65,11 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.F
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetAllPurchasePrice(tx, filterCondition, pages)
+	results, err := s.PurchasePriceRepo.GetAllPurchasePrice(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *PurchasePriceServiceImpl) UpdatePurchasePrice(id int, req masteritempayloads.PurchasePriceRequest) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
@@ -196,7 +196,7 @@ func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.Purch
 	return results, nil
 }
 
-func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -220,11 +220,11 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []u
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, filterCondition, pages)
+	results, err := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailById(id int) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
@@ -489,16 +489,24 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 		Page:  0,
 	}
 
-	results, _, _, errResp := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, internalFilterCondition, paginate)
+	results, errResp := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, internalFilterCondition, paginate)
 	if errResp != nil {
 		return nil, errResp
 	}
 
-	if results == nil {
-		results = []map[string]interface{}{}
+	rows, ok := results.Rows.([]map[string]interface{})
+	if !ok {
+		return nil, &exceptions.BaseErrorResponse{
+			Err:        fmt.Errorf("invalid data type for rows, expected []map[string]interface{}"),
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	data, err := ConvertPurchasePriceMapToStruct(results)
+	if len(rows) == 0 {
+		rows = []map[string]interface{}{}
+	}
+
+	data, err := ConvertPurchasePriceMapToStruct(rows)
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}

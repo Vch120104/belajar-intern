@@ -21,42 +21,39 @@ func StartItemPriceCodeImpl() masteritemlevelrepo.ItemPriceCodeRepository {
 	return &ItemPriceCodeRepositoryImpl{}
 }
 
-func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var results []masteritempayloads.SaveItemPriceCode
-	var totalItems int64
+func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []masteritempayloads.SaveItemPriceCode
 
-	tableStruct := masteritementities.ItemPriceCode{}
-	baseModelQuery := tx.Model(&tableStruct)
-
+	baseModelQuery := tx.Model(&masteritementities.ItemPriceCode{})
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	err := whereQuery.Count(&totalItems).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	err = whereQuery.Limit(pages.GetLimit()).Offset(pages.GetOffset()).Find(&results).Error
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	mapResults := make([]map[string]interface{}, len(results))
-	for i, result := range results {
-		mapResults[i] = map[string]interface{}{
-			"item_price_code_id":   result.ItemPriceCodeId,
-			"item_price_code_name": result.ItemPriceCodeName,
-			"is_active":            result.IsActive,
-			"item_price_code":      result.ItemPriceCode,
+	var results []map[string]interface{}
+	for _, response := range responses {
+		result := map[string]interface{}{
+			"item_price_code_id":   response.ItemPriceCodeId,
+			"item_price_code_name": response.ItemPriceCodeName,
+			"is_active":            response.IsActive,
+			"item_price_code":      response.ItemPriceCode,
 		}
+		results = append(results, result)
 	}
 
-	return mapResults, int(totalItems), pages.Limit, nil
+	pages.Rows = results
+
+	return pages, nil
 }
 
 func (r *ItemPriceCodeRepositoryImpl) GetByIdItemPriceCode(tx *gorm.DB, id int) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse) {

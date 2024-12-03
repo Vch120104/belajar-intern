@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	"math"
 	"strconv"
 
 	"after-sales/api/utils"
@@ -283,52 +284,76 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masterit
 	return entities, nil
 }
 
-func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailListResponse
+func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	// Define join table
-	joinTable := tx.Table("mtr_bom_detail as det").
-		Select("det.bom_master_id, det.bom_detail_seq, item.item_code, item.item_name, iclas.item_class_code, lt.line_type_name, det.bom_detail_costing_percent, det.bom_detail_remark, det.bom_detail_qty , det.bom_detail_id,uom.uom_description").
-		Joins("INNER join mtr_item as item ON det.bom_detail_material_id = item.item_id").
-		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_type_id  = uom.uom_id").
-		Joins("INNER join mtr_item_class as iclas ON item.item_class_id = iclas.item_class_id").
-		Joins("INNER join dms_microservices_general_dev.dbo.mtr_line_type as lt ON iclas.line_type_id = lt.line_type_id")
+	type BomDetailResponse struct {
+		BomMasterId             int     `json:"bom_master_id"`
+		BomDetailSeq            int     `json:"bom_detail_seq"`
+		ItemCode                string  `json:"item_code"`
+		ItemName                string  `json:"item_name"`
+		ItemClassCode           string  `json:"item_class_code"`
+		LineTypeName            string  `json:"line_type_name"`
+		BomDetailCostingPercent float64 `json:"bom_detail_costing_percent"`
+		BomDetailRemark         string  `json:"bom_detail_remark"`
+		BomDetailQty            float64 `json:"bom_detail_qty"`
+		BomDetailId             int     `json:"bom_detail_id"`
+		UomDescription          string  `json:"uom_description"`
+	}
 
-	// Apply filters
-	whereQuery := utils.ApplyFilter(joinTable, filters)
+	var responses []BomDetailResponse
 
-	// Execute query
-	rows, err := whereQuery.Find(&responses).Rows()
+	baseQuery := tx.Table("mtr_bom_detail AS det").
+		Select(`
+			det.bom_master_id,
+			det.bom_detail_seq,
+			item.item_code,
+			item.item_name,
+			iclas.item_class_code,
+			lt.line_type_name,
+			det.bom_detail_costing_percent,
+			det.bom_detail_remark,
+			det.bom_detail_qty,
+			det.bom_detail_id,
+			uom.uom_description`).
+		Joins("LEFT JOIN mtr_item AS item ON det.bom_detail_material_id = item.item_id").
+		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id").
+		Joins("LEFT JOIN mtr_item_class AS iclas ON item.item_class_id = iclas.item_class_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_line_type AS lt ON iclas.line_type_id = lt.line_type_id")
+
+	baseQuery = utils.ApplyFilter(baseQuery, filters)
+
+	var totalRows int64
+	err := baseQuery.Count(&totalRows).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// Convert responses to maps
-	responseMaps := make([]map[string]interface{}, 0)
-	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"bom_master_id":              response.BomMasterId,
-			"item_code":                  response.ItemCode,
-			"item_name":                  response.ItemName,
-			"uom_description":            response.UomDescription,
-			"bom_detail_seq":             response.BomDetailSeq,
-			"line_type_name":             response.LineTypeName,
-			"bom_detail_costing_percent": response.BomDetailCostingPercent,
-			"bom_detail_remark":          response.BomDetailRemark,
-			"bom_detail_qty":             response.BomDetailQty,
-			"bom_detail_id":              response.BomDetailId,
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+
+	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
+
+	if err := paginatedQuery.Scan(&responses).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
-		responseMaps = append(responseMaps, responseMap)
 	}
 
-	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		pages.TotalRows = totalRows
+		pages.TotalPages = totalPages
+		return pages, nil
+	}
 
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = responses
+	pages.TotalRows = totalRows
+	pages.TotalPages = totalPages
+
+	return pages, nil
 }
 
 func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

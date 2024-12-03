@@ -19,7 +19,7 @@ type ItemModelMappingServiceImpl struct {
 }
 
 // GetItemModelMappingByItemId implements masteritemservice.ItemModelMappingService.
-func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -43,11 +43,11 @@ func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pa
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.ItemModelMappingRepo.GetItemModelMappingByItemId(tx, itemId, pages)
+	results, err := s.ItemModelMappingRepo.GetItemModelMappingByItemId(tx, itemId, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 // UpdateItemModelMapping implements masteritemservice.ItemModelMappingService.
