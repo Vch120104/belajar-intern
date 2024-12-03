@@ -266,7 +266,6 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 			if !strings.EqualFold(value[1], uploadRequest.CurrencyCode) {
 				result = append(result, fmt.Sprintf("Line %d : %s", key, "Currency Code not match"))
 			}
-
 			//parse from excel
 			parsedDate1, err := time.Parse("01-02-06", value[2])
 			if err != nil {
@@ -558,7 +557,7 @@ func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.
 	return result, nil
 }
 
-func (s *PriceListServiceImpl) GetAllPriceListNew(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PriceListServiceImpl) GetAllPriceListNew(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -582,13 +581,13 @@ func (s *PriceListServiceImpl) GetAllPriceListNew(filterCondition []utils.Filter
 			}
 		}
 	}()
-	result, total_page, total_rows, err := s.priceListRepo.GetAllPriceListNew(tx, filterCondition, pages)
+	result, err := s.priceListRepo.GetAllPriceListNew(tx, filterCondition, pages)
 
 	if err != nil {
-		return nil, 0, 0, err
+		return result, err
 	}
 
-	return result, total_page, total_rows, nil
+	return result, nil
 }
 
 func (s *PriceListServiceImpl) DeactivatePriceList(id string) (bool, *exceptions.BaseErrorResponse) {

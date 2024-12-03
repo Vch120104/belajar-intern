@@ -84,7 +84,7 @@ func (r *ServiceBodyshopControllerImp) GetAllByTechnicianWOBodyshop(writer http.
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, baseErr := r.ServiceBodyshopService.GetAllByTechnicianWOBodyshop(TechnicianId, workOrderId, criteria, paginate)
+	result, baseErr := r.ServiceBodyshopService.GetAllByTechnicianWOBodyshop(TechnicianId, workOrderId, criteria, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
@@ -94,7 +94,16 @@ func (r *ServiceBodyshopControllerImp) GetAllByTechnicianWOBodyshop(writer http.
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, paginatedData, "Service Retrieved Successfully", http.StatusOK)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // StartService starts the service

@@ -96,7 +96,7 @@ func (s *SupplySlipReturnServiceImpl) SaveSupplySlipReturnDetail(req transaction
 	return results, nil
 }
 
-func (s *SupplySlipReturnServiceImpl) GetAllSupplySlipReturn(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *SupplySlipReturnServiceImpl) GetAllSupplySlipReturn(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -120,11 +120,11 @@ func (s *SupplySlipReturnServiceImpl) GetAllSupplySlipReturn(internalFilter []ut
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.supplySlipReturnRepo.GetAllSupplySlipReturn(tx, internalFilter, externalFilter, pages)
+	results, err := s.supplySlipReturnRepo.GetAllSupplySlipReturn(tx, internalFilter, externalFilter, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *SupplySlipReturnServiceImpl) GetSupplySlipReturnById(Id int, pagination pagination.Pagination) (map[string]interface{}, *exceptions.BaseErrorResponse) {
