@@ -428,6 +428,8 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterConditio
 		`).
 		Order("CAST(effective_date AS DATE) desc")
 
+	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
+
 	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&payloads).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

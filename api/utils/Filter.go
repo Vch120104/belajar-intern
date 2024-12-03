@@ -3,6 +3,7 @@ package utils
 import (
 	"reflect"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -69,7 +70,15 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 			key = strings.Split(columnName[i], "_to")[0]
 			condition = key + " <= '" + columnValue[i] + "'"
 		} else if strings.Contains(columnName[i], "date") {
-			condition = "CAST(" + columnName[i] + " AS DATETIME)" + " LIKE '%" + columnValue[i] + "%'"
+			// Handle date fields using RFC3339 format ("2025-08-15T00:00:00Z")
+			parsedDate, err := time.Parse(time.RFC3339, columnValue[i])
+			if err != nil {
+				parsedDate, err = time.Parse("2006-01-02", columnValue[i])
+				if err != nil {
+					continue
+				}
+			}
+			condition = "CONVERT(DATE, " + columnName[i] + ") = '" + parsedDate.Format("2006-01-02") + "'"
 		} else if strings.Contains(columnName[i], "id") {
 			// Handle multiple IDs and single ID filtering
 			if strings.Contains(columnName[i], "#multiple") {
