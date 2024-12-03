@@ -591,8 +591,8 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 	var results []masteritempayloads.PurchasePriceDetailResponses
 	var numericRegex = regexp.MustCompile(`^\d*\.?\d+$`)
 
-	var regexCheckInput = regexp.MustCompile(`^\d*(,\d{3})*(\.\d{2})?$`)  // handle 12,345,678.99
-	var regexCheckInput2 = regexp.MustCompile(`^\d*(\.\d{3})*(,\d{2})?$`) // handle 12.345.678,99
+	var regexCheckInput = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(,\d{3})*(\.\d{1,2})?)$`)  // Handles 12,345,678.99
+	var regexCheckInput2 = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(\.\d{3})*(,\d{1,2})?)$`) // Handles 12.345.678,99
 
 	for i, row := range rows {
 		if i == 0 {
