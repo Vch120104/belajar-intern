@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -141,11 +142,8 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 // |
 
 func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
 	model := masteritementities.ItemImport{}
 	var responses []masteritempayloads.ItemImportResponse
-	var supplierResponses []masteritempayloads.SupplierResponse
-	var supplierMultipleId string
 	var supplierCode string
 	var supplierName string
 
@@ -158,29 +156,41 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	if supplierCode != "" || supplierName != "" {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-list?page=" + strconv.Itoa(0) + "&limit=" + strconv.Itoa(10000000) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		params := generalserviceapiutils.SupplierMasterParams{
+			SupplierCode: supplierCode,
+			SupplierName: supplierName,
+			Page:         0,
+			Limit:        10000000,
+		}
 
-		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
+		suppliers, suppErr := generalserviceapiutils.GetAllSupplierMaster(params)
+		if suppErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+				StatusCode: suppErr.StatusCode,
+				Err:        suppErr.Err,
 			}
 		}
 
-		for _, value := range supplierResponses {
-			supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
-		}
-		if len(supplierResponses) == 0 {
-			supplierMultipleId = "-1"
+		if len(suppliers) == 0 {
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "mtr_item_import.supplier_id",
+				ColumnValue: "-1",
+			})
+		} else {
+			var supplierIds []string
+			for _, supplier := range suppliers {
+				supplierIds = append(supplierIds, strconv.Itoa(supplier.SupplierId))
+			}
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "mtr_item_import.supplier_id",
+				ColumnValue: strings.Join(supplierIds, ","),
+			})
 		}
 	}
 
-	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
-		InnerJoins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id")
-
-	if supplierCode != "" || supplierName != "" {
-		query = query.Where("mtr_item_import.supplier_id IN (" + strings.TrimSuffix(supplierMultipleId, ",") + ")")
-	}
+	query := tx.Model(&model).
+		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
+		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id")
 
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
@@ -197,41 +207,54 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		return pages, nil
 	}
 
-	dataPaginate := []map[string]interface{}{}
-
-	if len(responses) > 0 {
-
-		responseSupplierMultiId := ""
-		for _, value := range responses {
-			responseSupplierMultiId += strconv.Itoa(value.SupplierId) + ","
-		}
-
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-multi-id/" + responseSupplierMultiId
-		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errSupplier,
-			}
-		}
-
-		if len(supplierResponses) == 0 {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New("supplier not found"),
-			}
-		}
-
-		joinedDataSupplier, errdf := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
-		if errdf != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errdf,
-			}
-		}
-		dataPaginate = joinedDataSupplier
+	supplierIds := []int{}
+	for _, response := range responses {
+		supplierIds = append(supplierIds, response.SupplierId)
 	}
 
-	pages.Rows = dataPaginate
+	supplierIds = utils.RemoveDuplicateIds(supplierIds)
+
+	var supplierResponses []masteritempayloads.SupplierResponse
+	if err := generalserviceapiutils.GetSupplierMasterByMultiId(supplierIds, &supplierResponses); err != nil {
+		return pages, err
+	}
+
+	supplierMap := make(map[int]struct {
+		SupplierName string
+		SupplierCode string
+	})
+	for _, supplier := range supplierResponses {
+		supplierMap[supplier.SupplierId] = struct {
+			SupplierName string
+			SupplierCode string
+		}{
+			SupplierName: supplier.SupplierName,
+			SupplierCode: supplier.SupplierCode,
+		}
+	}
+
+	type ItemImportWithSupplier struct {
+		masteritempayloads.ItemImportResponse
+		SupplierName string `json:"supplier_name"`
+		SupplierCode string `json:"supplier_code"`
+	}
+
+	var combinedResponses []ItemImportWithSupplier
+
+	for _, response := range responses {
+		combined := ItemImportWithSupplier{
+			ItemImportResponse: response,
+		}
+
+		if supplierInfo, ok := supplierMap[response.SupplierId]; ok {
+			combined.SupplierName = supplierInfo.SupplierName
+			combined.SupplierCode = supplierInfo.SupplierCode
+		}
+
+		combinedResponses = append(combinedResponses, combined)
+	}
+
+	pages.Rows = combinedResponses
 	return pages, nil
 }
 

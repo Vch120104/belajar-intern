@@ -8,9 +8,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
-	"reflect"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -23,95 +22,84 @@ func StartMarkupRateRepositoryImpl() masteritemrepository.MarkupRateRepository {
 	return &MarkupRateRepositoryImpl{}
 }
 
-func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.MarkupRateListResponse
+func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var entities []masteritementities.MarkupRate
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var orderTypeName string
-	responseStruct := reflect.TypeOf(masteritempayloads.MarkupRateListResponse{})
+	newFilterCondition := []utils.FilterCondition{}
 
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "order_type_name") {
+			orderTypeName = filter.ColumnValue
+			continue
+		}
+		newFilterCondition = append(newFilterCondition, filter)
+	}
+
+	baseQuery := tx.Model(&masteritementities.MarkupRate{}).
+		Preload("MarkupMaster").
+		Joins("LEFT JOIN mtr_order_type ON mtr_order_type.order_type_id = mtr_markup_rate.order_type_id")
+
+	whereQuery := utils.ApplyFilter(baseQuery, newFilterCondition)
+
+	var orderTypeIds []int
+	if orderTypeName != "" {
+		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-types?page=0&limit=100&order_type_name=" + orderTypeName
+		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
+			for _, orderType := range getOrderTypeResponse {
+				orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 			}
 		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
+		if len(orderTypeIds) == 0 {
+			orderTypeIds = []int{-1}
 		}
+
+		whereQuery = whereQuery.Where("mtr_markup_rate.order_type_id IN ?", orderTypeIds)
 	}
 
-	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		orderTypeName = externalServiceFilter[i].ColumnValue
-	}
-
-	// define table struct
-	tableStruct := masteritempayloads.MarkupRateListResponse{}
-	//define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-
-	// Execute the query
-	rows, err := whereQuery.Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch data from database",
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// Initialize responses slice with 0 length
-	responses = make([]masteritempayloads.MarkupRateListResponse, 0)
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
-	// Scan the results into the responses slice
-	for rows.Next() {
-		var response masteritempayloads.MarkupRateListResponse
-		if err := rows.Scan(&response.IsActive, &response.MarkupRateId, &response.MarkupMasterId, &response.MarkupMasterCode, &response.MarkupMasterDescription, &response.OrderTypeId, &response.MarkupRate); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+	var responses []map[string]interface{}
+	for _, entity := range entities {
+		response := map[string]interface{}{
+			"is_active":          entity.IsActive,
+			"markup_rate_id":     entity.MarkupRateId,
+			"markup_master_id":   entity.MarkupMasterId,
+			"markup_master_code": entity.MarkupMaster.MarkupCode,
+			"markup_master_desc": entity.MarkupMaster.MarkupDescription,
+			"order_type_id":      entity.OrderTypeId,
+			"markup_rate":        entity.MarkupRate,
 		}
+
+		if entity.OrderTypeId != 0 {
+			orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + strconv.Itoa(entity.OrderTypeId)
+			var singleOrderType masteritempayloads.OrderTypeResponse
+			if err := utils.Get(orderTypeURL, &singleOrderType, nil); err == nil {
+				response["order_type_name"] = singleOrderType.OrderTypeName
+			} else {
+				response["order_type_name"] = ""
+			}
+		} else {
+			response["order_type_name"] = ""
+		}
+
 		responses = append(responses, response)
 	}
 
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
-	}
-
-	// Fetch order type data
-	orderTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + orderTypeName
-	errUrlMarkupRate := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
-	if errUrlMarkupRate != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlMarkupRate,
-		}
-	}
-
-	// Perform inner join with order type data
-	joinedData, errdf := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	// Paginate the joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = responses
+	return pages, nil
 }
 
 func (r *MarkupRateRepositoryImpl) GetMarkupRateById(tx *gorm.DB, Id int) (masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {

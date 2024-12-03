@@ -35,7 +35,6 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB, filterCond
 		}
 	}
 
-	// Jika data kosong, kembalikan response sukses dengan list kosong
 	if len(responses) == 0 {
 		pages.Rows = []masteritementities.MarkupMaster{}
 		pages.TotalRows = 0

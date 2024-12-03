@@ -59,7 +59,10 @@ func Paginate(pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
 	// db.Count(&totalRows)
 
 	pagination.TotalRows = totalRows
-	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+	totalPages := 0
+	if totalRows != 0 {
+		totalPages = int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
+	}
 	pagination.TotalPages = totalPages
 	return func(db *gorm.DB) *gorm.DB {
 		// return db.Order(sort)

@@ -31,7 +31,7 @@ func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubs
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -50,11 +50,11 @@ func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils
 			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
-	results, page, limit, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
+	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, page, limit, nil
+	return results, nil
 }
 
 func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {

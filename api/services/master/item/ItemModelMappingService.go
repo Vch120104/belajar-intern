@@ -9,5 +9,5 @@ import (
 type ItemModelMappingService interface {
 	CreateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse)
-	GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
+	GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

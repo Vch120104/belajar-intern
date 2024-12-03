@@ -2,6 +2,7 @@ package transactionsparepartrepositoryimpl
 
 import (
 	"after-sales/api/config"
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -43,10 +44,10 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 		fmt.Println(strfilter)
 	}
 	JoinTable := db.Model(&entities).
-		Select("*").
+		Select("trx_item_purchase_order.*").
 		//Select("A.purchase_order_system_number,A.purchase_order_document_number,A.purchase_order_document_date,A.purchase_order_status_id,A.purchase_order_type_id,A.warehouse_id,A.supplier_id,C.purchase_request_document_number").
-		Joins("LEFT JOIN trx_item_purchase_order_detail B ON A.purchase_order_system_number = B.purchase_order_system_number " +
-			"LEFT JOIN trx_purchase_request C ON B.purchase_request_system_number = C.purchase_request_system_number").
+		Joins("left JOIN trx_item_purchase_order_detail B ON trx_item_purchase_order.purchase_order_system_number = B.purchase_order_system_number " +
+			"left JOIN trx_purchase_request C ON B.purchase_request_system_number = C.purchase_request_system_number").
 		Where(strfilter)
 	whereQuery := utils.ApplyFilter(JoinTable, filter)
 	var strDateFilter string
@@ -58,36 +59,41 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	}
 	strDateFilter = "purchase_order_document_date >='" + DateParams["purchase_order_date_from"] + "' AND purchase_order_document_date <= '" + DateParams["purchase_order_date_to"] + "'"
 
-	err := whereQuery.Scopes(pagination.Paginate(&page, JoinTable)).Order("A.purchase_order_document_date desc").Where(strDateFilter).Scan(&payloadsresdb).Error
+	err := whereQuery.Scopes(pagination.Paginate(&page, JoinTable)).Order("trx_item_purchase_order.purchase_order_document_date desc").Where(strDateFilter).Scan(&payloadsresdb).Error
 	if err != nil {
 		return page, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+			Message:    "error on getting purchase order",
 		}
 	}
 	if len(payloadsresdb) == 0 {
-		return page, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+		page.Rows = []string{}
+		return page, nil
 	}
 
 	for _, i := range payloadsresdb {
-		var purchaseRequestStatusDesc transactionsparepartpayloads.PurchaseRequestStatusResponse
-		StatusURL := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(i.PurchaseOrderStatusId)
-		if err := utils.Get(StatusURL, &purchaseRequestStatusDesc, nil); err != nil {
-			return page, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Status data from external service",
-				Err:        err,
-			}
+
+		//var purchaseRequestStatusDesc transactionsparepartpayloads.PurchaseRequestStatusResponse
+
+		purchaseRequestStatusDesc, purchaseRequestStatusDescErr := generalserviceapiutils.GetDocumentStatusById(i.PurchaseOrderStatusId)
+		if purchaseRequestStatusDescErr != nil {
+			return page, purchaseRequestStatusDescErr
 		}
-		var OrderType transactionsparepartpayloads.OrderTypeStatusResponse
-		OrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "order-type/" + strconv.Itoa(i.OrderTypeId)
-		if err := utils.Get(OrderTypeUrl, &OrderType, nil); err != nil {
+		var OrderType masterentities.OrderType
+		err = db.Model(&OrderType).Where(masterentities.OrderType{OrderTypeId: i.OrderTypeId}).
+			First(&OrderType).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return page, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "order type is not found with id : " + strconv.Itoa(int(i.OrderTypeId)),
+					Err:        err,
+				}
+			}
 			return page, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Status data from external service",
+				Message:    "failed to get order type",
 				Err:        err,
 			}
 		}
@@ -122,7 +128,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 			PurchaseOrderSystemNumber:   i.PurchaseOrderSystemNumber,
 			PurchaseOrderDocumentNumber: i.PurchaseOrderDocumentNumber,
 			PurchaseOrderDocumentDate:   i.PurchaseOrderDocumentDate,
-			PurchaseOrderStatus:         purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
+			PurchaseOrderStatus:         purchaseRequestStatusDesc.DocumentStatusDescription,
 			OrderType:                   OrderType.OrderTypeName,
 			WarehouseName:               WhsEntities.WarehouseName,
 			SupplierName:                SupplierResponse.SupplierName,
@@ -248,14 +254,18 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderHeader(db *gorm.DB, req
 			Err:        errors.New("warehouse id is missing. Please try again"),
 		}
 	}
-
+	//get status purchase order waiting for approval
+	GetApprovalStatus, GetApprovalStatusErr := generalserviceapiutils.GetApprovalStatusByCode("15")
+	if GetApprovalStatusErr != nil {
+		return res, GetApprovalStatusErr
+	}
 	entities := transactionsparepartentities.PurchaseOrderEntities{
-		CompanyId:                 request.CompanyId,
-		PurchaseOrderSystemNumber: 0,
+		CompanyId: request.CompanyId,
+		//PurchaseOrderSystemNumber: 0,
 		//PurchaseOrderSystemNumber:           0,
-		PurchaseOrderDocumentNumber:         request.PurchaseOrderDocumentNumber,
+		//PurchaseOrderDocumentNumber:         request.PurchaseOrderDocumentNumber,
 		PurchaseOrderDocumentDate:           request.PurchaseOrderDocumentDate,
-		PurchaseOrderStatusId:               request.PurchaseOrderStatusId,
+		PurchaseOrderStatusId:               GetApprovalStatus.ApprovalStatusId,
 		BrandId:                             request.BrandId,
 		ItemGroupId:                         request.ItemGroupId,
 		OrderTypeId:                         request.PurchaseOrderTypeId,
@@ -836,15 +846,13 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	pkptype = SupplierResponse.TaxSupplier.PkpType
 	SupplierVatPkpNo = SupplierResponse.TaxSupplier.PkpNo
 	//SET @Company_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmComp0 WHERE COMPANY_CODE = @Company_Code)
-	var CompanyDetailResponse transactionsparepartpayloads.CompanyDetailResponses
-	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(poEntities.CompanyId)
-	if err := utils.Get(CompanyDetailUrl, &CompanyDetailResponse, nil); err != nil {
-		return entities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusUnprocessableEntity,
-			Message:    "Failed to fetch Company Id Detail from external service",
-			Err:        err,
-		}
-	}
+	//var CompanyDetailResponse transactionsparepartpayloads.CompanyDetailResponses
+
+	//CompanyDetailResponse,CompanyDetailResponseErr := generalserviceapiutils.GetCompanyDataById(poEntities.CompanyId)
+	//if CompanyDetailResponseErr != nil {
+	//	return entities, CompanyDetailResponseErr
+	//}
+
 	//IF @PKP='Y'
 	//BEGIN
 	//IF LTRIM(RTRIM(ISNULL(@Supplier_Vat_Pkp_No,'')))<>LTRIM(RTRIM(ISNULL(@Company_Vat_Pkp_No,'')))

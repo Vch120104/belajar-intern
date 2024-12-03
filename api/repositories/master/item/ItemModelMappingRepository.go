@@ -9,7 +9,7 @@ import (
 )
 
 type ItemModelMappingRepository interface {
-	GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
+	GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	CreateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse)
 }
