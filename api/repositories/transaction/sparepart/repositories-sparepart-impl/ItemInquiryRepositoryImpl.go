@@ -12,7 +12,6 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -157,6 +156,9 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				mic.item_class_code,
 				mtr_item_detail.brand_id,
 				'' model_code,
+				mwg.warehouse_group_id,
+				mwm.warehouse_id,
+				mwl.warehouse_location_id,
 				ISNULL(mwg.warehouse_group_code, '') warehouse_group_code,
 				ISNULL(mwm.warehouse_code, '') warehouse_code,
 				ISNULL(mwl.warehouse_location_code, '') warehouse_location_code,
@@ -227,6 +229,9 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				mic.item_class_code,
 				mtr_item_detail.brand_id,
 				'' model_code,
+				mwg.warehouse_group_id,
+				mwm.warehouse_id,
+				mwl.warehouse_location_id,
 				ISNULL(mwg.warehouse_group_code, '') warehouse_group_code,
 				ISNULL(mwm.warehouse_code, '') warehouse_code,
 				ISNULL(mwl.warehouse_location_code, '') warehouse_location_code,
@@ -297,6 +302,9 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				mic.item_class_code,
 				mtr_item_detail.brand_id,
 				'' model_code,
+				0 warehouse_group_id,
+				0 warehouse_id,
+				0 warehouse_location_id,
 				'' warehouse_group_code,
 				'' warehouse_code,
 				'' warehouse_location_code,
@@ -426,8 +434,11 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 			"ItemClassCode":          data.ItemClassCode,
 			"BrandId":                data.BrandId,
 			"ModelCode":              data.ModelCode,
+			"WarehouseGroupId":       data.WarehouseGroupId,
 			"WarehouseGroupCode":     data.WarehouseGroupCode,
+			"WarehouseId":            data.WarehouseId,
 			"WarehouseCode":          data.WarehouseCode,
+			"WarehouseLocationId":    data.WarehouseLocationId,
 			"WarehouseLocationCode":  data.WarehouseLocationCode,
 			"SalesPrice":             data.SalesPrice,
 			"QuantityAvailable":      data.QuantityAvailable,
@@ -466,7 +477,6 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		}
 
 		joinedData := utils.DataFrameLeftJoin(paginatedData, brandResponse, "BrandId")
-		fmt.Printf("%T", joinedData[0]["QuantityAvailable"])
 
 		// start usp_comToolTip @strEntity = 'ItemInquiryBrandModel'
 		itemIds := []int{}
@@ -561,8 +571,11 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				BrandId:                joinedData[i]["BrandId"].(int),
 				BrandCode:              joinedData[i]["BrandCode"].(string),
 				ModelCode:              joinedData[i]["ModelCode"].(string),
+				WarehouseGroupId:       joinedData[i]["WarehouseGroupId"].(int),
 				WarehouseGroupCode:     joinedData[i]["WarehouseGroupCode"].(string),
+				WarehouseId:            joinedData[i]["WarehouseId"].(int),
 				WarehouseCode:          joinedData[i]["WarehouseCode"].(string),
+				WarehouseLocationId:    joinedData[i]["WarehouseLocationId"].(int),
 				WarehouseLocationCode:  joinedData[i]["WarehouseLocationCode"].(string),
 				SalesPrice:             joinedData[i]["SalesPrice"],
 				QuantityAvailable:      joinedData[i]["QuantityAvailable"],
