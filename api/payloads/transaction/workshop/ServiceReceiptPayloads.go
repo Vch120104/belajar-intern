@@ -15,7 +15,6 @@ type ServiceReceiptNew struct {
 	BookingSystemNumber          int       `json:"booking_system_number" parent_entity:"trx_service_request" `
 	EstimationSystemNumber       int       `json:"estimation_system_number" parent_entity:"trx_service_request" `
 	WorkOrderSystemNumber        int       `json:"work_order_system_number" parent_entity:"trx_service_request" `
-	ReferenceDocSystemNumber     int       `json:"reference_doc_system_number" parent_entity:"trx_service_request" `
 	ProfitCenterId               int       `json:"profit_center_id" parent_entity:"trx_service_request" `
 	CompanyId                    int       `json:"company_id" parent_entity:"trx_service_request" `
 	DealerRepresentativeId       int       `json:"dealer_representative_id" parent_entity:"trx_service_request" `

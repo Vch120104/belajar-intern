@@ -30,7 +30,7 @@ func OpenBookingEstimationServiceImpl(bookingEstimationRepo transactionworkshopr
 	}
 }
 
-func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -54,11 +54,11 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.structBookingEstimationRepo.GetAll(tx, filterCondition, pages)
+	results, err := s.structBookingEstimationRepo.GetAll(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -340,7 +340,7 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq(id int) (transactionw
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(pages *pagination.Pagination, id int) (*pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -364,9 +364,9 @@ func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(pages *pagination.Pagi
 			}
 		}
 	}()
-	result, err := s.structBookingEstimationRepo.GetAllBookEstimReq(tx, pages, id)
+	result, err := s.structBookingEstimationRepo.GetAllBookEstimReq(tx, filterCondition, pages, id)
 	if err != nil {
-		return pages, err
+		return result, err
 	}
 	return result, nil
 }

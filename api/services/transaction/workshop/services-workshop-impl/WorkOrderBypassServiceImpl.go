@@ -29,7 +29,7 @@ func OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepo transactionworkshoprepos
 	}
 }
 
-func (s *WorkOrderBypassServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderBypassServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -55,12 +55,12 @@ func (s *WorkOrderBypassServiceImpl) GetAll(filterCondition []utils.FilterCondit
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.structWorkOrderBypassRepo.GetAll(tx, filterCondition, pages)
+	results, repoErr := s.structWorkOrderBypassRepo.GetAll(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderBypassServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderBypassResponse, *exceptions.BaseErrorResponse) {

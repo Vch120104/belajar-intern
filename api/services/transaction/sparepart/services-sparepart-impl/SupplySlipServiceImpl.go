@@ -156,7 +156,7 @@ func (s *SupplySlipServiceImpl) SaveSupplySlipDetail(req transactionsparepartent
 	return results, nil
 }
 
-func (s *SupplySlipServiceImpl) GetAllSupplySlip(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *SupplySlipServiceImpl) GetAllSupplySlip(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -180,11 +180,11 @@ func (s *SupplySlipServiceImpl) GetAllSupplySlip(internalFilter []utils.FilterCo
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.supplySlipRepo.GetAllSupplySlip(tx, internalFilter, externalFilter, pages)
+	results, err := s.supplySlipRepo.GetAllSupplySlip(tx, internalFilter, externalFilter, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *SupplySlipServiceImpl) UpdateSupplySlip(req transactionsparepartentities.SupplySlip, id int) (transactionsparepartentities.SupplySlip, *exceptions.BaseErrorResponse) {

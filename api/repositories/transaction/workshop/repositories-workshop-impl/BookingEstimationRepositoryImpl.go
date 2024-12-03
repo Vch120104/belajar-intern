@@ -29,62 +29,64 @@ func OpenBookingEstimationRepositoryImpl() transactionworkshoprepository.Booking
 	return &BookingEstimationImpl{}
 }
 
-func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.BookingEstimation
-	// Query to retrieve all booking estimation entities based on the request
-	query := tx.Model(&transactionworkshopentities.BookingEstimation{})
-	if len(filterCondition) > 0 {
-		query = query.Where(filterCondition)
-	}
-	err := query.Find(&entities).Error
+
+	baseModelQuery := tx.Model(&transactionworkshopentities.BookingEstimation{})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimations from the database"}
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking estimations from the database",
+			Err:        err,
+		}
 	}
 
-	var bookingEstimationResponses []map[string]interface{}
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
-	// Loop through each entity and copy its data to the response
+	var results []map[string]interface{}
 	for _, entity := range entities {
-		bookingEstimationData := make(map[string]interface{})
-		// Copy data from entity to response
-		bookingEstimationData["batch_system_number"] = entity.BatchSystemNumber
-		bookingEstimationData["booking_system_number"] = entity.BookingSystemNumber
-		bookingEstimationData["brand_id"] = entity.BrandId
-		bookingEstimationData["model_id"] = entity.ModelId
-		bookingEstimationData["variant_id"] = entity.VariantId
-		bookingEstimationData["vehicle_id"] = entity.VehicleId
-		bookingEstimationData["estimation_system_number"] = entity.EstimationSystemNumber
-		bookingEstimationData["pdi_system_number"] = entity.PdiSystemNumber
-		bookingEstimationData["service_request_system_number"] = entity.ServiceRequestSystemNumber
-		bookingEstimationData["contract_system_number"] = entity.ContractSystemNumber
-		bookingEstimationData["agreement_id"] = entity.AgreementId
-		bookingEstimationData["campaign_id"] = entity.CampaignId
-		bookingEstimationData["company_id"] = entity.CompanyId
-		bookingEstimationData["profit_center_id"] = entity.ProfitCenterId
-		bookingEstimationData["dealer_representative_id"] = entity.DealerRepresentativeId
-		bookingEstimationData["customer_id"] = entity.CustomerId
-		bookingEstimationData["document_status_id"] = entity.DocumentStatusId
-		bookingEstimationData["booking_estimation_batch_date"] = entity.BookingEstimationBatchDate
-		bookingEstimationData["booking_estimation_vehicle_number"] = entity.BookingEstimationVehicleNumber
-		bookingEstimationData["agreement_number_br"] = entity.AgreementNumberBr
-		bookingEstimationData["is_unregistered"] = entity.IsUnregistered
-		bookingEstimationData["contact_person_name"] = entity.ContactPersonName
-		bookingEstimationData["contact_person_phone"] = entity.ContactPersonPhone
-		bookingEstimationData["contact_person_mobile"] = entity.ContactPersonMobile
-		bookingEstimationData["contact_person_via_id"] = entity.ContactPersonViaId
-		bookingEstimationData["insurance_policy_no"] = entity.InsurancePolicyNo
-		bookingEstimationData["insurance_expired_date"] = entity.InsuranceExpiredDate
-		bookingEstimationData["insurance_claim_no"] = entity.InsuranceClaimNo
-		bookingEstimationData["insurance_pic"] = entity.InsurancePic
-
-		// Append the response data to the array
-		bookingEstimationResponses = append(bookingEstimationResponses, bookingEstimationData)
+		result := map[string]interface{}{
+			"batch_system_number":               entity.BatchSystemNumber,
+			"booking_system_number":             entity.BookingSystemNumber,
+			"brand_id":                          entity.BrandId,
+			"model_id":                          entity.ModelId,
+			"variant_id":                        entity.VariantId,
+			"vehicle_id":                        entity.VehicleId,
+			"estimation_system_number":          entity.EstimationSystemNumber,
+			"pdi_system_number":                 entity.PdiSystemNumber,
+			"service_request_system_number":     entity.ServiceRequestSystemNumber,
+			"contract_system_number":            entity.ContractSystemNumber,
+			"agreement_id":                      entity.AgreementId,
+			"campaign_id":                       entity.CampaignId,
+			"company_id":                        entity.CompanyId,
+			"profit_center_id":                  entity.ProfitCenterId,
+			"dealer_representative_id":          entity.DealerRepresentativeId,
+			"customer_id":                       entity.CustomerId,
+			"document_status_id":                entity.DocumentStatusId,
+			"booking_estimation_batch_date":     entity.BookingEstimationBatchDate,
+			"booking_estimation_vehicle_number": entity.BookingEstimationVehicleNumber,
+			"agreement_number_br":               entity.AgreementNumberBr,
+			"is_unregistered":                   entity.IsUnregistered,
+			"contact_person_name":               entity.ContactPersonName,
+			"contact_person_phone":              entity.ContactPersonPhone,
+			"contact_person_mobile":             entity.ContactPersonMobile,
+			"contact_person_via_id":             entity.ContactPersonViaId,
+			"insurance_policy_no":               entity.InsurancePolicyNo,
+			"insurance_expired_date":            entity.InsuranceExpiredDate,
+			"insurance_claim_no":                entity.InsuranceClaimNo,
+			"insurance_pic":                     entity.InsurancePic,
+		}
+		results = append(results, result)
 	}
 
-	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(bookingEstimationResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = results
+	return pages, nil
 }
 
 func (r *BookingEstimationImpl) Post(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
@@ -418,23 +420,27 @@ func (r *BookingEstimationImpl) GetByIdBookEstimReq(tx *gorm.DB, id int) (transa
 	return payloads, nil
 }
 
-func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, pages *pagination.Pagination, id int) (*pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var model []transactionworkshopentities.BookingEstimationRequest
+func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionworkshopentities.BookingEstimationRequest
 
-	err := tx.Model(&model).Where("booking_system_number = ?", id).Scan(&model).Scopes(pagination.Paginate(pages, tx)).Error
+	baseModelQuery := tx.Model(&transactionworkshopentities.BookingEstimationRequest{})
+	whereQuery := utils.ApplyFilter(baseModelQuery.Where("booking_system_number = ?", id), filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking estimation requests from the database",
 			Err:        err,
 		}
 	}
 
-	if len(model) == 0 {
+	if len(responses) == 0 {
 		pages.Rows = []transactionworkshopentities.BookingEstimationRequest{}
 		return pages, nil
 	}
 
-	pages.Rows = model
+	pages.Rows = responses
 	return pages, nil
 }
 

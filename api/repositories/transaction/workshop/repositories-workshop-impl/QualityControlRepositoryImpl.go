@@ -30,8 +30,7 @@ func OpenQualityControlRepositoryImpl() transactionworkshoprepository.QualityCon
 // uspg_wtWorkOrder0_Select
 // IF @Option = 7
 // USE IN MODUL : AWS - 006 QUALITY CONTROL PAGE 1 REQ: ???
-func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
+func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshoppayloads.QualityControlRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.QualityControlRequest{})
@@ -40,13 +39,13 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 
 	if err := whereQuery.Find(&entities).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Work order not found",
 				Err:        err,
 			}
 		}
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch entity",
 			Err:        err,
@@ -54,69 +53,63 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	}
 
 	if len(entities) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "No data found",
-			Err:        errors.New("no data found"),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
 	var convertedResponses []transactionworkshoppayloads.QualityControlResponse
 
+	// Process entities
 	for _, entity := range entities {
-		// Fetch data model from external services
+		// Fetch data from external services
 		modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
 		if modelErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch model data from external service",
 				Err:        modelErr.Err,
 			}
 		}
 
-		// Fetch data variant from external services
 		variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
 		if variantErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch variant data from external service",
 				Err:        variantErr.Err,
 			}
 		}
 
-		// Fetch data vehicle from external API
 		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
 		if vehicleErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve vehicle data from the external API",
+				Message:    "Failed to retrieve vehicle data from external service",
 				Err:        vehicleErr.Err,
 			}
 		}
 
-		// Fetch data customer from external API
 		customerResponses, customerErr := generalserviceapiutils.GetCustomerMasterDetailById(entity.CustomerId)
 		if customerErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve customer data from the external API",
+				Message:    "Failed to retrieve customer data from external service",
 				Err:        customerErr.Err,
 			}
 		}
 
-		// Fetch data work order from external API
+		// Fetch work order data from external API
 		WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(entity.WorkOrderSystemNumber)
 		var workOrderResponses transactionworkshoppayloads.WorkOrderResponse
 		errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
 		if errWorkOrder != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve work order data from the external API",
 				Err:        errWorkOrder,
 			}
 		}
 
-		// Append converted response
 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
@@ -146,7 +139,11 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = paginatedData
+	pages.TotalRows = int64(totalRows)
+	pages.TotalPages = totalPages
+
+	return pages, nil
 }
 
 func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionworkshoppayloads.QualityControlIdResponse, *exceptions.BaseErrorResponse) {
