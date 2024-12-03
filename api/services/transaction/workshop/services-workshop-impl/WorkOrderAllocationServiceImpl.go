@@ -32,7 +32,7 @@ func OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepo transactionworks
 	}
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -131,7 +131,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, woSysNum int) 
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocateDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAllocateDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -157,15 +157,15 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocateDetail(filterCondition []uti
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.WorkOrderAllocationRepository.GetAllocateDetail(tx, filterCondition, pages)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAllocateDetail(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -191,12 +191,12 @@ func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []u
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.WorkOrderAllocationRepository.GetAssignTechnician(tx, filterCondition, pages)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAssignTechnician(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderAllocationServiceImpl) NewAssignTechnician(date time.Time, techId int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {

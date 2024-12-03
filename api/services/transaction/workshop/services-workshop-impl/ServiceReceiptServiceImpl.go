@@ -30,7 +30,7 @@ func OpenServiceReceiptServiceImpl(ServiceReceiptRepo transactionworkshopreposit
 	}
 }
 
-func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -56,12 +56,12 @@ func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterConditi
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.ServiceReceiptRepository.GetAll(tx, filterCondition, pages)
+	results, repoErr := s.ServiceReceiptRepository.GetAll(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *ServiceReceiptServiceImpl) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse) {

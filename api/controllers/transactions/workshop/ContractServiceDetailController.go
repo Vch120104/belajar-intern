@@ -61,17 +61,22 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 	}
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, totalPages, totalRows, errs := c.ContractServiceDetailService.GetAllDetail(contractServiceSystemNumber, filterCondition, pagination)
+	result, errs := c.ContractServiceDetailService.GetAllDetail(contractServiceSystemNumber, filterCondition, pagination)
 	if errs != nil {
 		helper.ReturnError(writer, request, errs)
 		return
 	}
 
-	if len(result) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetById implements ContractServiceDetailController.

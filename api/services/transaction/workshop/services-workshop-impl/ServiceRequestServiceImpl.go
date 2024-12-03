@@ -94,7 +94,7 @@ func (s *ServiceRequestServiceImpl) NewStatus(filter []utils.FilterCondition) ([
 	return statuses, nil
 }
 
-func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -120,12 +120,12 @@ func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterConditi
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.ServiceRequestRepository.GetAll(tx, filterCondition, pages)
+	results, repoErr := s.ServiceRequestRepository.GetAll(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *ServiceRequestServiceImpl) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
@@ -321,7 +321,7 @@ func (s *ServiceRequestServiceImpl) CloseOrder(id int) (bool, *exceptions.BaseEr
 	return closeOrder, nil
 }
 
-func (s *ServiceRequestServiceImpl) GetAllServiceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) GetAllServiceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -347,12 +347,12 @@ func (s *ServiceRequestServiceImpl) GetAllServiceDetail(filterCondition []utils.
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.ServiceRequestRepository.GetAllServiceDetail(tx, filterCondition, pages)
+	results, repoErr := s.ServiceRequestRepository.GetAllServiceDetail(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 
 }
 

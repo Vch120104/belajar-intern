@@ -63,7 +63,7 @@ func (s *WorkOrderServiceImpl) GenerateDocumentNumber(workOrderId int) (string, 
 	return documentNumber, nil
 }
 
-func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -88,12 +88,12 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 			}
 		}
 	}()
-	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAll(tx, filterCondition, pages)
+	results, repoErr := s.structWorkOrderRepo.GetAll(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderServiceImpl) New(request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
@@ -290,9 +290,8 @@ func (s *WorkOrderServiceImpl) CloseOrder(id int) (bool, *exceptions.BaseErrorRe
 	return close, nil
 }
 
-func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	// Data not found in cache, proceed to database
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -317,12 +316,12 @@ func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondi
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
+	results, repoErr := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderServiceImpl) GetRequestById(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderServiceResponse, *exceptions.BaseErrorResponse) {
@@ -487,7 +486,7 @@ func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) (bool, *ex
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -513,12 +512,12 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllVehicleService(tx, filterCondition, pages)
+	results, repoErr := s.structWorkOrderRepo.GetAllVehicleService(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderServiceImpl) GetVehicleServiceById(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderServiceVehicleResponse, *exceptions.BaseErrorResponse) {
@@ -653,7 +652,7 @@ func (s *WorkOrderServiceImpl) DeleteVehicleService(id int, IdWorkorder int) (bo
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -679,12 +678,12 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
+	results, repoErr := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 
 }
 
@@ -822,7 +821,7 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) (b
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -848,12 +847,12 @@ func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondi
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
+	results, repoErr := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderBookingResponse, *exceptions.BaseErrorResponse) {
@@ -955,7 +954,7 @@ func (s *WorkOrderServiceImpl) SaveBooking(workOrderId int, id int, request tran
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -981,13 +980,12 @@ func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCo
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllAffiliated(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, repoErr)
+	results, repoErr := s.structWorkOrderRepo.GetAllAffiliated(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	return results, totalPages, totalRows, nil
+	return results, nil
 
 }
 

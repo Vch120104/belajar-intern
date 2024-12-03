@@ -24,68 +24,56 @@ func NewCarWashRepositoryImpl() transactionjpcbrepository.CarWashRepository {
 	return &CarWashImpl{}
 }
 
-func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	joinQuery := tx.Table("trx_car_wash").
+func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionjpcbpayloads.CarWashGetAllResponse
+
+	baseModelQuery := tx.Table("trx_car_wash").
 		Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
-				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, mtr_car_wash_bay.car_wash_bay_description,trx_car_wash.car_wash_status_id, 
-				mtr_car_wash_status.car_wash_status_description, trx_car_wash.start_time, trx_car_wash.end_time, trx_car_wash.car_wash_priority_id, 
-				mtr_car_wash_priority.car_wash_priority_description`).
+				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, mtr_car_wash_bay.car_wash_bay_description,
+				trx_car_wash.car_wash_status_id, mtr_car_wash_status.car_wash_status_description, trx_car_wash.start_time, trx_car_wash.end_time, 
+				trx_car_wash.car_wash_priority_id, mtr_car_wash_priority.car_wash_priority_description`).
 		Joins("LEFT JOIN trx_work_order ON trx_car_wash.work_order_system_number = trx_work_order.work_order_system_number AND trx_car_wash.company_id = trx_work_order.company_id").
 		Joins("LEFT JOIN mtr_car_wash_priority ON trx_car_wash.car_wash_priority_id = mtr_car_wash_priority.car_wash_priority_id").
 		Joins("LEFT JOIN mtr_car_wash_status ON trx_car_wash.car_wash_status_id = mtr_car_wash_status.car_wash_status_id").
 		Joins("LEFT JOIN mtr_car_wash_bay ON trx_car_wash.car_wash_bay_id = mtr_car_wash_bay.car_wash_bay_id")
 
-	joinQuery = utils.ApplyFilter(joinQuery, filterCondition)
-	whereQuery := joinQuery.Where("trx_work_order.car_wash = 1 AND trx_car_wash.car_wash_status_id != 4")
-	rows, err := whereQuery.Rows()
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
-	var convertedCarWashResponse []transactionjpcbpayloads.CarWashGetAllResponse
-	for rows.Next() {
-		var carWashPayload transactionjpcbpayloads.CarWashGetAllResponse
-		var modelId int
-		var vehicleId int
-
-		err := rows.Scan(
-			&carWashPayload.WorkOrderSystemNumber, &carWashPayload.WorkOrderDocumentNumber, &modelId, &vehicleId, &carWashPayload.PromiseTime, &carWashPayload.PromiseDate,
-			&carWashPayload.CarWashBayId, &carWashPayload.CarWashBayDescription, &carWashPayload.CarWashStatusId, &carWashPayload.CarWashStatusDescription, &carWashPayload.StartTime,
-			&carWashPayload.EndTime, &carWashPayload.CarWashPriorityId, &carWashPayload.CarWashPriorityDescription,
-		)
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		//Fetch data Model from external services
-		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(modelId)
+	var results []map[string]interface{}
+	for _, response := range responses {
+		// Fetch external data for Model, Vehicle, and Color
+		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(response.ModelId)
 		var getModelResponse transactionjpcbpayloads.CarWashModelResponse
 		errFetchModel := utils.Get(ModelURL, &getModelResponse, nil)
 		if errFetchModel != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch brand data from external service",
-				Err:        err,
+				Message:    "Failed to fetch model data from external service",
+				Err:        errFetchModel,
 			}
 		}
 
-		//Fetch data Color from vehicle master then unit color
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(vehicleId)
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(response.VehicleId)
 		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
 		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
 		if errFetchVehicle != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch vehicle data from external service",
-				Err:        err,
+				Err:        errFetchVehicle,
 			}
 		}
 
@@ -93,58 +81,37 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
 		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
 		if errFetchColour != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch colour data from external service",
+				Err:        errFetchColour,
 			}
 		}
 
-		carWashResponse := transactionjpcbpayloads.CarWashGetAllResponse{
-			WorkOrderSystemNumber:      carWashPayload.WorkOrderSystemNumber,
-			WorkOrderDocumentNumber:    carWashPayload.WorkOrderDocumentNumber,
-			Model:                      getModelResponse.ModelName,
-			Color:                      getColourResponse.VariantColourName,
-			Tnkb:                       getVehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
-			PromiseTime:                carWashPayload.PromiseTime,
-			PromiseDate:                carWashPayload.PromiseDate,
-			CarWashBayId:               carWashPayload.CarWashBayId,
-			CarWashBayDescription:      carWashPayload.CarWashBayDescription,
-			CarWashStatusId:            carWashPayload.CarWashStatusId,
-			CarWashStatusDescription:   carWashPayload.CarWashStatusDescription,
-			StartTime:                  carWashPayload.StartTime,
-			EndTime:                    carWashPayload.EndTime,
-			CarWashPriorityId:          carWashPayload.CarWashPriorityId,
-			CarWashPriorityDescription: carWashPayload.CarWashPriorityDescription,
-		}
-		convertedCarWashResponse = append(convertedCarWashResponse, carWashResponse)
-	}
-
-	var mapResponses []map[string]interface{}
-	for _, response := range convertedCarWashResponse {
-		responseMap := map[string]interface{}{
-			"WorkOrderSystemNumber":      response.WorkOrderSystemNumber,
-			"WorkOrderDocumentNumber":    response.WorkOrderDocumentNumber,
-			"Model":                      response.Model,
-			"Color":                      response.Color,
-			"Tnkb":                       response.Tnkb,
-			"PromiseTime":                response.PromiseTime,
-			"PromiseDate":                response.PromiseDate,
-			"CarWashBayId":               response.CarWashBayId,
-			"CarWashBayDescription":      response.CarWashBayDescription,
-			"CarWashStatusId":            response.CarWashStatusId,
-			"CarWashStatusDescription":   response.CarWashStatusDescription,
-			"StartTime":                  response.StartTime,
-			"EndTime":                    response.EndTime,
-			"CarWashPriorityId":          response.CarWashPriorityId,
-			"CarWashPriorityDescription": response.CarWashPriorityDescription,
+		result := map[string]interface{}{
+			"work_order_system_number":      response.WorkOrderSystemNumber,
+			"work_order_document_number":    response.WorkOrderDocumentNumber,
+			"model":                         getModelResponse.ModelName,
+			"color":                         getColourResponse.VariantColourName,
+			"tnkb":                          getVehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
+			"promise_time":                  response.PromiseTime,
+			"promise_date":                  response.PromiseDate,
+			"car_wash_bay_id":               response.CarWashBayId,
+			"car_wash_bay_description":      response.CarWashBayDescription,
+			"car_wash_status_id":            response.CarWashStatusId,
+			"car_wash_status_description":   response.CarWashStatusDescription,
+			"start_time":                    response.StartTime,
+			"end_time":                      response.EndTime,
+			"car_wash_priority_id":          response.CarWashPriorityId,
+			"car_wash_priority_description": response.CarWashPriorityDescription,
 		}
 
-		mapResponses = append(mapResponses, responseMap)
+		results = append(results, result)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+	pages.Rows = results
 
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (*CarWashImpl) UpdatePriority(tx *gorm.DB, workOrderSystemNumber, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {

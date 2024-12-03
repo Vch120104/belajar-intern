@@ -22,76 +22,72 @@ func OpenContractServicelDetailRepositoryImpl() transactionworkshoprepository.Co
 	return &ContractServiceDetailRepositoryImpl{}
 }
 
-func (r *ContractServiceDetailRepositoryImpl) GetAllDetail(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var entities []transactionworkshopentities.ContractServiceDetail
-	combinedPayloads := make([]map[string]interface{}, 0)
+func (r *ContractServiceDetailRepositoryImpl) GetAllDetail(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionworkshopentities.ContractServiceDetail
 
-	// Query utama untuk mengambil data ContractServiceDetail
-	query := tx.Model(&transactionworkshopentities.ContractServiceDetail{}).
+	baseModelQuery := tx.Model(&transactionworkshopentities.ContractServiceDetail{}).
 		Where("contract_service_system_number = ?", Id)
 
-	// Menambahkan filter condition ke query
-	for _, condition := range filterCondition {
-		query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
-	}
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Eksekusi query untuk mendapatkan ContractServiceDetail
-	if err := query.Find(&entities).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	// Iterasi melalui hasil query dan melakukan query tambahan untuk Line Type dan Operation Code
-	for _, entity := range entities {
-		// Mengambil Line Type dari API eksternal
-		linetype, linetypeErr := generalserviceapiutils.GetLineTypeById(entity.LineTypeId)
-		if linetypeErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        linetypeErr.Err,
-			}
-		}
-
-		// Mengambil Operation Code dari tabel mtr_operation_code menggunakan GORM
-		var operation masteroperationentities.OperationCode
-		operationErr := tx.Model(&masteroperationentities.OperationCode{}).
-			Where("operation_id = ?", entity.ItemOperationId).
-			First(&operation).Error
-		if operationErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        operationErr,
-			}
-		}
-
-		// Membuat response untuk setiap entity detail
-		response := map[string]interface{}{
-			"contract_service_package_detail_system_number": entity.ContractServicePackageDetailSystemNumber,
-			"contract_service_system_number":                entity.ContractServiceSystemNumber,
-			"contract_service_line":                         entity.ContractServiceLine,
-			"line_type_id":                                  entity.LineTypeId,
-			"line_type_code":                                linetype.LineTypeCode,
-			"item_operation_id":                             entity.ItemOperationId,
-			"operation_code":                                operation.OperationCode,
-			"operation_name":                                operation.OperationName,
-			"description":                                   entity.Description,
-			"frt_quantity":                                  entity.FrtQuantity,
-			"item_price":                                    entity.ItemPrice,
-			"item_discount_percent":                         entity.ItemDiscountPercent,
-			"item_discount_amount":                          entity.ItemDiscountAmount,
-			"package_id":                                    entity.PackageId,
-			"total_use_frt_quantity":                        entity.TotalUseFrtQuantity,
-		}
-
-		// Menambahkan hasil ke payload kombinasi
-		combinedPayloads = append(combinedPayloads, response)
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	// Pagination hasil data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(combinedPayloads, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	var results []map[string]interface{}
+	for _, response := range responses {
+		linetypeResponse, errLineType := generalserviceapiutils.GetLineTypeById(response.LineTypeId)
+		if errLineType != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errLineType.StatusCode,
+				Err:        errLineType.Err,
+			}
+		}
+
+		var operationResponse masteroperationentities.OperationCode
+		errOperation := tx.Model(&masteroperationentities.OperationCode{}).
+			Where("operation_id = ?", response.ItemOperationId).
+			First(&operationResponse).Error
+		if errOperation != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errOperation,
+			}
+		}
+
+		result := map[string]interface{}{
+			"contract_service_package_detail_system_number": response.ContractServicePackageDetailSystemNumber,
+			"contract_service_system_number":                response.ContractServiceSystemNumber,
+			"contract_service_line":                         response.ContractServiceLine,
+			"line_type_id":                                  response.LineTypeId,
+			"line_type_code":                                linetypeResponse.LineTypeCode,
+			"item_operation_id":                             response.ItemOperationId,
+			"operation_code":                                operationResponse.OperationCode,
+			"operation_name":                                operationResponse.OperationName,
+			"description":                                   response.Description,
+			"frt_quantity":                                  response.FrtQuantity,
+			"item_price":                                    response.ItemPrice,
+			"item_discount_percent":                         response.ItemDiscountPercent,
+			"item_discount_amount":                          response.ItemDiscountAmount,
+			"package_id":                                    response.PackageId,
+			"total_use_frt_quantity":                        response.TotalUseFrtQuantity,
+		}
+
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+
+	return pages, nil
 }
 
 // GetById implements transactionworkshoprepository.ContractServiceDetailRepository.
