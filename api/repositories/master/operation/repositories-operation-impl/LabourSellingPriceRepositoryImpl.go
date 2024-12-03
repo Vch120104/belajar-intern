@@ -259,18 +259,6 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 	baseModelQuery := tx.Model(&masteroperationentities.LabourSellingPrice{})
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	var effectiveDate string
-	for _, filter := range filterCondition {
-		if strings.Contains(filter.ColumnField, "effective_date") {
-			effectiveDate = filter.ColumnValue
-			break
-		}
-	}
-
-	if effectiveDate != "" {
-		whereQuery = whereQuery.Where("FORMAT(effective_date, 'd MMM yyyy') LIKE ?", "%"+effectiveDate+"%")
-	}
-
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
