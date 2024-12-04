@@ -13,6 +13,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"math"
@@ -3747,6 +3748,194 @@ func (r *LookupRepositoryImpl) LocationAvailable(tx *gorm.DB, filterCondition []
 	paginateData, totalPages, totalRows := pagination.NewDataFramePaginate(response, &pages)
 
 	pages.Rows = utils.ModifyKeysInResponse(paginateData)
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
+}
+
+// uspg_gmItem1_Select
+// IF @Option = 5
+func (r *LookupRepositoryImpl) ItemDetailForItemInquiry(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemDetail{}
+	payloads := []masterpayloads.ItemDetailForItemInquiryPayload{}
+
+	baseModelQuery := tx.Model(&entities).Select("model_id, variant_id")
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching item detail for item inquiry",
+			Err:        err,
+		}
+	}
+
+	finalJoinedData := []map[string]interface{}{}
+	if len(payloads) > 0 {
+		var modelIds []int
+		var variantIds []int
+
+		for _, data := range payloads {
+			modelIds = append(modelIds, data.ModelId)
+			variantIds = append(variantIds, data.VariantId)
+		}
+
+		modelResponse, modelError := salesserviceapiutils.GetUnitModelByMultiId(modelIds)
+		if modelError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching model data",
+				Err:        modelError.Err,
+			}
+		}
+
+		variantResponse, variantError := salesserviceapiutils.GetUnitVariantByMultiId(variantIds)
+		if variantError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching model data",
+				Err:        variantError.Err,
+			}
+		}
+
+		joinedData := utils.DataFrameLeftJoin(payloads, modelResponse, "ModelId")
+
+		finalJoinedData = utils.DataFrameLeftJoin(joinedData, variantResponse, "VariantId")
+	}
+
+	pages.Rows = utils.ModifyKeysInResponse(finalJoinedData)
+
+	return pages, nil
+}
+
+// USPG_SMSUBSTITUTE1_SELECT
+// IF @Option=3
+func (r *LookupRepositoryImpl) ItemSubstituteDetailForItemInquiry(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var err error
+	entities := masteritementities.ItemSubstitute{}
+	entitiesDetail := masteritementities.ItemSubstituteDetail{}
+
+	var itemId int
+	var companyId int
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "item_id") {
+			itemId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "company_id") {
+			companyId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+	}
+
+	currentYear := strconv.Itoa(int(time.Now().Year()))
+	currentMonth := strconv.Itoa(int(time.Now().Month()))
+	if len(currentMonth) == 1 {
+		currentMonth = "0" + currentMonth
+	}
+
+	effectiveDate := time.Now().Truncate(24 * time.Hour)
+	err = tx.Model(&entities).
+		Select("MAX(effective_date)").
+		Where(masteritementities.ItemSubstitute{ItemId: itemId, IsActive: true}).
+		Pluck("effective_date", &effectiveDate).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching item substitute effective date data",
+			Err:        err,
+		}
+	}
+
+	viewLocStock := tx.Table("mtr_location_stock mls").
+		Select(`
+			mls.item_inquiry_id,
+			mls.period_year,
+			mls.period_month,
+			mls.company_id,
+			mls.item_id,
+			(
+				ISNULL(quantity_sales, 0) +
+				ISNULL(quantity_transfer_out, 0) +
+				ISNULL(quantity_robbing_out, 0) +
+				ISNULL(quantity_assembly_out, 0) +
+				ISNULL(quantity_allocated, 0)
+			) AS quantity_available
+		`).
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.company_id = mls.company_id AND mwm.warehouse_id = mls.warehouse_id")
+
+	query1 := tx.Model(&entitiesDetail).
+		Select(`
+			mtr_item_substitute_detail.item_substitute_detail_id,
+			mtr_item_substitute_detail.is_active,
+			mtr_item_substitute_detail.item_id,
+			mi.item_name,
+			SUM(view_location.quantity_available) AS quantity,
+			mtr_item_substitute_detail.sequence
+		`).
+		Joins("INNER JOIN mtr_item_substitute mis ON mis.item_substitute_id = mtr_item_substitute_detail.item_substitute_id").
+		Joins("LEFT JOIN mtr_item mi ON mi.item_id = mtr_item_substitute_detail.item_id").
+		Joins("INNER JOIN (?) view_location ON view_location.item_id = mtr_item_substitute_detail.item_id", viewLocStock).
+		Where("mtr_item_substitute_detail.item_id = ?", itemId).
+		Where("view_location.period_year = ?", currentYear).
+		Where("view_location.period_month = ?", currentMonth).
+		Where("view_location.company_id = ?", companyId).
+		Where("mis.effective_date = ?", effectiveDate).
+		Group(`
+			mtr_item_substitute_detail.item_substitute_detail_id,
+			mtr_item_substitute_detail.is_active,
+			mtr_item_substitute_detail.item_id,
+			mi.item_name,
+			mtr_item_substitute_detail.sequence
+		`)
+
+	response1 := []masterpayloads.ItemSubstituteDetailForItemInquiryResponse{}
+	err = query1.Scan(&response1).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching item substitute detail id first query",
+			Err:        err,
+		}
+	}
+
+	query1Ids := []int{-1} // set default value to prevent error
+	for _, resp := range response1 {
+		query1Ids = append(query1Ids, resp.ItemSubstituteDetailId)
+	}
+
+	query2 := tx.Model(&entitiesDetail).
+		Select(`
+			mtr_item_substitute_detail.item_substitute_detail_id,
+			mtr_item_substitute_detail.is_active,
+			mtr_item_substitute_detail.item_id,
+			mi.item_name,
+			0 AS quantity,
+			mtr_item_substitute_detail.sequence
+		`).
+		Joins("INNER JOIN mtr_item_substitute mis ON mis.item_substitute_id = mtr_item_substitute_detail.item_substitute_id").
+		Joins("LEFT JOIN mtr_item mi ON mi.item_id = mtr_item_substitute_detail.item_id").
+		Where("mtr_item_substitute_detail.item_id = ?", itemId).
+		Where("mis.effective_date = ?", effectiveDate).
+		Where("mtr_item_substitute_detail.item_substitute_id NOT IN ?", query1Ids)
+
+	response2 := []masterpayloads.ItemSubstituteDetailForItemInquiryResponse{}
+	err = query2.Scan(&response2).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching item substitute detail id second query",
+			Err:        err,
+		}
+	}
+
+	response1 = append(response1, response2...)
+
+	joinedResponse, totalPages, totalRows := pagination.NewDataFramePaginate(response1, &pages)
+
+	pages.Rows = utils.ModifyKeysInResponse(joinedResponse)
 	pages.TotalPages = totalPages
 	pages.TotalRows = int64(totalRows)
 

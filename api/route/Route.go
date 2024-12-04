@@ -376,6 +376,11 @@ func StartRouting(db *gorm.DB) {
 	ClaimSupplierService := transactionsparepartserviceimpl.NewClaimSupplierServiceImpl(ClaimSupplierRepository, db, rdb)
 	ClaimSupplierController := transactionsparepartcontroller.NewClaimSupplierControllerImpl(ClaimSupplierService)
 
+	//Item Inquiry
+	ItemInquiryRepository := transactionsparepartrepositoryimpl.StartItemInquiryRepositoryImpl()
+	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
+	ItemInquiryController := transactionsparepartcontroller.NewItemInquiryController(ItemInquiryService)
+
 	//stock transaction
 	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
@@ -532,6 +537,7 @@ func StartRouting(db *gorm.DB) {
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	GoodsReceiveRouter := GoodsReceiveRouter(GoodsReceiveController)
 	BinningListRouter := BinningListRouter(BinningListController)
+	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
@@ -643,6 +649,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
 
 		r.Mount("/binning-list", BinningListRouter)
+		r.Mount("/item-inquiry", ItemInquiryRouter)
+
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
 	})
