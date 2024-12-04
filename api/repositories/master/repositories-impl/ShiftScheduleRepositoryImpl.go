@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -200,21 +199,20 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 	return true, nil
 }
 
+// USPG_AMSHIFTSCH_SELECT
+// IF @Option = 6
 func (r *ShiftScheduleRepositoryImpl) GetShiftScheduleDropDown(tx *gorm.DB) ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse) {
-	entities := []masterentities.ShiftSchedule{}
+	entities := masterentities.ShiftSchedule{}
 	response := []masterpayloads.ShiftScheduleDropDownResponse{}
-	if err := tx.Model(entities).Scan(&response).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+
+	err := tx.Model(&entities).Select("MAX(shift_schedule_id) shift_schedule_id, shift_code, is_active").Group("shift_code, is_active").Order("shift_schedule_id ASC").Scan(&response).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching shift schedule dropdown",
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
-		}
-	}
 	return response, nil
 }
