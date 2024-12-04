@@ -75,10 +75,10 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 	queryParams := map[string]string{
 		"mtr_purchase_price.purchase_price_id":             queryValues.Get("purchase_price_id"),
 		"mtr_purchase_price.supplier_id":                   queryValues.Get("supplier_id"),
-		"mtr_purchase_price.supplier_code":                 queryValues.Get("supplier_code"),
-		"mtr_purchase_price.supplier_name":                 queryValues.Get("supplier_name"),
+		"supplier_code":                                    queryValues.Get("supplier_code"),
+		"supplier_name":                                    queryValues.Get("supplier_name"),
 		"mtr_purchase_price.currency_id":                   queryValues.Get("currency_id"),
-		"mtr_purchase_price.currency_code":                 queryValues.Get("currency_code"),
+		"currency_code":                                    queryValues.Get("currency_code"),
 		"mtr_purchase_price.purchase_price_effective_date": queryValues.Get("purchase_price_effective_date"),
 		"mtr_purchase_price.is_active":                     queryValues.Get("is_active"),
 	}

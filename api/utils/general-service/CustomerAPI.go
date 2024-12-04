@@ -5,7 +5,9 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -68,6 +70,72 @@ type CustomerMasterByCodeResponse struct {
 	CustomerCode string `json:"customer_code"`
 	CustomerName string `json:"customer_name"`
 	ClientTypeId int    `json:"client_type_id"`
+}
+
+type CustomerMasterParams struct {
+	Page           int    `json:"page"`
+	Limit          int    `json:"limit"`
+	CustomerId     int    `json:"customer_id"`
+	CustomerCode   string `json:"customer_code"`
+	CustomerName   string `json:"customer_name"`
+	IdType         int    `json:"id_type"`
+	IdNumber       string `json:"id_number"`
+	IdAddressId    int    `json:"id_address_id"`
+	AddressStreet1 string `json:"address_street_1"`
+	AddressStreet2 string `json:"address_street_2"`
+	AddressStreet3 string `json:"address_street_3"`
+	VillageName    string `json:"village_name"`
+	VillageZipCode string `json:"village_zip_code"`
+	DistrictName   string `json:"district_name"`
+	CityName       string `json:"city_name"`
+	CityPhoneArea  string `json:"city_phone_area"`
+	ProvinceName   string `json:"province_name"`
+	CountryName    string `json:"country_name"`
+	SortBy         string `json:"sort_by"`
+	SortOf         string `json:"sort_of"`
+}
+
+func GetAllCustomerMaster(params CustomerMasterParams) ([]CustomerMasterResponse, *exceptions.BaseErrorResponse) {
+	var getCustomerMaster []CustomerMasterResponse
+	if params.Limit == 0 {
+		params.Limit = 1000000
+	}
+
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "customer-list"
+
+	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
+
+	v := reflect.ValueOf(params)
+	typeOfParams := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		value := v.Field(i).Interface()
+		if strVal, ok := value.(string); ok && strVal != "" {
+			key := typeOfParams.Field(i).Tag.Get("json")
+			value := strings.ReplaceAll(strVal, " ", "%20")
+			queryParams += "&" + key + "=" + value
+		}
+	}
+
+	url := baseURL + "?" + queryParams
+
+	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve customer due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "customer service is temporarily unavailable"
+		}
+
+		return getCustomerMaster, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting customer by ID"),
+		}
+	}
+
+	return getCustomerMaster, nil
 }
 
 func GetCustomerMasterDetailById(id int) (CustomerMasterDetailResponse, *exceptions.BaseErrorResponse) {

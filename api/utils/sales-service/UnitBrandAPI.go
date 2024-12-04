@@ -5,14 +5,70 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
 )
 
 type UnitBrandResponse struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`
 	BrandName string `json:"brand_name"`
+}
+
+type UnitBrandParams struct {
+	Page      int    `json:"page"`
+	Limit     int    `json:"limit"`
+	BrandId   int    `json:"brand_id"`
+	BrandCode string `json:"brand_code"`
+	BrandName string `json:"brand_name"`
+	SortBy    string `json:"sort_by"`
+	SortOf    string `json:"sort_of"`
+}
+
+func GetAllUnitBrand(params UnitBrandParams) ([]UnitBrandResponse, *exceptions.BaseErrorResponse) {
+	var getUnitBrand []UnitBrandResponse
+	if params.Limit == 0 {
+		params.Limit = 1000000
+	}
+
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "unit-brand-list"
+
+	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
+
+	v := reflect.ValueOf(params)
+	typeOfParams := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		value := v.Field(i).Interface()
+		if strVal, ok := value.(string); ok && strVal != "" {
+			key := typeOfParams.Field(i).Tag.Get("json")
+			value := strings.ReplaceAll(strVal, " ", "%20")
+			queryParams += "&" + key + "=" + value
+		}
+	}
+
+	url := baseURL + "?" + queryParams
+
+	err := utils.CallAPI("GET", url, nil, &getUnitBrand)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit brand due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit brand service is temporarily unavailable"
+		}
+
+		return getUnitBrand, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit brand by ID"),
+		}
+	}
+
+	return getUnitBrand, nil
 }
 
 func GetUnitBrandByCode(code string) (UnitBrandResponse, *exceptions.BaseErrorResponse) {
