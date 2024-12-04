@@ -110,7 +110,7 @@ func GetEmployeeByID(id int) (EmployeeMasterResponse, *exceptions.BaseErrorRespo
 
 func GetEmployeeMasterById(id int) (EmployeeMasterResponses, *exceptions.BaseErrorResponse) {
 	var getEmployee EmployeeMasterResponses
-	url := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(id)
+	url := config.EnvConfigs.GeneralServiceUrl + "user-detail?user_id=" + strconv.Itoa(id)
 
 	err := utils.CallAPI("GET", url, nil, &getEmployee)
 	if err != nil {

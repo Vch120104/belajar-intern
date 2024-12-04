@@ -8,13 +8,13 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -148,13 +148,21 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	var mapResponses []map[string]interface{}
 	for _, response := range responses {
-		supplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-		var getSupplierResponse masteritempayloads.SupplierMasterResponse
-		supplierError := utils.Get(supplierURL, &getSupplierResponse, nil)
 
-		itemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-		var getItemGroupResponse masteritempayloads.ItemGroupResponse
-		itemGroupError := utils.Get(itemGroupURL, &getItemGroupResponse, nil)
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+		if supplierErr != nil || getSupplierResponse.SupplierId == 0 {
+			getSupplierResponse = generalserviceapiutils.SupplierMasterResponse{
+				SupplierName: "",
+				SupplierCode: "",
+			}
+		}
+
+		getItemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+		if itemGroupErr != nil || getItemGroupResponse.ItemGroupId == 0 {
+			getItemGroupResponse = aftersalesserviceapiutils.ItemGroupResponse{
+				ItemGroupCode: "",
+			}
+		}
 
 		responseMap := map[string]interface{}{
 			"is_active":       response.IsActive,
@@ -172,14 +180,9 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			"supplier_code":   getSupplierResponse.SupplierCode,
 		}
 
-		if supplierError != nil {
-			responseMap["supplier_name"] = ""
-			responseMap["supplier_code"] = ""
-		}
-
-		if itemGroupError != nil {
-			responseMap["item_group_code"] = ""
-		}
+		responseMap["supplier_name"] = getSupplierResponse.SupplierName
+		responseMap["supplier_code"] = getSupplierResponse.SupplierCode
+		responseMap["item_group_code"] = getItemGroupResponse.ItemGroupCode
 
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -237,20 +240,19 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 		}
 	}
 
-	supplierResponse := masteritempayloads.SupplierMasterResponse{}
 	if response.SupplierId != nil {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
-		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-			return response, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to fetch supplier data",
-				Err:        err,
-			}
+		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterByID(*response.SupplierId)
+		if supplierError != nil {
+			response.SupplierCode = nil
+			response.SupplierName = nil
+		} else {
+			response.SupplierCode = &supplierResponse.SupplierCode
+			response.SupplierName = &supplierResponse.SupplierName
 		}
+	} else {
+		response.SupplierCode = nil
+		response.SupplierName = nil
 	}
-
-	response.SupplierCode = &supplierResponse.SupplierCode
-	response.SupplierName = &supplierResponse.SupplierName
 
 	return response, nil
 }
@@ -330,19 +332,19 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 		}
 	}
 
-	supplierResponse := masteritempayloads.SupplierMasterResponse{}
 	if response.SupplierId != nil {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
-		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-			return response, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterByID(*response.SupplierId)
+		if supplierError != nil {
+			response.SupplierCode = nil
+			response.SupplierName = nil
+		} else {
+			response.SupplierCode = &supplierResponse.SupplierCode
+			response.SupplierName = &supplierResponse.SupplierName
 		}
+	} else {
+		response.SupplierCode = nil
+		response.SupplierName = nil
 	}
-
-	response.SupplierCode = &supplierResponse.SupplierCode
-	response.SupplierName = &supplierResponse.SupplierName
 
 	// joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
 

@@ -8,8 +8,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
-	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"math"
@@ -468,7 +468,7 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterConditio
 			}
 		}
 
-		itemGroupResponse, itemGroupErr := generalserviceapiutils.GetItemGroupById(payload.ItemGroupId)
+		itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(payload.ItemGroupId)
 		if itemGroupErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
