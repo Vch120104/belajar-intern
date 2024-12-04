@@ -12,7 +12,6 @@ import (
 
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,8 +30,6 @@ func StartLabourSellingPriceRepositoryImpl() masteroperationrepository.LabourSel
 func (r *LabourSellingPriceRepositoryImpl) GetSellingPriceDetailById(tx *gorm.DB, detailId int) (masteroperationpayloads.LabourSellingPriceDetailbyIdResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.LabourSellingPriceDetail{}
 	response := masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}
-	var modelResponse masteroperationpayloads.ModelSellingPriceDetailResponse
-	var variantResponse masteroperationpayloads.VariantResponse
 
 	if err := tx.Model(entities).Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceDetailId: detailId}).
 		First(&entities).
@@ -48,50 +45,40 @@ func (r *LabourSellingPriceRepositoryImpl) GetSellingPriceDetailById(tx *gorm.DB
 	response.ModelId = entities.ModelId
 	response.VariantId = entities.VariantId
 
-	// join with mtr_unit_model
-
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entities.ModelId)
-
-	errUrlUnitModel := utils.Get(unitModelUrl, &modelResponse, nil)
-
-	if errUrlUnitModel != nil {
+	modelData, modelError := salesserviceapiutils.GetUnitModelById(entities.ModelId)
+	if modelError != nil {
 		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitModel,
+			StatusCode: modelError.StatusCode,
+			Err:        modelError.Err,
 		}
 	}
 
-	if modelResponse == (masteroperationpayloads.ModelSellingPriceDetailResponse{}) {
+	if modelData == (salesserviceapiutils.UnitModelResponse{}) {
 		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNoContent,
 			Err:        errors.New("model not found"),
 		}
 	}
 
-	response.Model = modelResponse.ModelCode + " - " + modelResponse.ModelDescription
+	response.Model = modelData.ModelCode + " - " + modelData.ModelName
 
-	//JOIN UNIT VARIANT
-
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(entities.VariantId)
-
-	errUrlunitVariant := utils.Get(unitVariantUrl, &variantResponse, nil)
-
-	if errUrlunitVariant != nil {
+	variantData, variantError := salesserviceapiutils.GetUnitVariantById(entities.VariantId)
+	if variantError != nil {
 		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitModel,
+			StatusCode: variantError.StatusCode,
+			Err:        variantError.Err,
 		}
 	}
 
-	if variantResponse == (masteroperationpayloads.VariantResponse{}) {
+	if variantData == (salesserviceapiutils.UnitVariantResponse{}) {
 		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNoContent,
-			Err:        errors.New("varinat not found"),
+			Err:        errors.New("variant not found"),
 		}
 	}
 
-	response.Variant = variantResponse.VariantCode + " - " + variantResponse.VariantDescription
-	response.RecordStatus = variantResponse.VariantDescription
+	response.Variant = variantData.VariantCode + " - " + variantData.VariantDescription
+	response.RecordStatus = variantData.VariantDescription
 
 	return response, nil
 }
@@ -132,16 +119,11 @@ func (r *LabourSellingPriceRepositoryImpl) SaveMultipleDetail(tx *gorm.DB, detai
 func (r *LabourSellingPriceRepositoryImpl) GetAllDetailbyHeaderId(tx *gorm.DB, headerId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	entities := []masteroperationentities.LabourSellingPriceDetail{}
 	responses := []masteroperationpayloads.LabourSellingPriceDetailResponse{}
-	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
-	var getVariantResponse []masteroperationpayloads.VariantResponse
-	var ModelIds string
-	var VariantIds string
-	//define base model
+
 	query := tx.
 		Model(&entities).
 		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId})
 
-	//apply pagination and execute
 	rows, err := query.Scan(&responses).Rows()
 
 	if len(responses) == 0 {
@@ -160,45 +142,39 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllDetailbyHeaderId(tx *gorm.DB, h
 
 	defer rows.Close()
 
-	models_ids := []int{}
-	variant_ids := []int{}
+	modelsIds := []int{}
+	variantIds := []int{}
+	ModelIds := ""
+	VariantIds := ""
 
 	for _, response := range responses {
-		if isNotInList(models_ids, response.ModelId) {
-			str := strconv.Itoa(response.ModelId)
-			ModelIds += str + ","
-			models_ids = append(models_ids, response.ModelId)
+		if isNotInList(modelsIds, response.ModelId) {
+			ModelIds += strconv.Itoa(response.ModelId) + ","
+			modelsIds = append(modelsIds, response.ModelId)
 		}
-		if isNotInList(variant_ids, response.VariantId) {
-			str := strconv.Itoa(response.VariantId)
-			VariantIds += str + ","
-			variant_ids = append(variant_ids, response.VariantId)
+		if isNotInList(variantIds, response.VariantId) {
+			VariantIds += strconv.Itoa(response.VariantId) + ","
+			variantIds = append(variantIds, response.VariantId)
 		}
-
 	}
 
-	// join with mtr_unit_model
-
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + ModelIds
-
-	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
-
-	if errUrlUnitModel != nil {
+	modelData, modelError := salesserviceapiutils.GetUnitModelByMultiId(modelsIds)
+	if modelError != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitModel,
+			StatusCode: modelError.StatusCode,
+			Err:        modelError.Err,
 		}
 	}
 
-	if len(getModelResponse) == 0 {
+	variantData, variantError := salesserviceapiutils.GetUnitVariantByMultiId(variantIds)
+	if variantError != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
+			StatusCode: variantError.StatusCode,
+			Err:        variantError.Err,
 		}
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
-
+	joinedData1, errdf := utils.DataFrameInnerJoin(responses, modelData, "ModelId")
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -206,35 +182,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllDetailbyHeaderId(tx *gorm.DB, h
 		}
 	}
 
-	if len(getModelResponse) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
-	}
-
-	//JOIN UNIT VARIANT
-
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + VariantIds
-
-	errUrlunitVariant := utils.Get(unitVariantUrl, &getVariantResponse, nil)
-
-	if errUrlunitVariant != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitModel,
-		}
-	}
-
-	if len(getVariantResponse) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
-	}
-
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
-
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, variantData, "VariantId")
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -335,15 +283,14 @@ func isNotInList(list []int, value int) bool {
 func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.LabourSellingPrice{}
 	response := masteroperationpayloads.LabourSellingPriceResponse{}
-	var getUnitBrandResponse masteroperationpayloads.BrandLabourSellingPriceResponse
-	var getjobTypeResponse masteroperationpayloads.JobTypeLabourSellingPriceResponse
+	var getUnitBrandResponse salesserviceapiutils.UnitBrandResponse
+	var getJobTypeResponse generalserviceapiutils.WorkOrderJobType
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Where(masteroperationentities.LabourSellingPrice{
 			LabourSellingPriceId: Id,
 		}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -352,25 +299,23 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 		}
 	}
 
-	fmt.Print(response)
-
-	defer rows.Close()
-
-	// join with mtr_brand on sales service
-
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(response.BrandId)
-
-	errUrlUnitBrand := utils.Get(unitBrandUrl, &getUnitBrandResponse, nil)
-
-	if errUrlUnitBrand != nil {
+	getUnitBrandResponse, errBrand := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	if errBrand != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlUnitBrand,
+			StatusCode: errBrand.StatusCode,
+			Err:        errBrand.Err,
 		}
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin([]masteroperationpayloads.LabourSellingPriceResponse{response}, []masteroperationpayloads.BrandLabourSellingPriceResponse{getUnitBrandResponse}, "BrandId")
+	getJobTypeResponse, errJobType := generalserviceapiutils.GetJobTransactionTypeByID(response.JobTypeId)
+	if errJobType != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: errJobType.StatusCode,
+			Err:        errJobType.Err,
+		}
+	}
 
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masteroperationpayloads.LabourSellingPriceResponse{response}, []salesserviceapiutils.UnitBrandResponse{getUnitBrandResponse}, "BrandId")
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -378,28 +323,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 		}
 	}
 
-	if len(joinedData1) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("failed to fetch with brand"),
-		}
-	}
-
-	//join with mtr_job_type on general service
-
-	jobTypeUrl := config.EnvConfigs.GeneralServiceUrl + "job-type/" + strconv.Itoa(response.JobTypeId)
-
-	errUrljobType := utils.Get(jobTypeUrl, &getjobTypeResponse, nil)
-
-	if errUrljobType != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrljobType,
-		}
-	}
-
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masteroperationpayloads.JobTypeLabourSellingPriceResponse{getjobTypeResponse}, "JobTypeId")
-
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []generalserviceapiutils.WorkOrderJobType{getJobTypeResponse}, "JobTypeId")
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -410,12 +334,11 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 	if len(joinedData2) == 0 {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("failed to fetch with job type"),
+			Err:        errors.New("failed to fetch with brand and job type"),
 		}
 	}
 
 	result := joinedData2[0]
-
 	return result, nil
 }
 
@@ -496,19 +419,16 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 
 			for _, data := range joinedData2 {
 				result := map[string]interface{}{
-					"labour_selling_price_id": data["LabourSellingPriceId"],
-					"model_id":                data["ModelId"],
-					"model_code":              data["ModelCode"],
-					"model_description":       data["ModelDescription"],
-					"variant_id":              data["VariantId"],
-					"variant_code":            data["VariantCode"],
-					"variant_description":     data["VariantDescription"],
-					"selling_price":           data["SellingPrice"],
-					// "effective_date":          data["EffectiveDate"],
-					// "expire_mileage":          data["ExpireMileage"],
-					// "expire_month":            data["ExpireMonth"],
-					// "extended_warranty":       data["ExtendedWarranty"],
-					"is_active": data["IsActive"],
+					"labour_selling_price_id":        data["LabourSellingPriceId"],
+					"model_id":                       data["ModelId"],
+					"model_code":                     data["ModelCode"],
+					"model_description":              data["ModelDescription"],
+					"variant_id":                     data["VariantId"],
+					"variant_code":                   data["VariantCode"],
+					"variant_description":            data["VariantDescription"],
+					"selling_price":                  data["SellingPrice"],
+					"labour_selling_price_detail_id": data["LabourSellingPriceDetailId"],
+					"is_active":                      data["IsActive"],
 				}
 				results = append(results, result)
 			}

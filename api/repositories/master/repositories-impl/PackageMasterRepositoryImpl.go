@@ -3,6 +3,7 @@ package masterrepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
+	"math"
 
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -28,14 +29,129 @@ func StartPackageMasterRepositoryImpl() masterrepository.PackageMasterRepository
 
 func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var payloads []masterentities.PackageMaster
-	var internalServiceFilter []utils.FilterCondition
+	var profitCenterName, variantCode, modelDescription, modelCode string
 
+	// Define internal and external filters
+	internalFilter, externalFilter := utils.DefineInternalExternalFilter(filterCondition, masterentities.PackageMaster{})
+
+	// Initialize the query for PackageMaster model
 	result := tx.Model(&masterentities.PackageMaster{})
-	whereQuery := utils.ApplyFilter(result, internalServiceFilter)
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&payloads).Error
+
+	// Apply internal filters to the query
+	whereQuery := utils.ApplyFilter(result, internalFilter)
+
+	// Process external filters (for external services like profit center)
+	if len(externalFilter) > 0 {
+		for _, filter := range externalFilter {
+			// Handle profit_center_name external filter
+			if filter.ColumnField == "profit_center_name" {
+				profitCenterName = filter.ColumnValue
+			}
+		}
+
+		// If profit_center_name is provided, fetch profit center IDs from the external service
+		if profitCenterName != "" {
+			profitCenterParams := generalserviceapiutils.ProfitCenterParams{
+				ProfitCenterName: profitCenterName,
+			}
+
+			profitCenterResponse, profitCenterErr := generalserviceapiutils.GetAllProfitCenter(profitCenterParams)
+			if profitCenterErr != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: profitCenterErr.StatusCode,
+					Message:    "Error fetching profit center data",
+					Err:        profitCenterErr.Err,
+				}
+			}
+
+			var profitCenterIds []int
+			for _, pc := range profitCenterResponse {
+				profitCenterIds = append(profitCenterIds, pc.ProfitCenterId)
+			}
+
+			// If we have valid profit_center_ids, add them to the query
+			if len(profitCenterIds) > 0 {
+				whereQuery = whereQuery.Where("profit_center_id IN ?", profitCenterIds)
+			} else {
+				pages.Rows = []map[string]interface{}{}
+				return pages, nil
+			}
+		}
+	}
+
+	// Fetch variant IDs if variant_code is provided (similar logic can be added for variant_code, model_description, etc.)
+	if variantCode != "" {
+		variantParams := salesserviceapiutils.UnitVariantParams{
+			VariantCode: variantCode,
+		}
+
+		variantResponse, variantErr := salesserviceapiutils.GetAllUnitVariant(variantParams)
+		if variantErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: variantErr.StatusCode,
+				Message:    "Error fetching variant data",
+				Err:        variantErr.Err,
+			}
+		}
+
+		var variantIds []int
+		for _, v := range variantResponse {
+			variantIds = append(variantIds, v.VariantId)
+		}
+
+		if len(variantIds) > 0 {
+			whereQuery = whereQuery.Where("variant_id IN ?", variantIds)
+		} else {
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	// Fetch model IDs if model_description or model_code is provided
+	if modelDescription != "" || modelCode != "" {
+		modelParams := salesserviceapiutils.UnitModelParams{
+			ModelDescription: modelDescription,
+			ModelCode:        modelCode,
+		}
+
+		modelResponse, modelErr := salesserviceapiutils.GetAllUnitModel(modelParams)
+		if modelErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: modelErr.StatusCode,
+				Message:    "Error fetching model data",
+				Err:        modelErr.Err,
+			}
+		}
+
+		var modelIds []int
+		for _, m := range modelResponse {
+			modelIds = append(modelIds, m.ModelId)
+		}
+
+		if len(modelIds) > 0 {
+			whereQuery = whereQuery.Where("model_id IN ?", modelIds)
+		} else {
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	var totalRows int64
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.TotalRows = totalRows
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+	pages.TotalPages = totalPages
+
+	err := whereQuery.Order("package_id ASC").Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&payloads).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
@@ -45,36 +161,37 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		return pages, nil
 	}
 
-	// Fetch Profit Center data using the API
-	profitCenterData, profitCenterErr := generalserviceapiutils.GetProfitCenterById(payloads[0].ProfitCenterId)
-	if profitCenterErr != nil {
-		return pages, profitCenterErr
-	}
-
-	// Fetch Model data using the API
-	unitModelData, unitModelErr := salesserviceapiutils.GetUnitModelById(payloads[0].ModelId)
-	if unitModelErr != nil {
-		return pages, unitModelErr
-	}
-
-	// Fetch Variant data using the API
-	unitVariantData, unitVariantErr := salesserviceapiutils.GetUnitVariantById(payloads[0].VariantId)
-	if unitVariantErr != nil {
-		return pages, unitVariantErr
-	}
-
+	// Map the results with necessary external data (e.g., profit center, model, variant)
 	var results []map[string]interface{}
 	for _, response := range payloads {
+		// Fetch profit center data
+		profitCenterData, profitCenterErr := generalserviceapiutils.GetProfitCenterById(response.ProfitCenterId)
+		if profitCenterErr != nil {
+			return pages, profitCenterErr
+		}
+
+		// Fetch model data
+		unitModelData, unitModelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		if unitModelErr != nil {
+			return pages, unitModelErr
+		}
+
+		// Fetch variant data
+		unitVariantData, unitVariantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
+		if unitVariantErr != nil {
+			return pages, unitVariantErr
+		}
+
 		result := map[string]interface{}{
-			"package_master_id":   response.PackageId,
+			"package_id":          response.PackageId,
 			"package_code":        response.PackageCode,
 			"package_name":        response.PackageName,
+			"profit_center_id":    response.ProfitCenterId,
 			"profit_center_name":  profitCenterData.ProfitCenterName,
-			"model_name":          unitModelData.ModelName,
-			"variant_description": unitVariantData.VariantDescription,
-			"profit_center_code":  profitCenterData.ProfitCenterCode,
+			"model_description":   unitModelData.ModelName,
 			"model_code":          unitModelData.ModelCode,
 			"variant_code":        unitVariantData.VariantCode,
+			"variant_description": unitVariantData.VariantDescription,
 			"package_price":       response.PackagePrice,
 			"is_active":           response.IsActive,
 		}
