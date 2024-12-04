@@ -48,7 +48,7 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
-	response.DealerId = entities.DealerId
+	response.CompanyId = entities.DealerId
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
 
@@ -59,7 +59,7 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 	entities := masterentities.Agreement{
 		AgreementCode:     req.AgreementCode,
 		BrandId:           req.BrandId,
-		DealerId:          req.DealerId,
+		DealerId:          req.CompanyId,
 		TopId:             req.TopId,
 		AgreementDateFrom: req.AgreementDateFrom,
 		AgreementDateTo:   req.AgreementDateTo,
@@ -90,7 +90,7 @@ func (r *AgreementRepositoryImpl) UpdateAgreement(tx *gorm.DB, Id int, req maste
 			"aggreement_id":       Id,
 			"agreement_code":      req.AgreementCode,
 			"brand_id":            req.BrandId,
-			"company_id":          req.DealerId,
+			"company_id":          req.CompanyId,
 			"top_id":              req.TopId,
 			"agreement_date_from": req.AgreementDateFrom,
 			"agreement_date_to":   req.AgreementDateTo,
@@ -150,14 +150,85 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (ma
 }
 
 func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []masterentities.Agreement
+	var entities masterentities.Agreement
 
-	entities := []masterentities.Agreement{}
+	baseModelQuery := tx.Model(&entities)
 
-	baseModelQuery := tx.Model(&masterentities.Agreement{})
+	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	var customerCode, customerName, profitCenterName string
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	for _, filter := range filterCondition {
+		switch filter.ColumnField {
+		case "customer_code":
+			customerCode = filter.ColumnValue
+		case "customer_name":
+			customerName = filter.ColumnValue
+		case "profit_center_name":
+			profitCenterName = filter.ColumnValue
+		}
+	}
+
+	// External filter untuk Customer
+	if customerCode != "" || customerName != "" {
+		customerParams := generalserviceapiutils.CustomerMasterParams{
+			CustomerCode: customerCode,
+			CustomerName: customerName,
+		}
+
+		customerResponse, customerError := generalserviceapiutils.GetAllCustomerMaster(customerParams)
+		if customerError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: customerError.StatusCode,
+				Message:    "Error fetching customer data",
+				Err:        customerError.Err,
+			}
+		}
+
+		var customerIds []int
+		for _, customer := range customerResponse {
+			customerIds = append(customerIds, customer.CustomerId)
+		}
+
+		if len(customerIds) > 0 {
+			baseModelQuery = baseModelQuery.Where("customer_id IN ?", customerIds)
+		} else {
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	// External filter untuk Profit Center
+	if profitCenterName != "" {
+		profitCenterParams := generalserviceapiutils.ProfitCenterParams{
+			ProfitCenterName: profitCenterName,
+		}
+
+		profitCenterResponse, profitCenterError := generalserviceapiutils.GetAllProfitCenter(profitCenterParams)
+		if profitCenterError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: profitCenterError.StatusCode,
+				Message:    "Error fetching profit center data",
+				Err:        profitCenterError.Err,
+			}
+		}
+
+		var profitCenterIds []int
+		for _, profitCenter := range profitCenterResponse {
+			profitCenterIds = append(profitCenterIds, profitCenter.ProfitCenterId)
+		}
+
+		if len(profitCenterIds) > 0 {
+			baseModelQuery = baseModelQuery.Where("profit_center_id IN ?", profitCenterIds)
+		} else {
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	// Apply pagination scope and execute the query
+	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -165,15 +236,16 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 		}
 	}
 
-	if len(entities) == 0 {
+	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
+	// Map the query results to the response structure
 	var results []map[string]interface{}
-	for _, entity := range entities {
-		// Fetch Customer data from external service
-		getCustomerResponse, custErr := generalserviceapiutils.GetCustomerMasterByID(entity.CustomerId)
+	for _, response := range responses {
+		// Fetch customer data
+		getCustomerResponse, custErr := generalserviceapiutils.GetCustomerMasterByID(response.CustomerId)
 		if custErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -181,8 +253,8 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 			}
 		}
 
-		// Fetch Company data from external service
-		getCompanyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entity.DealerId)
+		// Fetch company data
+		getCompanyResponse, compErr := generalserviceapiutils.GetCompanyDataById(response.DealerId)
 		if compErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -190,8 +262,8 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 			}
 		}
 
-		// Fetch Profit Center data from external service
-		profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entity.ProfitCenterId)
+		// Fetch profit center data
+		profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(response.ProfitCenterId)
 		if profitCenterErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -199,8 +271,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 			}
 		}
 
-		// Fetch Term Of Payment data from external service
-		termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entity.TopId)
+		termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(response.TopId)
 		if termOfPaymentErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -209,11 +280,11 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 		}
 
 		result := map[string]interface{}{
-			"agreement_id":        entity.AgreementId,
-			"agreement_code":      entity.AgreementCode,
-			"is_active":           entity.IsActive,
-			"brand_id":            entity.BrandId,
-			"customer_id":         entity.CustomerId,
+			"agreement_id":        response.AgreementId,
+			"agreement_code":      response.AgreementCode,
+			"is_active":           response.IsActive,
+			"brand_id":            response.BrandId,
+			"customer_id":         response.CustomerId,
 			"customer_name":       getCustomerResponse.CustomerName,
 			"customer_code":       getCustomerResponse.CustomerCode,
 			"address_street_1":    getCustomerResponse.AddressStreet1,
@@ -226,23 +297,21 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 			"city_phone_area":     getCustomerResponse.CityPhoneArea,
 			"province_name":       getCustomerResponse.ProvinceName,
 			"country_name":        getCustomerResponse.CountryName,
-			"profit_center_id":    entity.ProfitCenterId,
+			"profit_center_id":    response.ProfitCenterId,
 			"profit_center_name":  profitCenterResponse.ProfitCenterName,
-			"agreement_date_from": entity.AgreementDateFrom,
-			"agreement_date_to":   entity.AgreementDateTo,
-			"dealer_id":           entity.DealerId,
+			"agreement_date_from": response.AgreementDateFrom,
+			"agreement_date_to":   response.AgreementDateTo,
+			"dealer_id":           response.DealerId,
 			"dealer_name":         getCompanyResponse.CompanyName,
 			"dealer_code":         getCompanyResponse.CompanyCode,
-			"top_id":              entity.TopId,
-			"top_name":            termOfPaymentResponse.TermOfPaymentName,
-			"agreement_remark":    entity.AgreementRemark,
+			"top_id":              response.TopId,
+			"top_code":            termOfPaymentResponse.TermOfPaymentCode,
+			"top_description":     termOfPaymentResponse.TermOfPaymentName,
 		}
-
 		results = append(results, result)
 	}
 
 	pages.Rows = results
-
 	return pages, nil
 }
 

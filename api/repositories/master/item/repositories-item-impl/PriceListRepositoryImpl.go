@@ -12,6 +12,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -426,11 +427,24 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterConditio
 			mtr_item_price_code.item_price_code,
 			mtr_item_price_list.is_active
 		`).
-		Order("CAST(effective_date AS DATE) desc")
+		Order("CAST(effective_date AS DATE) DESC")
 
-	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&payloads).Error
+	var totalRows int64
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.TotalRows = totalRows
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+	pages.TotalPages = totalPages
+
+	err := whereQuery.Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&payloads).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -445,34 +459,31 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterConditio
 
 	var results []map[string]interface{}
 	for _, payload := range payloads {
-		// Fetch brand data
+		// Fetch data eksternal seperti brand, item group, currency
 		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(payload.BrandId)
 		if brandErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: brandErr.StatusCode,
-				Err:        errors.New(brandErr.Message),
+				StatusCode: http.StatusInternalServerError,
+				Err:        brandErr.Err,
 			}
 		}
 
-		// Fetch item group data
 		itemGroupResponse, itemGroupErr := generalserviceapiutils.GetItemGroupById(payload.ItemGroupId)
 		if itemGroupErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: itemGroupErr.StatusCode,
-				Err:        errors.New(itemGroupErr.Message),
+				StatusCode: http.StatusInternalServerError,
+				Err:        itemGroupErr.Err,
 			}
 		}
 
-		// Fetch currency data
 		currencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(payload.CurrencyId)
 		if currencyErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: currencyErr.StatusCode,
-				Err:        errors.New(currencyErr.Message),
+				StatusCode: http.StatusInternalServerError,
+				Err:        currencyErr.Err,
 			}
 		}
 
-		// Prepare the result
 		result := map[string]interface{}{
 			"price_list_id":   payload.PriceListId,
 			"brand_id":        payload.BrandId,

@@ -46,8 +46,12 @@ func (r *PackageMasterControllerImpl) GetAllPackageMaster(writer http.ResponseWr
 		"mtr_package.package_name":     queryValues.Get("package_name"),
 		"mtr_package.package_code":     queryValues.Get("package_code"),
 		"mtr_package.profit_center_id": queryValues.Get("profit_center_id"),
+		"profit_center_name":           queryValues.Get("profit_center_name"),
 		"mtr_package.model_id":         queryValues.Get("model_id"),
+		"model_code":                   queryValues.Get("model_code"),
+		"model_description":            queryValues.Get("model_description"),
 		"mtr_package.variant_id":       queryValues.Get("variant_id"),
+		"variant_description":          queryValues.Get("variant_description"),
 		"mtr_package.package_price":    queryValues.Get("package_price"),
 		"mtr_package.is_active":        queryValues.Get("is_active"),
 	}
