@@ -283,13 +283,12 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 	}
 
 	// Fetch Supplier data from external service
-	SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(entities.SupplierId)
-	var getSupplierResponse masteritempayloads.PurchasePriceSupplierResponse
-	if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	if supplierErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Internal server error while fetching supplier data",
-			Err:        err,
+			Message:    "failed to fetch supplier data",
+			Err:        supplierErr,
 		}
 	}
 

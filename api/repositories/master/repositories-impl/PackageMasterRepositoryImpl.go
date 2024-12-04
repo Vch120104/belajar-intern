@@ -31,25 +31,20 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 	var payloads []masterentities.PackageMaster
 	var profitCenterName, variantCode, modelDescription, modelCode string
 
-	// Define internal and external filters
 	internalFilter, externalFilter := utils.DefineInternalExternalFilter(filterCondition, masterentities.PackageMaster{})
 
-	// Initialize the query for PackageMaster model
 	result := tx.Model(&masterentities.PackageMaster{})
 
-	// Apply internal filters to the query
 	whereQuery := utils.ApplyFilter(result, internalFilter)
 
-	// Process external filters (for external services like profit center)
 	if len(externalFilter) > 0 {
 		for _, filter := range externalFilter {
-			// Handle profit_center_name external filter
+
 			if filter.ColumnField == "profit_center_name" {
 				profitCenterName = filter.ColumnValue
 			}
 		}
 
-		// If profit_center_name is provided, fetch profit center IDs from the external service
 		if profitCenterName != "" {
 			profitCenterParams := generalserviceapiutils.ProfitCenterParams{
 				ProfitCenterName: profitCenterName,
@@ -69,7 +64,6 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 				profitCenterIds = append(profitCenterIds, pc.ProfitCenterId)
 			}
 
-			// If we have valid profit_center_ids, add them to the query
 			if len(profitCenterIds) > 0 {
 				whereQuery = whereQuery.Where("profit_center_id IN ?", profitCenterIds)
 			} else {
@@ -79,7 +73,6 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	// Fetch variant IDs if variant_code is provided (similar logic can be added for variant_code, model_description, etc.)
 	if variantCode != "" {
 		variantParams := salesserviceapiutils.UnitVariantParams{
 			VariantCode: variantCode,
@@ -107,7 +100,6 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	// Fetch model IDs if model_description or model_code is provided
 	if modelDescription != "" || modelCode != "" {
 		modelParams := salesserviceapiutils.UnitModelParams{
 			ModelDescription: modelDescription,
@@ -161,7 +153,6 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		return pages, nil
 	}
 
-	// Map the results with necessary external data (e.g., profit center, model, variant)
 	var results []map[string]interface{}
 	for _, response := range payloads {
 		// Fetch profit center data
@@ -273,7 +264,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 		// Build the response map
 		response := map[string]interface{}{
 			"is_active":                     detail.IsActive,
-			"package_detail_operation_id":   detail.PackageDetailId,
+			"package_detail_id":             detail.PackageDetailId,
 			"package_id":                    detail.PackageId,
 			"line_type_id":                  detail.LineTypeId,
 			"item_operation_id":             detail.ItemOperationId,

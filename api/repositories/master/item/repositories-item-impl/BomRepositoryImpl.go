@@ -1,15 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
-	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"math"
-	"strconv"
 
 	"after-sales/api/utils"
 	"errors"
@@ -100,17 +99,14 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 	}
 
 	// Fetch item details from external API
-	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(bomMaster.ItemId)
-	var itemResponse masteritempayloads.BomItemLookup
-	errItem := utils.Get(itemUrl, &itemResponse, nil)
+	itemResponse, errItem := aftersalesserviceapiutils.GetItemId(bomMaster.ItemId)
 	if errItem != nil {
 		return masteritempayloads.BomMasterResponseDetail{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch item details",
-			Err:        errItem,
+			StatusCode: errItem.StatusCode,
+			Message:    errItem.Message,
+			Err:        errItem.Err,
 		}
 	}
-
 	// Calculate pagination values
 	offset := pagination.GetPage() * pagination.GetLimit()
 	limit := pagination.GetLimit()
