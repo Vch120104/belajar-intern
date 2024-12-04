@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	masterservice "after-sales/api/services/master"
+	"after-sales/api/utils"
 	"after-sales/api/validation"
 	"errors"
 	"net/http"
@@ -36,7 +37,19 @@ func NewOrderTypeControllerImpl(orderTypeService masterservice.OrderTypeService)
 }
 
 func (r *OrderTypeControllerImpl) GetAllOrderType(writer http.ResponseWriter, request *http.Request) {
-	result, err := r.OrderTypeService.GetAllOrderType()
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"is_active":       queryValues.Get("is_active"),
+		"order_type_id":   queryValues.Get("order_type_id"),
+		"order_type_code": queryValues.Get("order_type_code"),
+		"order_type_name": queryValues.Get("order_type_name"),
+	}
+
+	filterCondition := utils.BuildFilterCondition(queryParams)
+
+	result, err := r.OrderTypeService.GetAllOrderType(filterCondition)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

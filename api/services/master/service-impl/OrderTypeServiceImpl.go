@@ -6,6 +6,7 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+	"after-sales/api/utils"
 	"fmt"
 	"net/http"
 
@@ -25,7 +26,7 @@ func StartOrderTypeServiceImpl(orderTypeRepo masterrepository.OrderTypeRepositor
 	}
 }
 
-func (s *OrderTypeServiceImpl) GetAllOrderType() ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse) {
+func (s *OrderTypeServiceImpl) GetAllOrderType(filterConditions []utils.FilterCondition) ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -49,7 +50,7 @@ func (s *OrderTypeServiceImpl) GetAllOrderType() ([]masterpayloads.GetOrderTypeR
 			}
 		}
 	}()
-	results, err := s.OrderTypeRepo.GetAllOrderType(tx)
+	results, err := s.OrderTypeRepo.GetAllOrderType(tx, filterConditions)
 
 	if err != nil {
 		return results, err
