@@ -52,6 +52,8 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	baseModelQuery := tx.Model(&masteritementities.PurchasePrice{})
 
+	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
+
 	var supplierCode, supplierName, currencyCode, currencyName string
 
 	for _, filter := range filterCondition {
@@ -89,7 +91,6 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		for _, supplier := range supplierResponse {
 			supplierIds = append(supplierIds, supplier.SupplierId)
 		}
-
 		if len(supplierIds) > 0 {
 			baseModelQuery = baseModelQuery.Where("supplier_id IN ?", supplierIds)
 		} else {
@@ -100,7 +101,6 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	var currencyIds []int
 	if currencyCode != "" || currencyName != "" {
-
 		currencyParams := financeserviceapiutils.CurrencyParams{
 			CurrencyCode: currencyCode,
 			CurrencyName: currencyName,
@@ -123,13 +123,12 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		if len(currencyIds) > 0 {
 			baseModelQuery = baseModelQuery.Where("currency_id IN ?", currencyIds)
 		} else {
-
 			pages.Rows = []map[string]interface{}{}
 			return pages, nil
 		}
 	}
 
-	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&responses).Error
+	err := baseModelQuery.Order("purchase_price_id ASC").Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -162,9 +161,8 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			}
 		}
 
-		// Prepare the result
 		result := map[string]interface{}{
-			"identity_system_number":        response.PurchasePriceId,
+			"purchase_price_id":             response.PurchasePriceId,
 			"supplier_id":                   response.SupplierId,
 			"supplier_code":                 getSupplierResponse.SupplierCode,
 			"supplier_name":                 getSupplierResponse.SupplierName,
@@ -178,7 +176,6 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		results = append(results, result)
 	}
 
-	// Set pagination results
 	pages.Rows = results
 
 	return pages, nil

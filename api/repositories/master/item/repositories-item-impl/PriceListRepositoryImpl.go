@@ -4,11 +4,13 @@ import (
 	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
-	masterpayloads "after-sales/api/payloads/master"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"net/http"
 	"strconv"
@@ -396,85 +398,102 @@ func RemoveDuplicates(input []string) []string {
 	return result
 }
 
-func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var payloads []masteritempayloads.PriceListGetAllResponse
-	var brandpayloads []masterpayloads.BrandResponse
-	var itemgrouppayloads []masteritempayloads.ItemGroupResponse
-	var currencypayloads []masteritempayloads.CurrencyResponse
 
-	model := masteritementities.ItemPriceList{}
-
-	query := tx.Model(&model).
+	baseModelQuery := tx.Model(&masteritementities.ItemPriceList{}).
 		Select(`
-        mtr_item_price_list.brand_id,
-        mtr_item_price_list.item_group_id,
-        mtr_item_price_list.item_class_id,
-        mtr_item_class.item_class_name,
-        mtr_item_price_list.currency_id,
-		CAST(effective_date AS DATE) AS effective_date,
-        mtr_item_price_code.item_price_code,
-        MIN(mtr_item_price_list.price_list_id) AS price_list_id,
-        mtr_item_price_list.is_active
-    `).
+			mtr_item_price_list.brand_id,
+			mtr_item_price_list.item_group_id,
+			mtr_item_price_list.item_class_id,
+			mtr_item_class.item_class_name,
+			mtr_item_price_list.currency_id,
+			CAST(effective_date AS DATE) AS effective_date,
+			mtr_item_price_code.item_price_code,
+			MIN(mtr_item_price_list.price_list_id) AS price_list_id,
+			mtr_item_price_list.is_active
+		`).
 		Joins("JOIN mtr_item ON mtr_item.item_id = mtr_item_price_list.item_id").
 		Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
 		Joins("LEFT JOIN mtr_item_price_code ON mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id").
 		Group(`
-        mtr_item_price_list.brand_id,
-        mtr_item_price_list.item_group_id,
-        mtr_item_price_list.item_class_id,
-        mtr_item_class.item_class_name,
-        mtr_item_price_list.currency_id,
-        CAST(effective_date AS DATE),
-        mtr_item_price_code.item_price_code,
-        mtr_item_price_list.is_active
-    `).Order("CAST(effective_date AS DATE) desc")
+			mtr_item_price_list.brand_id,
+			mtr_item_price_list.item_group_id,
+			mtr_item_price_list.item_class_id,
+			mtr_item_class.item_class_name,
+			mtr_item_price_list.currency_id,
+			CAST(effective_date AS DATE),
+			mtr_item_price_code.item_price_code,
+			mtr_item_price_list.is_active
+		`).
+		Order("CAST(effective_date AS DATE) desc")
 
-	//apply where query
-	whereQuery := utils.ApplyFilter(query, filtercondition)
-	//execute
-	err := whereQuery.Scan(&payloads).Error
+	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
 
+	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&payloads).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	errBrandUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand-dropdown", &brandpayloads, nil)
-	if errBrandUrl != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("failed to fetch brand data"),
-		}
+	if len(payloads) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	joinedData := utils.DataFrameLeftJoin(payloads, brandpayloads, "BrandId")
-
-	errItemGroupUrl := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-groups", &itemgrouppayloads, nil)
-	if errItemGroupUrl != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("failed to fetch item group data"),
+	var results []map[string]interface{}
+	for _, payload := range payloads {
+		// Fetch brand data
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(payload.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: brandErr.StatusCode,
+				Err:        errors.New(brandErr.Message),
+			}
 		}
+
+		// Fetch item group data
+		itemGroupResponse, itemGroupErr := generalserviceapiutils.GetItemGroupById(payload.ItemGroupId)
+		if itemGroupErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: itemGroupErr.StatusCode,
+				Err:        errors.New(itemGroupErr.Message),
+			}
+		}
+
+		// Fetch currency data
+		currencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(payload.CurrencyId)
+		if currencyErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: currencyErr.StatusCode,
+				Err:        errors.New(currencyErr.Message),
+			}
+		}
+
+		// Prepare the result
+		result := map[string]interface{}{
+			"price_list_id":   payload.PriceListId,
+			"brand_id":        payload.BrandId,
+			"brand_name":      brandResponse.BrandName,
+			"item_group_id":   payload.ItemGroupId,
+			"item_group_name": itemGroupResponse.ItemGroupName,
+			"item_class_id":   payload.ItemClassId,
+			"item_class_name": payload.ItemClassName,
+			"currency_id":     payload.CurrencyId,
+			"currency_code":   currencyResponse.CurrencyCode,
+			"effective_date":  payload.EffectiveDate,
+			"item_price_code": payload.ItemPriceCode,
+			"is_active":       payload.IsActive,
+		}
+
+		results = append(results, result)
 	}
 
-	joinedData1 := utils.DataFrameLeftJoin(joinedData, itemgrouppayloads, "ItemGroupId")
+	pages.Rows = results
 
-	errCurrencyUrl := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code?page=0&limit=100000", &currencypayloads, nil)
-	if errCurrencyUrl != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("failed to fetch currency data"),
-		}
-	}
-
-	joinedData2 := utils.DataFrameLeftJoin(joinedData1, currencypayloads, "CurrencyId")
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (r *PriceListRepositoryImpl) DeletePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {

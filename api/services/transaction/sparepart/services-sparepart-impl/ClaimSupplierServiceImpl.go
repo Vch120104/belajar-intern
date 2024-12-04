@@ -1,38 +1,37 @@
-package transactionbodyshopserviceimpl
+package transactionsparepartserviceimpl
 
 import (
-	exceptions "after-sales/api/exceptions"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
-	transactionbodyshoprepository "after-sales/api/repositories/transaction/bodyshop"
-	transactionbodyshopservice "after-sales/api/services/transaction/bodyshop"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
+	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
+	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"fmt"
-	"net/http"
-
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"net/http"
 )
 
-type ServiceBodyshopServiceImpl struct {
-	ServiceBodyshopRepository transactionbodyshoprepository.ServiceBodyshopRepository
-	DB                        *gorm.DB
-	RedisClient               *redis.Client // Redis client
+type ClaimSupplierServiceImpl struct {
+	claimRepository transactionsparepartrepository.ClaimSupplierRepository
+	DB              *gorm.DB
+	rdb             *redis.Client
 }
 
-func OpenServiceBodyshopServiceImpl(ServiceBodyshopRepo transactionbodyshoprepository.ServiceBodyshopRepository, db *gorm.DB, redisClient *redis.Client) transactionbodyshopservice.ServiceBodyshopService {
-	return &ServiceBodyshopServiceImpl{
-		ServiceBodyshopRepository: ServiceBodyshopRepo,
-		DB:                        db,
-		RedisClient:               redisClient,
+func NewClaimSupplierServiceImpl(repo transactionsparepartrepository.ClaimSupplierRepository, db *gorm.DB, rdb *redis.Client) transactionsparepartservice.ClaimSupplierService {
+	return &ClaimSupplierServiceImpl{
+		claimRepository: repo,
+		DB:              db,
+		rdb:             rdb,
 	}
 }
-
-func (s *ServiceBodyshopServiceImpl) GetAllByTechnicianWOBodyshop(idTech int, idSysWo int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
+func (service *ClaimSupplierServiceImpl) InsertItemClaim(payload transactionsparepartpayloads.ClaimSupplierInsertPayload) (transactionsparepartentities.ItemClaim, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	//tx.Rollback()
+	result, err := service.claimRepository.InsertItemClaim(tx, payload)
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -54,50 +53,13 @@ func (s *ServiceBodyshopServiceImpl) GetAllByTechnicianWOBodyshop(idTech int, id
 		}
 	}()
 
-	results, repoErr := s.ServiceBodyshopRepository.GetAllByTechnicianWOBodyshop(tx, idTech, idSysWo, filterCondition, pages)
-	if repoErr != nil {
-		return results, repoErr
-	}
-
-	return results, nil
-}
-
-func (s *ServiceBodyshopServiceImpl) StartService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-
-	// Start the service
-	start, err := s.ServiceBodyshopRepository.StartService(tx, idAlloc, idSysWo, companyId)
 	if err != nil {
-		return false, err
+		return result, err
 	}
-
-	return start, nil
+	return result, nil
 }
-
-func (s *ServiceBodyshopServiceImpl) PendingService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (service *ClaimSupplierServiceImpl) InsertItemClaimDetail(payloads transactionsparepartpayloads.ClaimSupplierInsertDetailPayload) (transactionsparepartentities.ItemClaimDetail, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -120,18 +82,16 @@ func (s *ServiceBodyshopServiceImpl) PendingService(idAlloc int, idSysWo int, co
 			}
 		}
 	}()
+	result, err := service.claimRepository.InsertItemClaimDetail(tx, payloads)
+	//tx.Rollback()
 
-	// Pending the service
-	pending, err := s.ServiceBodyshopRepository.PendingService(tx, idAlloc, idSysWo, companyId)
 	if err != nil {
-		return false, err
+		return result, err
 	}
-
-	return pending, nil
+	return result, nil
 }
-
-func (s *ServiceBodyshopServiceImpl) TransferService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (service *ClaimSupplierServiceImpl) GetItemClaimById(itemClaimId int) (transactionsparepartpayloads.ClaimSupplierGetByIdResponse, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -154,18 +114,15 @@ func (s *ServiceBodyshopServiceImpl) TransferService(idAlloc int, idSysWo int, c
 			}
 		}
 	}()
+	result, err := service.claimRepository.GetItemClaimById(tx, itemClaimId)
 
-	// Transfer the service
-	transfer, err := s.ServiceBodyshopRepository.TransferService(tx, idAlloc, idSysWo, companyId)
 	if err != nil {
-		return false, err
+		return result, err
 	}
-
-	return transfer, nil
+	return result, nil
 }
-
-func (s *ServiceBodyshopServiceImpl) StopService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (service *ClaimSupplierServiceImpl) GetItemClaimDetailByHeaderId(Paginations pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -188,12 +145,74 @@ func (s *ServiceBodyshopServiceImpl) StopService(idAlloc int, idSysWo int, compa
 			}
 		}
 	}()
+	result, err := service.claimRepository.GetItemClaimDetailByHeaderId(tx, Paginations, filter)
 
-	// Stop the service
-	stop, err := s.ServiceBodyshopRepository.StopService(tx, idAlloc, idSysWo, companyId)
 	if err != nil {
-		return false, err
+		return result, err
 	}
+	return result, nil
+}
 
-	return stop, nil
+func (service *ClaimSupplierServiceImpl) SubmitItemClaim(claimId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := service.claimRepository.SubmitItemClaim(tx, claimId)
+
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (service *ClaimSupplierServiceImpl) GetAllItemClaim(page pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := service.claimRepository.GetAllItemClaim(tx, page, filter)
+
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }

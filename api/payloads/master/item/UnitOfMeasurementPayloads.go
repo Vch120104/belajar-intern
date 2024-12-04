@@ -45,3 +45,10 @@ type GetQuantityConversionResponse struct {
 //	ItemId       int `json:"item_id"`
 //	Quantity     int `json:"quantity"`
 //}
+
+type SourceTypeConversionResponse struct {
+	SourceType         string `json:"source_type"`
+	ItemId             int    `json:"item_id"`
+	Quantity           int    `json:"quantity"`
+	QuantityConversion int    `json:"quantity_conversion"`
+}

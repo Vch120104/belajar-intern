@@ -23,16 +23,12 @@ func StartItemLocationRepositoryImpl() masteritemrepository.ItemLocationReposito
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// Query entitas `ItemLocationDetail` dengan preload untuk relasi terkait
-	entities := []masteritementities.ItemLocationDetail{}
-	query := tx.Model(&masteritementities.ItemLocationDetail{}).
-		Preload("Item").              // Preload relasi Item
-		Preload("ItemLocationSource") // Preload relasi ItemLocationSource
 
-	// Terapkan filter
+	entities := []masteritementities.ItemLocationDetail{}
+	query := tx.Model(&masteritementities.ItemLocationDetail{})
+
 	whereQuery := utils.ApplyFilter(query, filterCondition)
 
-	// Eksekusi query dengan pagination
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -41,13 +37,11 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 		}
 	}
 
-	// Jika tidak ada data yang ditemukan
 	if len(entities) == 0 {
 		pages.Rows = []masteritempayloads.ItemLocationDetailResponse{}
 		return pages, nil
 	}
 
-	// Assign hasil ke pagination
 	pages.Rows = entities
 	return pages, nil
 }

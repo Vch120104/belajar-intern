@@ -30,7 +30,7 @@ func OpenContractServiceDetailServiceImpl(ContractServiceDetailRepo transactionw
 }
 
 // GetAllDetail implements transactionworkshopservice.ContractServiceDetailService.
-func (s *ContractServiceDetailServiceImpl) GetAllDetail(Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ContractServiceDetailServiceImpl) GetAllDetail(Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -55,14 +55,12 @@ func (s *ContractServiceDetailServiceImpl) GetAllDetail(Id int, filterCondition 
 		}
 	}()
 
-	results, totalPages, totalRows, repoErr := s.ContractServiceDetailRepository.GetAllDetail(tx, Id, filterCondition, pages)
+	results, repoErr := s.ContractServiceDetailRepository.GetAllDetail(tx, Id, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(results, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	return results, nil
 }
 
 // GetById implements transactionworkshopservice.ContractServiceDetailService.
