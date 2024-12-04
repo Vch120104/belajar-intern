@@ -1755,7 +1755,7 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, st
 func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var tableStruct []transactionworkshoppayloads.WorkOrderDetailRequest
 
-	baseModelQuery := tx.Model(&transactionworkshoppayloads.WorkOrderDetailRequest{})
+	baseModelQuery := tx.Model(&transactionworkshopentities.WorkOrderDetail{})
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
