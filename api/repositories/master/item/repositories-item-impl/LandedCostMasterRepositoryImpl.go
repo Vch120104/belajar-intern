@@ -79,6 +79,7 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 			"landed_cost_id":        payload.LandedCostId,
 			"shipping_method_name":  shippingMethod.ShippingMethodName,
 			"landed_cost_type_name": landedCostType.LandedCostTypeName,
+			"landed_cost_type_code": landedCostType.LandedCostTypeCode,
 			"is_active":             payload.IsActive,
 			"landed_cost_factor":    payload.LandedCostFactor,
 			"company_id":            payload.CompanyId,

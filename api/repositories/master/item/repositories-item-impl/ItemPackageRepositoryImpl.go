@@ -46,8 +46,8 @@ func (r *ItemPackageRepositoryImpl) GetItemPackageByCode(tx *gorm.DB, itemPackag
 		}
 	}
 
-	response.ItemGroupName = &itemGroupResponse.ItemGroupName
-	response.ItemGroupCode = &itemGroupResponse.ItemGroupCode
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
+	response.ItemGroupCode = itemGroupResponse.ItemGroupCode
 
 	return response, nil
 }
@@ -59,11 +59,13 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 
 	query := tx.Model(&entities).
 		Select(`
+			mtr_item_package.is_active,
 			mtr_item_package.item_package_id,
 			mtr_item_package.item_package_code,
 			mtr_item_package.item_package_name,
 			mtr_item_group.item_group_id AS item_group_id,
-			mtr_item_group.item_group_code AS item_group_code
+			mtr_item_group.item_group_code AS item_group_code,
+			mtr_item_group.item_group_name AS item_group_name
 		`).
 		Joins("LEFT JOIN mtr_item_group ON mtr_item_group.item_group_id = mtr_item_package.item_group_id")
 	queryFilter := utils.ApplyFilter(query, internalFilterCondition)
@@ -85,7 +87,6 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 		}
 	}
 
-	// If no records are found, return an empty slice
 	if len(responses) == 0 {
 		pages.Rows = []masteritempayloads.GetAllItemPackageResponse{}
 		return pages, nil
@@ -120,8 +121,8 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 		}
 	}
 
-	response.ItemGroupName = &itemGroupResponse.ItemGroupName
-	response.ItemGroupCode = &itemGroupResponse.ItemGroupCode
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
+	response.ItemGroupCode = itemGroupResponse.ItemGroupCode
 
 	return response, nil
 }

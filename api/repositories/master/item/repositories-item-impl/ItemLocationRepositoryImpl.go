@@ -2,6 +2,7 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -123,7 +124,8 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 
 	entities := []masteritementities.ItemLocation{}
 
-	baseModelQuery := tx.Model(&masteritementities.ItemLocation{})
+	baseModelQuery := tx.Model(&masteritementities.ItemLocation{}).
+		Joins("JOIN mtr_warehouse_master AS warehouse ON warehouse.warehouse_id = mtr_location_item.warehouse_id")
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterConditions)
 
@@ -142,6 +144,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 
 	var results []map[string]interface{}
 	for _, entity := range entities {
+		// Fetch Item data
 		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.ItemId)
 		if itemErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -151,11 +154,13 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 		}
 
 		// Fetch Warehouse data
-		warehouseResponse, warehouseErr := aftersalesserviceapiutils.GetWarehouseById(entity.WarehouseId)
-		if warehouseErr != nil {
+		warehouseResponse := map[string]interface{}{}
+		err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
+			Where("warehouse_id = ?", entity.WarehouseId).First(&warehouseResponse).Error
+		if err != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: warehouseErr.StatusCode,
-				Err:        warehouseErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("failed to fetch warehouse data: %w", err),
 			}
 		}
 
@@ -175,8 +180,8 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 			"item_name":               itemResponse.ItemName,
 			"stock_opname":            entity.StockOpname,
 			"warehouse_id":            entity.WarehouseId,
-			"warehouse_name":          warehouseResponse.WarehouseName,
-			"warehouse_code":          warehouseResponse.WarehouseCode,
+			"warehouse_name":          warehouseResponse["warehouse_name"],
+			"warehouse_code":          warehouseResponse["warehouse_code"],
 			"warehouse_location_id":   entity.WarehouseLocationId,
 			"warehouse_location_name": locationResponse.WarehouseLocationName,
 			"warehouse_location_code": locationResponse.WarehouseLocationCode,
