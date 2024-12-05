@@ -1,16 +1,15 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
-	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -99,16 +98,13 @@ func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, I
 }
 
 func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// Define entities slice
+
 	var entities []masterentities.ForecastMaster
 
-	// Base query
 	baseModelQuery := tx.Model(&masterentities.ForecastMaster{})
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Paginate and fetch data
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -117,13 +113,11 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		}
 	}
 
-	// Check if no records found
 	if len(entities) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	// Fetch additional data and join results
 	var results []map[string]interface{}
 	for _, entity := range entities {
 		// Fetch supplier data
@@ -135,27 +129,18 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 			}
 		}
 
-		// Fetch order type data
-		var getOrderTypeResponse masterpayloads.OrderTypeResponse
-		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + strconv.Itoa(entity.OrderTypeId)
-		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		// Fetch order type
+		getOrderTypeResponse, orderTypeErr := aftersalesserviceapiutils.GetOrderTypeById(entity.OrderTypeId)
+		if orderTypeErr != nil {
+			return pages, orderTypeErr
 		}
 
-		// fetch moving code data
-		var getMovingCodeResponse masterpayloads.MovingCodeResponse
-		movingCodeURL := config.EnvConfigs.AfterSalesServiceUrl + "moving-code/" + strconv.Itoa(entity.MovingCodeId)
-		if err := utils.Get(movingCodeURL, &getMovingCodeResponse, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		// Fetch moving code
+		getMovingCodeResponse, movingCodeErr := aftersalesserviceapiutils.GetMovingCodeById(entity.MovingCodeId)
+		if movingCodeErr != nil {
+			return pages, movingCodeErr
 		}
 
-		// Construct result map
 		result := map[string]interface{}{
 			"forecast_master_id":            entity.ForecastMasterId,
 			"is_active":                     entity.IsActive,
@@ -163,7 +148,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 			"supplier_id":                   entity.SupplierId,
 			"supplier_name":                 getSupplierResponse.SupplierName,
 			"moving_code_id":                entity.MovingCodeId,
-			"moving_code_description":       getMovingCodeResponse.MovingCodeDescription,
+			"moving_code_description":       getMovingCodeResponse.MovingCodeName,
 			"order_type_id":                 entity.OrderTypeId,
 			"order_type_name":               getOrderTypeResponse.OrderTypeName,
 			"forecast_master_lead_time":     entity.ForecastMasterLeadTime,

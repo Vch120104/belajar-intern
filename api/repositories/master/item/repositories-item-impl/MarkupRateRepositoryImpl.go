@@ -1,15 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
-	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -24,7 +23,6 @@ func StartMarkupRateRepositoryImpl() masteritemrepository.MarkupRateRepository {
 
 func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []masteritementities.MarkupRate
-	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
 	var orderTypeName string
 	newFilterCondition := []utils.FilterCondition{}
 
@@ -44,11 +42,22 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 
 	var orderTypeIds []int
 	if orderTypeName != "" {
-		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-types?page=0&limit=100&order_type_name=" + orderTypeName
-		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
-			for _, orderType := range getOrderTypeResponse {
-				orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
+		orderTypeParams := aftersalesserviceapiutils.OrderTypeParams{
+			Page:          0,
+			Limit:         100,
+			OrderTypeName: orderTypeName,
+		}
+		orderTypes, err := aftersalesserviceapiutils.GetAllOrderType(orderTypeParams)
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: err.StatusCode,
+				Message:    "Failed to fetch order types",
+				Err:        err.Err,
 			}
+		}
+
+		for _, orderType := range orderTypes {
+			orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 		}
 		if len(orderTypeIds) == 0 {
 			orderTypeIds = []int{-1}
@@ -61,7 +70,7 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch data from database",
+			Message:    "Failed to fetch data from the database",
 			Err:        err,
 		}
 	}
@@ -84,10 +93,9 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 		}
 
 		if entity.OrderTypeId != 0 {
-			orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + strconv.Itoa(entity.OrderTypeId)
-			var singleOrderType masteritempayloads.OrderTypeResponse
-			if err := utils.Get(orderTypeURL, &singleOrderType, nil); err == nil {
-				response["order_type_name"] = singleOrderType.OrderTypeName
+			orderType, err := aftersalesserviceapiutils.GetOrderTypeById(entity.OrderTypeId)
+			if err == nil {
+				response["order_type_name"] = orderType.OrderTypeName
 			} else {
 				response["order_type_name"] = ""
 			}

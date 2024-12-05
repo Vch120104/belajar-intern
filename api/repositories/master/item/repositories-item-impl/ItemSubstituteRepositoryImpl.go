@@ -1,7 +1,6 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -11,7 +10,6 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -90,50 +88,53 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var entity masteritementities.ItemSubstitute
 	var response masteritempayloads.ItemSubstitutePayloads
-	var typepayloads masteritempayloads.ItemSubstituteCode
 
-	err := tx.Model(entity).Select("mtr_item_substitute.*, Item.item_code, Item.item_name, Item.item_class_id, Item.item_group_id").
+	err := tx.Model(entity).
+		Select("mtr_item_substitute.*, Item.item_code, Item.item_name, Item.item_class_id, Item.item_group_id").
 		Where(masteritementities.ItemSubstitute{ItemSubstituteId: id}).
-		Joins("Item", tx.Select("")).
-		Joins("JOIN mtr_item_class ON Item.item_class_id = mtr_item_class.item_class_id", tx.Select("")).
+		Joins("JOIN mtr_item Item ON mtr_item_substitute.item_id = Item.item_id").
+		Joins("JOIN mtr_item_class ON Item.item_class_id = mtr_item_class.item_class_id").
 		First(&response).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("item substitute not found"),
+			}
+		}
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	UrlSubstituteType := config.EnvConfigs.GeneralServiceUrl + "substitute-type/" + strconv.Itoa(response.SubstituteTypeId)
-	errUrlSubstituteType := utils.Get(UrlSubstituteType, &typepayloads, nil)
-	if errUrlSubstituteType != nil {
+
+	typeResponse, errSubType := generalserviceapiutils.GetSubstituteTypeByID(response.SubstituteTypeId)
+	if errSubType != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlSubstituteType,
+			StatusCode: errSubType.StatusCode,
+			Err:        errSubType.Err,
 		}
 	}
-	joinedData1, err := utils.DataFrameInnerJoin([]masteritempayloads.ItemSubstitutePayloads{response}, []masteritempayloads.ItemSubstituteCode{typepayloads}, "SubstituteTypeId")
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+
+	// Construct response map
 	result := map[string]interface{}{
-		"effective_date":       joinedData1[0]["EffectiveDate"],
-		"is_active":            joinedData1[0]["IsActive"],
-		"item_class_code":      joinedData1[0]["ItemClassCode"],
-		"item_class_id":        joinedData1[0]["ItemClassId"],
-		"item_code":            joinedData1[0]["ItemCode"],
-		"item_group_id":        joinedData1[0]["ItemGroupId"],
-		"item_id":              joinedData1[0]["ItemId"],
-		"item_name":            joinedData1[0]["ItemName"],
-		"item_substitute_id":   joinedData1[0]["ItemSubstituteId"],
-		"description":          joinedData1[0]["Description"],
-		"substitute_type_id":   joinedData1[0]["SubstituteTypeId"],
-		"substitute_type_name": joinedData1[0]["SubstituteTypeNames"],
+		"effective_date":       response.EffectiveDate,
+		"is_active":            response.IsActive,
+		"item_class_code":      response.ItemClassCode,
+		"item_class_id":        response.ItemClassId,
+		"item_code":            response.ItemCode,
+		"item_group_id":        response.ItemGroupId,
+		"item_id":              response.ItemId,
+		"item_name":            response.ItemName,
+		"item_substitute_id":   response.ItemSubstituteId,
+		"description":          response.Description,
+		"substitute_type_id":   typeResponse.SubstituteTypeId,
+		"substitute_type_name": typeResponse.SubstituteTypeName,
 	}
+
 	return result, nil
+
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
