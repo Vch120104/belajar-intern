@@ -4,10 +4,11 @@ import (
 	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
+	"after-sales/api/utils"
 )
 
 type OrderTypeService interface {
-	GetAllOrderType() ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse)
+	GetAllOrderType(filterConditions []utils.FilterCondition) ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse)
 	GetOrderTypeById(id int) (masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse)
 	GetOrderTypeByName(name string) ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse)
 	SaveOrderType(req masterpayloads.OrderTypeSaveRequest) (masterentities.OrderType, *exceptions.BaseErrorResponse)

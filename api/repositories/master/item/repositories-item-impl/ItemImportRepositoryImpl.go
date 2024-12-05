@@ -70,13 +70,12 @@ func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritement
 func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.DB, itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemImport{}
 	response := masteritempayloads.ItemImportByIdResponse{}
-	supplierResponses := masteritempayloads.SupplierResponse{}
 
-	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").Where(masteritementities.ItemImport{ItemId: itemId, SupplierId: supplierId}).
+	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
+		Where(masteritementities.ItemImport{ItemId: itemId, SupplierId: supplierId}).
 		InnerJoins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id", tx.Select(""))
 
 	err := query.First(&response).Error
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -84,17 +83,16 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.D
 		}
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-
-	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
+	supplier, supplierErr := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+	if supplierErr != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			StatusCode: supplierErr.StatusCode,
+			Err:        supplierErr.Err,
 		}
 	}
 
-	response.SupplierName = supplierResponses.SupplierName
-	response.SupplierCode = supplierResponses.SupplierCode
+	response.SupplierName = supplier.SupplierName
+	response.SupplierCode = supplier.SupplierCode
 
 	return response, nil
 }

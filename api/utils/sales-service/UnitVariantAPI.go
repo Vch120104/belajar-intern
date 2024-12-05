@@ -5,8 +5,11 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
 )
 
 type UnitVariantResponse struct {
@@ -20,6 +23,59 @@ type UnitVariantMultiIdResponse struct {
 	VariantId          int    `json:"variant_id"`
 	VariantCode        string `json:"variant_code"`
 	VariantDescription string `json:"variant_description"`
+}
+
+type UnitVariantParams struct {
+	Page               int    `json:"page"`
+	Limit              int    `json:"limit"`
+	VariantId          int    `json:"variant_id"`
+	VariantCode        string `json:"variant_code"`
+	VariantDescription string `json:"variant_description"`
+	SortBy             string `json:"sort_by"`
+	SortOf             string `json:"sort_of"`
+}
+
+func GetAllUnitVariant(params UnitVariantParams) ([]UnitVariantResponse, *exceptions.BaseErrorResponse) {
+	var getUnitVariant []UnitVariantResponse
+	if params.Limit == 0 {
+		params.Limit = 1000000
+	}
+
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "unit-variant-list"
+
+	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
+
+	v := reflect.ValueOf(params)
+	typeOfParams := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		value := v.Field(i).Interface()
+		if strVal, ok := value.(string); ok && strVal != "" {
+			key := typeOfParams.Field(i).Tag.Get("json")
+			value := strings.ReplaceAll(strVal, " ", "%20")
+			queryParams += "&" + key + "=" + value
+		}
+	}
+
+	url := baseURL + "?" + queryParams
+
+	err := utils.CallAPI("GET", url, nil, &getUnitVariant)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit variant due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit variant service is temporarily unavailable"
+		}
+
+		return getUnitVariant, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit variant by ID"),
+		}
+	}
+
+	return getUnitVariant, nil
 }
 
 func GetUnitVariantById(id int) (UnitVariantResponse, *exceptions.BaseErrorResponse) {

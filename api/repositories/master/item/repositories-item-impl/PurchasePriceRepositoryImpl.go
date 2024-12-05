@@ -13,6 +13,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -50,26 +51,27 @@ func StartPurchasePriceRepositoryImpl() masteritemrepository.PurchasePriceReposi
 func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.PurchasePriceRequest
 
+	internalFilter, externalFilter := utils.DefineInternalExternalFilter(filterCondition, masteritementities.PurchasePrice{})
+
 	baseModelQuery := tx.Model(&masteritementities.PurchasePrice{})
 
-	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
+	baseModelQuery = utils.ApplyFilter(baseModelQuery, internalFilter)
 
 	var supplierCode, supplierName, currencyCode, currencyName string
 
-	for _, filter := range filterCondition {
+	for _, filter := range externalFilter {
 		switch {
-		case strings.Contains(filter.ColumnField, "supplier_code"):
+		case filter.ColumnField == "supplier_code":
 			supplierCode = filter.ColumnValue
-		case strings.Contains(filter.ColumnField, "supplier_name"):
+		case filter.ColumnField == "supplier_name":
 			supplierName = filter.ColumnValue
-		case strings.Contains(filter.ColumnField, "currency_code"):
+		case filter.ColumnField == "currency_code":
 			currencyCode = filter.ColumnValue
-		case strings.Contains(filter.ColumnField, "currency_name"):
+		case filter.ColumnField == "currency_name":
 			currencyName = filter.ColumnValue
 		}
 	}
 
-	var supplierIds []int
 	if supplierCode != "" || supplierName != "" {
 		supplierParams := generalserviceapiutils.SupplierMasterParams{
 			Page:         0,
@@ -78,7 +80,6 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			SupplierName: supplierName,
 		}
 
-		// Get supplier data from the external service
 		supplierResponse, supplierError := generalserviceapiutils.GetAllSupplierMaster(supplierParams)
 		if supplierError != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -88,6 +89,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			}
 		}
 
+		var supplierIds []int
 		for _, supplier := range supplierResponse {
 			supplierIds = append(supplierIds, supplier.SupplierId)
 		}
@@ -99,14 +101,12 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 	}
 
-	var currencyIds []int
 	if currencyCode != "" || currencyName != "" {
 		currencyParams := financeserviceapiutils.CurrencyParams{
 			CurrencyCode: currencyCode,
 			CurrencyName: currencyName,
 		}
 
-		// Get currency data from the external service
 		currencyResponse, currencyError := financeserviceapiutils.GetAllCurrency(currencyParams)
 		if currencyError != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -116,6 +116,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			}
 		}
 
+		var currencyIds []int
 		for _, currency := range currencyResponse {
 			currencyIds = append(currencyIds, currency.CurrencyId)
 		}
@@ -128,7 +129,19 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 	}
 
-	err := baseModelQuery.Order("purchase_price_id ASC").Scopes(pagination.Paginate(&pages, baseModelQuery)).Find(&responses).Error
+	var totalRows int64
+	if err := baseModelQuery.Count(&totalRows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.TotalRows = totalRows
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+	pages.TotalPages = totalPages
+
+	err := baseModelQuery.Order("purchase_price_id ASC").Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -161,6 +174,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			}
 		}
 
+		// Map the result
 		result := map[string]interface{}{
 			"purchase_price_id":             response.PurchasePriceId,
 			"supplier_id":                   response.SupplierId,
@@ -269,13 +283,12 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 	}
 
 	// Fetch Supplier data from external service
-	SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(entities.SupplierId)
-	var getSupplierResponse masteritempayloads.PurchasePriceSupplierResponse
-	if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	if supplierErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Internal server error while fetching supplier data",
-			Err:        err,
+			Message:    "failed to fetch supplier data",
+			Err:        supplierErr,
 		}
 	}
 

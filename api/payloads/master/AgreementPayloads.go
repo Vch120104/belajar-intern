@@ -11,7 +11,7 @@ type AgreementRequest struct {
 	ProfitCenterId    int       `json:"profit_center_id"  parent_entity:"mtr_agreement"`
 	AgreementDateFrom time.Time `json:"agreement_date_from" parent_entity:"mtr_agreement"`
 	AgreementDateTo   time.Time `json:"agreement_date_to" parent_entity:"mtr_agreement"`
-	DealerId          int       `json:"company_id" parent_entity:"mtr_agreement"`
+	CompanyId         int       `json:"company_id" parent_entity:"mtr_agreement"`
 	TopId             int       `json:"top_id" parent_entity:"mtr_agreement"`
 	AgreementRemark   string    `json:"agreement_remark" parent_entity:"mtr_agreement"`
 }
