@@ -1,7 +1,6 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -15,6 +14,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1411,15 +1411,23 @@ func (r *ItemRepositoryImpl) GetPrincipalBrandParent(tx *gorm.DB, id int) ([]mas
 
 func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse) {
 	var itemDetails []masteritempayloads.ItemDetailResponse
-	brandid := strings.Split(id, ",")
+	brandIds := strings.Split(id, ",")
 
-	for _, id := range brandid {
-		var getdatabybrand []masteritempayloads.BrandModelVariantResponse
-		err := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant-by-brand/"+id, &getdatabybrand, nil)
+	for _, id := range brandIds {
+		brandId, err := strconv.Atoi(strings.TrimSpace(id))
 		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        errors.New("brand has no variant and model"),
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("invalid brand ID"),
+			}
+		}
+
+		getdatabybrand, errFetch := salesserviceapiutils.GetUnitVariantByBrand(brandId)
+		if errFetch != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: errFetch.StatusCode,
+				Err:        errFetch.Err,
+				Message:    "Failed to fetch unit variants by brand",
 			}
 		}
 
@@ -1432,11 +1440,12 @@ func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId
 				VariantId: detail.VariantId,
 			}
 
-			err = tx.Save(&entities).Error
+			err := tx.Save(&entities).Error
 			if err != nil {
 				return nil, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusConflict,
 					Err:        err,
+					Message:    "Failed to save item detail",
 				}
 			}
 

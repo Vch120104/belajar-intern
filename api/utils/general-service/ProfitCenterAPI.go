@@ -151,7 +151,7 @@ func GetProfitCenterByMultiId(ids []int, abstractType interface{}) *exceptions.B
 	}
 
 	strIds := "[" + strings.Join(nonZeroIds, ",") + "]"
-	url := config.EnvConfigs.GeneralServiceUrl + "profit-center-by-multi-id/" + strIds
+	url := config.EnvConfigs.GeneralServiceUrl + "profit-center-multi-id/" + strIds
 
 	err := utils.CallAPI("GET", url, nil, &abstractType)
 	if err != nil {

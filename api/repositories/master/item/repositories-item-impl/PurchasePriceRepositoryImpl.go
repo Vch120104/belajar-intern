@@ -1,7 +1,6 @@
 package masteritemrepositoryimpl
 
 import (
-	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -15,7 +14,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -262,7 +260,6 @@ func (r *PurchasePriceRepositoryImpl) SavePurchasePrice(tx *gorm.DB, request mas
 func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, pagination pagination.Pagination) (masteritempayloads.PurchasePriceResponse, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PurchasePrice{}
 
-	// Fetch PurchasePrice data
 	err := tx.Model(&masteritementities.PurchasePrice{}).
 		Where("purchase_price_id = ?", Id).
 		First(&entities).Error
@@ -282,7 +279,6 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 		}
 	}
 
-	// Fetch Supplier data from external service
 	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
 	if supplierErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
@@ -292,7 +288,6 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 		}
 	}
 
-	// Fetch Currency data from external service
 	getCurrencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(entities.CurrencyId)
 	if currencyErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
@@ -302,7 +297,6 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 		}
 	}
 
-	// Fetch Purchase Price Detail data
 	var purchasepriceDetails []masteritempayloads.PurchasePriceDetailResponse
 	query := tx.Model(&masteritementities.PurchasePriceDetail{}).
 		Select("purchase_price_detail_id", "purchase_price_id", "item_id", "is_active", "purchase_price").
@@ -319,22 +313,19 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 		}
 	}
 
-	// Fetch Item data for each purchase price detail
 	for i, detail := range purchasepriceDetails {
-		ItemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(detail.ItemId)
-		var itemResponse masteritempayloads.PurchasePriceItemResponse
-		if err := utils.Get(ItemURL, &itemResponse, nil); err != nil {
+		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(detail.ItemId)
+		if itemErr != nil {
 			return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: itemErr.StatusCode,
 				Message:    "Internal server error while fetching item data",
-				Err:        err,
+				Err:        itemErr.Err,
 			}
 		}
 		purchasepriceDetails[i].ItemCode = itemResponse.ItemCode
 		purchasepriceDetails[i].ItemName = itemResponse.ItemName
 	}
 
-	// Construct the payload with pagination information
 	payloads := masteritempayloads.PurchasePriceResponse{
 		PurchasePriceId:            entities.PurchasePriceId,
 		SupplierId:                 entities.SupplierId,
