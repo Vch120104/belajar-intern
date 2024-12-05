@@ -1,15 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
-	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -44,13 +43,17 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 	var orderTypeIds []int
 	if orderTypeName != "" {
-		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-types?page=0&limit=100&order_type_name=" + orderTypeName
-		var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
+		orderTypeParams := aftersalesserviceapiutils.OrderTypeParams{
+			Page: 0, Limit: 100, OrderTypeName: orderTypeName,
+		}
 
-		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
-			for _, orderType := range getOrderTypeResponse {
-				orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
-			}
+		orderTypes, err := aftersalesserviceapiutils.GetAllOrderType(orderTypeParams)
+		if err != nil {
+			return pages, err
+		}
+
+		for _, orderType := range orderTypes {
+			orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 		}
 
 		if len(orderTypeIds) == 0 {
@@ -77,7 +80,6 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 	var mapResponses []masteritempayloads.DiscountPercentListResponse
 	for _, response := range responses {
-
 		responseMap := masteritempayloads.DiscountPercentListResponse{
 			IsActive:          response.IsActive,
 			DiscountPercentId: response.DiscountPercentId,
@@ -103,16 +105,12 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 		responseMap.DiscountCode = discountDetails.DiscountCode
 		responseMap.DiscountDescription = discountDetails.DiscountDescription
 
-		// Fetch order type name
 		if response.OrderTypeId != 0 {
-			orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
-			var getOrderTypeResponse masteritempayloads.OrderTypeResponse
-
-			err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil)
+			orderTypeResponse, err := aftersalesserviceapiutils.GetOrderTypeById(response.OrderTypeId)
 			if err != nil {
 				responseMap.OrderTypeName = ""
 			} else {
-				responseMap.OrderTypeName = getOrderTypeResponse.OrderTypeName
+				responseMap.OrderTypeName = orderTypeResponse.OrderTypeName
 			}
 		} else {
 			responseMap.OrderTypeName = ""

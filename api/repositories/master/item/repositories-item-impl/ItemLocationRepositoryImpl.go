@@ -49,10 +49,8 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemLocSourceResponse
 
-	// Fetch data from database with joins and conditions
 	query := tx.Table("mtr_item_location_source")
 
-	// Apply filter conditions
 	for _, condition := range filterCondition {
 		query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
 	}
@@ -65,16 +63,13 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 		}
 	}
 
-	// Check if responses are empty
 	if len(responses) == 0 {
-		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	// Perform pagination
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
@@ -113,7 +108,6 @@ func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int,
 func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	entities := masteritementities.ItemLocationDetail{}
 
-	// Menghapus data berdasarkan ID
 	err := tx.Where("item_location_detail_id = ?", Id).Delete(&entities).Error
 	if err != nil {
 		return &exceptions.BaseErrorResponse{
@@ -122,21 +116,17 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *ex
 		}
 	}
 
-	// Jika data berhasil dihapus, kembalikan nil untuk error
 	return nil
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// Entity structure for item location
+
 	entities := []masteritementities.ItemLocation{}
 
-	// Build base query
 	baseModelQuery := tx.Model(&masteritementities.ItemLocation{})
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterConditions)
 
-	// Execute paginated query
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -145,16 +135,13 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 		}
 	}
 
-	// Handle case where no data is found
 	if len(entities) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	// Transform the data into the required map structure
 	var results []map[string]interface{}
 	for _, entity := range entities {
-		// Fetch Item data
 		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.ItemId)
 		if itemErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -198,7 +185,6 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 		results = append(results, result)
 	}
 
-	// Assign the transformed results to the pagination rows
 	pages.Rows = results
 
 	return pages, nil

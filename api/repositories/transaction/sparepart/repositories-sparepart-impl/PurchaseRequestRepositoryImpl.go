@@ -11,6 +11,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -153,7 +154,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	if CompanyReponseerr != nil {
 		return response, CompanyReponseerr
 	}
-	ItemGroup, ItemGroupErr := generalserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	ItemGroup, ItemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
 	if ItemGroupErr != nil {
 		return response, ItemGroupErr
 	}
