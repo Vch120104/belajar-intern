@@ -205,7 +205,10 @@ func (r *ShiftScheduleRepositoryImpl) GetShiftScheduleDropDown(tx *gorm.DB) ([]m
 	entities := masterentities.ShiftSchedule{}
 	response := []masterpayloads.ShiftScheduleDropDownResponse{}
 
-	err := tx.Model(&entities).Select("MAX(shift_schedule_id) shift_schedule_id, shift_code, is_active").Group("shift_code, is_active").Order("shift_schedule_id ASC").Scan(&response).Error
+	err := tx.Model(&entities).
+		Select("MAX(shift_schedule_id) shift_schedule_id, shift_group, is_active").
+		Group("shift_group, is_active").
+		Order("shift_schedule_id ASC").Scan(&response).Error
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
