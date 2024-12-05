@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -9,6 +10,7 @@ import (
 	"after-sales/api/utils"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -267,21 +269,26 @@ func (i *ItemImportRepositoryImpl) UpdateItemImport(tx *gorm.DB, req masteriteme
 		OrderConversion:    req.OrderConversion,
 	}
 
-	_, errGetSupplier := generalserviceapiutils.GetSupplierMasterByID(req.SupplierId)
+	supplierResponse := masteritempayloads.SupplierResponse{}
+	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
+
+	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
+
+	fmt.Print(supplierResponse)
+
 	if errGetSupplier != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err:        errGetSupplier.Err,
-			Message:    "Failed to fetch supplier details",
+			Err:        errGetSupplier,
 		}
 	}
 
-	err := tx.Model(&entities).Where("item_import_id = ?", req.ItemImportId).Updates(entities).Error
+	err := tx.Updates(&entities).Where(masteritementities.ItemImport{ItemImportId: req.ItemImportId}).Error
+
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-			Message:    "Failed to update item import",
 		}
 	}
 
