@@ -1382,13 +1382,16 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	}
 	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	uomentities := masteritementities.UomItem{}
-	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+
+	response.UnitOfMeasurementCode = ""
+	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", response.ItemId, "P").Scan(&response.UnitOfMeasurementCode).Error
+
+	//response.UnitOfMeasurementCode = response.UomTypeCode
 	response.UnitOfMeasurementRate = UomRate
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			uomentities.UomTypeCode = ""
+			response.UnitOfMeasurementCode = ""
 		} else {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1398,7 +1401,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 		}
 
 	}
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
 	return response, nil
 }
 
