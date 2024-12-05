@@ -1,13 +1,12 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
-	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -145,34 +144,24 @@ func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (maste
 
 // CreateMovingCode implements masterrepository.MovingCodeRepository.
 func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
+	model := masterentities.MovingCode{}
+	var responses []masterentities.MovingCode
 
 	if req.CompanyId != 0 {
-
-		model := masterentities.MovingCode{}
-		var responses []masterentities.MovingCode
-
-		//CHECK COMPANY
-		companyResponses := masterpayloads.CompanyResponse{}
-
-		companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(req.CompanyId)
-
-		if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlCompany,
-			}
+		// CHECK COMPANY
+		companyResponse, errCompany := generalserviceapiutils.GetCompanyDataById(req.CompanyId)
+		if errCompany != nil {
+			return false, errCompany
 		}
 
-		if companyResponses == (masterpayloads.CompanyResponse{}) {
+		if companyResponse.CompanyId == 0 {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errors.New("failed to find company"),
 			}
 		}
 
-		//
-		//CHECK COMPANY HAS MOVING CODE
-
+		// CHECK COMPANY HAS MOVING CODE
 		if err := tx.Model(&model).Where(masterentities.MovingCode{CompanyId: req.CompanyId}).Scan(&responses).Error; err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -180,9 +169,8 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 			}
 		}
 
-		// IF DOESNT HAVE ANY MOVING CODE, INSERT ALL COMPANY_CODE = 0 MOVING CODE INTO THE CURRENT COMPANY
+		// IF DOESN'T HAVE ANY MOVING CODE, INSERT ALL COMPANY_CODE = 0 MOVING CODES
 		if len(responses) == 0 {
-			fmt.Print("sini?")
 			if err := tx.Model(&model).Where("mtr_moving_code.company_id LIKE '0'").Scan(&responses).Error; err != nil {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -191,7 +179,6 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 			}
 
 			for _, value := range responses {
-				//SAVE
 				entities := masterentities.MovingCode{
 					CompanyId:             req.CompanyId,
 					MovingCode:            value.MovingCode,
@@ -207,21 +194,17 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 					Remark:                value.Remark,
 				}
 
-				err := tx.Save(&entities).Error
-
-				if err != nil {
+				if err := tx.Save(&entities).Error; err != nil {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
 						Err:        err,
 					}
 				}
 			}
-
 		}
 
-		//GENERATE NEW PRIORITY
+		// GENERATE NEW PRIORITY
 		var priority int64
-
 		if err := tx.Model(&model).Where(masterentities.MovingCode{CompanyId: req.CompanyId}).Count(&priority).Error; err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -229,7 +212,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 			}
 		}
 
-		//SAVE NEW DATA
+		// SAVE NEW DATA
 		entities := masterentities.MovingCode{
 			CompanyId:             req.CompanyId,
 			MovingCode:            req.MovingCode,
@@ -245,71 +228,59 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 			Remark:                req.Remark,
 		}
 
-		err := tx.Save(&entities).Error
-
-		if err != nil {
+		if err := tx.Save(&entities).Error; err != nil {
 			if strings.Contains(err.Error(), "duplicate") {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusConflict,
 					Err:        err,
 				}
-			} else {
-
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
 			}
-		}
-
-	} else {
-
-		//GENERATE NEW PRIORITY
-		model := masterentities.MovingCode{}
-		var priority int64
-
-		if err := tx.Model(&model).Where("mtr_moving_code.company_id LIKE '0'").Count(&priority).Error; err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 
-		fmt.Print("prio ", priority)
+		return true, nil
+	}
 
-		//SAVE
-		entities := masterentities.MovingCode{
+	// HANDLE CASE FOR COMPANY_ID == 0
 
-			CompanyId:             req.CompanyId,
-			MovingCode:            req.MovingCode,
-			MovingCodeDescription: req.MovingCodeDescription,
-			MinimumQuantityDemand: req.MinimumQuantityDemand,
-			AgingMonthFrom:        req.AgingMonthFrom,
-			AgingMonthTo:          req.AgingMonthTo,
-			DemandExistMonthFrom:  req.AgingMonthFrom,
-			Priority:              float64(priority + 1),
-			DemandExistMonthTo:    req.AgingMonthTo,
-			LastMovingMonthFrom:   req.LastMovingMonthFrom,
-			LastMovingMonthTo:     req.LastMovingMonthTo,
-			Remark:                req.Remark,
+	// GENERATE NEW PRIORITY FOR DEFAULT MOVING CODES
+	var priority int64
+	if err := tx.Model(&model).Where("mtr_moving_code.company_id LIKE '0'").Count(&priority).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
+	}
 
-		err := tx.Save(&entities).Error
+	// SAVE NEW DEFAULT DATA
+	entities := masterentities.MovingCode{
+		CompanyId:             req.CompanyId,
+		MovingCode:            req.MovingCode,
+		MovingCodeDescription: req.MovingCodeDescription,
+		MinimumQuantityDemand: req.MinimumQuantityDemand,
+		AgingMonthFrom:        req.AgingMonthFrom,
+		AgingMonthTo:          req.AgingMonthTo,
+		DemandExistMonthFrom:  req.AgingMonthFrom,
+		Priority:              float64(priority + 1),
+		DemandExistMonthTo:    req.AgingMonthTo,
+		LastMovingMonthFrom:   req.LastMovingMonthFrom,
+		LastMovingMonthTo:     req.LastMovingMonthTo,
+		Remark:                req.Remark,
+	}
 
-		if err != nil {
-
-			if strings.Contains(err.Error(), "duplicate") {
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusConflict,
-					Err:        err,
-				}
-			} else {
-
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
+	if err := tx.Save(&entities).Error; err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
 			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 

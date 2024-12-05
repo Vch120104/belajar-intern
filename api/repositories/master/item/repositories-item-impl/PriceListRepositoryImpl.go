@@ -1,7 +1,6 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -232,9 +231,6 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemPriceList{}
 	response := masteritempayloads.PriceListGetbyId{}
-	brandpayloads := masteritempayloads.UnitBrandResponses{}
-	itemgrouppayloads := masteritempayloads.ItemGroupResponse{}
-	currencypayloads := masteritempayloads.CurrencyResponse{}
 
 	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
 		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
@@ -249,45 +245,39 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
-	ErrUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(response.BrandId), &brandpayloads, nil)
-	if ErrUrlBrand != nil {
+	// Fetch Brand
+	brandResponse, errBrand := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	if errBrand != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        ErrUrlBrand,
+			StatusCode: errBrand.StatusCode,
+			Err:        errBrand.Err,
 		}
 	}
+	response.BrandId = brandResponse.BrandId
+	response.BrandName = brandResponse.BrandName
+	response.BrandCode = brandResponse.BrandCode
 
-	if brandpayloads != (masteritempayloads.UnitBrandResponses{}) {
-		response.BrandId = brandpayloads.BrandId
-		response.BrandName = brandpayloads.BrandName
-		response.BrandCode = brandpayloads.BrandCode
-	}
-
-	ErrUrlItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group/"+strconv.Itoa(response.ItemGroupId), &itemgrouppayloads, nil)
-	if ErrUrlItemGroup != nil {
+	// Fetch Item Group
+	itemGroupResponse, errItemGroup := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if errItemGroup != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        ErrUrlItemGroup,
+			StatusCode: errItemGroup.StatusCode,
+			Err:        errItemGroup.Err,
 		}
 	}
+	response.ItemGroupId = itemGroupResponse.ItemGroupId
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
 
-	if itemgrouppayloads != (masteritempayloads.ItemGroupResponse{}) {
-		response.ItemGroupId = itemgrouppayloads.ItemGroupId
-		response.ItemGroupName = itemgrouppayloads.ItemGroupName
-	}
-
-	ErrUrlCurrency := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code/"+strconv.Itoa(response.CurrencyId), &currencypayloads, nil)
-	if ErrUrlCurrency != nil {
+	// Fetch Currency
+	currencyResponse, errCurrency := financeserviceapiutils.GetCurrencyId(response.CurrencyId)
+	if errCurrency != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        ErrUrlCurrency,
+			StatusCode: errCurrency.StatusCode,
+			Err:        errCurrency.Err,
 		}
 	}
-
-	if currencypayloads != (masteritempayloads.CurrencyResponse{}) {
-		response.CurrencyId = currencypayloads.CurrencyId
-		response.CurrencyCode = currencypayloads.CurrencyCode
-	}
+	response.CurrencyId = currencyResponse.CurrencyId
+	response.CurrencyCode = currencyResponse.CurrencyCode
 
 	return response, nil
 }

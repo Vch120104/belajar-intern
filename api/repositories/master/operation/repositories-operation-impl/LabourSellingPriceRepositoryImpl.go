@@ -1,7 +1,6 @@
 package masteroperationrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	"after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -346,9 +345,8 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 	var responses []masteroperationpayloads.LabourSellingPriceDetailResponse
 	var results []map[string]interface{}
 
-	var modelIds, variantIds string
-	models_ids := []int{}
-	variant_ids := []int{}
+	modelIds := []int{}
+	variantIds := []int{}
 
 	query := tx.Model(&masteroperationentities.LabourSellingPriceDetail{}).
 		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId})
@@ -367,92 +365,62 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 	}
 
 	for _, response := range responses {
+		modelIds = append(modelIds, response.ModelId)
+		variantIds = append(variantIds, response.VariantId)
+	}
 
-		if !strings.Contains(modelIds, strconv.Itoa(response.ModelId)+",") {
-			modelIds += strconv.Itoa(response.ModelId) + ","
-			models_ids = append(models_ids, response.ModelId)
-		}
+	modelData, modelErr := salesserviceapiutils.GetUnitModelByMultiId(modelIds)
+	if modelErr != nil {
+		return pages, modelErr
+	}
 
-		if !strings.Contains(variantIds, strconv.Itoa(response.VariantId)+",") {
-			variantIds += strconv.Itoa(response.VariantId) + ","
-			variant_ids = append(variant_ids, response.VariantId)
+	joinedData1, joinErr := utils.DataFrameInnerJoin(responses, modelData, "ModelId")
+	if joinErr != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        joinErr,
 		}
 	}
 
-	if len(models_ids) > 0 {
-		unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + modelIds
-		var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
-		err := utils.Get(unitModelUrl, &getModelResponse, nil)
-		if err != nil {
+	if len(variantIds) > 0 {
+		variantData, variantErr := salesserviceapiutils.GetUnitVariantByMultiId(variantIds)
+		if variantErr != nil {
+			return pages, variantErr
+		}
+
+		joinedData2, joinErr := utils.DataFrameInnerJoin(joinedData1, variantData, "VariantId")
+		if joinErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        joinErr,
 			}
 		}
 
-		joinedData1, err := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
-		if err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		for _, data := range joinedData2 {
+			results = append(results, map[string]interface{}{
+				"labour_selling_price_id":        data["LabourSellingPriceId"],
+				"model_id":                       data["ModelId"],
+				"model_code":                     data["ModelCode"],
+				"model_description":              data["ModelDescription"],
+				"variant_id":                     data["VariantId"],
+				"variant_code":                   data["VariantCode"],
+				"variant_description":            data["VariantDescription"],
+				"selling_price":                  data["SellingPrice"],
+				"labour_selling_price_detail_id": data["LabourSellingPriceDetailId"],
+				"is_active":                      data["IsActive"],
+			})
 		}
-
-		if len(variant_ids) > 0 {
-			unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + variantIds
-			var getVariantResponse []masteroperationpayloads.VariantResponse
-			err := utils.Get(unitVariantUrl, &getVariantResponse, nil)
-			if err != nil {
-				return pages, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
-			}
-
-			joinedData2, err := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
-			if err != nil {
-				return pages, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
-			}
-
-			for _, data := range joinedData2 {
-				result := map[string]interface{}{
-					"labour_selling_price_id":        data["LabourSellingPriceId"],
-					"model_id":                       data["ModelId"],
-					"model_code":                     data["ModelCode"],
-					"model_description":              data["ModelDescription"],
-					"variant_id":                     data["VariantId"],
-					"variant_code":                   data["VariantCode"],
-					"variant_description":            data["VariantDescription"],
-					"selling_price":                  data["SellingPrice"],
-					"labour_selling_price_detail_id": data["LabourSellingPriceDetailId"],
-					"is_active":                      data["IsActive"],
-				}
-				results = append(results, result)
-			}
-
-		} else {
-
-			for _, data := range joinedData1 {
-				result := map[string]interface{}{
-					"labour_selling_price_id": data["LabourSellingPriceId"],
-					"model_id":                data["ModelId"],
-					"model_code":              data["ModelCode"],
-					"model_description":       data["ModelDescription"],
-					"variant_id":              data["VariantId"],
-					"variant_code":            data["VariantCode"],
-					"variant_description":     data["VariantDescription"],
-					"selling_price":           data["SellingPrice"],
-					"effective_date":          data["EffectiveDate"],
-					"expire_mileage":          data["ExpireMileage"],
-					"expire_month":            data["ExpireMonth"],
-					"extended_warranty":       data["ExtendedWarranty"],
-					"is_active":               data["IsActive"],
-				}
-				results = append(results, result)
-			}
+	} else {
+		for _, data := range joinedData1 {
+			results = append(results, map[string]interface{}{
+				"labour_selling_price_id":        data["LabourSellingPriceId"],
+				"model_id":                       data["ModelId"],
+				"model_code":                     data["ModelCode"],
+				"model_description":              data["ModelDescription"],
+				"selling_price":                  data["SellingPrice"],
+				"labour_selling_price_detail_id": data["LabourSellingPriceDetailId"],
+				"is_active":                      data["IsActive"],
+			})
 		}
 	}
 

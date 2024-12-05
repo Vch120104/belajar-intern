@@ -25,6 +25,18 @@ type UnitVariantMultiIdResponse struct {
 	VariantDescription string `json:"variant_description"`
 }
 
+type UnitVariantByBrandResponse struct {
+	VariantId          int    `json:"variant_id"`
+	VariantCode        string `json:"variant_code"`
+	VariantDescription string `json:"variant_description"`
+	ModelId            int    `json:"model_id"`
+	ModelCode          string `json:"model_code"`
+	ModelDescription   string `json:"model_description"`
+	BrandId            int    `json:"brand_id"`
+	BrandCode          string `json:"brand_code"`
+	BrandName          string `json:"brand_name"`
+}
+
 type UnitVariantParams struct {
 	Page               int    `json:"page"`
 	Limit              int    `json:"limit"`
@@ -134,6 +146,29 @@ func GetUnitVariantByMultiId(ids []int) ([]UnitVariantMultiIdResponse, *exceptio
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting unit variant by multi ID"),
+		}
+	}
+
+	return getUnitVariant, nil
+}
+
+func GetUnitVariantByBrand(brandId int) ([]UnitVariantByBrandResponse, *exceptions.BaseErrorResponse) {
+	var getUnitVariant []UnitVariantByBrandResponse
+	url := config.EnvConfigs.SalesServiceUrl + "unit-variant-by-brand/" + strconv.Itoa(brandId)
+	err := utils.CallAPI("GET", url, nil, &getUnitVariant)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit variant due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit variant service is temporarily unavailable"
+		}
+
+		return getUnitVariant, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit variant by brand"),
 		}
 	}
 

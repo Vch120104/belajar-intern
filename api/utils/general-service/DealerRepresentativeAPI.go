@@ -35,7 +35,7 @@ func GetDealerRepresentativeByMultiId(ids []int, abstractType interface{}) *exce
 	} else {
 		strIds = "[]"
 	}
-	url := config.EnvConfigs.GeneralServiceUrl + "dealer-representative-by-multi-id/" + strIds
+	url := config.EnvConfigs.GeneralServiceUrl + "dealer-representative-multi-id/" + strIds
 	err := utils.CallAPI("GET", url, nil, &abstractType)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502

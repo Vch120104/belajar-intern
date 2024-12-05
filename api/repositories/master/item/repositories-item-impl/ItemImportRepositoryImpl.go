@@ -1,7 +1,6 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -10,7 +9,6 @@ import (
 	"after-sales/api/utils"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,12 +26,8 @@ func StartItemImportRepositoryImpl() masteritemrepository.ItemImportRepository {
 // SaveItemImport implements masteritemrepository.ItemImportRepository.
 func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 
-	supplierResponse := masteritempayloads.SupplierResponse{}
-	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
-
-	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
-
-	if supplierResponse == (masteritempayloads.SupplierResponse{}) {
+	supplierResponse, errGetSupplier := generalserviceapiutils.GetSupplierMasterByID(req.SupplierId)
+	if supplierResponse == (generalserviceapiutils.SupplierMasterResponse{}) {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("supplier not found"),
@@ -43,26 +37,25 @@ func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritement
 	if errGetSupplier != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err:        errGetSupplier,
+			Err:        errGetSupplier.Err,
 		}
 	}
 
 	err := tx.Save(&req).Error
-
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
-		} else {
+		}
 
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
+
 	return true, nil
 }
 
@@ -101,34 +94,39 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.D
 func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemImport{}
 	response := masteritempayloads.ItemImportByIdResponse{}
-	supplierResponses := masteritempayloads.SupplierResponse{}
 
-	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").Where(masteritementities.ItemImport{ItemImportId: Id}).
-		InnerJoins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id", tx.Select(""))
+	query := tx.Model(&model).
+		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
+		Where(masteritementities.ItemImport{ItemImportId: Id}).
+		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id")
 
 	err := query.First(&response).Error
-
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("item import not found"),
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-
-	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
+	supplierResponse, errSupplier := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+	if errSupplier != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			StatusCode: errSupplier.StatusCode,
+			Err:        errSupplier.Err,
 		}
 	}
 
-	response.SupplierName = supplierResponses.SupplierName
-	response.SupplierCode = supplierResponses.SupplierCode
+	response.SupplierName = supplierResponse.SupplierName
+	response.SupplierCode = supplierResponse.SupplierCode
 
 	return response, nil
-
 }
 
 // GetAllItemImport implements masteritemrepository.ItemImportRepository.
@@ -269,26 +267,21 @@ func (i *ItemImportRepositoryImpl) UpdateItemImport(tx *gorm.DB, req masteriteme
 		OrderConversion:    req.OrderConversion,
 	}
 
-	supplierResponse := masteritempayloads.SupplierResponse{}
-	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
-
-	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
-
-	fmt.Print(supplierResponse)
-
+	_, errGetSupplier := generalserviceapiutils.GetSupplierMasterByID(req.SupplierId)
 	if errGetSupplier != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err:        errGetSupplier,
+			Err:        errGetSupplier.Err,
+			Message:    "Failed to fetch supplier details",
 		}
 	}
 
-	err := tx.Updates(&entities).Where(masteritementities.ItemImport{ItemImportId: req.ItemImportId}).Error
-
+	err := tx.Model(&entities).Where("item_import_id = ?", req.ItemImportId).Updates(entities).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+			Message:    "Failed to update item import",
 		}
 	}
 

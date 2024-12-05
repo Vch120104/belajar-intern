@@ -1,7 +1,6 @@
 package masteroperationrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 
@@ -237,9 +236,8 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 }
 
 func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// OperationFrtMapping := []masteroperationentities.OperationFrt{}
 	var OperationFrtResponse []masteroperationpayloads.OperationModelMappingFrtRequest
-	var VariantPayloads []masteroperationpayloads.VariantResponse
+	var variantIds []int
 
 	err := tx.Table(masteroperationentities.TableNameOperationFrt).
 		Select("mtr_operation_frt.operation_frt_id AS operation_frt_id, "+
@@ -257,23 +255,25 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 			Err:        err,
 		}
 	}
-	urlVariant := config.EnvConfigs.SalesServiceUrl + "unit-variant?page=0&limit=10000"
-	errUrlVariant := utils.Get(urlVariant, &VariantPayloads, nil)
-	if errUrlVariant != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlVariant,
-		}
+
+	for _, op := range OperationFrtResponse {
+		variantIds = append(variantIds, op.VariantId)
 	}
-	joinedData1, err := utils.DataFrameInnerJoin(OperationFrtResponse, VariantPayloads, "VariantId")
-	if err != nil {
+
+	variantData, errVariant := salesserviceapiutils.GetUnitVariantByMultiId(variantIds)
+	if errVariant != nil {
+		return nil, 0, 0, errVariant
+	}
+
+	joinedData, errJoin := utils.DataFrameInnerJoin(OperationFrtResponse, variantData, "variant_id")
+	if errJoin != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errJoin,
 		}
 	}
 
-	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
+	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return results, totalPages, totalRows, nil
 }
