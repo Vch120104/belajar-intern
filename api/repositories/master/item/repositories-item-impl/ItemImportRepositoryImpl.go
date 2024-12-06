@@ -140,11 +140,11 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 // |
 
 func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	model := masteritementities.ItemImport{}
 	var responses []masteritempayloads.ItemImportResponse
-	var supplierCode string
-	var supplierName string
 
+	var supplierCode, supplierName string
 	for _, values := range externalFilter {
 		if values.ColumnField == "supplier_code" {
 			supplierCode = values.ColumnValue
@@ -175,20 +175,22 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 				ColumnValue: "-1",
 			})
 		} else {
-			var supplierIds []string
+			var supplierIds []int
 			for _, supplier := range suppliers {
-				supplierIds = append(supplierIds, strconv.Itoa(supplier.SupplierId))
+				supplierIds = append(supplierIds, supplier.SupplierId)
 			}
+
 			internalFilter = append(internalFilter, utils.FilterCondition{
 				ColumnField: "mtr_item_import.supplier_id",
-				ColumnValue: strings.Join(supplierIds, ","),
+				ColumnValue: fmt.Sprintf("%v", supplierIds),
 			})
 		}
 	}
 
 	query := tx.Model(&model).
 		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
-		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id")
+		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_supplier Supplier ON mtr_item_import.supplier_id = Supplier.supplier_id")
 
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
@@ -238,7 +240,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	var combinedResponses []ItemImportWithSupplier
-
 	for _, response := range responses {
 		combined := ItemImportWithSupplier{
 			ItemImportResponse: response,
