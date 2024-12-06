@@ -1,7 +1,6 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -9,9 +8,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
-	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -24,7 +21,6 @@ type ItemModelMappingRepositoryImpl struct {
 func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemModelMappingReponses
 
-	// Query data dari database
 	baseModelQuery := tx.Model(&masteritementities.ItemDetail{}).Where("item_id = ?", itemId)
 	whereQuery := utils.ApplyFilter(baseModelQuery, nil)
 
@@ -36,7 +32,6 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 	}
 
-	// Jika tidak ada data ditemukan
 	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
@@ -118,39 +113,30 @@ func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req
 // CreateItemModelMapping implements masteritemrepository.ItemModelMappingRepository.
 func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 
-	//Check brandID
-	var brandResponses masteritempayloads.UnitBrandResponses
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(req.BrandId)
-
-	if errBrandUrl := utils.Get(brandUrl, &brandResponses, nil); errBrandUrl != nil {
+	_, brandErr := salesserviceapiutils.GetUnitBrandById(req.BrandId)
+	if brandErr != nil {
 		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("brand not found"),
-		}
-	}
-	//
-
-	//check unit model
-	var unitmodelresponses masteritempayloads.UnitModelResponses
-
-	unitmodelurl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(req.ModelId)
-
-	if errunitmodelurl := utils.Get(unitmodelurl, &unitmodelresponses, nil); errunitmodelurl != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("unit model not found"),
+			StatusCode: brandErr.StatusCode,
+			Message:    "Failed to fetch brand data",
+			Err:        brandErr.Err,
 		}
 	}
 
-	//check variant
-	var variantResponses masteritempayloads.UnitVariantResponses
-
-	variantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(req.VariantId)
-
-	if errvarianturl := utils.Get(variantUrl, &variantResponses, nil); errvarianturl != nil {
+	_, modelErr := salesserviceapiutils.GetUnitModelById(req.ModelId)
+	if modelErr != nil {
 		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("variant not found"),
+			StatusCode: modelErr.StatusCode,
+			Message:    "Failed to fetch model data",
+			Err:        modelErr.Err,
+		}
+	}
+
+	_, variantErr := salesserviceapiutils.GetUnitVariantById(req.VariantId)
+	if variantErr != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: variantErr.StatusCode,
+			Message:    "Failed to fetch variant data",
+			Err:        variantErr.Err,
 		}
 	}
 

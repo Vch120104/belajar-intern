@@ -104,7 +104,7 @@ func GetUserCompanyAccessByID(id int) (UserCompanyAccessResponse, *exceptions.Ba
 
 func GetUserDetailsByID(id int) (UserDetailsResponse, *exceptions.BaseErrorResponse) {
 	var userDetails UserDetailsResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(id)
+	url := config.EnvConfigs.GeneralServiceUrl + "user-detail?user_id=" + strconv.Itoa(id)
 
 	err := utils.CallAPI("GET", url, nil, &userDetails)
 	if err != nil {

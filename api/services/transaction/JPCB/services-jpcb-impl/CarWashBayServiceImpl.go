@@ -30,7 +30,7 @@ func NewCarWashBayServiceImpl(BayRepository transactionjpcbrepository.BayMasterR
 	}
 }
 
-func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -55,11 +55,11 @@ func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCo
 		}
 	}()
 
-	results, totalPages, totalRows, err := s.BayMasterRepository.GetAll(tx, filterCondition, pages)
+	results, err := s.BayMasterRepository.GetAll(tx, filterCondition, pages)
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *BayMasterServiceImpl) GetAllActiveCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

@@ -8,7 +8,6 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -64,151 +63,109 @@ func (r *SupplySlipReturnRepositoryImpl) SaveSupplySlipReturnDetail(tx *gorm.DB,
 	return entities, nil
 }
 
-func (r *SupplySlipReturnRepositoryImpl) GetAllSupplySlipReturn(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	entities := transactionsparepartentities.SupplySlipReturn{}
+func (r *SupplySlipReturnRepositoryImpl) GetAllSupplySlipReturn(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionsparepartpayloads.SupplySlipReturnSearchResponse
-	// var getCustomerResponse transactionsparepartpayloads.CustomerResponse
-	var getCustomerAllResponse []transactionsparepartpayloads.CustomerResponse
-	var getApprovalStatusResponse transactionsparepartpayloads.SupplyReturnStatusResponse
-	var getApprovalStatusAllResponse []transactionsparepartpayloads.SupplyReturnStatusResponse
 
-	customerName := ""
-	approvalStatusId := ""
+	baseModelQuery := tx.Model(&transactionsparepartentities.SupplySlipReturn{}).
+		Select(`
+			trx_supply_slip_return.supply_return_system_number,
+			trx_supply_slip_return.supply_return_document_number,
+			trx_supply_slip_return.supply_return_status_id,
+			trx_supply_slip_return.supply_return_date,
+			trx_supply_slip_return.supply_system_number, 
+			trx_supply_slip_return.remark,
+			trx_supply_slip_return.is_active,
+			trx_work_order.customer_id
+		`).
+		Joins("LEFT JOIN trx_work_order ON trx_supply_slip_return.supply_system_number = trx_work_order.work_order_system_number")
 
-	// apply external services filter
+	whereQuery := utils.ApplyFilter(baseModelQuery, internalFilter)
 
-	for i := 0; i < len(externalFilter); i++ {
-		if strings.Contains(externalFilter[i].ColumnField, "customer_name") {
-			customerName = externalFilter[i].ColumnValue
-		} else if strings.Contains(externalFilter[i].ColumnField, "approval_status_id") {
-			approvalStatusId = externalFilter[i].ColumnValue
-		}
-	}
-
-	joinTable := tx.Model(&entities).
-		Joins("JOIN trx_supply_slip on trx_supply_slip_return.supply_system_number = trx_supply_slip.supply_system_number").
-		Joins("JOIN trx_work_order on trx_supply_slip.work_order_system_number = trx_work_order.work_order_system_number").
-		Select("trx_supply_slip_return.supply_return_system_number, trx_supply_slip_return.supply_return_document_number, trx_supply_slip_return.supply_return_date, trx_supply_slip.supply_document_number, trx_work_order.work_order_document_number, trx_work_order.customer_id, trx_supply_slip_return.supply_return_status_id")
-
-	//apply filter
-	whereQuery := utils.ApplyFilter(joinTable, internalFilter)
-
-	// Execute the query
-	rows, err := whereQuery.Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
-	// Scan the results into the responses slice
-	for rows.Next() {
-		var response transactionsparepartpayloads.SupplySlipReturnSearchResponse
-		if err := rows.Scan(&response.SupplyReturnSystemNumber, &response.SupplyReturnDocumentNumber, &response.SupplyReturnDate, &response.SupplyDocumentNumber, &response.WorkOrderDocumentNumber, &response.CustomerId, &response.SupplyReturnStatusId); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		responses = append(responses, response)
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+	var customerName, approvalStatusId string
+	for _, filter := range externalFilter {
+		if strings.Contains(filter.ColumnField, "customer_name") {
+			customerName = filter.ColumnValue
+		} else if strings.Contains(filter.ColumnField, "approval_status_id") {
+			approvalStatusId = filter.ColumnValue
+		}
+	}
+
+	var customerResponses []transactionsparepartpayloads.CustomerResponse
+	if customerName != "" {
+		customerUrl := config.EnvConfigs.GeneralServiceUrl + "customer-by-name/" + customerName
+		errCustomer := utils.Get(customerUrl, &customerResponses, nil)
+		if errCustomer != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errCustomer,
+			}
+		}
+	} else {
+		customerUrl := config.EnvConfigs.GeneralServiceUrl + "customer-list?page=0&limit=1000"
+		errCustomer := utils.Get(customerUrl, &customerResponses, nil)
+		if errCustomer != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errCustomer,
+			}
 		}
 	}
 
 	var joinedData1 []map[string]interface{}
-
-	// Fetch customer data
-	if customerName != "" {
-		customerUrl := config.EnvConfigs.GeneralServiceUrl + "customer-by-name/" + customerName
-		errUrlCustomer := utils.Get(customerUrl, &getCustomerAllResponse, nil)
-		if errUrlCustomer != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlCustomer,
-			}
-		}
-		// Perform inner join with customer data
-		joinedData1, err = utils.DataFrameInnerJoin(responses, getCustomerAllResponse, "CustomerId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-	} else {
-		customerUrl := config.EnvConfigs.GeneralServiceUrl + "customers?page=0&limit=1000"
-		errUrlCustomer := utils.Get(customerUrl, &getCustomerAllResponse, nil)
-		if errUrlCustomer != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlCustomer,
-			}
-		}
-		// Perform inner join with customer data
-		joinedData1, err = utils.DataFrameInnerJoin(responses, getCustomerAllResponse, "CustomerId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+	joinedData1, err = utils.DataFrameInnerJoin(responses, customerResponses, "CustomerId")
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 
-	var joinedData2 []map[string]interface{}
-
-	// Fetch approval status data
+	var approvalStatusResponses []transactionsparepartpayloads.SupplyReturnStatusResponse
 	if approvalStatusId != "" {
 		approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status/" + approvalStatusId
-		errUrlapprovalStatus := utils.Get(approvalStatusUrl, &getApprovalStatusResponse, nil)
-		if errUrlapprovalStatus != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+		errApprovalStatus := utils.Get(approvalStatusUrl, &approvalStatusResponses, nil)
+		if errApprovalStatus != nil {
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlapprovalStatus,
-			}
-		}
-		// Perform inner join with supply type data
-		joinedData2, err = utils.DataFrameInnerJoin(joinedData1, []transactionsparepartpayloads.SupplyReturnStatusResponse{getApprovalStatusResponse}, "SupplyReturnStatusId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        errApprovalStatus,
 			}
 		}
 	} else {
 		approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status"
-		errUrlapprovalStatus := utils.Get(approvalStatusUrl, &getApprovalStatusAllResponse, nil)
-		if errUrlapprovalStatus != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+		errApprovalStatus := utils.Get(approvalStatusUrl, &approvalStatusResponses, nil)
+		if errApprovalStatus != nil {
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlapprovalStatus,
-			}
-		}
-		// Perform inner join with supply type data
-		joinedData2, err = utils.DataFrameInnerJoin(joinedData1, getApprovalStatusAllResponse, "SupplyReturnStatusId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        errApprovalStatus,
 			}
 		}
 	}
 
-	// Paginate the joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+	var finalData []map[string]interface{}
+	finalData, err = utils.DataFrameInnerJoin(joinedData1, approvalStatusResponses, "SupplyReturnStatusId")
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = finalData
+
+	return pages, nil
 }
 
 func (r *SupplySlipReturnRepositoryImpl) GetSupplySlipReturnById(tx *gorm.DB, Id int, pagination pagination.Pagination, supplySlip map[string]interface{}) (map[string]interface{}, *exceptions.BaseErrorResponse) {

@@ -173,7 +173,7 @@ func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agr
 	return entity, nil
 }
 
-func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAllAgreement(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -197,7 +197,7 @@ func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCon
 			}
 		}
 	}()
-	results, err := s.AgreementRepo.GetAllAgreement(tx, filterCondition, pages)
+	results, err := s.AgreementRepo.GetAllAgreement(tx, internalFilter, externalFilter, pages)
 	if err != nil {
 		return results, err
 	}

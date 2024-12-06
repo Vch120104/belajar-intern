@@ -23,16 +23,12 @@ func StartItemLocationRepositoryImpl() masteritemrepository.ItemLocationReposito
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// Query entitas `ItemLocationDetail` dengan preload untuk relasi terkait
-	entities := []masteritementities.ItemLocationDetail{}
-	query := tx.Model(&masteritementities.ItemLocationDetail{}).
-		Preload("Item").              // Preload relasi Item
-		Preload("ItemLocationSource") // Preload relasi ItemLocationSource
 
-	// Terapkan filter
+	entities := []masteritementities.ItemLocationDetail{}
+	query := tx.Model(&masteritementities.ItemLocationDetail{})
+
 	whereQuery := utils.ApplyFilter(query, filterCondition)
 
-	// Eksekusi query dengan pagination
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -41,13 +37,11 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 		}
 	}
 
-	// Jika tidak ada data yang ditemukan
 	if len(entities) == 0 {
 		pages.Rows = []masteritempayloads.ItemLocationDetailResponse{}
 		return pages, nil
 	}
 
-	// Assign hasil ke pagination
 	pages.Rows = entities
 	return pages, nil
 }
@@ -55,10 +49,8 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemLocSourceResponse
 
-	// Fetch data from database with joins and conditions
 	query := tx.Table("mtr_item_location_source")
 
-	// Apply filter conditions
 	for _, condition := range filterCondition {
 		query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
 	}
@@ -71,16 +63,13 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 		}
 	}
 
-	// Check if responses are empty
 	if len(responses) == 0 {
-		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	// Perform pagination
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
@@ -119,7 +108,6 @@ func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int,
 func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	entities := masteritementities.ItemLocationDetail{}
 
-	// Menghapus data berdasarkan ID
 	err := tx.Where("item_location_detail_id = ?", Id).Delete(&entities).Error
 	if err != nil {
 		return &exceptions.BaseErrorResponse{
@@ -128,22 +116,22 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *ex
 		}
 	}
 
-	// Jika data berhasil dihapus, kembalikan nil untuk error
 	return nil
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// Entity structure for item location
-	entities := []masteritementities.ItemLocation{}
+	var results []masteritempayloads.ItemLocationGetAllResponse
 
-	// Build base query
-	baseModelQuery := tx.Model(&masteritementities.ItemLocation{})
+	// Join the ItemLocation table with parent entities (Item, Warehouse, WarehouseGroup, WarehouseLocation)
+	baseModelQuery := tx.Model(&masteritementities.ItemLocation{}).
+		Joins("JOIN mtr_item ON mtr_item.item_id = mtr_location_item.item_id").
+		Joins("JOIN mtr_warehouse_master ON mtr_warehouse_master.warehouse_id = mtr_location_item.warehouse_id").
+		Joins("JOIN mtr_warehouse_group ON mtr_warehouse_group.warehouse_group_id = mtr_location_item.warehouse_group_id").
+		Joins("JOIN mtr_warehouse_location ON mtr_warehouse_location.warehouse_location_id = mtr_location_item.warehouse_location_id")
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterConditions)
 
-	// Execute paginated query
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&results).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -151,17 +139,16 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 		}
 	}
 
-	// Handle case where no data is found
-	if len(entities) == 0 {
+	if len(results) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	// Transform the data into the required map structure
-	var results []map[string]interface{}
-	for _, entity := range entities {
-		// Fetch Item data
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.ItemId)
+	var itemLocations []masteritempayloads.ItemLocationGetAllResponse
+	for _, result := range results {
+
+		// Ambil data Item berdasarkan ItemId
+		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(result.ItemId)
 		if itemErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: itemErr.StatusCode,
@@ -169,8 +156,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 			}
 		}
 
-		// Fetch Warehouse data
-		warehouseResponse, warehouseErr := aftersalesserviceapiutils.GetWarehouseById(entity.WarehouseId)
+		warehouseResponse, warehouseErr := aftersalesserviceapiutils.GetWarehouseById(result.WarehouseId)
 		if warehouseErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: warehouseErr.StatusCode,
@@ -178,8 +164,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 			}
 		}
 
-		// Fetch Warehouse Location data
-		locationResponse, locationErr := aftersalesserviceapiutils.GetWarehouseLocationById(entity.WarehouseLocationId)
+		locationResponse, locationErr := aftersalesserviceapiutils.GetWarehouseLocationById(result.WarehouseLocationId)
 		if locationErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: locationErr.StatusCode,
@@ -187,25 +172,35 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 			}
 		}
 
-		result := map[string]interface{}{
-			"item_location_id":        entity.ItemLocationId,
-			"item_id":                 entity.ItemId,
-			"item_code":               itemResponse.ItemCode,
-			"item_name":               itemResponse.ItemName,
-			"stock_opname":            entity.StockOpname,
-			"warehouse_id":            entity.WarehouseId,
-			"warehouse_name":          warehouseResponse.WarehouseName,
-			"warehouse_code":          warehouseResponse.WarehouseCode,
-			"warehouse_location_id":   entity.WarehouseLocationId,
-			"warehouse_location_name": locationResponse.WarehouseLocationName,
-			"warehouse_location_code": locationResponse.WarehouseLocationCode,
+		warehouseGroupResponse, warehouseGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(result.WarehouseGroupId)
+		if warehouseGroupErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: warehouseGroupErr.StatusCode,
+				Err:        warehouseGroupErr.Err,
+			}
 		}
 
-		results = append(results, result)
+		itemLocation := masteritempayloads.ItemLocationGetAllResponse{
+			ItemLocationId:        result.ItemLocationId,
+			ItemId:                result.ItemId,
+			ItemCode:              itemResponse.ItemCode,
+			ItemName:              itemResponse.ItemName,
+			StockOpname:           result.StockOpname,
+			WarehouseId:           result.WarehouseId,
+			WarehouseCode:         warehouseResponse.WarehouseCode,
+			WarehouseName:         warehouseResponse.WarehouseName,
+			WarehouseGroupId:      result.WarehouseGroupId,
+			WarehouseGroupCode:    warehouseGroupResponse.WarehouseGroupCode,
+			WarehouseGroupName:    warehouseGroupResponse.WarehouseGroupName,
+			WarehouseLocationId:   result.WarehouseLocationId,
+			WarehouseLocationCode: locationResponse.WarehouseLocationCode,
+			WarehouseLocationName: locationResponse.WarehouseLocationName,
+		}
+		itemLocations = append(itemLocations, itemLocation)
 	}
 
-	// Assign the transformed results to the pagination rows
-	pages.Rows = results
+	// Store the results into the pagination struct
+	pages.Rows = itemLocations
 
 	return pages, nil
 }

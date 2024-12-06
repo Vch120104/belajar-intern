@@ -55,11 +55,13 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_discount.discount_code":        queryValues.Get("discount_code"),
-		"mtr_discount.discount_description": queryValues.Get("discount_description"),
-		"order_type_name":                   queryValues.Get("order_type_name"),
-		"mtr_discount_percent.discount":     queryValues.Get("discount"),
-		"mtr_discount_percent.is_active":    queryValues.Get("is_active"),
+		"mtr_discount.discount_code_id":      queryValues.Get("discount_code_id"),
+		"mtr_discount.discount_code":         queryValues.Get("discount_code"),
+		"mtr_discount.discount_description":  queryValues.Get("discount_description"),
+		"mtr_discount_percent.order_type_id": queryValues.Get("order_type_id"),
+		"order_type_name":                    queryValues.Get("order_type_name"),
+		"mtr_discount_percent.discount":      queryValues.Get("discount"),
+		"mtr_discount_percent.is_active":     queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{

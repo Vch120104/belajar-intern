@@ -3,7 +3,6 @@ package transactionbodyshopserviceimpl
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
-	transactionbodyshoppayloads "after-sales/api/payloads/transaction/bodyshop"
 	transactionbodyshoprepository "after-sales/api/repositories/transaction/bodyshop"
 	transactionbodyshopservice "after-sales/api/services/transaction/bodyshop"
 	"after-sales/api/utils"
@@ -29,7 +28,7 @@ func OpenServiceBodyshopServiceImpl(ServiceBodyshopRepo transactionbodyshoprepos
 	}
 }
 
-func (s *ServiceBodyshopServiceImpl) GetAllByTechnicianWOBodyshop(idTech int, idSysWo int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionbodyshoppayloads.ServiceBodyshopDetailResponse, *exceptions.BaseErrorResponse) {
+func (s *ServiceBodyshopServiceImpl) GetAllByTechnicianWOBodyshop(idTech int, idSysWo int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -57,7 +56,7 @@ func (s *ServiceBodyshopServiceImpl) GetAllByTechnicianWOBodyshop(idTech int, id
 
 	results, repoErr := s.ServiceBodyshopRepository.GetAllByTechnicianWOBodyshop(tx, idTech, idSysWo, filterCondition, pages)
 	if repoErr != nil {
-		return transactionbodyshoppayloads.ServiceBodyshopDetailResponse{}, repoErr
+		return results, repoErr
 	}
 
 	return results, nil
