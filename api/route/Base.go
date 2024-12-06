@@ -675,6 +675,23 @@ func GoodsReceiveRouter(
 	router.Delete("/detail/{goods_receive_detail_id}", GoodsReceiveController.DeleteGoodsReceiveDetail)
 	return router
 }
+
+func ItemInquiryRouter(
+	ItemInquiryController transactionsparepartcontroller.ItemInquiryController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemInquiryController.GetAllItemInquiry)
+	router.Get("/by-id", ItemInquiryController.GetByIdItemInquiry)
+
+	return router
+}
+
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {
@@ -1899,6 +1916,8 @@ func LookupRouter(
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
 	router.Get("/location-available", LookupController.LocationAvailable)
+	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
+	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 
 	return router
 }

@@ -5,6 +5,7 @@ import (
 	"after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	masterrepository "after-sales/api/repositories/master"
+	"after-sales/api/utils"
 	"errors"
 	"net/http"
 	"strings"
@@ -19,11 +20,13 @@ func StartOrderTypeRepositoryImpl() masterrepository.OrderTypeRepository {
 	return &OrderTypeRepositoryImpl{}
 }
 
-func (r *OrderTypeRepositoryImpl) GetAllOrderType(tx *gorm.DB) ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse) {
+func (r *OrderTypeRepositoryImpl) GetAllOrderType(tx *gorm.DB, filterConditions []utils.FilterCondition) ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.OrderType{}
 	response := []masterpayloads.GetOrderTypeResponse{}
 
-	err := tx.Model(&entities).Scan(&response).Error
+	query := utils.ApplyFilter(tx.Model(&entities), filterConditions)
+
+	err := query.Scan(&response).Error
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

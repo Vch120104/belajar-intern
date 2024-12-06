@@ -62,30 +62,31 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 			columnValue[i] = n[columnValue[i]]
 		}
 
-		// Handle date ranges (date_from and date_to)
-		if strings.Contains(columnName[i], "date_from") {
-			key = strings.Split(columnName[i], "_from")[0]
+		// Handle date range filters (_from and _to suffix)
+		if strings.HasSuffix(columnName[i], "_from") {
+			key = strings.TrimSuffix(columnName[i], "_from")
 			condition = key + " >= '" + columnValue[i] + "'"
-		} else if strings.Contains(columnName[i], "date_to") {
-			key = strings.Split(columnName[i], "_to")[0]
+		} else if strings.HasSuffix(columnName[i], "_to") {
+			key = strings.TrimSuffix(columnName[i], "_to")
 			condition = key + " <= '" + columnValue[i] + "'"
 		} else if strings.Contains(columnName[i], "date") {
-			// Handle date fields using RFC3339 format ("2025-08-15T00:00:00Z")
-			parsedDate, err := time.Parse(time.RFC3339, columnValue[i])
+			// Handle exact date match
+			parsedDate, err := time.Parse("2006-01-02", columnValue[i])
 			if err != nil {
-				parsedDate, err = time.Parse("2006-01-02", columnValue[i])
-				if err != nil {
-					continue
-				}
+				continue
 			}
-			condition = "CONVERT(DATE, " + columnName[i] + ") = '" + parsedDate.Format("2006-01-02") + "'"
+			condition = columnName[i] + " = '" + parsedDate.Format("2006-01-02") + "'"
 		} else if strings.Contains(columnName[i], "id") {
-			// Handle multiple IDs and single ID filtering
+			// Handle ID filtering
 			if strings.Contains(columnName[i], "#multiple") {
 				condition = columnName[i] + " IN (" + columnValue[i] + ")"
 			} else {
-				condition = columnName[i] + " LIKE '" + columnValue[i] + "'"
+				condition = columnName[i] + " = '" + columnValue[i] + "'"
 			}
+		} else if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
+			// Handle boolean-like values
+			boolMap := map[string]string{"true": "1", "false": "0", "Active": "1"}
+			condition = columnName[i] + " = '" + boolMap[strings.ToLower(columnValue[i])] + "'"
 		} else {
 			// Default condition (LIKE match for text)
 			condition = columnName[i] + " LIKE '%" + columnValue[i] + "%'"
