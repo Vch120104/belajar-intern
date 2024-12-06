@@ -543,16 +543,17 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 			ttpJoinedData := utils.DataFrameLeftJoin(responseItemDetails, ttpBrandResponse, "BrandId")
 			ttpJoinedData2 := utils.DataFrameLeftJoin(ttpJoinedData, ttpModelResponse, "ModelId")
 
+			snakeCaseTooltip := utils.ModifyKeysInResponse(ttpJoinedData2)
+
 			tooltips = append(tooltips, transactionsparepartpayloads.ItemInquiryGetAllToolTip{
 				ItemId:  itemId,
-				Tooltip: ttpJoinedData2,
+				Tooltip: snakeCaseTooltip,
 			})
 		}
 		// end usp_comToolTip @strEntity = 'ItemInquiryBrandModel'
 
 		// manual left join data frame for adding tooltip resonse
 		for i := 0; i < len(joinedData); i++ {
-			joinedData[i]["Tooltip"] = []map[string]interface{}{}
 			for j := 0; j < len(tooltips); j++ {
 				if joinedData[i]["ItemId"].(int) == tooltips[j].ItemId {
 					joinedData[i]["Tooltip"] = tooltips[j].Tooltip
@@ -582,7 +583,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				ItemSubstitute:         joinedData[i]["ItemSubstitute"].(string),
 				MovingCode:             joinedData[i]["MovingCode"].(string),
 				AvailableInOtherDealer: joinedData[i]["AvailableInOtherDealer"].(string),
-				Tooltip:                joinedData[i]["Tooltip"].([]map[string]interface{}),
+				Tooltip:                joinedData[i]["Tooltip"],
 			}
 			finalJoinedData = append(finalJoinedData, temp)
 		}
