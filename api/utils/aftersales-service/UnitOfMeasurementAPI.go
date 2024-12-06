@@ -17,10 +17,10 @@ type QuantityConversionUomResponse struct {
 	QuantityConversion float64 `json:"quantity_conversion"`
 }
 
-var UomBaseUrl string = config.EnvConfigs.AfterSalesServiceUrl + "unit-measurement/"
+//var UomBaseUrl string = config.EnvConfigs.AfterSalesServiceUrl + "unit-measurement/"
 
 func GetQuantityConversion(SourceType string, itemId int, quantity float64) (QuantityConversionUomResponse, *exceptions.BaseErrorResponse) {
-	Url := UomBaseUrl + fmt.Sprintf("get_quantity_conversion?source_type=%s&item_id=%s&quantity=%s", SourceType, strconv.Itoa(itemId), strconv.FormatFloat(quantity, 'f', 6, 64))
+	Url := config.EnvConfigs.AfterSalesServiceUrl + "unit-measurement/" + fmt.Sprintf("get_quantity_conversion?source_type=%s&item_id=%s&quantity=%s", SourceType, strconv.Itoa(itemId), strconv.FormatFloat(quantity, 'f', 6, 64))
 	response := QuantityConversionUomResponse{}
 	err := utils.CallAPI("POST", Url, nil, &response)
 	if err != nil {
