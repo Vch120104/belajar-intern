@@ -140,7 +140,6 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 // |
 
 func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
 	model := masteritementities.ItemImport{}
 	var responses []masteritempayloads.ItemImportResponse
 
@@ -153,6 +152,13 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
+	// Mulai query dan filter berdasarkan supplier_code atau supplier_name
+	query := tx.Model(&model).
+		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
+		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_supplier Supplier ON mtr_item_import.supplier_id = Supplier.supplier_id")
+
+	// Jika ada filter berdasarkan supplier_code atau supplier_name
 	if supplierCode != "" || supplierName != "" {
 		params := generalserviceapiutils.SupplierMasterParams{
 			SupplierCode: supplierCode,
@@ -170,30 +176,29 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 
 		if len(suppliers) == 0 {
+			// Jika tidak ada supplier ditemukan, tambahkan filter palsu
 			internalFilter = append(internalFilter, utils.FilterCondition{
 				ColumnField: "mtr_item_import.supplier_id",
 				ColumnValue: "-1",
 			})
 		} else {
-			var supplierIds []int
-			for _, supplier := range suppliers {
-				supplierIds = append(supplierIds, supplier.SupplierId)
+			// Jika ada supplier ditemukan, buat filter berdasarkan supplier_id
+			if len(supplierCode) > 0 && len(suppliers) > 1 {
+				query = query.Where("Supplier.supplier_code LIKE ?", fmt.Sprintf("%%%s%%", supplierCode))
+			} else {
+				var supplierIds []int
+				for _, supplier := range suppliers {
+					supplierIds = append(supplierIds, supplier.SupplierId)
+				}
+				query = query.Where("mtr_item_import.supplier_id IN (?)", supplierIds)
 			}
-
-			internalFilter = append(internalFilter, utils.FilterCondition{
-				ColumnField: "mtr_item_import.supplier_id",
-				ColumnValue: fmt.Sprintf("%v", supplierIds),
-			})
 		}
 	}
 
-	query := tx.Model(&model).
-		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
-		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id").
-		Joins("JOIN dms_microservices_general_dev.dbo.mtr_supplier Supplier ON mtr_item_import.supplier_id = Supplier.supplier_id")
-
+	// Terapkan filter internal
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
+	// Jalankan query dengan paginasi
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -202,58 +207,40 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
+	// Jika tidak ada data
 	if len(responses) == 0 {
 		pages.Rows = []masteritempayloads.ItemImportResponse{}
 		return pages, nil
 	}
 
+	// Ambil ID Supplier untuk join dengan data supplier
 	supplierIds := []int{}
 	for _, response := range responses {
 		supplierIds = append(supplierIds, response.SupplierId)
 	}
-
 	supplierIds = utils.RemoveDuplicateIds(supplierIds)
 
+	// Ambil data supplier berdasarkan supplierIds
 	var supplierResponses []masteritempayloads.SupplierResponse
 	if err := generalserviceapiutils.GetSupplierMasterByMultiId(supplierIds, &supplierResponses); err != nil {
 		return pages, err
 	}
 
-	supplierMap := make(map[int]struct {
-		SupplierName string
-		SupplierCode string
-	})
-	for _, supplier := range supplierResponses {
-		supplierMap[supplier.SupplierId] = struct {
-			SupplierName string
-			SupplierCode string
-		}{
-			SupplierName: supplier.SupplierName,
-			SupplierCode: supplier.SupplierCode,
+	// Gabungkan data item import dan supplier
+	joinedData, joinErr := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
+	if joinErr != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        joinErr,
 		}
 	}
 
-	type ItemImportWithSupplier struct {
-		masteritempayloads.ItemImportResponse
-		SupplierName string `json:"supplier_name"`
-		SupplierCode string `json:"supplier_code"`
-	}
+	// Paginasi hasil gabungan data
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+	pages.Rows = dataPaginate
+	pages.TotalRows = int64(totalRows)
+	pages.TotalPages = totalPages
 
-	var combinedResponses []ItemImportWithSupplier
-	for _, response := range responses {
-		combined := ItemImportWithSupplier{
-			ItemImportResponse: response,
-		}
-
-		if supplierInfo, ok := supplierMap[response.SupplierId]; ok {
-			combined.SupplierName = supplierInfo.SupplierName
-			combined.SupplierCode = supplierInfo.SupplierCode
-		}
-
-		combinedResponses = append(combinedResponses, combined)
-	}
-
-	pages.Rows = combinedResponses
 	return pages, nil
 }
 
