@@ -75,11 +75,11 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 				Err:        err,
 			}
 		}
-		//dummy request by for testing
-		//RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
-		//if RequestByErr != nil {
-		//	return paginationResponses, RequestByErr
-		//}
+
+		RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
+		if RequestByErr != nil {
+			return paginationResponses, RequestByErr
+		}
 
 		var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
 		ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(res.ItemGroupId)
@@ -126,7 +126,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			ReferenceNo:                   res.ReferenceDocumentNumber,
 			ExpectedArrivalDate:           res.ExpectedArrivalDate,
 			Status:                        purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-			RequestBy:                     "dummy employee name",
+			RequestBy:                     RequestBy.EmployeeName,
 		}
 		result = append(result, tempRes)
 	}
@@ -270,16 +270,16 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	//	}
 	//}
 
-	//RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
-	//if RequestByErr != nil {
-	//	return response, RequestByErr
-	//}
+	RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	if RequestByErr != nil {
+		return response, RequestByErr
+	}
 
 	//var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	//UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
-	//if UpdatedByerr != nil {
-	//	return response, UpdatedByerr
-	//}
+	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
+	if UpdatedByerr != nil {
+		return response, UpdatedByerr
+	}
 
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
 	if response.ReferenceTypeId != 0 {
@@ -320,9 +320,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		SetOrder:                   response.SetOrder,
 		Currency:                   GetCcyName.CurrencyName,
 		ChangeNo:                   0,
-		CreatedByUser:              "dummy created user",
+		CreatedByUser:              RequestBy.EmployeeName,
 		CreatedDate:                response.CreatedDate,
-		UpdatedByUser:              "dummy updated user",
+		UpdatedByUser:              UpdatedBy.EmployeeName,
 		UpdatedDate:                response.UpdatedDate,
 	}
 	fmt.Println(result)
