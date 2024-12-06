@@ -1,28 +1,28 @@
 package transactionsparepartrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
-	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type ClaimSupplierRepositoryImpl struct {
@@ -396,16 +396,12 @@ func (c *ClaimSupplierRepositoryImpl) SubmitItemClaim(db *gorm.DB, claimId int) 
 	for _, item := range itemClaimDetailResponds {
 		if item.QuantityVariance != 0 {
 			//<<localhostp8000>>unit-of-measurement/get_quantity_conversion?source_type=S&item_id=893891&quantity=1.0
-			sourceTypeConversionResponse := masteritempayloads.SourceTypeConversionResponse{}
-			sourceTypeConversionUrl := config.EnvConfigs.AfterSalesServiceUrl + fmt.Sprintf("unit-of-measurement/get_quantity_conversion?source_type=%s&item_id=%s&quantity=%s")
-			err = utils.CallAPI("GET", sourceTypeConversionUrl, nil, &sourceTypeConversionResponse)
-			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-					Message:    "failed to get source type conversion",
-				}
+			sourceTypeConversionResponse, SourceTypeConversionErr := aftersalesserviceapiutils.GetQuantityConversion("P", item.ItemId, item.QuantityVariance)
+			if SourceTypeConversionErr != nil {
+				return false, SourceTypeConversionErr
+
 			}
+
 			if sourceTypeConversionResponse.QuantityConversion == 0 {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusBadRequest,
@@ -495,6 +491,13 @@ func (c *ClaimSupplierRepositoryImpl) SubmitItemClaim(db *gorm.DB, claimId int) 
 							WarehouseGroupId: itemClaimEntities.WarehouseGroupId,
 							ItemId:           item.ItemId,
 						}).Select("price_current").Scan(&hppCurent).Error
+						if err != nil {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "failed to check group stock",
+								Err:        err,
+							}
+						}
 					} else {
 						hppCurent = 0
 					}
