@@ -142,9 +142,8 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemImport{}
 	var responses []masteritempayloads.ItemImportResponse
-	var supplierCode string
-	var supplierName string
 
+	var supplierCode, supplierName string
 	for _, values := range externalFilter {
 		if values.ColumnField == "supplier_code" {
 			supplierCode = values.ColumnValue
@@ -152,6 +151,11 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 			supplierName = values.ColumnValue
 		}
 	}
+
+	query := tx.Model(&model).
+		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
+		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_supplier Supplier ON mtr_item_import.supplier_id = Supplier.supplier_id")
 
 	if supplierCode != "" || supplierName != "" {
 		params := generalserviceapiutils.SupplierMasterParams{
@@ -170,25 +174,24 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 
 		if len(suppliers) == 0 {
+
 			internalFilter = append(internalFilter, utils.FilterCondition{
 				ColumnField: "mtr_item_import.supplier_id",
 				ColumnValue: "-1",
 			})
 		} else {
-			var supplierIds []string
-			for _, supplier := range suppliers {
-				supplierIds = append(supplierIds, strconv.Itoa(supplier.SupplierId))
+
+			if len(supplierCode) > 0 && len(suppliers) > 1 {
+				query = query.Where("Supplier.supplier_code LIKE ?", fmt.Sprintf("%%%s%%", supplierCode))
+			} else {
+				var supplierIds []int
+				for _, supplier := range suppliers {
+					supplierIds = append(supplierIds, supplier.SupplierId)
+				}
+				query = query.Where("mtr_item_import.supplier_id IN (?)", supplierIds)
 			}
-			internalFilter = append(internalFilter, utils.FilterCondition{
-				ColumnField: "mtr_item_import.supplier_id",
-				ColumnValue: strings.Join(supplierIds, ","),
-			})
 		}
 	}
-
-	query := tx.Model(&model).
-		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
-		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id")
 
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
@@ -209,7 +212,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	for _, response := range responses {
 		supplierIds = append(supplierIds, response.SupplierId)
 	}
-
 	supplierIds = utils.RemoveDuplicateIds(supplierIds)
 
 	var supplierResponses []masteritempayloads.SupplierResponse
@@ -217,42 +219,19 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		return pages, err
 	}
 
-	supplierMap := make(map[int]struct {
-		SupplierName string
-		SupplierCode string
-	})
-	for _, supplier := range supplierResponses {
-		supplierMap[supplier.SupplierId] = struct {
-			SupplierName string
-			SupplierCode string
-		}{
-			SupplierName: supplier.SupplierName,
-			SupplierCode: supplier.SupplierCode,
+	joinedData, joinErr := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
+	if joinErr != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        joinErr,
 		}
 	}
 
-	type ItemImportWithSupplier struct {
-		masteritempayloads.ItemImportResponse
-		SupplierName string `json:"supplier_name"`
-		SupplierCode string `json:"supplier_code"`
-	}
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+	pages.Rows = dataPaginate
+	pages.TotalRows = int64(totalRows)
+	pages.TotalPages = totalPages
 
-	var combinedResponses []ItemImportWithSupplier
-
-	for _, response := range responses {
-		combined := ItemImportWithSupplier{
-			ItemImportResponse: response,
-		}
-
-		if supplierInfo, ok := supplierMap[response.SupplierId]; ok {
-			combined.SupplierName = supplierInfo.SupplierName
-			combined.SupplierCode = supplierInfo.SupplierCode
-		}
-
-		combinedResponses = append(combinedResponses, combined)
-	}
-
-	pages.Rows = combinedResponses
 	return pages, nil
 }
 

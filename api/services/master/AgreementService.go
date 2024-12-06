@@ -14,7 +14,7 @@ type AgreementService interface {
 	SaveAgreement(masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	UpdateAgreement(int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	ChangeStatusAgreement(int) (masterentities.Agreement, *exceptions.BaseErrorResponse)
-	GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllAgreement(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	AddDiscountGroup(int, masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse)
 	UpdateDiscountGroup(int, int, masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse)
 	DeleteDiscountGroup(int, int) *exceptions.BaseErrorResponse
