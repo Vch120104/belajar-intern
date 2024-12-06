@@ -2,7 +2,6 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -121,15 +120,18 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *ex
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var results []masteritempayloads.ItemLocationGetAllResponse
 
-	entities := []masteritementities.ItemLocation{}
-
+	// Join the ItemLocation table with parent entities (Item, Warehouse, WarehouseGroup, WarehouseLocation)
 	baseModelQuery := tx.Model(&masteritementities.ItemLocation{}).
-		Joins("JOIN mtr_warehouse_master AS warehouse ON warehouse.warehouse_id = mtr_location_item.warehouse_id")
+		Joins("JOIN mtr_item ON mtr_item.item_id = mtr_location_item.item_id").
+		Joins("JOIN mtr_warehouse_master ON mtr_warehouse_master.warehouse_id = mtr_location_item.warehouse_id").
+		Joins("JOIN mtr_warehouse_group ON mtr_warehouse_group.warehouse_group_id = mtr_location_item.warehouse_group_id").
+		Joins("JOIN mtr_warehouse_location ON mtr_warehouse_location.warehouse_location_id = mtr_location_item.warehouse_location_id")
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterConditions)
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&results).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -137,15 +139,16 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 		}
 	}
 
-	if len(entities) == 0 {
+	if len(results) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	var results []map[string]interface{}
-	for _, entity := range entities {
-		// Fetch Item data
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.ItemId)
+	var itemLocations []masteritempayloads.ItemLocationGetAllResponse
+	for _, result := range results {
+
+		// Ambil data Item berdasarkan ItemId
+		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(result.ItemId)
 		if itemErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: itemErr.StatusCode,
@@ -153,19 +156,15 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 			}
 		}
 
-		// Fetch Warehouse data
-		warehouseResponse := map[string]interface{}{}
-		err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
-			Where("warehouse_id = ?", entity.WarehouseId).First(&warehouseResponse).Error
-		if err != nil {
+		warehouseResponse, warehouseErr := aftersalesserviceapiutils.GetWarehouseById(result.WarehouseId)
+		if warehouseErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("failed to fetch warehouse data: %w", err),
+				StatusCode: warehouseErr.StatusCode,
+				Err:        warehouseErr.Err,
 			}
 		}
 
-		// Fetch Warehouse Location data
-		locationResponse, locationErr := aftersalesserviceapiutils.GetWarehouseLocationById(entity.WarehouseLocationId)
+		locationResponse, locationErr := aftersalesserviceapiutils.GetWarehouseLocationById(result.WarehouseLocationId)
 		if locationErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: locationErr.StatusCode,
@@ -173,24 +172,35 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 			}
 		}
 
-		result := map[string]interface{}{
-			"item_location_id":        entity.ItemLocationId,
-			"item_id":                 entity.ItemId,
-			"item_code":               itemResponse.ItemCode,
-			"item_name":               itemResponse.ItemName,
-			"stock_opname":            entity.StockOpname,
-			"warehouse_id":            entity.WarehouseId,
-			"warehouse_name":          warehouseResponse["warehouse_name"],
-			"warehouse_code":          warehouseResponse["warehouse_code"],
-			"warehouse_location_id":   entity.WarehouseLocationId,
-			"warehouse_location_name": locationResponse.WarehouseLocationName,
-			"warehouse_location_code": locationResponse.WarehouseLocationCode,
+		warehouseGroupResponse, warehouseGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(result.WarehouseGroupId)
+		if warehouseGroupErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: warehouseGroupErr.StatusCode,
+				Err:        warehouseGroupErr.Err,
+			}
 		}
 
-		results = append(results, result)
+		itemLocation := masteritempayloads.ItemLocationGetAllResponse{
+			ItemLocationId:        result.ItemLocationId,
+			ItemId:                result.ItemId,
+			ItemCode:              itemResponse.ItemCode,
+			ItemName:              itemResponse.ItemName,
+			StockOpname:           result.StockOpname,
+			WarehouseId:           result.WarehouseId,
+			WarehouseCode:         warehouseResponse.WarehouseCode,
+			WarehouseName:         warehouseResponse.WarehouseName,
+			WarehouseGroupId:      result.WarehouseGroupId,
+			WarehouseGroupCode:    warehouseGroupResponse.WarehouseGroupCode,
+			WarehouseGroupName:    warehouseGroupResponse.WarehouseGroupName,
+			WarehouseLocationId:   result.WarehouseLocationId,
+			WarehouseLocationCode: locationResponse.WarehouseLocationCode,
+			WarehouseLocationName: locationResponse.WarehouseLocationName,
+		}
+		itemLocations = append(itemLocations, itemLocation)
 	}
 
-	pages.Rows = results
+	// Store the results into the pagination struct
+	pages.Rows = itemLocations
 
 	return pages, nil
 }
