@@ -75,11 +75,11 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 				Err:        err,
 			}
 		}
-		//dummy request by for testing
-		//RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
-		//if RequestByErr != nil {
-		//	return paginationResponses, RequestByErr
-		//}
+
+		RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
+		if RequestByErr != nil {
+			return paginationResponses, RequestByErr
+		}
 
 		var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
 		ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(res.ItemGroupId)
@@ -126,7 +126,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			ReferenceNo:                   res.ReferenceDocumentNumber,
 			ExpectedArrivalDate:           res.ExpectedArrivalDate,
 			Status:                        purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-			RequestBy:                     "dummy employee name",
+			RequestBy:                     RequestBy.EmployeeName,
 		}
 		result = append(result, tempRes)
 	}
@@ -270,16 +270,16 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	//	}
 	//}
 
-	//RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
-	//if RequestByErr != nil {
-	//	return response, RequestByErr
-	//}
+	RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	if RequestByErr != nil {
+		return response, RequestByErr
+	}
 
 	//var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	//UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
-	//if UpdatedByerr != nil {
-	//	return response, UpdatedByerr
-	//}
+	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
+	if UpdatedByerr != nil {
+		return response, UpdatedByerr
+	}
 
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
 	if response.ReferenceTypeId != 0 {
@@ -320,9 +320,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		SetOrder:                   response.SetOrder,
 		Currency:                   GetCcyName.CurrencyName,
 		ChangeNo:                   0,
-		CreatedByUser:              "dummy created user",
+		CreatedByUser:              RequestBy.EmployeeName,
 		CreatedDate:                response.CreatedDate,
-		UpdatedByUser:              "dummy updated user",
+		UpdatedByUser:              UpdatedBy.EmployeeName,
 		UpdatedDate:                response.UpdatedDate,
 	}
 	fmt.Println(result)
@@ -986,7 +986,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type_id <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 2 "+
 			" AND whs.warehouse_id = x.warehouse_id) ", companyid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
 		Group("mtr_item.item_id,mtr_item.item_code," +
@@ -1130,12 +1130,15 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 		UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
 
-		uomentities := masteritementities.UomItem{}
-		err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: res.ItemId}).Scan(&uomentities).Error
-		res.UnitOfMeasurementCode = uomentities.UomTypeCode
+		//uomentities := masteritementities.UomItem{}
+		res.UnitOfMeasurementCode = ""
+		err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+			Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&res.UnitOfMeasurementCode).Error
+
+		//err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: res.ItemId}).Scan(&uomentities).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				uomentities.UomTypeCode = ""
+				res.UnitOfMeasurementCode = ""
 			} else {
 				return page, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -1143,8 +1146,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 					Err:        err,
 				}
 			}
-
 		}
+		//res.UnitOfMeasurementCode = uomentities.UomTypeCode
 		res.UnitOfMeasurementRate = UomRate
 		res.Sequence = i
 		//res.ItemTypeCode = itemTypeEntities.ItemTypeCode
@@ -1166,49 +1169,75 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	fmt.Println("year = " + year)
 
 	fmt.Println(PeriodResponse)
-	err := db.Table("mtr_item A").Select("A.item_id,"+
-		"A.item_code,"+
-		"A.item_name,"+
-		"A.item_name,"+
-		"Z.item_class_name,"+
-		"A.item_type_id,"+
-		"A.item_level_1_id,"+
-		"A.item_level_2_id,"+
-		"A.item_level_3_id,"+
-		"L1.item_level_1_code as item_level_1,"+
-		"L2.item_level_2_code as item_level_2,"+
-		"L3.item_level_3_code as item_level_3,"+
-		"L4.item_level_4_code as item_level_4,"+
-		"IT.item_type_code,"+
-		"A.item_level_4_id,A.unit_of_measurement_type_id,"+
-		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
-		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
-		Joins(`LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_3 L3 ON A.item_level_3_id = L3.item_level_3_id AND A.item_level_3_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_4 L4 ON A.item_level_4_id = L4.item_level_4_id AND A.item_level_4_id <> 0`).
-		Joins("LEFT JOIN mtr_item_type IT ON IT.item_type_id = a.item_type_id").
-		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
-			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
-			" from mtr_warehouse_master whs "+
-			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type_id <> 'NON' "+
-			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
-		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
-		Group("A.item_id,A.item_code,"+
-			"A.item_name,"+
-			"Z.item_class_name,"+
-			"A.item_type_id,"+
-			"A.item_level_1_id,"+
-			"A.item_level_2_id,"+
-			"A.item_level_3_id,"+
-			"A.item_level_4_id,"+
-			"L1.item_level_1_code,"+
-			"L2.item_level_2_code,"+
-			"L3.item_level_3_code,"+
-			"L4.item_level_4_code,"+
-			"A.unit_of_measurement_type_id,"+
-			"IT.item_type_code").Where("A.item_id = ?", i).First(&response).Error
+	err := db.Table("mtr_item A").
+		Select(`
+		A.item_id,
+		A.item_code,
+		A.item_name,
+		A.item_name,
+		Z.item_class_name,
+		A.item_type_id,
+		A.item_level_1_id,
+		A.item_level_2_id,
+		A.item_level_3_id,
+		L1.item_level_1_code as item_level_1,
+		L2.item_level_2_code as item_level_2,
+		L3.item_level_3_code as item_level_3,
+		L4.item_level_4_code as item_level_4,
+		IT.item_type_code,
+		A.item_level_4_id,
+		A.unit_of_measurement_type_id,
+		ISNULL(SUM(x.quantity_ending-x.quantity_allocated), 0) as quantity
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_3 L3 ON A.item_level_3_id = L3.item_level_3_id AND A.item_level_3_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_4 L4 ON A.item_level_4_id = L4.item_level_4_id AND A.item_level_4_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_type IT ON IT.item_type_id = A.item_type_id
+	`).
+		Joins(`
+		LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id AND x.company_id = ? AND period_year = ? AND period_month = ?
+		AND x.warehouse_id in (
+			SELECT whs.warehouse_id
+			FROM mtr_warehouse_master whs
+			WHERE whs.company_id = x.company_id
+			AND whs.warehouse_costing_type_id <> 2
+			AND whs.warehouse_id = x.warehouse_id
+		)
+	`, compid, year, month).
+		Group(`
+		A.item_id,
+		A.item_code,
+		A.item_name,
+		Z.item_class_name,
+		A.item_type_id,
+		A.item_level_1_id,
+		A.item_level_2_id,
+		A.item_level_3_id,
+		A.item_level_4_id,
+		L1.item_level_1_code,
+		L2.item_level_2_code,
+		L3.item_level_3_code,
+		L4.item_level_4_code,
+		A.unit_of_measurement_type_id,
+		IT.item_type_code
+	`).
+		Where("A.item_id = ?", i).
+		First(&response).
+		Error
+
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1227,30 +1256,31 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 			Err:        err,
 		}
 	}
-	// var QtyRes float64
-	// if UomItemResponse.SourceConvertion == nil {
-	// 	QtyRes = 0
-	// } else {
-	// 	QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+	var QtyRes float64
+	if UomItemResponse.SourceConvertion == nil {
+		QtyRes = 0
+	} else {
+		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
 
-	// }
-	// if UomItemResponse.SourceConvertion == nil {
-	// 	return response, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to fetch Uom Source Convertion From External Data",
-	// 		Err:        err,
-	// 	}
-	// }
+	}
+	if UomItemResponse.SourceConvertion == nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Uom Source Conversion From External Data",
+			Err:        err,
+		}
+	}
 
-	// var UomRate float64
-	// UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	// UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	uomentities := masteritementities.UomItem{}
-	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	var UomRate float64
+	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	response.UnitOfMeasurementCode = ""
+	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&response.UnitOfMeasurementCode).Error
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			uomentities.UomTypeCode = ""
+			response.UnitOfMeasurementCode = ""
 		} else {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1260,7 +1290,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 		}
 
 	}
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	response.UnitOfMeasurementRate = UomRate
 	return response, nil
 }
 
@@ -1302,7 +1332,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type_id <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 2 "+
 			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
 		Group("A.item_id,A.item_code,"+
@@ -1353,13 +1383,16 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	}
 	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	uomentities := masteritementities.UomItem{}
-	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+
+	response.UnitOfMeasurementCode = ""
+	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", response.ItemId, "P").Scan(&response.UnitOfMeasurementCode).Error
+
+	//response.UnitOfMeasurementCode = response.UomTypeCode
 	response.UnitOfMeasurementRate = UomRate
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			uomentities.UomTypeCode = ""
+			response.UnitOfMeasurementCode = ""
 		} else {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1369,7 +1402,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 		}
 
 	}
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
 	return response, nil
 }
 
