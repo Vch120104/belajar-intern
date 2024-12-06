@@ -152,13 +152,11 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	// Mulai query dan filter berdasarkan supplier_code atau supplier_name
 	query := tx.Model(&model).
 		Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
 		Joins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id").
 		Joins("JOIN dms_microservices_general_dev.dbo.mtr_supplier Supplier ON mtr_item_import.supplier_id = Supplier.supplier_id")
 
-	// Jika ada filter berdasarkan supplier_code atau supplier_name
 	if supplierCode != "" || supplierName != "" {
 		params := generalserviceapiutils.SupplierMasterParams{
 			SupplierCode: supplierCode,
@@ -176,13 +174,13 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 
 		if len(suppliers) == 0 {
-			// Jika tidak ada supplier ditemukan, tambahkan filter palsu
+
 			internalFilter = append(internalFilter, utils.FilterCondition{
 				ColumnField: "mtr_item_import.supplier_id",
 				ColumnValue: "-1",
 			})
 		} else {
-			// Jika ada supplier ditemukan, buat filter berdasarkan supplier_id
+
 			if len(supplierCode) > 0 && len(suppliers) > 1 {
 				query = query.Where("Supplier.supplier_code LIKE ?", fmt.Sprintf("%%%s%%", supplierCode))
 			} else {
@@ -195,10 +193,8 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	// Terapkan filter internal
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
-	// Jalankan query dengan paginasi
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -207,26 +203,22 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	// Jika tidak ada data
 	if len(responses) == 0 {
 		pages.Rows = []masteritempayloads.ItemImportResponse{}
 		return pages, nil
 	}
 
-	// Ambil ID Supplier untuk join dengan data supplier
 	supplierIds := []int{}
 	for _, response := range responses {
 		supplierIds = append(supplierIds, response.SupplierId)
 	}
 	supplierIds = utils.RemoveDuplicateIds(supplierIds)
 
-	// Ambil data supplier berdasarkan supplierIds
 	var supplierResponses []masteritempayloads.SupplierResponse
 	if err := generalserviceapiutils.GetSupplierMasterByMultiId(supplierIds, &supplierResponses); err != nil {
 		return pages, err
 	}
 
-	// Gabungkan data item import dan supplier
 	joinedData, joinErr := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
 	if joinErr != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -235,7 +227,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	// Paginasi hasil gabungan data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 	pages.Rows = dataPaginate
 	pages.TotalRows = int64(totalRows)
