@@ -55,26 +55,26 @@ type ItemInquiryGetAllPayloads struct {
 }
 
 type ItemInquiryGetAllResponse struct {
-	ItemDetailId           int                      `json:"item_detail_id"`
-	ItemId                 int                      `json:"item_id"`
-	ItemCode               string                   `json:"item_code"`
-	ItemName               string                   `json:"item_name"`
-	ItemClassCode          string                   `json:"item_class_code"`
-	BrandId                int                      `json:"brand_id"`
-	BrandCode              string                   `json:"brand_code"`
-	ModelCode              string                   `json:"model_code"`
-	WarehouseGroupId       int                      `json:"warehouse_group_id"`
-	WarehouseGroupCode     string                   `json:"warehouse_group_code"`
-	WarehouseId            int                      `json:"warehouse_id"`
-	WarehouseCode          string                   `json:"warehouse_code"`
-	WarehouseLocationId    int                      `json:"warehouse_location_id"`
-	WarehouseLocationCode  string                   `json:"warehouse_location_code"`
-	SalesPrice             interface{}              `json:"sales_price"`
-	QuantityAvailable      interface{}              `json:"quantity_available"`
-	ItemSubstitute         string                   `json:"item_substitute"`
-	MovingCode             string                   `json:"moving_code"`
-	AvailableInOtherDealer string                   `json:"available_in_other_dealer"`
-	Tooltip                []map[string]interface{} `json:"tooltip"`
+	ItemDetailId           int         `json:"item_detail_id"`
+	ItemId                 int         `json:"item_id"`
+	ItemCode               string      `json:"item_code"`
+	ItemName               string      `json:"item_name"`
+	ItemClassCode          string      `json:"item_class_code"`
+	BrandId                int         `json:"brand_id"`
+	BrandCode              string      `json:"brand_code"`
+	ModelCode              string      `json:"model_code"`
+	WarehouseGroupId       int         `json:"warehouse_group_id"`
+	WarehouseGroupCode     string      `json:"warehouse_group_code"`
+	WarehouseId            int         `json:"warehouse_id"`
+	WarehouseCode          string      `json:"warehouse_code"`
+	WarehouseLocationId    int         `json:"warehouse_location_id"`
+	WarehouseLocationCode  string      `json:"warehouse_location_code"`
+	SalesPrice             interface{} `json:"sales_price"`
+	QuantityAvailable      interface{} `json:"quantity_available"`
+	ItemSubstitute         string      `json:"item_substitute"`
+	MovingCode             string      `json:"moving_code"`
+	AvailableInOtherDealer string      `json:"available_in_other_dealer"`
+	Tooltip                interface{} `json:"tooltip"`
 }
 
 type ItemInquiryBrandResponse struct {
@@ -93,8 +93,8 @@ type ItemInquiryToolTip struct {
 }
 
 type ItemInquiryGetAllToolTip struct {
-	ItemId  int                      `json:"ItemId"`
-	Tooltip []map[string]interface{} `json:"tooltip"`
+	ItemId  int         `json:"ItemId"`
+	Tooltip interface{} `json:"tooltip"`
 }
 
 type ItemInquiryGetByIdFilter struct {
