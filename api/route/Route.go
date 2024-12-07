@@ -371,6 +371,16 @@ func StartRouting(db *gorm.DB) {
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
 	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
 
+	//claim supplier
+	ClaimSupplierRepository := transactionsparepartrepositoryimpl.NewClaimSupplierRepositoryImpl()
+	ClaimSupplierService := transactionsparepartserviceimpl.NewClaimSupplierServiceImpl(ClaimSupplierRepository, db, rdb)
+	ClaimSupplierController := transactionsparepartcontroller.NewClaimSupplierControllerImpl(ClaimSupplierService)
+
+	//Item Inquiry
+	ItemInquiryRepository := transactionsparepartrepositoryimpl.StartItemInquiryRepositoryImpl()
+	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
+	ItemInquiryController := transactionsparepartcontroller.NewItemInquiryController(ItemInquiryService)
+
 	//stock transaction
 	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
@@ -527,10 +537,11 @@ func StartRouting(db *gorm.DB) {
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	GoodsReceiveRouter := GoodsReceiveRouter(GoodsReceiveController)
 	BinningListRouter := BinningListRouter(BinningListController)
+	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
-
+	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -635,8 +646,11 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/goods-receive", GoodsReceiveRouter)
+		r.Mount("/claim-supplier", ClaimSupplierRoute)
 
 		r.Mount("/binning-list", BinningListRouter)
+		r.Mount("/item-inquiry", ItemInquiryRouter)
+
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
 	})

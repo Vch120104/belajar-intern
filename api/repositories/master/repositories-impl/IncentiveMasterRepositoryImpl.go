@@ -25,11 +25,9 @@ func StartIncentiveMasterRepositoryImpl() masterrepository.IncentiveMasterReposi
 func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []masterentities.IncentiveMaster
 
-	// Apply filters and pagination
 	baseModelQuery := tx.Model(&masterentities.IncentiveMaster{})
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Perform the query with pagination
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -38,7 +36,6 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 		}
 	}
 
-	// If no entities are found, return empty rows
 	if len(entities) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
@@ -46,18 +43,16 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 
 	var results []map[string]interface{}
 	for _, entity := range entities {
-		// Fetch the role data using the Role API
 		role, errResp := generalserviceapiutils.GetRoleById(entity.JobPositionId)
 		if errResp != nil {
 			return pages, errResp
 		}
 
-		// Prepare the result map with the incentive details and role data
 		result := map[string]interface{}{
 			"incentive_level_id":      entity.IncentiveLevelId,
 			"incentive_level_code":    entity.IncentiveLevelCode,
 			"job_position_id":         entity.JobPositionId,
-			"job_position_name":       role.RoleName, // Using RoleName from the RoleResponse
+			"job_position_name":       role.RoleName,
 			"incentive_level_percent": entity.IncentiveLevelPercent,
 			"is_active":               entity.IsActive,
 		}
@@ -65,7 +60,6 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 		results = append(results, result)
 	}
 
-	// Attach the results to the pagination rows
 	pages.Rows = results
 	return pages, nil
 }

@@ -61,17 +61,22 @@ func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, reque
 	criteria := utils.BuildFilterCondition(queryParams)
 	fmt.Println("Filter Conditions:", criteria)
 
-	paginatedData, totalPages, totalRows, err := r.ContractServiceService.GetAll(criteria, paginate)
+	result, err := r.ContractServiceService.GetAll(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetById implements ContractServiceController.

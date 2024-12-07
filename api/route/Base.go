@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -676,6 +675,23 @@ func GoodsReceiveRouter(
 	router.Delete("/detail/{goods_receive_detail_id}", GoodsReceiveController.DeleteGoodsReceiveDetail)
 	return router
 }
+
+func ItemInquiryRouter(
+	ItemInquiryController transactionsparepartcontroller.ItemInquiryController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemInquiryController.GetAllItemInquiry)
+	router.Get("/by-id", ItemInquiryController.GetByIdItemInquiry)
+
+	return router
+}
+
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {
@@ -1650,6 +1666,23 @@ func ContractServiceDetailRouter(
 	return router
 }
 
+func ClaimSupplierRouter(
+	ClaimSupplierController transactionsparepartcontroller.ClaimSupplierController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+	router.Post("/detail", ClaimSupplierController.InsertItemClaimDetail)
+	router.Post("/", ClaimSupplierController.InsertItemClaim)
+	router.Get("/by-id/{claim_system_number}", ClaimSupplierController.GetItemClaimById)
+	router.Get("/detail", ClaimSupplierController.GetItemClaimDetailByHeaderId)
+	router.Get("/", ClaimSupplierController.GetAllItemClaim)
+	router.Post("/submit/{claim_system_number}", ClaimSupplierController.SubmitItemClaim)
+	return router
+}
 func QualityControlRouter(
 	QualityControlController transactionworkshopcontroller.QualityControlController,
 ) chi.Router {
@@ -1802,6 +1835,11 @@ func SupplySlipRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
 	router.Get("/", SupplySlipController.GetAllSupplySlip)
 	router.Get("/detail/{supply_detail_system_number}", SupplySlipController.GetSupplySlipDetailByID)
@@ -1818,6 +1856,11 @@ func SupplySlipReturnRouter(
 	SupplySlipReturnController transactionsparepartcontroller.SupplySlipReturnController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Post("/", SupplySlipReturnController.SaveSupplySlipReturn)
 	router.Post("/detail", SupplySlipReturnController.SaveSupplySlipReturnDetail)
@@ -1873,6 +1916,8 @@ func LookupRouter(
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
 	router.Get("/location-available", LookupController.LocationAvailable)
+	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
+	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 
 	return router
 }

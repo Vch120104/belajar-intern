@@ -1,7 +1,6 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -11,7 +10,6 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"net/http"
-	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -102,17 +100,11 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	entities := masterentities.WarrantyFreeService{}
 	response := masterpayloads.WarrantyFreeServiceResponse{}
-	var getUnitBrandResponse masterpayloads.BrandResponse
-	var getUnitModelResponse masterpayloads.UnitModelResponse
-	var getUnitVariantResponse masterpayloads.UnitVariantResponse
-	var getWarrantyFreeServiceTypeResponse masterpayloads.WarrantyFreeServiceTypeResponse
 
-	rows, err := tx.Model(&entities).
-		Where(masterentities.WarrantyFreeService{
-			WarrantyFreeServicesId: Id,
-		}).
-		First(&response).
-		Rows()
+	// Fetch data from database
+	err := tx.Model(&entities).
+		Where("warranty_free_services_id = ?", Id).
+		First(&response).Error
 
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -121,98 +113,68 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 		}
 	}
 
-	defer rows.Close()
-
-	// join with mtr_brand on sales service
-
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(response.BrandId)
-
-	errUrlUnitBrand := utils.Get(unitBrandUrl, &getUnitBrandResponse, nil)
-
-	if errUrlUnitBrand != nil {
+	// Fetch Brand data
+	brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	if brandErr != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        brandErr.Err,
 		}
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.WarrantyFreeServiceResponse{response}, []masterpayloads.BrandResponse{getUnitBrandResponse}, "BrandId")
-	if errdf != nil {
+	// Fetch Model data
+	modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+	if modelErr != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+			Err:        modelErr.Err,
 		}
 	}
 
-	//join with mtr_unit_model on sales service
-
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(response.ModelId)
-
-	errUrlUnitModel := utils.Get(unitModelUrl, &getUnitModelResponse, nil)
-
-	if errUrlUnitModel != nil {
+	// Fetch Variant data
+	variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
+	if variantErr != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        variantErr.Err,
 		}
 	}
 
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getUnitModelResponse}, "ModelId")
-
-	if errdf != nil {
+	// Fetch Warranty Free Service Type data
+	warrantyFreeServiceTypeResponse, wfstErr := generalserviceapiutils.GetWarrantyFreeServiceTypeById(response.WarrantyFreeServiceTypeId)
+	if wfstErr != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+			Err:        wfstErr.Err,
 		}
 	}
 
-	// join with mtr_unit_variant on sales service
-
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(response.VariantId)
-
-	errUrlUnitVariant := utils.Get(unitVariantUrl, &getUnitVariantResponse, nil)
-
-	if errUrlUnitVariant != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+	// Prepare the response as a map
+	finalResponse := map[string]interface{}{
+		"is_active":                        response.IsActive,
+		"warranty_free_services_id":        response.WarrantyFreeServicesId,
+		"brand_id":                         response.BrandId,
+		"model_id":                         response.ModelId,
+		"warranty_free_service_type_id":    response.WarrantyFreeServiceTypeId,
+		"effective_date":                   response.EffectiveDate,
+		"expire_mileage":                   response.ExpireMileage,
+		"expire_month":                     response.ExpireMonth,
+		"variant_id":                       response.VariantId,
+		"expire_mileage_extended_warranty": response.ExpireMileageExtendedWarranty,
+		"expire_month_extended_warranty":   response.ExpireMonthExtendedWarranty,
+		"remark":                           response.Remark,
+		"extended_warranty":                response.ExtendedWarranty,
+		"brand_code":                       brandResponse.BrandCode,
+		"model_code":                       modelResponse.ModelCode,
+		"variant_code":                     variantResponse.VariantCode,
+		"brand_name":                       brandResponse.BrandName,
+		"model_description":                modelResponse.ModelName,
+		"variant_description":              variantResponse.VariantDescription,
+		"warranty_free_service_type_code":  warrantyFreeServiceTypeResponse.WarrantyFreeServiceTypeCode,
+		"warranty_free_service_type_name":  warrantyFreeServiceTypeResponse.WarrantyFreeServiceTypeName,
 	}
 
-	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	// join with mtr_warranty_free_service_type on general service
-
-	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
-
-	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
-
-	if errUrlWarrantyFreeServiceType != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData4, errdf := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.WarrantyFreeServiceTypeResponse{getWarrantyFreeServiceTypeResponse}, "WarrantyFreeServiceTypeId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	result := joinedData4[0]
-
-	return result, nil
+	return finalResponse, nil
 }
 
 func (r *WarrantyFreeServiceRepositoryImpl) SaveWarrantyFreeService(tx *gorm.DB, request masterpayloads.WarrantyFreeServiceRequest) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse) {

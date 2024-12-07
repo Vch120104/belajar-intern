@@ -71,3 +71,26 @@ type LocationAvailableResponse struct {
 	WarehouseLocationCode string `json:"warehouse_location_code"`
 	WarehouseLocationName string `json:"warehouse_location_name"`
 }
+
+type ItemDetailForItemInquiryResponse struct {
+	ModelId     int    `json:"model_id"`
+	ModelCode   string `json:"model_code"`
+	ModelName   string `json:"model_name"`
+	VariantId   int    `json:"variant_id"`
+	VariantCode string `json:"variant_code"`
+	VariantName string `json:"variant_name"`
+}
+
+type ItemDetailForItemInquiryPayload struct {
+	ModelId   int `json:"model_id"`
+	VariantId int `json:"variant_id"`
+}
+
+type ItemSubstituteDetailForItemInquiryResponse struct {
+	ItemSubstituteDetailId int     `json:"item_substitute_detail_id"`
+	IsActive               bool    `json:"is_active"`
+	ItemId                 int     `json:"item_id"`
+	ItemName               string  `json:"item_name"`
+	Quantity               float64 `json:"quantity"`
+	Sequence               int     `json:"sequence"`
+}

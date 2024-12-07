@@ -1,15 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -25,8 +24,6 @@ func StartLandedCostMasterRepositoryImpl() masteritemrepository.LandedCostMaster
 func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.LandedCost
 	var payloads []masteritempayloads.LandedCostMasterPayloads
-	var shippingmethodpayloads []masteritempayloads.ShippingMethodResponse
-	var landedcostpayloads []masteritempayloads.LandedCostTypeResponse
 
 	query := tx.Model(&entities).
 		Select("mtr_landed_cost.*, mtr_shipping_method.shipping_method_description, mtr_landed_cost_type.landed_cost_type_name").
@@ -34,7 +31,6 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_landed_cost_type ON mtr_landed_cost.landed_cost_type_id = mtr_landed_cost_type.landed_cost_type_id")
 
 	query = utils.ApplyFilter(query, filterCondition)
-
 	query = query.Scopes(pagination.Paginate(&pages, query))
 
 	err := query.Scan(&payloads).Error
@@ -52,36 +48,47 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 		return pages, nil
 	}
 
-	errShippingMethod := utils.Get(config.EnvConfigs.GeneralServiceUrl+"shipping-methods", &shippingmethodpayloads, nil)
-	if errShippingMethod != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errShippingMethod,
-		}
-	}
-
-	errLandedCostType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"landed-cost-types", &landedcostpayloads, nil)
-	if errLandedCostType != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errLandedCostType,
-		}
-	}
-
-	joinedData := utils.DataFrameLeftJoin(payloads, shippingmethodpayloads, "ShippingMethodId")
-	joinedData = utils.DataFrameLeftJoin(joinedData, landedcostpayloads, "LandedCostTypeId")
-
 	result := []map[string]interface{}{}
-	for _, res := range joinedData {
+	for _, payload := range payloads {
+		// Fetch Shipping Method by ID
+		shippingMethod, errSM := generalserviceapiutils.GetShippingMethodById(payload.ShippingMethodId)
+		if errSM != nil {
+			return pages, errSM
+		}
+
+		// Fetch Landed Cost Type by ID
+		landedCostType, errLC := generalserviceapiutils.GetLandedCostTypeById(payload.LandedCostTypeId)
+		if errLC != nil {
+			return pages, errLC
+		}
+
+		// Fetch Supplier by ID
+		supplier, errSup := generalserviceapiutils.GetSupplierMasterByID(payload.SupplierId)
+		if errSup != nil {
+			return pages, errSup
+		}
+
+		// Fetch Company by ID
+		company, errComp := generalserviceapiutils.GetCompanyDataById(payload.CompanyId)
+		if errComp != nil {
+			return pages, errComp
+		}
+
+		// Combine data into final result
 		data := map[string]interface{}{
-			"landed_cost_id":        res["LandedCostId"],
-			"shipping_method_name":  res["ShippingMethodName"],
-			"landed_cost_type_name": res["LandedCostTypeName"],
-			"is_active":             res["IsActive"],
-			"cost_value":            res["CostValue"],
-			"effective_date":        res["EffectiveDate"],
-			"created_at":            res["CreatedAt"],
-			"updated_at":            res["UpdatedAt"],
+			"landed_cost_id":        payload.LandedCostId,
+			"shipping_method_name":  shippingMethod.ShippingMethodName,
+			"landed_cost_type_name": landedCostType.LandedCostTypeName,
+			"landed_cost_type_code": landedCostType.LandedCostTypeCode,
+			"is_active":             payload.IsActive,
+			"landed_cost_factor":    payload.LandedCostFactor,
+			"company_id":            payload.CompanyId,
+			"company_name":          company.CompanyName,
+			"supplier_id":           payload.SupplierId,
+			"supplier_code":         supplier.SupplierCode,
+			"supplier_name":         supplier.SupplierName,
+			"shipping_method_id":    payload.ShippingMethodId,
+			"landed_cost_type_id":   payload.LandedCostTypeId,
 		}
 		result = append(result, data)
 	}
@@ -93,8 +100,6 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tableStruct := masteritementities.LandedCost{}
 	response := masteritempayloads.LandedCostMasterPayloads{}
-	var GetLandedCostType masteritempayloads.LandedCostTypeResponse
-	var GetShippinMethodType masteritempayloads.ShippingMethodResponse
 
 	baseModelQuery := tx.Model(tableStruct)
 
@@ -105,56 +110,33 @@ func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) 
 			Err:        err,
 		}
 	}
-	LandedCostTypeUrl := config.EnvConfigs.GeneralServiceUrl + "landed-cost-type/" + strconv.Itoa(response.LandedCostTypeId)
-	errLandedCost := utils.Get(LandedCostTypeUrl, &GetLandedCostType, nil)
+
+	// Fetch LandedCostType
+	GetLandedCostType, errLandedCost := generalserviceapiutils.GetLandedCostTypeById(response.LandedCostTypeId)
 	if errLandedCost != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	joinedData1, errdf := utils.DataFrameInnerJoin([]masteritempayloads.LandedCostMasterPayloads{response}, []masteritempayloads.LandedCostTypeResponse{GetLandedCostType}, "LandedCostTypeId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
+		return nil, errLandedCost
 	}
 
-	ShippingMethodUrl := config.EnvConfigs.GeneralServiceUrl + "shipping-method/" + strconv.Itoa(response.ShippingMethodId)
-
-	errshippingmethod := utils.Get(ShippingMethodUrl, &GetShippinMethodType, nil)
-
-	if errshippingmethod != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	JoinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masteritempayloads.ShippingMethodResponse{GetShippinMethodType}, "ShippingMethodId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
+	// Fetch ShippingMethod
+	GetShippingMethodType, errShippingMethod := generalserviceapiutils.GetShippingMethodById(response.ShippingMethodId)
+	if errShippingMethod != nil {
+		return nil, errShippingMethod
 	}
 
 	result := map[string]interface{}{
-		"company_id":                   JoinedData2[0]["CompanyId"],
-		"is_active":                    JoinedData2[0]["IsActive"],
-		"landed_cost_factor":           JoinedData2[0]["LandedCostFactor"],
-		"landed_cost_id":               JoinedData2[0]["LandedCostTypeId"],
-		"landed_cost_type_code":        JoinedData2[0]["LandedCostTypeCode"],
-		"landed_cost_type_description": JoinedData2[0]["LandedCostTypeDescription"],
-		"landed_cost_type_id":          JoinedData2[0]["LandedCostTypeId"],
-		"shipping_method_code":         JoinedData2[0]["ShippingMethodCode"],
-		"shipping_method_id":           JoinedData2[0]["ShippingMethodId"],
-		"supplier_id":                  JoinedData2[0]["SupplierId"],
+		"company_id":                   response.CompanyId,
+		"is_active":                    response.IsActive,
+		"landed_cost_factor":           response.LandedCostFactor,
+		"landed_cost_id":               response.LandedCostId,
+		"landed_cost_type_code":        GetLandedCostType.LandedCostTypeCode,
+		"landed_cost_type_description": GetLandedCostType.LandedCostTypeDescription,
+		"landed_cost_type_id":          GetLandedCostType.LandedCostTypeId,
+		"shipping_method_code":         GetShippingMethodType.ShippingMethodCode,
+		"shipping_method_id":           GetShippingMethodType.ShippingMethodId,
+		"supplier_id":                  response.SupplierId,
 	}
-	return result, nil
 
+	return result, nil
 }
 
 // func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteritempayloads.LandedCostMasterPayloads) (bool, error) {

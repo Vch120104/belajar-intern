@@ -92,13 +92,22 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.bookingEstimationService.GetAll(criteria, paginate)
+	result, err := r.bookingEstimationService.GetAll(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // New creates a new booking estimation
@@ -287,19 +296,44 @@ func (r *BookingEstimationControllerImpl) GetByIdBookEstimReq(writer http.Respon
 
 func (r *BookingEstimationControllerImpl) GetAllBookEstimReq(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"booking_estimation_request_id":   queryValues.Get("booking_estimation_request_id"),
+		"booking_estimation_request_code": queryValues.Get("booking_estimation_request_code"),
+		"booking_system_number":           queryValues.Get("booking_system_number"),
+		"booking_service_request":         queryValues.Get("booking_service_request"),
+	}
+
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
 	}
-	bookestimid, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
-	get, err := r.bookingEstimationService.GetAllBookEstimReq(&pagination, bookestimid)
+
+	bookestimid, err := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		payloads.NewHandleError(writer, "Invalid booking system number", http.StatusBadRequest)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, baseErr := r.bookingEstimationService.GetAllBookEstimReq(criteria, pagination, bookestimid)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *BookingEstimationControllerImpl) SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request) {

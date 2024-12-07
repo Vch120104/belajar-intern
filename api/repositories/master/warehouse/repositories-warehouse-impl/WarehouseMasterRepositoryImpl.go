@@ -1,16 +1,15 @@
 package masterwarehouserepositoryimpl
 
 import (
-	"after-sales/api/config"
 	exceptions "after-sales/api/exceptions"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	utils "after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
-	"math"
 	"net/http"
-	"strconv"
 	"strings"
 
 	// masterwarehousegroupservice "after-sales/api/services/master/warehouse"
@@ -197,27 +196,21 @@ func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousep
 	return warehouseMasterResponse, nil
 }
 
-func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination pagination.Pagination) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterResponse
-	var getAddressResponse masterwarehousepayloads.AddressResponse
-	var getBrandResponse masterwarehousepayloads.BrandResponse
-	var getSupplierResponse masterwarehousepayloads.SupplierResponse
-	var getUserResponse masterwarehousepayloads.UserResponse
-	var getRolePositionResponse masterwarehousepayloads.JobPositionResponse
-	var getVillageResponse masterwarehousepayloads.VillageResponse
 
-	// Correct the fetching process
 	err := tx.Model(&entities).
 		Where("warehouse_id = ?", warehouseId).
 		First(&entities).Error
-
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse not found",
 			Err:        err,
 		}
 	}
+
 	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
 	err = tx.Model(&CostingTypeEntities).
 		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
@@ -225,10 +218,125 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse costing type not found",
 			Err:        errors.New("warehouse costing type is not found"),
 		}
 	}
-	// Map the entity to the response payload
+
+	getAddressResponse, addrErr := generalserviceapiutils.GetAddressByID(entities.AddressId)
+	var addressDetails masterwarehousepayloads.AddressResponse
+	if addrErr != nil {
+		addressDetails = masterwarehousepayloads.AddressResponse{
+			AddressId:      0,
+			AddressStreet1: "",
+			AddressStreet2: "",
+			AddressStreet3: "",
+			VillageId:      0,
+		}
+	} else {
+		addressDetails = masterwarehousepayloads.AddressResponse{
+			AddressId:      getAddressResponse.AddressId,
+			AddressStreet1: getAddressResponse.AddressStreet1,
+			AddressStreet2: getAddressResponse.AddressStreet2,
+			AddressStreet3: getAddressResponse.AddressStreet3,
+			VillageId:      getAddressResponse.VillageId,
+		}
+	}
+
+	// Brand
+	getBrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entities.BrandId)
+	var brandDetails masterwarehousepayloads.BrandResponse
+	if brandErr != nil {
+		brandDetails = masterwarehousepayloads.BrandResponse{
+			BrandId:   0,
+			BrandCode: "",
+			BrandName: "",
+		}
+	} else {
+		brandDetails = masterwarehousepayloads.BrandResponse{
+			BrandId:   getBrandResponse.BrandId,
+			BrandCode: getBrandResponse.BrandCode,
+			BrandName: getBrandResponse.BrandName,
+		}
+	}
+
+	// Supplier
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	var supplierDetails masterwarehousepayloads.SupplierResponse
+	if supplierErr != nil {
+		supplierDetails = masterwarehousepayloads.SupplierResponse{
+			SupplierId:   0,
+			SupplierName: "",
+			SupplierCode: "",
+		}
+	} else {
+		supplierDetails = masterwarehousepayloads.SupplierResponse{
+			SupplierId:   getSupplierResponse.SupplierId,
+			SupplierName: getSupplierResponse.SupplierName,
+			SupplierCode: getSupplierResponse.SupplierCode,
+		}
+	}
+
+	// Village
+	getVillageResponse, villageErr := generalserviceapiutils.GetVillageByID(addressDetails.VillageId)
+	var villageDetails masterwarehousepayloads.VillageResponse
+	if villageErr != nil {
+		villageDetails = masterwarehousepayloads.VillageResponse{
+			VillageId:      0,
+			VillageName:    "",
+			DistrictCode:   "",
+			DistrictName:   "",
+			CityName:       "",
+			ProvinceName:   "",
+			CountryName:    "",
+			VillageZipCode: "",
+		}
+	} else {
+		villageDetails = masterwarehousepayloads.VillageResponse{
+			VillageId:      getVillageResponse.VillageId,
+			VillageName:    getVillageResponse.VillageName,
+			DistrictCode:   getVillageResponse.DistrictCode,
+			DistrictName:   getVillageResponse.DistrictName,
+			CityName:       getVillageResponse.CityName,
+			ProvinceName:   getVillageResponse.ProvinceName,
+			CountryName:    getVillageResponse.CountryName,
+			VillageZipCode: getVillageResponse.VillageZipCode,
+		}
+	}
+
+	// User
+	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserCompanyAccessByID(entities.UserId)
+	var userDetails masterwarehousepayloads.UserResponse
+	if userErr != nil {
+		userDetails = masterwarehousepayloads.UserResponse{
+			UserId:        0,
+			JobPositionId: 0,
+		}
+	} else {
+		userDetails = masterwarehousepayloads.UserResponse{
+			UserId:        getUserCompanyResponse.UserId,
+			JobPositionId: getUserCompanyResponse.RoleId,
+		}
+	}
+
+	// Job Position
+	getJobPositionResponse, jobPositionErr := generalserviceapiutils.GetRoleById(userDetails.JobPositionId)
+	var jobPositionDetails masterwarehousepayloads.JobPositionResponse
+	if jobPositionErr != nil {
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
+			RolePositionId:   0,
+			RolePositionCode: "",
+			RolePositionName: "",
+		}
+	} else {
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
+			RolePositionId:   getJobPositionResponse.RoleId,
+			RolePositionCode: getJobPositionResponse.RoleCode,
+			RolePositionName: getJobPositionResponse.RoleName,
+		}
+	}
+
+	// Now assign the warehouse response fields
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterResponse{
 		IsActive:                      *entities.IsActive,
 		WarehouseId:                   entities.WarehouseId,
@@ -252,116 +360,21 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 		WarehousePhoneNumber:          entities.WarehousePhoneNumber,
 		WarehouseFaxNumber:            entities.WarehouseFaxNumber,
 		WarehouseCostingTypeCode:      CostingTypeEntities.WarehouseCostingTypeCode,
+
+		AddressDetails:     addressDetails,
+		BrandDetails:       brandDetails,
+		VillageDetails:     villageDetails,
+		JobPositionDetails: jobPositionDetails,
 	}
 
-	// Fetch address details
-	AddressUrl := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(warehouseMasterResponse.AddressId)
-	if err := utils.Get(AddressUrl, &getAddressResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching address details",
-			Err:        err,
-		}
-	}
-
-	// Fetch brand details
-	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(warehouseMasterResponse.BrandId)
-	if err := utils.Get(BrandUrl, &getBrandResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching brand details",
-			Err:        err,
-		}
-	}
-
-	// Fetch supplier details
 	if warehouseMasterResponse.WarehouseKaroseri {
-		SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
-		if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
-			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching supplier details",
-				Err:        err,
-			}
-		}
+		warehouseMasterResponse.SupplierDetails = supplierDetails
+
+	} else {
+		warehouseMasterResponse.UserDetails = userDetails
+
 	}
 
-	// Fetch village details
-	VillageUrl := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(getAddressResponse.VillageId)
-	if err := utils.Get(VillageUrl, &getVillageResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching village details",
-			Err:        err,
-		}
-	}
-
-	// Fetch user details
-	if !warehouseMasterResponse.WarehouseKaroseri {
-		UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
-		if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
-			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching user details",
-				Err:        err,
-			}
-		}
-	}
-
-	// Fetch job position details
-	JobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "role/" + strconv.Itoa(getUserResponse.JobPositionId)
-	if err := utils.Get(JobPositionUrl, &getRolePositionResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching job role position details",
-			Err:        err,
-		}
-	}
-
-	// Fetch Authorized User details with pagination
-	var AuthorizedUserDetails []masterwarehousepayloads.AuthorizedUserResponse
-
-	var totalRows int64
-	query := tx.Table("mtr_warehouse_authorize").
-		Select("warehouse_authorize_id, mtr_user_details.user_employee_id as employee_id, mtr_user_details.employee_name as employee_name, mtr_user_details.user_id as user_id").
-		Joins("JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id").
-		Where("mtr_warehouse_authorize.warehouse_id = ?", warehouseId)
-	if err := query.Count(&totalRows).Error; err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count authorized user records",
-			Err:        err,
-		}
-	}
-
-	query = query.Offset(pagination.GetOffset()).Limit(pagination.GetLimit())
-	if errAuthorizedUserDetails := query.Find(&AuthorizedUserDetails).Error; errAuthorizedUserDetails != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve authorized user from the database",
-			Err:        errAuthorizedUserDetails,
-		}
-	}
-
-	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
-
-	// Populate the pagination response
-	warehouseMasterResponse.AuthorizedDetails = masterwarehousepayloads.AuthorizedUserDetailsResponse{
-		Page:       pagination.Page,
-		Limit:      pagination.Limit,
-		TotalPages: totalPages,
-		TotalRows:  int(totalRows),
-		Data:       AuthorizedUserDetails,
-	}
-
-	// Populate the nested fields
-	warehouseMasterResponse.AddressDetails = getAddressResponse
-	warehouseMasterResponse.BrandDetails = getBrandResponse
-	warehouseMasterResponse.SupplierDetails = getSupplierResponse
-	warehouseMasterResponse.UserDetails = getUserResponse
-	warehouseMasterResponse.JobPositionDetails = getRolePositionResponse
-	warehouseMasterResponse.VillageDetails = getVillageResponse
-	//fmt.Printf("Warehouse Master Response: %+v\n", warehouseMasterResponse)
 	return warehouseMasterResponse, nil
 }
 
@@ -369,117 +382,42 @@ func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []in
 	var warehouseResponses []masterwarehousepayloads.GetAllWarehouseMasterCodeResponse
 
 	for _, warehouseId := range MultiIds {
-		var entities masterwarehouseentities.WarehouseMaster
-		var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterCodeResponse
-		var getAddressResponse masterwarehousepayloads.AddressResponse
-		var getBrandResponse masterwarehousepayloads.BrandResponse
-		var getSupplierResponse masterwarehousepayloads.SupplierResponse
-		var getUserResponse masterwarehousepayloads.UserResponse
-		var getRolePositionResponse masterwarehousepayloads.JobPositionResponse
-		var getVillageResponse masterwarehousepayloads.VillageResponse
-
-		// Fetch main warehouse details
-		err := tx.Model(&entities).Where("warehouse_id = ?", warehouseId).First(&entities).Error
+		warehouseResponse, err := r.GetById(tx, warehouseId)
 		if err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
+			return nil, err
 		}
 
-		// Map warehouse details to response
-		warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
-			IsActive:                      *entities.IsActive,
-			WarehouseId:                   entities.WarehouseId,
-			WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
-			WarehouseKaroseri:             *entities.WarehouseKaroseri,
-			WarehouseNegativeStock:        *entities.WarehouseNegativeStock,
-			WarehouseReplishmentIndicator: *entities.WarehouseReplishmentIndicator,
-			WarehouseContact:              entities.WarehouseContact,
-			WarehouseCode:                 entities.WarehouseCode,
-			AddressId:                     entities.AddressId,
-			BrandId:                       entities.BrandId,
-			SupplierId:                    entities.SupplierId,
-			UserId:                        entities.UserId,
-			WarehouseSalesAllow:           *entities.WarehouseSalesAllow,
-			WarehouseInTransit:            *entities.WarehouseInTransit,
-			WarehouseName:                 entities.WarehouseName,
-			WarehouseDetailName:           entities.WarehouseDetailName,
-			WarehouseTransitDefault:       entities.WarehouseTransitDefault,
-			WarehouseGroupId:              entities.WarehouseGroupId,
-			WarehousePhoneNumber:          entities.WarehousePhoneNumber,
-			WarehouseFaxNumber:            entities.WarehouseFaxNumber,
+		// Map the fields from GetById response to the GetAllWarehouseMasterCodeResponse structure
+		warehouseCodeResponse := masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
+			IsActive:                      warehouseResponse.IsActive,
+			WarehouseId:                   warehouseResponse.WarehouseId,
+			WarehouseCostingTypeId:        warehouseResponse.WarehouseCostingTypeId,
+			WarehouseKaroseri:             warehouseResponse.WarehouseKaroseri,
+			WarehouseNegativeStock:        warehouseResponse.WarehouseNegativeStock,
+			WarehouseReplishmentIndicator: warehouseResponse.WarehouseReplishmentIndicator,
+			WarehouseContact:              warehouseResponse.WarehouseContact,
+			WarehouseCode:                 warehouseResponse.WarehouseCode,
+			AddressId:                     warehouseResponse.AddressId,
+			BrandId:                       warehouseResponse.BrandId,
+			SupplierId:                    warehouseResponse.SupplierId,
+			UserId:                        warehouseResponse.UserId,
+			WarehouseSalesAllow:           warehouseResponse.WarehouseSalesAllow,
+			WarehouseInTransit:            warehouseResponse.WarehouseInTransit,
+			WarehouseName:                 warehouseResponse.WarehouseName,
+			WarehouseDetailName:           warehouseResponse.WarehouseDetailName,
+			WarehouseTransitDefault:       warehouseResponse.WarehouseTransitDefault,
+			WarehouseGroupId:              warehouseResponse.WarehouseGroupId,
+			WarehousePhoneNumber:          warehouseResponse.WarehousePhoneNumber,
+			WarehouseFaxNumber:            warehouseResponse.WarehouseFaxNumber,
+			AddressDetails:                warehouseResponse.AddressDetails,
+			BrandDetails:                  warehouseResponse.BrandDetails,
+			SupplierDetails:               warehouseResponse.SupplierDetails,
+			UserDetails:                   warehouseResponse.UserDetails,
+			VillageDetails:                warehouseResponse.VillageDetails,
+			JobPositionDetails:            warehouseResponse.JobPositionDetails,
 		}
 
-		// Fetch Address Details
-		AddressUrl := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(entities.AddressId)
-		if err := utils.Get(AddressUrl, &getAddressResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching address details",
-				Err:        err,
-			}
-		}
-
-		// Fetch Brand Details
-		BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entities.BrandId)
-		if err := utils.Get(BrandUrl, &getBrandResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching brand details",
-				Err:        err,
-			}
-		}
-
-		// Fetch Supplier Details
-		SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(entities.SupplierId)
-		if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching supplier details",
-				Err:        err,
-			}
-		}
-
-		// Fetch Village Details
-		VillageUrl := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(getAddressResponse.VillageId)
-		if err := utils.Get(VillageUrl, &getVillageResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching village details",
-				Err:        err,
-			}
-		}
-
-		// Fetch User Details
-		UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entities.UserId)
-		if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching user details",
-				Err:        err,
-			}
-		}
-
-		// Fetch Job Position Details
-		JobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "role/" + strconv.Itoa(getUserResponse.JobPositionId)
-		if err := utils.Get(JobPositionUrl, &getRolePositionResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching job role position details",
-				Err:        err,
-			}
-		}
-
-		// Assign additional details to warehouse response
-		warehouseMasterResponse.AddressDetails = getAddressResponse
-		warehouseMasterResponse.BrandDetails = getBrandResponse
-		warehouseMasterResponse.SupplierDetails = getSupplierResponse
-		warehouseMasterResponse.UserDetails = getUserResponse
-		warehouseMasterResponse.JobPositionDetails = getRolePositionResponse
-		warehouseMasterResponse.VillageDetails = getVillageResponse
-
-		warehouseResponses = append(warehouseResponses, warehouseMasterResponse)
+		warehouseResponses = append(warehouseResponses, warehouseCodeResponse)
 	}
 
 	return warehouseResponses, nil
@@ -495,8 +433,17 @@ func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filter
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&response).Error
+	var totalCount int64
+	err := whereQuery.Count(&totalCount).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count warehouse master from the database",
+			Err:        err,
+		}
+	}
 
+	err = whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&response).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -505,10 +452,17 @@ func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filter
 		}
 	}
 
-	// If no records are found, return an empty slice
 	if len(response) == 0 {
 		pages.Rows = []masterwarehousepayloads.GetLookupWarehouseMasterResponse{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
 		return pages, nil
+	}
+
+	pages.TotalRows = totalCount
+	pages.TotalPages = int(totalCount / int64(pages.Limit))
+	if totalCount%int64(pages.Limit) != 0 {
+		pages.TotalPages++
 	}
 
 	pages.Rows = response
@@ -536,106 +490,132 @@ func (r *WarehouseMasterImpl) GetAllIsActive(tx *gorm.DB) ([]masterwarehousepayl
 func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string) (masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterCodeResponse
-	var getAddressResponse masterwarehousepayloads.AddressResponse
-	var getBrandResponse masterwarehousepayloads.BrandResponse
-	var getSupplierResponse masterwarehousepayloads.SupplierResponse
-	var getUserResponse masterwarehousepayloads.UserResponse
-	var getJobPositionResponse masterwarehousepayloads.JobPositionResponse
-	var getVillageResponse masterwarehousepayloads.VillageResponse
 
 	err := tx.Model(&entities).
 		Where("warehouse_code = ?", Code).
-		First(&warehouseMasterResponse).Error
-
+		First(&entities).Error
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse not found",
 			Err:        err,
 		}
 	}
 
-	// Fetch address details
-	AddressUrl := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(warehouseMasterResponse.AddressId)
-	if err := utils.Get(AddressUrl, &getAddressResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching address details",
-			Err:        err,
-		}
-	}
-
-	// Fetch brand details
-	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(warehouseMasterResponse.BrandId)
-	if err := utils.Get(BrandUrl, &getBrandResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching brand details",
-			Err:        err,
-		}
-	}
-
-	// Fetch supplier details
-	if warehouseMasterResponse.WarehouseKaroseri {
-		SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
-		if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
-			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching supplier details",
-				Err:        err,
-			}
-		}
-	}
-
-	// fetch village details
-	VillageUrl := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(getAddressResponse.VillageId)
-	if err := utils.Get(VillageUrl, &getVillageResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching village details",
-			Err:        err,
-		}
-	}
-
-	// Fetch user details
-	if !warehouseMasterResponse.WarehouseKaroseri {
-		UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
-		if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
-			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching user details",
-				Err:        err,
-			}
-		}
-	}
-
-	// Fetch job position details
-	JobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "role/" + strconv.Itoa(getUserResponse.JobPositionId)
-	if err := utils.Get(JobPositionUrl, &getJobPositionResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching job position details",
-			Err:        err,
-		}
-	}
 	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
 	err = tx.Model(&CostingTypeEntities).
-		Where("warehouse_costing_type_id = ?", warehouseMasterResponse.WarehouseCostingTypeId).
+		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
 		First(&CostingTypeEntities).Error
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse costing type not found",
 			Err:        errors.New("warehouse costing type is not found"),
 		}
 	}
 
-	warehouseMasterResponse.WarehouseCostingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
-	// Populate the nested fields
-	warehouseMasterResponse.AddressDetails = getAddressResponse
-	warehouseMasterResponse.BrandDetails = getBrandResponse
-	warehouseMasterResponse.SupplierDetails = getSupplierResponse
-	warehouseMasterResponse.UserDetails = getUserResponse
-	warehouseMasterResponse.JobPositionDetails = getJobPositionResponse
-	warehouseMasterResponse.VillageDetails = getVillageResponse
+	// Fetch Address Details
+	getAddressResponse, addrErr := generalserviceapiutils.GetAddressByID(entities.AddressId)
+	var addressDetails masterwarehousepayloads.AddressResponse
+	if addrErr != nil {
+		addressDetails = masterwarehousepayloads.AddressResponse{}
+	} else {
+		addressDetails = masterwarehousepayloads.AddressResponse{
+			AddressId:      getAddressResponse.AddressId,
+			AddressStreet1: getAddressResponse.AddressStreet1,
+			AddressStreet2: getAddressResponse.AddressStreet2,
+			AddressStreet3: getAddressResponse.AddressStreet3,
+			VillageId:      getAddressResponse.VillageId,
+		}
+	}
+
+	// Fetch Brand Details
+	getBrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entities.BrandId)
+	var brandDetails masterwarehousepayloads.BrandResponse
+	if brandErr != nil {
+		brandDetails = masterwarehousepayloads.BrandResponse{}
+	} else {
+		brandDetails = masterwarehousepayloads.BrandResponse{
+			BrandId:   getBrandResponse.BrandId,
+			BrandCode: getBrandResponse.BrandCode,
+			BrandName: getBrandResponse.BrandName,
+		}
+	}
+
+	// Fetch Supplier Details
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	var supplierDetails masterwarehousepayloads.SupplierResponse
+	if supplierErr != nil {
+		supplierDetails = masterwarehousepayloads.SupplierResponse{}
+	} else {
+		supplierDetails = masterwarehousepayloads.SupplierResponse{
+			SupplierId:   getSupplierResponse.SupplierId,
+			SupplierName: getSupplierResponse.SupplierName,
+			SupplierCode: getSupplierResponse.SupplierCode,
+		}
+	}
+
+	// Fetch Village Details
+	getVillageResponse, villageErr := generalserviceapiutils.GetVillageByID(addressDetails.VillageId)
+	var villageDetails masterwarehousepayloads.VillageResponse
+	if villageErr != nil {
+		villageDetails = masterwarehousepayloads.VillageResponse{}
+	} else {
+		villageDetails = masterwarehousepayloads.VillageResponse{
+			VillageId:      getVillageResponse.VillageId,
+			VillageName:    getVillageResponse.VillageName,
+			DistrictCode:   getVillageResponse.DistrictCode,
+			DistrictName:   getVillageResponse.DistrictName,
+			CityName:       getVillageResponse.CityName,
+			ProvinceName:   getVillageResponse.ProvinceName,
+			CountryName:    getVillageResponse.CountryName,
+			VillageZipCode: getVillageResponse.VillageZipCode,
+		}
+	}
+
+	// Fetch User Details
+	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessByID(entities.UserId)
+	var userDetails masterwarehousepayloads.UserResponse
+	if userErr != nil {
+		userDetails = masterwarehousepayloads.UserResponse{}
+	} else {
+		userDetails = masterwarehousepayloads.UserResponse{
+			UserId:        getUserResponse.UserId,
+			JobPositionId: getUserResponse.RoleId,
+		}
+	}
+
+	// Fetch Job Position Details
+	getJobPositionResponse, jobPositionErr := generalserviceapiutils.GetRoleById(userDetails.JobPositionId)
+	var jobPositionDetails masterwarehousepayloads.JobPositionResponse
+	if jobPositionErr != nil {
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{}
+	} else {
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
+			RolePositionId:   getJobPositionResponse.RoleId,
+			RolePositionCode: getJobPositionResponse.RoleCode,
+			RolePositionName: getJobPositionResponse.RoleName,
+		}
+	}
+
+	// Populate Warehouse Response
+	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
+		WarehouseId:              entities.WarehouseId,
+		WarehouseCode:            entities.WarehouseCode,
+		WarehouseCostingTypeId:   entities.WarehouseCostingTypeId,
+		WarehouseCostingTypeCode: CostingTypeEntities.WarehouseCostingTypeCode,
+		WarehouseKaroseri:        *entities.WarehouseKaroseri,
+		AddressDetails:           addressDetails,
+		BrandDetails:             brandDetails,
+		VillageDetails:           villageDetails,
+	}
+
+	if warehouseMasterResponse.WarehouseKaroseri {
+		warehouseMasterResponse.SupplierDetails = supplierDetails
+	} else {
+		warehouseMasterResponse.UserDetails = userDetails
+		warehouseMasterResponse.JobPositionDetails = jobPositionDetails
+	}
 
 	return warehouseMasterResponse, nil
 }
@@ -643,106 +623,132 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, warehouseCode string, companyId int) (masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterCodeResponse
-	var getAddressResponse masterwarehousepayloads.AddressResponse
-	var getBrandResponse masterwarehousepayloads.BrandResponse
-	var getSupplierResponse masterwarehousepayloads.SupplierResponse
-	var getUserResponse masterwarehousepayloads.UserResponse
-	var getJobPositionResponse masterwarehousepayloads.JobPositionResponse
-	var getVillageResponse masterwarehousepayloads.VillageResponse
 
 	err := tx.Model(&entities).
 		Where("warehouse_code = ? AND company_id = ?", warehouseCode, companyId).
 		First(&warehouseMasterResponse).Error
-
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse not found",
 			Err:        err,
 		}
 	}
 
-	// Fetch address details
-	AddressUrl := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(warehouseMasterResponse.AddressId)
-	if err := utils.Get(AddressUrl, &getAddressResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching address details",
-			Err:        err,
-		}
-	}
-
-	// Fetch brand details
-	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(warehouseMasterResponse.BrandId)
-	if err := utils.Get(BrandUrl, &getBrandResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching brand details",
-			Err:        err,
-		}
-	}
-
-	// Fetch supplier details
-	if warehouseMasterResponse.WarehouseKaroseri {
-		SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
-		if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
-			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching supplier details",
-				Err:        err,
-			}
-		}
-	}
-
-	// fetch village details
-	VillageUrl := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(getAddressResponse.VillageId)
-	if err := utils.Get(VillageUrl, &getVillageResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching village details",
-			Err:        err,
-		}
-	}
-
-	// Fetch user details
-	if !warehouseMasterResponse.WarehouseKaroseri {
-		UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
-		if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
-			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error when fetching user details",
-				Err:        err,
-			}
-		}
-	}
-
-	// Fetch job position details
-	JobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "role/" + strconv.Itoa(getUserResponse.JobPositionId)
-	if err := utils.Get(JobPositionUrl, &getJobPositionResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching job position details",
-			Err:        err,
-		}
-	}
 	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
 	err = tx.Model(&CostingTypeEntities).
-		Where("warehouse_costing_type_id = ?", warehouseMasterResponse.WarehouseCostingTypeId).
+		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
 		First(&CostingTypeEntities).Error
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse costing type not found",
 			Err:        errors.New("warehouse costing type is not found"),
 		}
 	}
 
-	warehouseMasterResponse.WarehouseCostingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
-	// Populate the nested fields
-	warehouseMasterResponse.AddressDetails = getAddressResponse
-	warehouseMasterResponse.BrandDetails = getBrandResponse
-	warehouseMasterResponse.SupplierDetails = getSupplierResponse
-	warehouseMasterResponse.UserDetails = getUserResponse
-	warehouseMasterResponse.JobPositionDetails = getJobPositionResponse
-	warehouseMasterResponse.VillageDetails = getVillageResponse
+	// Fetch Address Details
+	getAddressResponse, addrErr := generalserviceapiutils.GetAddressByID(entities.AddressId)
+	var addressDetails masterwarehousepayloads.AddressResponse
+	if addrErr != nil {
+		addressDetails = masterwarehousepayloads.AddressResponse{}
+	} else {
+		addressDetails = masterwarehousepayloads.AddressResponse{
+			AddressId:      getAddressResponse.AddressId,
+			AddressStreet1: getAddressResponse.AddressStreet1,
+			AddressStreet2: getAddressResponse.AddressStreet2,
+			AddressStreet3: getAddressResponse.AddressStreet3,
+			VillageId:      getAddressResponse.VillageId,
+		}
+	}
+
+	// Fetch Brand Details
+	getBrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entities.BrandId)
+	var brandDetails masterwarehousepayloads.BrandResponse
+	if brandErr != nil {
+		brandDetails = masterwarehousepayloads.BrandResponse{}
+	} else {
+		brandDetails = masterwarehousepayloads.BrandResponse{
+			BrandId:   getBrandResponse.BrandId,
+			BrandCode: getBrandResponse.BrandCode,
+			BrandName: getBrandResponse.BrandName,
+		}
+	}
+
+	// Fetch Supplier Details
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	var supplierDetails masterwarehousepayloads.SupplierResponse
+	if supplierErr != nil {
+		supplierDetails = masterwarehousepayloads.SupplierResponse{}
+	} else {
+		supplierDetails = masterwarehousepayloads.SupplierResponse{
+			SupplierId:   getSupplierResponse.SupplierId,
+			SupplierName: getSupplierResponse.SupplierName,
+			SupplierCode: getSupplierResponse.SupplierCode,
+		}
+	}
+
+	// Fetch Village Details
+	getVillageResponse, villageErr := generalserviceapiutils.GetVillageByID(addressDetails.VillageId)
+	var villageDetails masterwarehousepayloads.VillageResponse
+	if villageErr != nil {
+		villageDetails = masterwarehousepayloads.VillageResponse{}
+	} else {
+		villageDetails = masterwarehousepayloads.VillageResponse{
+			VillageId:      getVillageResponse.VillageId,
+			VillageName:    getVillageResponse.VillageName,
+			DistrictCode:   getVillageResponse.DistrictCode,
+			DistrictName:   getVillageResponse.DistrictName,
+			CityName:       getVillageResponse.CityName,
+			ProvinceName:   getVillageResponse.ProvinceName,
+			CountryName:    getVillageResponse.CountryName,
+			VillageZipCode: getVillageResponse.VillageZipCode,
+		}
+	}
+
+	// Fetch User Details
+	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessByID(entities.UserId)
+	var userDetails masterwarehousepayloads.UserResponse
+	if userErr != nil {
+		userDetails = masterwarehousepayloads.UserResponse{}
+	} else {
+		userDetails = masterwarehousepayloads.UserResponse{
+			UserId:        getUserResponse.UserId,
+			JobPositionId: getUserResponse.RoleId,
+		}
+	}
+
+	// Fetch Job Position Details
+	getJobPositionResponse, jobPositionErr := generalserviceapiutils.GetRoleById(userDetails.JobPositionId)
+	var jobPositionDetails masterwarehousepayloads.JobPositionResponse
+	if jobPositionErr != nil {
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{}
+	} else {
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
+			RolePositionId:   getJobPositionResponse.RoleId,
+			RolePositionCode: getJobPositionResponse.RoleCode,
+			RolePositionName: getJobPositionResponse.RoleName,
+		}
+	}
+
+	// Populate Warehouse Response
+	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
+		WarehouseId:              entities.WarehouseId,
+		WarehouseCode:            entities.WarehouseCode,
+		WarehouseCostingTypeId:   entities.WarehouseCostingTypeId,
+		WarehouseCostingTypeCode: CostingTypeEntities.WarehouseCostingTypeCode,
+		WarehouseKaroseri:        *entities.WarehouseKaroseri,
+		AddressDetails:           addressDetails,
+		BrandDetails:             brandDetails,
+		VillageDetails:           villageDetails,
+	}
+
+	if warehouseMasterResponse.WarehouseKaroseri {
+		warehouseMasterResponse.SupplierDetails = supplierDetails
+	} else {
+		warehouseMasterResponse.UserDetails = userDetails
+		warehouseMasterResponse.JobPositionDetails = jobPositionDetails
+	}
 
 	return warehouseMasterResponse, nil
 }
@@ -788,19 +794,18 @@ func (r *WarehouseMasterImpl) ChangeStatus(tx *gorm.DB, warehouseId int) (master
 	return warehouseMasterPayloads, nil
 }
 
-func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []masterwarehouseentities.WarehouseAuthorize
-	var response []map[string]interface{}
 
-	query := tx.Model(&entities).
+	baseModelQuery := tx.Model(&masterwarehouseentities.WarehouseAuthorize{}).
 		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.user_id").
 		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id")
 
-	whereQuery := utils.ApplyFilter(query, filterCondition)
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
 	var totalRows int64
 	if err := whereQuery.Count(&totalRows).Error; err != nil {
-		return response, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count authorized user records",
 			Err:        err,
@@ -808,25 +813,39 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 	}
 
 	if totalRows == 0 {
-		return response, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "No authorized users found",
-			Err:        errors.New("no authorized users found"),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	whereQuery = whereQuery.Offset(pages.GetOffset()).Limit(pages.GetLimit())
-	if err := whereQuery.Find(&response).Error; err != nil {
-		return response, 0, 0, &exceptions.BaseErrorResponse{
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve authorized users from the database",
 			Err:        err,
 		}
 	}
 
-	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+	var results []map[string]interface{}
+	for _, entity := range entities {
 
-	return response, int(totalRows), totalPages, nil
+		userDetails, err := generalserviceapiutils.GetUserDetailsByID(entity.EmployeeId)
+		if err != nil {
+			return pages, err
+		}
+
+		result := map[string]interface{}{
+			"warehouse_authorize_id": entity.WarehouseAuthorizedId,
+			"employee_id":            entity.EmployeeId,
+			"employee_name":          userDetails.EmployeeName,
+			"user_id":                userDetails.UserId,
+		}
+
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+	return pages, nil
 }
 
 func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB, req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {

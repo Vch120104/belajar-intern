@@ -31,32 +31,31 @@ func OpenWorkOrderAllocationRepositoryImpl() transactionworkshoprepository.WorkO
 // uspg_atWoAllocateGrid_Select
 // IF @Option = 0
 // --USE FOR : * SELECT DATA FOR WO ALLOCATION GRID
-func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var pages pagination.Pagination
+	pages.Rows = []map[string]interface{}{}
+
 	// Truncate trx_work_order_allocation_grid table
-	fmt.Println("Truncating trx_work_order_allocation_grid table...")
 	if err := tx.Exec("TRUNCATE TABLE trx_work_order_allocation_grid").Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to truncate the table",
 			Err:        err,
 		}
 	}
-	fmt.Println("Table truncated successfully")
 
 	// Fetch technicians
-	fmt.Println("Fetching technicians...")
 	var assignTechnicians []transactionworkshopentities.AssignTechnician
 	if err := tx.Model(&transactionworkshopentities.AssignTechnician{}).
 		Select("technician_id, shift_code").
 		Where("company_id = ? AND foreman_id = ? AND CONVERT(date, service_date) = ?", companyCode, foremanId, date).
 		Find(&assignTechnicians).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch technicians",
 			Err:        err,
 		}
 	}
-	fmt.Printf("Fetched %d technicians\n", len(assignTechnicians))
 
 	// Fetch technician names from external service
 	technicianNames := make(map[int]string)
@@ -64,7 +63,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 		TechnicianUrl := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(assignTech.TechnicianId)
 		var getTechnicianResponse masterwarehousepayloads.UserResponse
 		if err := utils.Get(TechnicianUrl, &getTechnicianResponse, nil); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch technician data from external service",
 				Err:        err,
@@ -72,7 +71,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 		}
 		technicianNames[assignTech.TechnicianId] = getTechnicianResponse.EmployeeName
 	}
-	fmt.Println("Technician names fetched")
 
 	// Insert data into WorkOrderAllocationGrid table
 	for _, assignTech := range assignTechnicians {
@@ -83,98 +81,74 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 		}
 
 		if err := tx.Create(&workordergrid).Error; err != nil {
-			return nil, &exceptions.BaseErrorResponse{
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to insert data into WorkOrderAllocationGrid",
 				Err:        err,
 			}
 		}
 	}
-	fmt.Println("Data inserted into WorkOrderAllocationGrid")
 
-	// Fetch shift schedule
+	// Fetch shift schedule for the first technician
 	var shiftSchedule masterentities.ShiftSchedule
 	if err := tx.Model(&masterentities.ShiftSchedule{}).
 		Select("start_time, end_time, rest_start_time, rest_end_time").
 		Where("company_id = ? AND shift_code = ?", companyCode, assignTechnicians[0].ShiftCode).
 		First(&shiftSchedule).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch shift schedule",
 			Err:        err,
 		}
 	}
 
-	// Convert float64 times to HHMM format
+	// Convert and validate times
 	startTimeStr := float64ToTimeString(shiftSchedule.StartTime)
 	endTimeStr := float64ToTimeString(shiftSchedule.EndTime)
 	restStartTimeStr := float64ToTimeString(shiftSchedule.RestStartTime)
 	restEndTimeStr := float64ToTimeString(shiftSchedule.RestEndTime)
 
-	fmt.Printf("Shift schedule: StartTime=%s, EndTime=%s, RestStartTime=%s, RestEndTime=%s\n",
-		startTimeStr, endTimeStr, restStartTimeStr, restEndTimeStr)
-
-	// Define time columns and update values
-	timeWorkInterval := 15 // in minutes
 	startTimeFloat, _ := strconv.ParseFloat(startTimeStr, 64)
 	endTimeFloat, _ := strconv.ParseFloat(endTimeStr, 64)
 	restStartTimeFloat, _ := strconv.ParseFloat(restStartTimeStr, 64)
 	restEndTimeFloat, _ := strconv.ParseFloat(restEndTimeStr, 64)
 
-	// Check if times are within the valid range (0700 to 2100)
-	if startTimeFloat < 0700 {
-		startTimeFloat = 0700
+	if startTimeFloat < 700 {
+		startTimeFloat = 700
 	}
 	if endTimeFloat > 2100 {
 		endTimeFloat = 2100
 	}
 
+	// Allocate time slots
+	timeWorkInterval := 15
 	for currentTime := startTimeFloat; currentTime <= endTimeFloat; currentTime += float64(timeWorkInterval) / 60.0 {
 		hours := int(currentTime) / 100
 		minutes := int(currentTime) % 100
-		timeColumn := fmt.Sprintf("time_allocation_%04d", hours*100+minutes) // Format the time column
+		timeColumn := fmt.Sprintf("time_allocation_%02d%02d", hours, minutes)
 
-		// Validate if the column name exists
+		// Validate time column
 		if !isValidTimeColumn(timeColumn) {
 			continue
 		}
 
-		// Loop through technicians and update based on availability
 		for _, assignTech := range assignTechnicians {
-			// Check availability of technicians
-			var countAvail int64
-			dayOfWeek := date.Weekday()
-			dayQuery := int(dayOfWeek) + 1 // Adjust for SQL Server weekday
-
-			if err := tx.Model(&masterentities.ShiftSchedule{}).
-				Where("company_id = ? AND shift_code = ? AND start_time <= ? AND end_time > ? AND DATEPART(WEEKDAY, effective_date) = ? AND effective_date <= ?",
-					companyCode, assignTech.ShiftCode, currentTime, currentTime, dayQuery, date).
-				Count(&countAvail).Error; err != nil {
-				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Message:    "Failed to check technician availability",
-					Err:        err,
-				}
-			}
-
-			// Determine allocation value
 			var allocate int64
 			if currentTime >= restStartTimeFloat && currentTime <= restEndTimeFloat {
-				allocate = -2 // Rest time
+				allocate = -2
 			} else if currentTime < startTimeFloat {
-				allocate = -1 // Before shift start
+				allocate = -1
 			} else if currentTime >= endTimeFloat {
-				allocate = 0 // After shift end
+				allocate = 0
 			} else {
-				allocate = 0 // Available, not booked (within shift time but not during rest time)
+				allocate = 0
 			}
 
-			// Update WorkOrderAllocationGrid table
 			updateData := map[string]interface{}{timeColumn: allocate}
 			if err := tx.Model(&transactionworkshopentities.WorkOrderAllocationGrid{}).
 				Where("technician_id = ? AND shift_code = ?", assignTech.TechnicianId, assignTech.ShiftCode).
 				Updates(updateData).Error; err != nil {
-				return nil, &exceptions.BaseErrorResponse{
+				return pages, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Message:    "Failed to update WorkOrderAllocationGrid",
 					Err:        err,
@@ -183,17 +157,18 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 		}
 	}
 
-	// Return the updated records
-	var result []map[string]interface{}
-	if err := tx.Model(&transactionworkshopentities.WorkOrderAllocationGrid{}).Find(&result).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	// Fetch paginated data
+	if err := tx.Model(&transactionworkshopentities.WorkOrderAllocationGrid{}).
+		Scopes(pagination.Paginate(&pages, tx.Model(&transactionworkshopentities.WorkOrderAllocationGrid{}))).
+		Find(&pages.Rows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve updated records",
+			Message:    "Failed to retrieve records",
 			Err:        err,
 		}
 	}
 
-	return result, nil
+	return pages, nil
 }
 
 // float64ToTimeString converts float64 to HHMM time string
@@ -366,67 +341,47 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date
 	}, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetAllocateDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tableStruct := transactionworkshopentities.WorkOrderAllocationDetail{}
+func (r *WorkOrderAllocationRepositoryImpl) GetAllocateDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionworkshopentities.WorkOrderAllocationDetail
 
-	whereQuery := utils.ApplyFilter(tx, filterCondition)
+	baseModelQuery := tx.Model(&transactionworkshopentities.WorkOrderAllocationDetail{})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	rows, err := whereQuery.Find(&tableStruct).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	var convertedResponses []transactionworkshoppayloads.WorkOrderAllocationDetailResponse
-	for rows.Next() {
-		var woResponse transactionworkshoppayloads.WorkOrderAllocationDetailResponse
-		var startTime, endTime time.Time
-
-		if err := rows.Scan(
-			&woResponse.TechnicianId,
-			&woResponse.TechnicianName,
-			&woResponse.WorkOrderSystemNumber,
-			&woResponse.WorkOrderDocumentNumber,
-			&woResponse.ShiftCode,
-			&woResponse.ServiceStatus,
-			&startTime,
-			&endTime,
-		); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		woResponse.StartTime = startTime.Format("15:04:05")
-		woResponse.EndTime = endTime.Format("15:04:05")
-
-		convertedResponses = append(convertedResponses, woResponse)
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	var mapResponses []map[string]interface{}
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
+	var results []map[string]interface{}
+	for _, response := range responses {
+		startTime := response.StartTime.Format("15:04:05")
+		endTime := response.EndTime.Format("15:04:05")
+
+		result := map[string]interface{}{
 			"technician_id":              response.TechnicianId,
 			"technician_name":            response.TechnicianName,
 			"work_order_system_number":   response.WorkOrderSystemNumber,
 			"work_order_document_number": response.WorkOrderDocumentNumber,
 			"shift_code":                 response.ShiftCode,
 			"service_status":             response.ServiceStatus,
-			"start_time":                 response.StartTime,
-			"end_time":                   response.EndTime,
+			"start_time":                 startTime,
+			"end_time":                   endTime,
 		}
 
-		mapResponses = append(mapResponses, responseMap)
-
+		results = append(results, result)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+	pages.Rows = results
 
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
@@ -507,91 +462,60 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	return result, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetAssignTechnician(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetAssignTechnician(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianResponse
 
-	tableStruct := transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest{}
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	baseModelQuery := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest{})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	var convertedResponses []transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianResponse
-
-	for rows.Next() {
-		var WoRequest transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianResponse
-		var serviceDate time.Time
-
-		if err := rows.Scan(
-			&WoRequest.CompanyId,
-			&WoRequest.TechnicianId,
-			&WoRequest.ShiftCode,
-			&WoRequest.ForemanId,
-			&serviceDate,
-		); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		WoRequest.ServiceDate = serviceDate
-		// Calculate attendance based on shift_code and technician_id
-		if WoRequest.ShiftCode != "" && WoRequest.TechnicianId != 0 {
-			WoRequest.Attendance = true
-		} else {
-			WoRequest.Attendance = false
-		}
-		convertedResponses = append(convertedResponses, WoRequest)
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	// Create maps to fetch foreman and technician names in bulk
-	foremanIds := make(map[int]struct{})
-	technicianIds := make(map[int]struct{})
-
-	for _, response := range convertedResponses {
-		foremanIds[response.ForemanId] = struct{}{}
-		technicianIds[response.TechnicianId] = struct{}{}
-	}
-
+	// Fetch foreman and technician names directly
 	foremanNames := make(map[int]string)
-	for foremanId := range foremanIds {
-		ForemanUrl := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(foremanId)
-		var getForemanResponse masterwarehousepayloads.UserResponse
-		if err := utils.Get(ForemanUrl, &getForemanResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch foreman data from external service",
-				Err:        err,
-			}
-		}
-		foremanNames[foremanId] = getForemanResponse.EmployeeName
-	}
-
 	technicianNames := make(map[int]string)
-	for technicianId := range technicianIds {
-		TechnicianUrl := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(technicianId)
-		var getTechnicianResponse masterwarehousepayloads.UserResponse
-		if err := utils.Get(TechnicianUrl, &getTechnicianResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch technician data from external service",
-				Err:        err,
+
+	for _, response := range responses {
+		if _, exists := foremanNames[response.ForemanId]; !exists {
+			url := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(response.ForemanId)
+			var foremanResponse masterwarehousepayloads.UserResponse
+			if err := utils.Get(url, &foremanResponse, nil); err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch foreman data from external service",
+					Err:        err,
+				}
 			}
+			foremanNames[response.ForemanId] = foremanResponse.EmployeeName
 		}
-		technicianNames[technicianId] = getTechnicianResponse.EmployeeName
+
+		if _, exists := technicianNames[response.TechnicianId]; !exists {
+			url := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(response.TechnicianId)
+			var technicianResponse masterwarehousepayloads.UserResponse
+			if err := utils.Get(url, &technicianResponse, nil); err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch technician data from external service",
+					Err:        err,
+				}
+			}
+			technicianNames[response.TechnicianId] = technicianResponse.EmployeeName
+		}
 	}
 
-	var mapResponses []map[string]interface{}
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
+	var results []map[string]interface{}
+	for _, response := range responses {
+		results = append(results, map[string]interface{}{
 			"service_date":    response.ServiceDate.Format("2006-01-02"),
 			"company_id":      response.CompanyId,
 			"foreman_id":      response.ForemanId,
@@ -599,15 +523,12 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAssignTechnician(tx *gorm.DB, fil
 			"technician_id":   response.TechnicianId,
 			"technician_name": technicianNames[response.TechnicianId],
 			"shift_code":      response.ShiftCode,
-			"attendance":      response.Attendance,
-		}
-
-		mapResponses = append(mapResponses, responseMap)
+			"attendance":      response.ShiftCode != "" && response.TechnicianId != 0,
+		})
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = results
+	return pages, nil
 }
 
 // uspg_atAssignTech_Insert

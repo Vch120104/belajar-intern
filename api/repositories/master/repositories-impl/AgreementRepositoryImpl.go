@@ -10,6 +10,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -48,7 +49,7 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
-	response.DealerId = entities.DealerId
+	response.CompanyId = entities.CompanyId
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
 
@@ -59,7 +60,7 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 	entities := masterentities.Agreement{
 		AgreementCode:     req.AgreementCode,
 		BrandId:           req.BrandId,
-		DealerId:          req.DealerId,
+		CompanyId:         req.CompanyId,
 		TopId:             req.TopId,
 		AgreementDateFrom: req.AgreementDateFrom,
 		AgreementDateTo:   req.AgreementDateTo,
@@ -90,7 +91,7 @@ func (r *AgreementRepositoryImpl) UpdateAgreement(tx *gorm.DB, Id int, req maste
 			"aggreement_id":       Id,
 			"agreement_code":      req.AgreementCode,
 			"brand_id":            req.BrandId,
-			"company_id":          req.DealerId,
+			"company_id":          req.CompanyId,
 			"top_id":              req.TopId,
 			"agreement_date_from": req.AgreementDateFrom,
 			"agreement_date_to":   req.AgreementDateTo,
@@ -149,15 +150,116 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (ma
 	return entities, nil
 }
 
-func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	model := masterentities.Agreement{}
+	var responses []masterpayloads.AgreementResponse
 
-	entities := []masterentities.Agreement{}
+	var customerCode, customerName, profitCenterName string
+	// External filter processing for customer and profit center
+	for _, filter := range externalFilter {
+		switch filter.ColumnField {
+		case "customer_code":
+			customerCode = filter.ColumnValue
+		case "customer_name":
+			customerName = filter.ColumnValue
+		case "profit_center_name":
+			profitCenterName = filter.ColumnValue
+		}
+	}
 
-	baseModelQuery := tx.Model(&masterentities.Agreement{})
+	query := tx.Model(&model).
+		Select("mtr_agreement.*, cust.customer_name, cust.customer_code, comp.company_name, comp.company_code, pc.profit_center_name, tops.term_of_payment_code, tops.term_of_payment_name").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_customer cust ON mtr_agreement.customer_id = cust.customer_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_company comp ON mtr_agreement.company_id = comp.company_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_profit_center pc ON mtr_agreement.profit_center_id = pc.profit_center_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_term_of_payment tops ON mtr_agreement.top_id = tops.term_of_payment_id")
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	// External filters processing
+	if customerCode != "" || customerName != "" {
+		customerParams := generalserviceapiutils.CustomerMasterParams{
+			CustomerCode: customerCode,
+			CustomerName: customerName,
+		}
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+		customerResponse, customerError := generalserviceapiutils.GetAllCustomerMaster(customerParams)
+		if customerError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: customerError.StatusCode,
+				Message:    "Error fetching customer data",
+				Err:        customerError.Err,
+			}
+		}
+
+		if len(customerResponse) == 0 {
+
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "mtr_agreement.customer_id",
+				ColumnValue: "-1",
+			})
+		} else if len(customerResponse) > 0 {
+			if len(customerCode) > 0 && len(customerResponse) > 1 {
+				query = query.Where("cust.customer_code LIKE ?", fmt.Sprintf("%%%s%%", customerCode))
+			} else if len(customerName) > 0 && len(customerResponse) > 1 {
+				query = query.Where("cust.customer_name LIKE ?", fmt.Sprintf("%%%s%%", customerName))
+			} else {
+				var customerIds []int
+				for _, customer := range customerResponse {
+					customerIds = append(customerIds, customer.CustomerId)
+				}
+				query = query.Where("mtr_agreement.customer_id IN (?)", customerIds)
+			}
+		} else {
+			// Return empty rows if no customers found
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	// External filter for Profit Center
+	if profitCenterName != "" {
+		profitCenterParams := generalserviceapiutils.ProfitCenterParams{
+			ProfitCenterName: profitCenterName,
+		}
+
+		profitCenterResponse, profitCenterError := generalserviceapiutils.GetAllProfitCenter(profitCenterParams)
+		if profitCenterError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: profitCenterError.StatusCode,
+				Message:    "Error fetching profit center data",
+				Err:        profitCenterError.Err,
+			}
+		}
+
+		if len(profitCenterResponse) == 0 {
+
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "mtr_agreement.profit_center_id",
+				ColumnValue: "-1",
+			})
+		} else if len(profitCenterResponse) > 0 {
+
+			if len(profitCenterName) > 0 && len(profitCenterResponse) > 1 {
+				query = query.Where("pc.profit_center_name LIKE ?", fmt.Sprintf("%%%s%%", profitCenterName))
+			} else {
+
+				var profitCenterIds []int
+				for _, profitCenter := range profitCenterResponse {
+					profitCenterIds = append(profitCenterIds, profitCenter.ProfitCenterId)
+				}
+				query = query.Where("mtr_agreement.profit_center_id IN (?)", profitCenterIds)
+			}
+		} else {
+
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	whereQuery := utils.ApplyFilter(query, internalFilter)
+
+	// Manually calculate total rows for pagination
+	var totalRows int64
+	err := whereQuery.Model(&model).Count(&totalRows).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -165,84 +267,57 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 		}
 	}
 
-	if len(entities) == 0 {
+	// Calculate pagination parameters
+	offset := pages.GetOffset()
+	limit := pages.GetLimit()
+
+	// Apply pagination manually
+	err = whereQuery.Offset(offset).Limit(limit).Order("mtr_agreement.agreement_id").Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(totalRows) / float64(limit)))
+	pages.TotalRows = totalRows
+	pages.TotalPages = totalPages
+
+	// If no responses found, return empty rows
+	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
 	var results []map[string]interface{}
-	for _, entity := range entities {
-		// Fetch Customer data from external service
-		getCustomerResponse, custErr := generalserviceapiutils.GetCustomerMasterByID(entity.CustomerId)
-		if custErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        custErr.Err,
-			}
-		}
-
-		// Fetch Company data from external service
-		getCompanyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entity.DealerId)
-		if compErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        compErr.Err,
-			}
-		}
-
-		// Fetch Profit Center data from external service
-		profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entity.ProfitCenterId)
-		if profitCenterErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        profitCenterErr.Err,
-			}
-		}
-
-		// Fetch Term Of Payment data from external service
-		termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entity.TopId)
-		if termOfPaymentErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        termOfPaymentErr.Err,
-			}
-		}
-
+	for _, response := range responses {
 		result := map[string]interface{}{
-			"agreement_id":        entity.AgreementId,
-			"agreement_code":      entity.AgreementCode,
-			"is_active":           entity.IsActive,
-			"brand_id":            entity.BrandId,
-			"customer_id":         entity.CustomerId,
-			"customer_name":       getCustomerResponse.CustomerName,
-			"customer_code":       getCustomerResponse.CustomerCode,
-			"address_street_1":    getCustomerResponse.AddressStreet1,
-			"address_street_2":    getCustomerResponse.AddressStreet2,
-			"address_street_3":    getCustomerResponse.AddressStreet3,
-			"village_name":        getCustomerResponse.VillageName,
-			"village_zip_code":    getCustomerResponse.VillageZipCode,
-			"district_name":       getCustomerResponse.DistrictName,
-			"city_name":           getCustomerResponse.CityName,
-			"city_phone_area":     getCustomerResponse.CityPhoneArea,
-			"province_name":       getCustomerResponse.ProvinceName,
-			"country_name":        getCustomerResponse.CountryName,
-			"profit_center_id":    entity.ProfitCenterId,
-			"profit_center_name":  profitCenterResponse.ProfitCenterName,
-			"agreement_date_from": entity.AgreementDateFrom,
-			"agreement_date_to":   entity.AgreementDateTo,
-			"dealer_id":           entity.DealerId,
-			"dealer_name":         getCompanyResponse.CompanyName,
-			"dealer_code":         getCompanyResponse.CompanyCode,
-			"top_id":              entity.TopId,
-			"top_name":            termOfPaymentResponse.TermOfPaymentName,
-			"agreement_remark":    entity.AgreementRemark,
+			"agreement_id":        response.AgreementId,
+			"agreement_code":      response.AgreementCode,
+			"is_active":           response.IsActive,
+			"brand_id":            response.BrandId,
+			"customer_id":         response.CustomerId,
+			"customer_name":       response.CustomerName,
+			"customer_code":       response.CustomerCode,
+			"profit_center_id":    response.ProfitCenterId,
+			"profit_center_name":  response.ProfitCenterName,
+			"agreement_date_from": response.AgreementDateFrom,
+			"agreement_date_to":   response.AgreementDateTo,
+			"company_id":          response.CompanyId,
+			"top_id":              response.TopId,
+			"top_code":            response.TermOfPaymentCode,
+			"top_description":     response.TermOfPaymentName,
+			"company_name":        response.CompanyName,
+			"company_code":        response.CompanyCode,
 		}
 
 		results = append(results, result)
 	}
 
+	// Set the pagination info
 	pages.Rows = results
-
 	return pages, nil
 }
 
@@ -657,7 +732,7 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	}
 
 	// fetch data company from utils cross service
-	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.DealerId)
+	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
 	if compErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -684,9 +759,9 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
-	response.DealerId = entities.DealerId
-	response.DealerName = companyResponse.CompanyName
-	response.DealerCode = companyResponse.CompanyCode
+	response.CompanyId = entities.CompanyId
+	response.CompanyName = companyResponse.CompanyName
+	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
 
