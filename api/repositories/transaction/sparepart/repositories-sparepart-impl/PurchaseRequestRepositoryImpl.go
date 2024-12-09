@@ -40,10 +40,9 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 		Select("purchase_request_system_number," +
 			"purchase_request_document_number," +
 			"purchase_request_document_status_id," +
-			"item_group_id,purchase_request_document_number," +
+			"item_group_id," +
 			"reference_system_number,order_type_id,purchase_request_document_date," +
-			"expected_arrival_date,created_by_user_id,reference_document_number," +
-			"'A.purchase_request_system_number'") //.Scan(&responses).Error
+			"expected_arrival_date,created_by_user_id,reference_document_number") //.Scan(&responses).Error
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
 	var strDateFilter string
 	if Dateparams["purchase_request_date_from"] == "" {
