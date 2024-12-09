@@ -115,6 +115,8 @@ type WorkOrder struct {
 	JobOnHoldReason                    string            `gorm:"column:job_on_hold_reason;size:50;" json:"job_on_hold_reason"`
 	CustomerExpress                    bool              `gorm:"column:customer_express;default:false;" json:"customer_express"`
 	CPTitlePrefix                      string            `gorm:"column:contact_person_title_prefix;size:50;" json:"contact_person_title_prefix"`
+	IDType                             *int              `gorm:"column:id_type;size:30;" json:"id_type"`
+	IDNumber                           *string           `gorm:"column:id_number;size:150;default:null" json:"id_number"`
 	WorkOrderDetail                    []WorkOrderDetail `gorm:"foreignKey:WorkOrderSystemNumber;references:WorkOrderSystemNumber" json:"work_order_detail"`
 }
 
