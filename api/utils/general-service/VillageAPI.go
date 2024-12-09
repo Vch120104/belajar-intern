@@ -26,7 +26,7 @@ type VillageByIdResponse struct {
 	ProvinceId     int    `json:"province_id"`
 }
 
-func GetVillageByID(id int) (VillageByIdResponse, *exceptions.BaseErrorResponse) {
+func GetVillageById(id int) (VillageByIdResponse, *exceptions.BaseErrorResponse) {
 	var getVillage VillageByIdResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getVillage)

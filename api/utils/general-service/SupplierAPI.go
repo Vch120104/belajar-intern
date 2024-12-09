@@ -129,7 +129,7 @@ func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.B
 	return getSupplierMaster, nil
 }
 
-func GetSupplierMasterByID(id int) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
+func GetSupplierMasterById(id int) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
 	var getSupplierMaster SupplierMasterResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(id)
 

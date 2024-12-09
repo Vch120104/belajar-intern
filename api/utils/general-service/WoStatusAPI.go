@@ -15,7 +15,7 @@ type WorkOrderStatusResponse struct {
 	WorkOrderStatusName string `json:"work_order_status_description"`
 }
 
-func GetWorkOrderStatusByID(id int) (WorkOrderStatusResponse, *exceptions.BaseErrorResponse) {
+func GetWorkOrderStatusById(id int) (WorkOrderStatusResponse, *exceptions.BaseErrorResponse) {
 	var workOrderStatus WorkOrderStatusResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "work-order-status/" + strconv.Itoa(id)
 
