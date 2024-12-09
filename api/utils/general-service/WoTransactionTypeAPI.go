@@ -15,7 +15,7 @@ type WorkOrderTransactionType struct {
 	WoTransactionTypeName string `json:"work_order_transaction_type_name"`
 }
 
-func GetTransactionTypeByID(id int) (WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+func GetWoTransactionTypeById(id int) (WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	var transactionType WorkOrderTransactionType
 	url := config.EnvConfigs.GeneralServiceUrl + "work-order-transaction-type/" + strconv.Itoa(id)
 

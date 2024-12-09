@@ -70,7 +70,7 @@ func UpdateAddress(id int, request UpdateAddressRequest) (AddressResponse, *exce
 	return response, nil
 }
 
-func GetAddressByID(id int) (AddressResponse, *exceptions.BaseErrorResponse) {
+func GetAddressById(id int) (AddressResponse, *exceptions.BaseErrorResponse) {
 	var response AddressResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &response)

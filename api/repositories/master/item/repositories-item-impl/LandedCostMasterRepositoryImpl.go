@@ -63,7 +63,7 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 		}
 
 		// Fetch Supplier by ID
-		supplier, errSup := generalserviceapiutils.GetSupplierMasterByID(payload.SupplierId)
+		supplier, errSup := generalserviceapiutils.GetSupplierMasterById(payload.SupplierId)
 		if errSup != nil {
 			return pages, errSup
 		}

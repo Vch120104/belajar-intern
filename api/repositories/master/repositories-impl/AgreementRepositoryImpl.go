@@ -768,7 +768,7 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	}
 
 	// fetch data customer from utils cross service
-	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterByID(entities.CustomerId)
+	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterById(entities.CustomerId)
 	if custErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

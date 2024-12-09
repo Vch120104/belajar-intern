@@ -435,7 +435,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	// fetch reference document from external API
-	ReferenceDocUrl := config.EnvConfigs.GeneralServiceUrl + "service-request-reference-type/" + strconv.Itoa(entity.ReferenceDocSystemNumber)
+	ReferenceDocUrl := config.EnvConfigs.GeneralServiceUrl + "service-request-reference-type/" + strconv.Itoa(entity.ReferenceSystemNumber)
 	var referenceDocResponses transactionworkshoppayloads.ReferenceDoc
 	errReferenceDoc := utils.Get(ReferenceDocUrl, &referenceDocResponses, nil)
 	if errReferenceDoc != nil {
@@ -511,10 +511,10 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 		}
 	}
 
-	if request.ReferenceDocSystemNumber == 0 && request.EstimationSystemNumber == 0 {
+	if request.ReferenceSystemNumber == 0 && request.EstimationSystemNumber == 0 {
 		refType = "SR" // New Service Request
 		ReferenceTypeId = 1
-	} else if request.ReferenceDocSystemNumber != 0 {
+	} else if request.ReferenceSystemNumber != 0 {
 		refType = "WO" // Work Order
 		ReferenceTypeId = 2
 	} else if request.EstimationSystemNumber != 0 {
@@ -534,25 +534,25 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 	case "SR":
 		jobType := ""
 		entities = transactionworkshopentities.ServiceRequest{
-			ServiceRequestStatusId:   defaultWorkOrderStatusId,
-			ServiceRequestDate:       currentDate,
-			BrandId:                  request.BrandId,
-			ModelId:                  request.ModelId,
-			VariantId:                request.VariantId,
-			VehicleId:                request.VehicleId,
-			CompanyId:                request.CompanyId,
-			DealerRepresentativeId:   request.DealerRepresentativeId,
-			ProfitCenterId:           request.ProfitCenterId,
-			WorkOrderSystemNumber:    request.WorkOrderSystemNumber,
-			BookingSystemNumber:      request.BookingSystemNumber,
-			EstimationSystemNumber:   request.EstimationSystemNumber,
-			ReferenceDocSystemNumber: request.ReferenceDocSystemNumber,
-			ReplyId:                  defaultReplyId,
-			ServiceCompanyId:         request.ServiceCompanyId,
-			ServiceDate:              request.ServiceDate,
-			ServiceRequestBy:         request.ServiceRequestBy,
-			ReferenceTypeId:          ReferenceTypeId,
-			ReferenceJobType:         jobType,
+			ServiceRequestStatusId: defaultWorkOrderStatusId,
+			ServiceRequestDate:     currentDate,
+			BrandId:                request.BrandId,
+			ModelId:                request.ModelId,
+			VariantId:              request.VariantId,
+			VehicleId:              request.VehicleId,
+			CompanyId:              request.CompanyId,
+			DealerRepresentativeId: request.DealerRepresentativeId,
+			ProfitCenterId:         request.ProfitCenterId,
+			WorkOrderSystemNumber:  request.WorkOrderSystemNumber,
+			BookingSystemNumber:    request.BookingSystemNumber,
+			EstimationSystemNumber: request.EstimationSystemNumber,
+			ReferenceSystemNumber:  request.ReferenceSystemNumber,
+			ReplyId:                defaultReplyId,
+			ServiceCompanyId:       request.ServiceCompanyId,
+			ServiceDate:            request.ServiceDate,
+			ServiceRequestBy:       request.ServiceRequestBy,
+			ReferenceTypeId:        ReferenceTypeId,
+			ReferenceJobType:       jobType,
 		}
 
 	case "WO":
@@ -566,22 +566,22 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 		}
 
 		entities = transactionworkshopentities.ServiceRequest{
-			ServiceRequestStatusId:   defaultWorkOrderStatusId,
-			ServiceRequestDate:       currentDate,
-			BrandId:                  request.BrandId,
-			ModelId:                  request.ModelId,
-			VariantId:                request.VariantId,
-			VehicleId:                request.VehicleId,
-			CompanyId:                request.CompanyId,
-			DealerRepresentativeId:   request.DealerRepresentativeId,
-			ProfitCenterId:           request.ProfitCenterId,
-			WorkOrderSystemNumber:    request.WorkOrderSystemNumber,
-			BookingSystemNumber:      request.BookingSystemNumber,
-			ReferenceDocSystemNumber: request.ReferenceDocSystemNumber,
-			ServiceRequestBy:         request.ServiceRequestBy,
-			ServiceDate:              request.ServiceDate,
-			ReferenceTypeId:          ReferenceTypeId,
-			ReferenceJobType:         jobType,
+			ServiceRequestStatusId: defaultWorkOrderStatusId,
+			ServiceRequestDate:     currentDate,
+			BrandId:                request.BrandId,
+			ModelId:                request.ModelId,
+			VariantId:              request.VariantId,
+			VehicleId:              request.VehicleId,
+			CompanyId:              request.CompanyId,
+			DealerRepresentativeId: request.DealerRepresentativeId,
+			ProfitCenterId:         request.ProfitCenterId,
+			WorkOrderSystemNumber:  request.WorkOrderSystemNumber,
+			BookingSystemNumber:    request.BookingSystemNumber,
+			ReferenceSystemNumber:  request.ReferenceSystemNumber,
+			ServiceRequestBy:       request.ServiceRequestBy,
+			ServiceDate:            request.ServiceDate,
+			ReferenceTypeId:        ReferenceTypeId,
+			ReferenceJobType:       jobType,
 		}
 
 	case "SO":
