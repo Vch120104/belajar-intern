@@ -50,7 +50,7 @@ func (b *BinningListRepositoryImpl) GetReferenceNumberTypoPOWithPagination(db *g
 	var responsePO []transactionsparepartpayloads.BinningListReferenceDocumentNumberTypePOResponse
 
 	for _, item := range purchaseOrderEntities {
-		supplierRes, errRes := generalserviceapiutils.GetSupplierMasterByID(item.SupplierId)
+		supplierRes, errRes := generalserviceapiutils.GetSupplierMasterById(item.SupplierId)
 		if errRes != nil {
 			return paginations, errRes
 		}
@@ -140,7 +140,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB,
 	}
 
 	for _, binningEntity := range binningEntities {
-		SupplierData, errSupplierMaster := generalserviceapiutils.GetSupplierMasterByID(binningEntity.SupplierId)
+		SupplierData, errSupplierMaster := generalserviceapiutils.GetSupplierMasterById(binningEntity.SupplierId)
 		if err != nil {
 			return paginations, errSupplierMaster
 		}
@@ -247,7 +247,7 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 		}
 	}
 	//get supplier data
-	SupplierData, supplierDataErr := generalserviceapiutils.GetSupplierMasterByID(BinningStockEntities.SupplierId)
+	SupplierData, supplierDataErr := generalserviceapiutils.GetSupplierMasterById(BinningStockEntities.SupplierId)
 	if supplierDataErr != nil {
 		return Response, supplierDataErr
 	}

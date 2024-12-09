@@ -223,7 +223,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 		}
 	}
 
-	getAddressResponse, addrErr := generalserviceapiutils.GetAddressByID(entities.AddressId)
+	getAddressResponse, addrErr := generalserviceapiutils.GetAddressById(entities.AddressId)
 	var addressDetails masterwarehousepayloads.AddressResponse
 	if addrErr != nil {
 		addressDetails = masterwarehousepayloads.AddressResponse{
@@ -261,7 +261,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// Supplier
-	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
 	var supplierDetails masterwarehousepayloads.SupplierResponse
 	if supplierErr != nil {
 		supplierDetails = masterwarehousepayloads.SupplierResponse{
@@ -278,7 +278,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// Village
-	getVillageResponse, villageErr := generalserviceapiutils.GetVillageByID(addressDetails.VillageId)
+	getVillageResponse, villageErr := generalserviceapiutils.GetVillageById(addressDetails.VillageId)
 	var villageDetails masterwarehousepayloads.VillageResponse
 	if villageErr != nil {
 		villageDetails = masterwarehousepayloads.VillageResponse{
@@ -305,7 +305,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// User
-	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserCompanyAccessByID(entities.UserId)
+	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserCompanyAccessById(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
 		userDetails = masterwarehousepayloads.UserResponse{
@@ -515,7 +515,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 	}
 
 	// Fetch Address Details
-	getAddressResponse, addrErr := generalserviceapiutils.GetAddressByID(entities.AddressId)
+	getAddressResponse, addrErr := generalserviceapiutils.GetAddressById(entities.AddressId)
 	var addressDetails masterwarehousepayloads.AddressResponse
 	if addrErr != nil {
 		addressDetails = masterwarehousepayloads.AddressResponse{}
@@ -543,7 +543,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 	}
 
 	// Fetch Supplier Details
-	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
 	var supplierDetails masterwarehousepayloads.SupplierResponse
 	if supplierErr != nil {
 		supplierDetails = masterwarehousepayloads.SupplierResponse{}
@@ -556,7 +556,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 	}
 
 	// Fetch Village Details
-	getVillageResponse, villageErr := generalserviceapiutils.GetVillageByID(addressDetails.VillageId)
+	getVillageResponse, villageErr := generalserviceapiutils.GetVillageById(addressDetails.VillageId)
 	var villageDetails masterwarehousepayloads.VillageResponse
 	if villageErr != nil {
 		villageDetails = masterwarehousepayloads.VillageResponse{}
@@ -574,7 +574,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 	}
 
 	// Fetch User Details
-	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessByID(entities.UserId)
+	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessById(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
 		userDetails = masterwarehousepayloads.UserResponse{}
@@ -648,7 +648,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 	}
 
 	// Fetch Address Details
-	getAddressResponse, addrErr := generalserviceapiutils.GetAddressByID(entities.AddressId)
+	getAddressResponse, addrErr := generalserviceapiutils.GetAddressById(entities.AddressId)
 	var addressDetails masterwarehousepayloads.AddressResponse
 	if addrErr != nil {
 		addressDetails = masterwarehousepayloads.AddressResponse{}
@@ -676,7 +676,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 	}
 
 	// Fetch Supplier Details
-	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
 	var supplierDetails masterwarehousepayloads.SupplierResponse
 	if supplierErr != nil {
 		supplierDetails = masterwarehousepayloads.SupplierResponse{}
@@ -689,7 +689,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 	}
 
 	// Fetch Village Details
-	getVillageResponse, villageErr := generalserviceapiutils.GetVillageByID(addressDetails.VillageId)
+	getVillageResponse, villageErr := generalserviceapiutils.GetVillageById(addressDetails.VillageId)
 	var villageDetails masterwarehousepayloads.VillageResponse
 	if villageErr != nil {
 		villageDetails = masterwarehousepayloads.VillageResponse{}
@@ -707,7 +707,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 	}
 
 	// Fetch User Details
-	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessByID(entities.UserId)
+	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessById(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
 		userDetails = masterwarehousepayloads.UserResponse{}

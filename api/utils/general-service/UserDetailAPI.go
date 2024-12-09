@@ -79,7 +79,7 @@ func GetAllUserDetail(params UserDetailParams) ([]UserDetailsResponse, *exceptio
 	return getUserDetailMaster, nil
 }
 
-func GetUserCompanyAccessByID(id int) (UserCompanyAccessResponse, *exceptions.BaseErrorResponse) {
+func GetUserCompanyAccessById(id int) (UserCompanyAccessResponse, *exceptions.BaseErrorResponse) {
 	var companyAccess UserCompanyAccessResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "user-company-access/" + strconv.Itoa(id)
 

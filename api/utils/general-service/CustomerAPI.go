@@ -160,7 +160,7 @@ func GetCustomerMasterDetailById(id int) (CustomerMasterDetailResponse, *excepti
 	return getCustomerMaster, nil
 }
 
-func GetCustomerMasterByID(id int) (CustomerMasterResponse, *exceptions.BaseErrorResponse) {
+func GetCustomerMasterById(id int) (CustomerMasterResponse, *exceptions.BaseErrorResponse) {
 	var getCustomerMaster CustomerMasterResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)

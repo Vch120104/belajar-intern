@@ -39,7 +39,7 @@ func GetAllSubstituteType() ([]SubstituteTypeResponse, *exceptions.BaseErrorResp
 	return getSubstituteType, nil
 }
 
-func GetSubstituteTypeByID(id int) (SubstituteTypeResponse, *exceptions.BaseErrorResponse) {
+func GetSubstituteTypeById(id int) (SubstituteTypeResponse, *exceptions.BaseErrorResponse) {
 	var getSubstituteType SubstituteTypeResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "substitute-type/" + strconv.Itoa(id)
 

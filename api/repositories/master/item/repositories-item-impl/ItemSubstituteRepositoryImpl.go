@@ -109,7 +109,7 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int
 		}
 	}
 
-	typeResponse, errSubType := generalserviceapiutils.GetSubstituteTypeByID(response.SubstituteTypeId)
+	typeResponse, errSubType := generalserviceapiutils.GetSubstituteTypeById(response.SubstituteTypeId)
 	if errSubType != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: errSubType.StatusCode,

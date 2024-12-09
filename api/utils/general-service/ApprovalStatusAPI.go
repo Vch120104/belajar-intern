@@ -52,7 +52,7 @@ func GetApprovalStatusByCode(code string) (ApprovalStatusResponse, *exceptions.B
 	return getApprovalStatus, nil
 }
 
-func GetApprovalStatusByID(id int) (ApprovalStatusResponse, *exceptions.BaseErrorResponse) {
+func GetApprovalStatusById(id int) (ApprovalStatusResponse, *exceptions.BaseErrorResponse) {
 	var getApprovalStatusTemp ApprovalStatusTempResponse
 	var getApprovalStatus ApprovalStatusResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "approval-status/" + strconv.Itoa(id)
