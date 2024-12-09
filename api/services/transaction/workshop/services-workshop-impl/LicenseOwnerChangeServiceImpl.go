@@ -2,13 +2,15 @@ package transactionworkshopserviceimpl
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -29,11 +31,65 @@ func OpenLicenseOwnerChangeServiceImpl(LicenseOwnerChangeRepo transactionworksho
 // GetAll implements transactionworkshopservice.LicenseOwnerChangeService.
 func (s *LicenseOwnerChangeServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
 	results, totalPages, totalRows, repoErr := s.LicenseOwncerChangeRepository.GetAll(tx, filterCondition, pages)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return nil, 0, 0, repoErr
 	}
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(results, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	return results, totalPages, totalRows, nil
+}
+
+// GetHistoryByChassisNumber implements transactionworkshopservice.LicenseOwnerChangeService.
+func (s *LicenseOwnerChangeServiceImpl) GetHistoryByChassisNumber(chassisNumber string, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, totalPages, totalRows, repoErr := s.LicenseOwncerChangeRepository.GetHistoryByChassisNumber(chassisNumber, tx, filterCondition, pages)
+	if repoErr != nil {
+		err = repoErr
+		return nil, 0, 0, repoErr
+	}
+	return results, totalPages, totalRows, nil
 }

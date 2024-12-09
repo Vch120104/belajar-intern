@@ -8,14 +8,16 @@ import (
 	"after-sales/api/utils"
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type LicenseOwnerChangeControllerImpl struct {
 	LicenseOwnerChangeService transactionworkshopservice.LicenseOwnerChangeService
 }
-
 type LicenseOwnerChangeController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetHistoryByChassisNumber(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewLicenseOwnerChangeController(LicenseOwnerChangeService transactionworkshopservice.LicenseOwnerChangeService) LicenseOwnerChangeController {
@@ -67,5 +69,39 @@ func (l *LicenseOwnerChangeControllerImpl) GetAll(writer http.ResponseWriter, re
 	} else {
 		// If no data found, return 404
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetHistoryByChassisNumber implements LicenseOwnerChangeController.
+func (l *LicenseOwnerChangeControllerImpl) GetHistoryByChassisNumber(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	chassisNumber := chi.URLParam(request, "vehicle_chassis_number")
+	if chassisNumber == "" {
+		payloads.NewHandleError(writer, "Vehicle Chassis Number is requried", http.StatusBadRequest)
+		return
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	filterParams := map[string]string{
+		"change_type": queryValues.Get("change_type"),
+	}
+	criteria := utils.BuildFilterCondition(filterParams)
+
+	results, totalPages, totalRows, err := l.LicenseOwnerChangeService.GetHistoryByChassisNumber(chassisNumber, criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	if len(results) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(results), "Get History Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "No history data found for the given chassis number", http.StatusNotFound)
 	}
 }

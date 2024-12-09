@@ -87,3 +87,48 @@ func (l *LicenseOwncerChangeRepository) GetAll(tx *gorm.DB, filterCondition []ut
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(combinePayloads, &pages)
 	return paginatedData, totalPages, totalRows, nil
 }
+
+// GetAllHistory implements transactionworkshoprepository.LicenseOwncerChangeRepository.
+func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber string, tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var entities []transactionworkshopentities.LicenseOwnerChange
+	combinePayloads := make([]map[string]interface{}, 0)
+
+	vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleByChassisNumber(chassisNumber)
+	if vehicleErr != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid chassis number or vehicle not found",
+			Err:        vehicleErr.Err,
+		}
+	}
+
+	vehicleID := vehicleResponse.VehicleID
+
+	query := tx.Model(&transactionworkshopentities.LicenseOwnerChange{}).
+		Select("change_date, change_type, tnkb_old, tnkb_new, owner_name_old, owner_name_new").
+		Where("vehicle_id = ?", vehicleID).
+		Order("change_date DESC")
+
+	if err := query.Find(&entities).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No history data found for the given chassis number",
+			Err:        err,
+		}
+	}
+
+	for _, entity := range entities {
+		response := map[string]interface{}{
+			"change_date":    entity.ChangeDate,
+			"change_type":    entity.ChangeType,
+			"tnkb_old":       entity.TnkbOld,
+			"tnkb_new":       entity.TnkbNew,
+			"owner_name_old": entity.OwnerNameOld,
+			"owner_name_new": entity.OwnerNameNew,
+		}
+		combinePayloads = append(combinePayloads, response)
+	}
+
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(combinePayloads, &pages)
+	return paginatedData, totalPages, totalRows, nil
+}
