@@ -7,11 +7,13 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"math"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -155,6 +157,9 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []
 	var responses []masterpayloads.AgreementResponse
 
 	var customerCode, customerName, profitCenterName string
+	var dateFrom, dateTo string
+	layoutDate := "2006-01-02" // Format parsing date
+
 	// External filter processing for customer and profit center
 	for _, filter := range externalFilter {
 		switch filter.ColumnField {
@@ -164,6 +169,10 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []
 			customerName = filter.ColumnValue
 		case "profit_center_name":
 			profitCenterName = filter.ColumnValue
+		case "agreement_date_from":
+			dateFrom = filter.ColumnValue
+		case "agreement_date_to":
+			dateTo = filter.ColumnValue
 		}
 	}
 
@@ -253,6 +262,32 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []
 			pages.Rows = []map[string]interface{}{}
 			return pages, nil
 		}
+	}
+
+	if dateTo != "" {
+		parsedDateTo, err := time.Parse(layoutDate, dateTo)
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    fmt.Sprintf("Invalid dateTo format: %v", dateTo),
+				Err:        err,
+			}
+		}
+		dateTo = parsedDateTo.Format(layoutDate)
+		query = query.Where("mtr_agreement.agreement_date_to <= ?", dateTo)
+	}
+
+	if dateFrom != "" {
+		parsedDateFrom, err := time.Parse(layoutDate, dateFrom)
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    fmt.Sprintf("Invalid dateFrom format: %v", dateFrom),
+				Err:        err,
+			}
+		}
+		dateFrom = parsedDateFrom.Format(layoutDate)
+		query = query.Where("mtr_agreement.agreement_date_from >= ?", dateFrom)
 	}
 
 	whereQuery := utils.ApplyFilter(query, internalFilter)
@@ -547,15 +582,25 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 			selectionName = "markup"
 		}
 
+		// fetch order type from utils cross service
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderType)
+		if orderTypeError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: orderTypeError.StatusCode,
+				Err:        orderTypeError.Err,
+			}
+		}
+
 		result := map[string]interface{}{
 			"agreement_discount_group_id":  entity.AgreementDiscountGroupId,
 			"agreement_id":                 entity.AgreementId,
 			"agreement_selection":          entity.AgreementSelection,
+			"agreement_selection_name":     selectionName,
 			"agreement_order_type":         entity.AgreementOrderType,
+			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
 			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
 			"agreement_discount":           entity.AgreementDiscount,
 			"agreement_detail_remarks":     entity.AgreementDetailRemarks,
-			"selection_name":               selectionName,
 		}
 		results = append(results, result)
 	}
