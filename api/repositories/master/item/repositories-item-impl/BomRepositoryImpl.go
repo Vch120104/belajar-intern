@@ -474,103 +474,64 @@ func (r *BomRepositoryImpl) UpdateBomDetail(tx *gorm.DB, id int, request masteri
 	return entities, nil
 }
 
-func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []map[string]interface{}
+func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	// Define main table
-	mainTable := "mtr_item"
-	mainAlias := "item"
-	mainAliasClass := "item_class"
-	mainAliasUom := "uom"
-
-	// Define join tables
-	joinTables := []utils.JoinTable{
-		{Table: "mtr_item_class", Alias: "item_class", ForeignKey: mainAlias + ".item_class_id", ReferenceKey: mainAliasClass + ".item_class_id"},
-		{Table: "mtr_uom", Alias: "uom", ForeignKey: mainAlias + ".unit_of_measurement_selling_id", ReferenceKey: mainAliasUom + ".uom_id"},
+	type BomItemResponse struct {
+		IsActive       bool   `json:"is_active"`
+		ItemId         int    `json:"item_id"`
+		ItemCode       string `json:"item_code"`
+		ItemName       string `json:"item_name"`
+		ItemTypeId     string `json:"item_type_id"`
+		ItemGroupId    int    `json:"item_group_id"`
+		ItemClassId    int    `json:"item_class_id"`
+		ItemClassCode  string `json:"item_class_code"`
+		UomId          int    `json:"uom_id"`
+		UomDescription string `json:"uom_description"`
 	}
 
-	// Create join query
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+	var responses []BomItemResponse
 
-	// Define key attributes to be selected
-	keyAttributes := []string{
-		mainAlias + ".is_active",
-		mainAlias + ".item_id",
-		mainAlias + ".item_code",
-		mainAlias + ".item_name",
-		mainAlias + ".item_type_id",
-		mainAlias + ".item_group_id",
-		mainAliasClass + ".item_class_id",
-		mainAliasClass + ".item_class_code",
-		mainAliasUom + ".uom_id",
-		mainAliasUom + ".uom_description",
-	}
-
-	// Apply key attributes selection
-	joinQuery = joinQuery.Select(keyAttributes)
+	baseQuery := tx.Table("mtr_item AS item").
+		Select(`
+			item.is_active,
+			item.item_id,
+			item.item_code,
+			item.item_name,
+			item.item_type_id,
+			item.item_group_id,
+			item_class.item_class_id,
+			item_class.item_class_code,
+			uom.uom_id,
+			uom.uom_description`).
+		Joins("LEFT JOIN mtr_item_class AS item_class ON item.item_class_id = item_class.item_class_id").
+		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_selling_id = uom.uom_id")
 
 	// Apply filters
-	for _, filter := range filters {
-		if filter.ColumnField == "item_id" {
-			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" = ?", filter.ColumnValue)
-		} else {
-			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" LIKE ?", "%"+filter.ColumnValue+"%")
-		}
-	}
+	baseQuery = utils.ApplyFilter(baseQuery, filterConditions)
 
-	// Execute query
-	rows, err := joinQuery.Rows()
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+	// Apply pagination
+	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
+
+	// Scan the results into the response struct
+	if err := paginatedQuery.Scan(&responses).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// Fetch data and append to response slice
-	for rows.Next() {
-		var isActive bool
-		var itemId, itemGroupId, itemClassId, uomId int
-		var itemCode, itemName, itemTypeId, itemClassCode, uomDescription string
-
-		err := rows.Scan(&isActive,
-			&itemId,
-			&itemCode,
-			&itemName,
-			&itemTypeId,
-			&itemGroupId,
-			&itemClassId,
-			&itemClassCode,
-			&uomId,
-			&uomDescription)
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		responseMap := map[string]interface{}{
-			"is_active":                isActive,
-			"item_id":                  itemId,
-			"item_code":                itemCode,
-			"item_name":                itemName,
-			"item_type_id":             itemTypeId,
-			"item_group_id":            itemGroupId,
-			"item_class_id":            itemClassId,
-			"item_class_code":          itemClassCode,
-			"unit_of_measurement_id":   uomId,
-			"unit_of_measurement_code": uomDescription,
-		}
-		responses = append(responses, responseMap)
+	// Handle empty results
+	if len(responses) == 0 {
+		pages.Rows = []BomItemResponse{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
+		return pages, nil
 	}
 
-	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+	// Assign results to the paginated response
+	pages.Rows = responses
 
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {
