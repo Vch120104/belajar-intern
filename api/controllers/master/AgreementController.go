@@ -204,22 +204,22 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	internalFilterCondition := map[string]string{
-		"mtr_agreement.agreement_id":        queryValues.Get("agreement_id"),
-		"mtr_agreement.brand_id":            queryValues.Get("brand_id"),
-		"mtr_agreement.customer_id":         queryValues.Get("customer_id"),
-		"mtr_agreement.profit_center_id":    queryValues.Get("profit_center_id"),
-		"mtr_agreement.company_id":          queryValues.Get("company_id"),
-		"mtr_agreement.top_id":              queryValues.Get("top_id"),
-		"mtr_agreement.is_active":           queryValues.Get("is_active"),
-		"mtr_agreement.agreement_code":      queryValues.Get("agreement_code"),
-		"mtr_agreement.agreement_date_from": queryValues.Get("agreement_date_from"),
-		"mtr_agreement.agreement_date_to":   queryValues.Get("agreement_date_to"),
+		"mtr_agreement.agreement_id":     queryValues.Get("agreement_id"),
+		"mtr_agreement.brand_id":         queryValues.Get("brand_id"),
+		"mtr_agreement.customer_id":      queryValues.Get("customer_id"),
+		"mtr_agreement.profit_center_id": queryValues.Get("profit_center_id"),
+		"mtr_agreement.company_id":       queryValues.Get("company_id"),
+		"mtr_agreement.top_id":           queryValues.Get("top_id"),
+		"mtr_agreement.is_active":        queryValues.Get("is_active"),
+		"mtr_agreement.agreement_code":   queryValues.Get("agreement_code"),
 	}
 
 	externalFilterCondition := map[string]string{
-		"customer_name":      queryValues.Get("customer_name"),
-		"customer_code":      queryValues.Get("customer_code"),
-		"profit_center_name": queryValues.Get("profit_center_name"),
+		"customer_name":       queryValues.Get("customer_name"),
+		"customer_code":       queryValues.Get("customer_code"),
+		"profit_center_name":  queryValues.Get("profit_center_name"),
+		"agreement_date_from": queryValues.Get("agreement_date_from"),
+		"agreement_date_to":   queryValues.Get("agreement_date_to"),
 	}
 
 	paginate := pagination.Pagination{

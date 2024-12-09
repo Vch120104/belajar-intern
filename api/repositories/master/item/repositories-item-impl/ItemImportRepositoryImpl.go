@@ -28,7 +28,7 @@ func StartItemImportRepositoryImpl() masteritemrepository.ItemImportRepository {
 // SaveItemImport implements masteritemrepository.ItemImportRepository.
 func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 
-	supplierResponse, errGetSupplier := generalserviceapiutils.GetSupplierMasterByID(req.SupplierId)
+	supplierResponse, errGetSupplier := generalserviceapiutils.GetSupplierMasterById(req.SupplierId)
 	if supplierResponse == (generalserviceapiutils.SupplierMasterResponse{}) {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -78,7 +78,7 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.D
 		}
 	}
 
-	supplier, supplierErr := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+	supplier, supplierErr := generalserviceapiutils.GetSupplierMasterById(response.SupplierId)
 	if supplierErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: supplierErr.StatusCode,
@@ -117,7 +117,7 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 		}
 	}
 
-	supplierResponse, errSupplier := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+	supplierResponse, errSupplier := generalserviceapiutils.GetSupplierMasterById(response.SupplierId)
 	if errSupplier != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: errSupplier.StatusCode,

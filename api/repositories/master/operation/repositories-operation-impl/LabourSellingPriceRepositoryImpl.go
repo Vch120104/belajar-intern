@@ -231,7 +231,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 		}
 
 		// Fetch Job Type data
-		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeByID(response.JobTypeId)
+		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeById(response.JobTypeId)
 		if jobTypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -240,7 +240,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 		}
 
 		// Fetch BillTo (Supplier) data
-		billToResponse, billToErr := generalserviceapiutils.GetSupplierMasterByID(response.BillToId)
+		billToResponse, billToErr := generalserviceapiutils.GetSupplierMasterById(response.BillToId)
 		if billToErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -306,7 +306,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 		}
 	}
 
-	getJobTypeResponse, errJobType := generalserviceapiutils.GetJobTransactionTypeByID(response.JobTypeId)
+	getJobTypeResponse, errJobType := generalserviceapiutils.GetJobTransactionTypeById(response.JobTypeId)
 	if errJobType != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: errJobType.StatusCode,

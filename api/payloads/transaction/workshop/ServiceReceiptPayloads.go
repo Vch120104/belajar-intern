@@ -125,7 +125,7 @@ type ServiceReceiptResponse struct {
 	EstimationSystemNumber       int                           `json:"estimation_system_number"`
 	WorkOrderSystemNumber        int                           `json:"work_order_system_number"`
 	WorkOrderDocumentNumber      string                        `json:"work_order_document_number"`
-	ReferenceDocSystemNumber     int                           `json:"reference_doc_system_number"`
+	ReferenceSystemNumber        int                           `json:"reference_system_number"`
 	ProfitCenterId               int                           `json:"profit_center_id"`
 	ProfitCenterName             string                        `json:"profit_center_name"`
 	CompanyId                    int                           `json:"company_id"`

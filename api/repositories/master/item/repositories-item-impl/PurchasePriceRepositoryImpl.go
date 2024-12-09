@@ -155,7 +155,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 	var results []map[string]interface{}
 	for _, response := range responses {
 		// Fetch supplier data
-		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(response.SupplierId)
 		if supplierErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: supplierErr.StatusCode,
@@ -279,7 +279,7 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 		}
 	}
 
-	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entities.SupplierId)
+	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
 	if supplierErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

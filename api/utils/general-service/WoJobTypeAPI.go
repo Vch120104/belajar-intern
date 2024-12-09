@@ -15,7 +15,7 @@ type WorkOrderJobType struct {
 	JobTypeName string `json:"work_order_job_type_description"`
 }
 
-func GetJobTransactionTypeByID(id int) (WorkOrderJobType, *exceptions.BaseErrorResponse) {
+func GetJobTransactionTypeById(id int) (WorkOrderJobType, *exceptions.BaseErrorResponse) {
 	var jobType WorkOrderJobType
 	url := config.EnvConfigs.GeneralServiceUrl + "work-order-job-type/" + strconv.Itoa(id)
 
