@@ -19,7 +19,7 @@ type ItemModelMappingServiceImpl struct {
 }
 
 // GetItemModelMappingByItemId implements masteritemservice.ItemModelMappingService.
-func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -34,15 +34,20 @@ func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pa
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.ItemModelMappingRepo.GetItemModelMappingByItemId(tx, itemId, pages)
+	results, err := s.ItemModelMappingRepo.GetItemModelMappingByItemId(tx, itemId, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 // UpdateItemModelMapping implements masteritemservice.ItemModelMappingService.
@@ -61,8 +66,13 @@ func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempaylo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemModelMappingRepo.UpdateItemModelMapping(tx, req)
@@ -88,8 +98,13 @@ func (s *ItemModelMappingServiceImpl) CreateItemModelMapping(req masteritempaylo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.ItemModelMappingRepo.CreateItemModelMapping(tx, req)

@@ -214,8 +214,11 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	queryValues := request.URL.Query()
 
 	internalFilterCondition := map[string]string{
-		"Item.item_code": queryValues.Get("item_code"),
-		"Item.item_name": queryValues.Get("item_name"),
+		"mtr_item_import.item_import_id": queryValues.Get("item_import_id"),
+		"mtr_item_import.item_id":        queryValues.Get("item_id"),
+		"mtr_item_import.supplier_id":    queryValues.Get("supplier_id"),
+		"Item.item_code":                 queryValues.Get("item_code"),
+		"Item.item_name":                 queryValues.Get("item_name"),
 	}
 	externalFilterCondition := map[string]string{
 		"supplier_code": queryValues.Get("supplier_code"),

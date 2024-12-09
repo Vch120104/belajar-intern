@@ -75,10 +75,10 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 	queryParams := map[string]string{
 		"mtr_purchase_price.purchase_price_id":             queryValues.Get("purchase_price_id"),
 		"mtr_purchase_price.supplier_id":                   queryValues.Get("supplier_id"),
-		"mtr_purchase_price.supplier_code":                 queryValues.Get("supplier_code"),
-		"mtr_purchase_price.supplier_name":                 queryValues.Get("supplier_name"),
+		"supplier_code":                                    queryValues.Get("supplier_code"),
+		"supplier_name":                                    queryValues.Get("supplier_name"),
 		"mtr_purchase_price.currency_id":                   queryValues.Get("currency_id"),
-		"mtr_purchase_price.currency_code":                 queryValues.Get("currency_code"),
+		"currency_code":                                    queryValues.Get("currency_code"),
 		"mtr_purchase_price.purchase_price_effective_date": queryValues.Get("purchase_price_effective_date"),
 		"mtr_purchase_price.is_active":                     queryValues.Get("is_active"),
 	}
@@ -92,13 +92,22 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePrice(criteria, paginate)
+	result, err := r.PurchasePriceService.GetAllPurchasePrice(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Update Purchase Price
@@ -254,13 +263,11 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	// Define query parameters
 	queryParams := map[string]string{
 		"mtr_purchase_price_detail.purchase_price_detail_id": queryValues.Get("purchase_price_detail_id"),
 		"mtr_purchase_price_detail.purchase_price_id":        queryValues.Get("purchase_price_id"),
 	}
 
-	// Extract pagination parameters
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -268,18 +275,24 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Build filter condition based on query parameters
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePriceDetail(criteria, paginate)
+	result, err := r.PurchasePriceService.GetAllPurchasePriceDetail(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	// Construct the response
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Purchase Price Detail By Purchase Price ID

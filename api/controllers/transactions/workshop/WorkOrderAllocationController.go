@@ -93,7 +93,7 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 	}
 
 	// Call service to fetch data
-	paginatedData, apiErr := r.WorkOrderAllocationService.GetAll(
+	result, apiErr := r.WorkOrderAllocationService.GetAll(
 		companyId,
 		technicianId,
 		serviceRequestDate,
@@ -104,12 +104,16 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 		return
 	}
 
-	// Handle the response
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccess(writer, paginatedData, "Get Data Successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetAllocate gets all allocated work orders
@@ -184,17 +188,22 @@ func (r *WorkOrderAllocationControllerImp) GetAllocateDetail(writer http.Respons
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderAllocationService.GetAllocateDetail(criteria, paginate)
+	result, err := r.WorkOrderAllocationService.GetAllocateDetail(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetAssignTechnician gets all assigned technicians
@@ -229,17 +238,22 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnician(writer http.Respo
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.WorkOrderAllocationService.GetAssignTechnician(criteria, paginate)
+	result, err := r.WorkOrderAllocationService.GetAssignTechnician(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetAssignTechnicianById gets all assigned technicians by ID

@@ -26,176 +26,120 @@ func OpenServiceReceiptRepositoryImpl() transactionworkshoprepository.ServiceRec
 	return &ServiceReceiptRepositoryImpl{}
 }
 
-func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tableStruct := transactionworkshoppayloads.ServiceReceiptNew{}
+func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var payloads []transactionworkshoppayloads.ServiceReceiptNew
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.ServiceReceiptNew{})
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	whereQuery = whereQuery.Where("service_request_system_number != 0 AND service_request_status_id = 2")
 
-	rows, err := whereQuery.Find(&tableStruct).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&payloads).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	var convertedResponses []transactionworkshoppayloads.ServiceReceiptGetAllResponse
-	for rows.Next() {
-		var (
-			ServiceReceiptReq transactionworkshoppayloads.ServiceReceiptNew
-			ServiceReceiptRes transactionworkshoppayloads.ServiceReceiptGetAllResponse
-		)
+	if len(payloads) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
-		if err := rows.Scan(
-			&ServiceReceiptReq.ServiceRequestSystemNumber,
-			&ServiceReceiptReq.ServiceRequestDocumentNumber,
-			&ServiceReceiptReq.ServiceRequestDate,
-			&ServiceReceiptReq.ServiceRequestBy,
-			&ServiceReceiptReq.ServiceRequestStatusId,
-			&ServiceReceiptReq.BrandId,
-			&ServiceReceiptReq.ModelId,
-			&ServiceReceiptReq.VariantId,
-			&ServiceReceiptReq.VehicleId,
-			&ServiceReceiptReq.BookingSystemNumber,
-			&ServiceReceiptReq.EstimationSystemNumber,
-			&ServiceReceiptReq.WorkOrderSystemNumber,
-			&ServiceReceiptReq.ReferenceDocSystemNumber,
-			&ServiceReceiptReq.ProfitCenterId,
-			&ServiceReceiptReq.CompanyId,
-			&ServiceReceiptReq.DealerRepresentativeId,
-			&ServiceReceiptReq.ServiceTypeId,
-			&ServiceReceiptReq.ReferenceTypeId,
-			&ServiceReceiptReq.ServiceRemark,
-			&ServiceReceiptReq.ServiceCompanyId,
-			&ServiceReceiptReq.ServiceDate,
-			&ServiceReceiptReq.ReplyId,
-		); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		// Fetch data brand from external services
-		brandResponses, brandErr := salesserviceapiutils.GetUnitBrandById(ServiceReceiptReq.BrandId)
+	var results []map[string]interface{}
+	for _, payload := range payloads {
+		// Fetch brand data from external service
+		brandResponses, brandErr := salesserviceapiutils.GetUnitBrandById(payload.BrandId)
 		if brandErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: brandErr.StatusCode,
 				Message:    "Failed to fetch brand data from external service",
 				Err:        brandErr.Err,
 			}
 		}
 
-		// Fetch data model from external services
-		modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(ServiceReceiptReq.ModelId)
+		// Fetch model data from external service
+		modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(payload.ModelId)
 		if modelErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: modelErr.StatusCode,
 				Message:    "Failed to fetch model data from external service",
 				Err:        modelErr.Err,
 			}
 		}
 
-		// Fetch data variant from external services
-		variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(ServiceReceiptReq.VariantId)
+		// Fetch variant data from external service
+		variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(payload.VariantId)
 		if variantErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: variantErr.StatusCode,
 				Message:    "Failed to fetch variant data from external service",
 				Err:        variantErr.Err,
 			}
 		}
 
-		colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(ServiceReceiptReq.BrandId)
+		// Fetch color data from external service
+		colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(payload.BrandId)
 		if colourErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve colour data from the external API",
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: colourErr.StatusCode,
+				Message:    "Failed to fetch color data from external service",
 				Err:        colourErr.Err,
 			}
 		}
 
-		companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(ServiceReceiptReq.CompanyId)
+		// Fetch company data from external service
+		companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(payload.CompanyId)
 		if companyErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve company data from the external API",
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: companyErr.StatusCode,
+				Message:    "Failed to fetch company data from internal service",
 				Err:        companyErr.Err,
 			}
 		}
 
-		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(ServiceReceiptReq.VehicleId)
+		// Fetch vehicle data from external service
+		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(payload.VehicleId)
 		if vehicleErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: vehicleErr.StatusCode,
 				Message:    "Failed to retrieve vehicle data from the external API",
 				Err:        vehicleErr.Err,
 			}
 		}
 
-		statusResponses, statusErr := generalserviceapiutils.GetServiceRequestStatusById(ServiceReceiptReq.ServiceRequestStatusId)
+		// Fetch service request status from external service
+		statusResponses, statusErr := generalserviceapiutils.GetServiceRequestStatusById(payload.ServiceRequestStatusId)
 		if statusErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve status service request data from the external API",
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: statusErr.StatusCode,
+				Message:    "Failed to retrieve service request status data from the external API",
 				Err:        statusErr.Err,
 			}
 		}
 
-		ServiceReceiptRes = transactionworkshoppayloads.ServiceReceiptGetAllResponse{
-			ServiceRequestSystemNumber:   ServiceReceiptReq.ServiceRequestSystemNumber,
-			ServiceRequestDocumentNumber: ServiceReceiptReq.ServiceRequestDocumentNumber,
-			ServiceRequestDate:           ServiceReceiptReq.ServiceRequestDate.Format("2006-01-02 15:04:05"),
-			ServiceRequestBy:             ServiceReceiptReq.ServiceRequestBy,
-			ServiceRequestStatusName:     statusResponses.ServiceRequestStatusDescription,
-			BrandName:                    brandResponses.BrandName,
-			ModelName:                    modelResponses.ModelName,
-			VariantName:                  variantResponses.VariantName,
-			VariantColourName:            colourResponses[0].VariantColourName,
-			VehicleCode:                  vehicleResponses.VehicleChassisNumber,
-			VehicleTnkb:                  vehicleResponses.VehicleRegistrationCertificateTNKB,
-			CompanyName:                  companyResponses.CompanyName,
-			WorkOrderSystemNumber:        ServiceReceiptReq.WorkOrderSystemNumber,
-			BookingSystemNumber:          ServiceReceiptReq.BookingSystemNumber,
-			EstimationSystemNumber:       ServiceReceiptReq.EstimationSystemNumber,
-			ReferenceDocSystemNumber:     ServiceReceiptReq.ReferenceDocSystemNumber,
-			ServiceDate:                  ServiceReceiptReq.ServiceDate.Format("2006-01-02 15:04:05"),
+		result := map[string]interface{}{
+			"service_request_system_number":   payload.ServiceRequestSystemNumber,
+			"service_request_document_number": payload.ServiceRequestDocumentNumber,
+			"service_request_date":            payload.ServiceRequestDate.Format("2006-01-02 15:04:05"),
+			"service_request_by":              payload.ServiceRequestBy,
+			"service_company_name":            companyResponses.CompanyName,
+			"brand_name":                      brandResponses.BrandName,
+			"model_code_description":          modelResponses.ModelName,
+			"variant_code_description":        variantResponses.VariantName,
+			"colour_name":                     colourResponses[0].VariantColourName,
+			"chassis_no":                      vehicleResponses.VehicleChassisNumber,
+			"no_polisi":                       vehicleResponses.VehicleRegistrationCertificateTNKB,
+			"status":                          statusResponses.ServiceRequestStatusDescription,
+			"work_order_system_number":        payload.WorkOrderSystemNumber,
+			"booking_system_number":           payload.BookingSystemNumber,
 		}
 
-		convertedResponses = append(convertedResponses, ServiceReceiptRes)
+		results = append(results, result)
 	}
 
-	var mapResponses []map[string]interface{}
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
-			"service_request_system_number":   response.ServiceRequestSystemNumber,
-			"service_request_document_number": response.ServiceRequestDocumentNumber,
-			"service_request_date":            response.ServiceRequestDate,
-			"service_request_by":              response.ServiceRequestBy,
-			"service_company_name":            response.CompanyName,
-			"brand_name":                      response.BrandName,
-			"model_code_description":          response.ModelName,
-			"variant_code_description":        response.VariantName,
-			"colour_name":                     response.VariantColourName,
-			"chassis_no":                      response.VehicleCode,
-			"no_polisi":                       response.VehicleTnkb,
-			"status":                          response.ServiceRequestStatusName,
-			"work_order_system_number":        response.WorkOrderSystemNumber,
-			"work_order_no":                   response.WorkOrderDocumentNumber,
-			"booking_system_number":           response.BookingSystemNumber,
-			"booking_no":                      response.BookingDocumentNumber,
-			"reference_doc_system_number":     response.ReferenceDocSystemNumber,
-			"ref_doc_no":                      response.ReferenceDocDocumentNumber,
-		}
-
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = results
+	return pages, nil
 }
 
 func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagination.Pagination) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse) {

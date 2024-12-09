@@ -5,6 +5,8 @@ import "time"
 type CarWashGetAllResponse struct {
 	WorkOrderSystemNumber      int        `json:"work_order_system_number"`
 	WorkOrderDocumentNumber    string     `json:"work_order_document_number"`
+	ModelId                    int        `json:"model_id"`
+	VehicleId                  int        `json:"vehicle_id"`
 	Model                      string     `json:"model"`
 	Color                      string     `json:"color"`
 	Tnkb                       string     `json:"tnkb"`

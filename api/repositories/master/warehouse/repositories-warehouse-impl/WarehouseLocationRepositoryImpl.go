@@ -9,6 +9,7 @@ import (
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	utils "after-sales/api/utils"
 	"errors"
+	"math"
 	"net/http"
 	"strings"
 
@@ -180,7 +181,8 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
 
 	filterQuery := utils.ApplyFilter(query, filter)
 
-	err := filterQuery.Scopes(pagination.Paginate(&pages, filterQuery)).Find(&responses).Error
+	var totalRows int64
+	err := filterQuery.Count(&totalRows).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -188,13 +190,26 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
 		}
 	}
 
-	// If no records are found, return an empty response
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+
+	err = filterQuery.Scopes(pagination.Paginate(&pages, filterQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	if len(responses) == 0 {
 		pages.Rows = []masterwarehousepayloads.GetAllWarehouseLocationResponse{}
+		pages.TotalRows = totalRows
+		pages.TotalPages = totalPages
 		return pages, nil
 	}
 
 	pages.Rows = responses
+	pages.TotalRows = totalRows
+	pages.TotalPages = totalPages
 
 	return pages, nil
 }

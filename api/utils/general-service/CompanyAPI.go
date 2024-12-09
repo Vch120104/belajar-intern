@@ -5,7 +5,9 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -66,6 +68,59 @@ type GetCompanyByIdResponses struct {
 	VatCompanyId           int     `json:"vat_company_id"`
 	CompanyOwnershipId     int     `json:"company_ownership_id"`
 	CompanyOfficeAddressId int     `json:"company_office_address_id"`
+}
+
+type CompanyParams struct {
+	Page        int    `json:"page"`
+	Limit       int    `json:"limit"`
+	CompanyId   int    `json:"company_id"`
+	CompanyCode string `json:"company_code"`
+	CompanyName string `json:"company_name"`
+	SortBy      string `json:"sort_by"`
+	SortOf      string `json:"sort_of"`
+}
+
+func GetAllCompany(params CompanyParams) ([]CompanyMasterDetailResponse, *exceptions.BaseErrorResponse) {
+	var getCompany []CompanyMasterDetailResponse
+	if params.Limit == 0 {
+		params.Limit = 1000000
+	}
+
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "company-list"
+
+	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
+
+	v := reflect.ValueOf(params)
+	typeOfParams := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		value := v.Field(i).Interface()
+		if strVal, ok := value.(string); ok && strVal != "" {
+			key := typeOfParams.Field(i).Tag.Get("json")
+			value := strings.ReplaceAll(strVal, " ", "%20")
+			queryParams += "&" + key + "=" + value
+		}
+	}
+
+	url := baseURL + "?" + queryParams
+
+	err := utils.CallAPI("GET", url, nil, &getCompany)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
+		return getCompany, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
+		}
+	}
+
+	return getCompany, nil
 }
 
 func GetCompanyVat(id int) (VatCompany, *exceptions.BaseErrorResponse) {

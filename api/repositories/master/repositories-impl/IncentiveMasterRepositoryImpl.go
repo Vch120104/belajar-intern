@@ -1,17 +1,16 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 
 	"gorm.io/gorm"
 )
@@ -23,81 +22,46 @@ func StartIncentiveMasterRepositoryImpl() masterrepository.IncentiveMasterReposi
 	return &IncentiveMasterRepositoryImpl{}
 }
 
-func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masterpayloads.IncentiveMasterListResponse
-	var getJobPositionResponse []masterpayloads.JobPositionResponse
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var jobPositionId string
-	responseStruct := reflect.TypeOf(masterpayloads.IncentiveMasterListResponse{})
+func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var entities []masterentities.IncentiveMaster
 
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		}
-	}
+	baseModelQuery := tx.Model(&masterentities.IncentiveMaster{})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		jobPositionId = externalServiceFilter[i].ColumnValue
-	}
-
-	// define table struct
-	tableStruct := masterpayloads.IncentiveMasterListResponse{}
-	//define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
-
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(responses) == 0 {
-		// notFoundErr := exceptions.NewNotFoundError("No data found")
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
-		}
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	defer rows.Close()
-
-	jobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "roles?role_id=" + jobPositionId
-
-	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
-
-	if errUrlIncentiveMaster != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+	var results []map[string]interface{}
+	for _, entity := range entities {
+		role, errResp := generalserviceapiutils.GetRoleById(entity.JobPositionId)
+		if errResp != nil {
+			return pages, errResp
 		}
+
+		result := map[string]interface{}{
+			"incentive_level_id":      entity.IncentiveLevelId,
+			"incentive_level_code":    entity.IncentiveLevelCode,
+			"job_position_id":         entity.JobPositionId,
+			"job_position_name":       role.RoleName,
+			"incentive_level_percent": entity.IncentiveLevelPercent,
+			"is_active":               entity.IsActive,
+		}
+
+		results = append(results, result)
 	}
 
-	joinedData, errdf := utils.DataFrameInnerJoin(responses, getJobPositionResponse, "JobPositionId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = results
+	return pages, nil
 }
 
 func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id int) (masterpayloads.IncentiveMasterResponse, *exceptions.BaseErrorResponse) {

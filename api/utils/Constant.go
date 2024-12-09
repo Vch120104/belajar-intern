@@ -98,6 +98,9 @@ var CarWashStatStop int = 3
 var CarWashPriorityHigh int = 1
 var CarWashPriorityNormal int = 2
 
+// Suggor Demand Period
+var SuggorDemandPeriod int = 6
+
 // Status
 
 var Draft int = 1

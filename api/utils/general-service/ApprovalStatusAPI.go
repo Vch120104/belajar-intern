@@ -25,7 +25,7 @@ type ApprovalStatusResponse struct {
 func GetApprovalStatusByCode(code string) (ApprovalStatusResponse, *exceptions.BaseErrorResponse) {
 	var getApprovalStatusTemp ApprovalStatusTempResponse
 	var getApprovalStatus ApprovalStatusResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-by-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-code/" + code
 
 	err := utils.CallAPI("GET", url, nil, &getApprovalStatusTemp)
 	if err != nil {
@@ -94,7 +94,7 @@ func GetApprovalStatusByMultiId(ids []int, response interface{}) *exceptions.Bas
 	}
 	strIds := "[" + strings.Join(idStrings, ",") + "]"
 
-	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-by-multi-id/" + strIds
+	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-multi-id/" + strIds
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502

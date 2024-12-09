@@ -9,6 +9,9 @@ import (
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -41,8 +44,24 @@ func NewPurchaseRequestImpl(PurchaseRequestRepo transactionsparepartrepository.P
 func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination, Dateparams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.GetAllPurchaseRequest(tx, filterCondition, pages, Dateparams)
-	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
@@ -51,6 +70,23 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequest(filterCondition []uti
 
 func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequest(id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.GetByIdPurchaseRequest(tx, id)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
@@ -62,6 +98,23 @@ func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequest(id int) (transaction
 func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequestDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.GetAllPurchaseRequestDetail(tx, filterCondition, pages)
 	defer helper.CommitOrRollbackTrx(tx)
 
@@ -73,6 +126,23 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequestDetail(filterCondition
 
 func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequestDetail(id int) (transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.GetByIdPurchaseRequestDetail(tx, id)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
@@ -82,8 +152,25 @@ func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequestDetail(id int) (trans
 }
 func (p *PurchaseRequestServiceImpl) NewPurchaseRequestHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.NewPurchaseRequestHeader(tx, request)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -92,8 +179,25 @@ func (p *PurchaseRequestServiceImpl) NewPurchaseRequestHeader(request transactio
 
 func (p *PurchaseRequestServiceImpl) NewPurchaseRequestDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.NewPurchaseRequestDetail(tx, payloads)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -103,8 +207,24 @@ func (p *PurchaseRequestServiceImpl) NewPurchaseRequestDetail(payloads transacti
 func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, *exceptions.BaseErrorResponse) {
 	//TODO implement me
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestHeader(tx, request, id)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return res, err
@@ -114,8 +234,25 @@ func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateHeader(request tra
 
 func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return res, err
 	}
@@ -124,9 +261,26 @@ func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateDetail(payloads tr
 
 func (p *PurchaseRequestServiceImpl) VoidPurchaseRequest(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.VoidPurchaseRequest(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return res, err
 	}
@@ -134,9 +288,26 @@ func (p *PurchaseRequestServiceImpl) VoidPurchaseRequest(id int) (bool, *excepti
 }
 func (p *PurchaseRequestServiceImpl) SubmitPurchaseRequest(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.SubmitPurchaseRequest(tx, request, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return res, err
 	}
@@ -145,9 +316,26 @@ func (p *PurchaseRequestServiceImpl) SubmitPurchaseRequest(request transactionsp
 
 func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return res, err
 	}
@@ -155,6 +343,23 @@ func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateDetail(payloads 
 }
 func (p *PurchaseRequestServiceImpl) GetByIdItemTypePurchaseRequest(companyId int, id int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.GetByIdPurchaseRequestItemPr(tx, companyId, id)
 	if err != nil {
@@ -165,6 +370,23 @@ func (p *PurchaseRequestServiceImpl) GetByIdItemTypePurchaseRequest(companyId in
 
 func (p *PurchaseRequestServiceImpl) GetByCodeItemTypePurchaseRequest(companyId int, stingcode string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.GetByCodePurchaseRequestItemPr(tx, companyId, stingcode)
 	if err != nil {
@@ -174,9 +396,26 @@ func (p *PurchaseRequestServiceImpl) GetByCodeItemTypePurchaseRequest(companyId 
 }
 func (p *PurchaseRequestServiceImpl) VoidPurchaseRequestDetail(stringId string) (bool, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.VoidPurchaseRequestDetailMultiId(tx, stringId)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return res, err
 	}

@@ -3,14 +3,16 @@ package transactionjpcbserviceimpl
 import (
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,8 +32,29 @@ func StartTechnicianAttendanceImpl(technicianAttendanceRepository transactionjpc
 
 func (s *TechnicianAttendanceImpl) GetAllTechnicianAttendance(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.TechnicianAttendanceRepository.GetAllTechnicianAttendance(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -40,8 +63,29 @@ func (s *TechnicianAttendanceImpl) GetAllTechnicianAttendance(filterCondition []
 
 func (s *TechnicianAttendanceImpl) SaveTechnicianAttendance(req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) (transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.TechnicianAttendanceRepository.SaveTechnicianAttendance(tx, req)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -50,8 +94,29 @@ func (s *TechnicianAttendanceImpl) SaveTechnicianAttendance(req transactionjpcbp
 
 func (s *TechnicianAttendanceImpl) ChangeStatusTechnicianAttendance(technicianAttendanceId int) (transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.TechnicianAttendanceRepository.ChangeStatusTechnicianAttendance(tx, technicianAttendanceId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}

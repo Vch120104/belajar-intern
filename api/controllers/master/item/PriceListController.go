@@ -438,14 +438,23 @@ func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
+	result, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, request *http.Request) {

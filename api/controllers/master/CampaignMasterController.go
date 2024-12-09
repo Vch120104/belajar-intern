@@ -278,13 +278,22 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.Re
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, pages, rows, err := r.CampaignMasterService.GetAllCampaignMasterDetail(pagination, CampaignId)
+	result, err := r.CampaignMasterService.GetAllCampaignMasterDetail(pagination, CampaignId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(rows), pages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 
 }
 

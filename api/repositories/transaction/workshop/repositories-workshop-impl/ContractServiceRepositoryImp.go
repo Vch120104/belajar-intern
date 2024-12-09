@@ -9,6 +9,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"log"
@@ -27,118 +28,78 @@ func OpenContractServicelRepositoryImpl() transactionworkshoprepository.Contract
 	return &ContractServiceRepositoryImpl{}
 }
 
-func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var entities []transactionworkshoppayloads.ContractServiceRequest
+func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionworkshoppayloads.ContractServiceRequest
 
-	joinTable := tx.Model(&transactionworkshopentities.ContractService{})
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	baseModelQuery := tx.Model(&transactionworkshopentities.ContractService{})
 
-	if err := whereQuery.Find(&entities).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "Contract service not found",
-				Err:        err,
-			}
-		}
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch contract service entity",
 			Err:        err,
 		}
 	}
-	fmt.Println(entities)
 
-	if len(entities) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "No contract service entities found",
-		}
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	var convertedResponses []transactionworkshoppayloads.ContractServiceResponse
-	for _, entity := range entities {
-		BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
-		var brandResponse transactionworkshoppayloads.ContractServiceBrand
-		errBrand := utils.Get(BrandUrl, &brandResponse, nil)
+	var results []map[string]interface{}
+	for _, response := range responses {
+		// Fetch external data for brand, model, and vehicle
+		brandResponse, errBrand := salesserviceapiutils.GetUnitBrandById(response.BrandId)
 		if errBrand != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve brand data from external API",
-				Err:        errBrand,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errBrand.StatusCode,
+				Err:        errBrand.Err,
 			}
 		}
 
-		ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
-		var modelResponse transactionworkshoppayloads.ContractServiceModel
-		errModel := utils.Get(ModelUrl, &modelResponse, nil)
+		modelResponse, errModel := salesserviceapiutils.GetUnitModelById(response.ModelId)
 		if errModel != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve model data from external API",
-				Err:        errModel,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errModel.StatusCode,
+				Err:        errModel.Err,
 			}
 		}
 
-		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-		var vehicleResponse transactionworkshoppayloads.ContractServiceVehicleResponse
-		errVehicle := utils.Get(VehicleUrl, &vehicleResponse, nil)
+		vehicleResponse, errVehicle := salesserviceapiutils.GetVehicleById(response.VehicleId)
 		if errVehicle != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve vehicle data from the external API",
-				Err:        errVehicle,
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errVehicle.StatusCode,
+				Err:        errVehicle.Err,
 			}
-		} else {
-			log.Printf("Received vehicle data: %+v", vehicleResponse)
 		}
 
-		convertedResponses = append(convertedResponses, transactionworkshoppayloads.ContractServiceResponse{
-			CompanyId:                     entity.CompanyId,
-			ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
-			ContractServiceDocumentNumber: entity.ContractServiceDocumentNumber,
-			ContractServiceFrom:           entity.ContractServiceFrom,
-			ContractServiceTo:             entity.ContractServiceTo,
-			BrandId:                       brandResponse.BrandId,
-			BrandName:                     brandResponse.BrandName,
-			BrandCode:                     brandResponse.BrandCode,
-			ModelId:                       modelResponse.ModelId,
-			ModelName:                     modelResponse.ModelName,
-			ModelCode:                     modelResponse.ModelCode,
-			VehicleId:                     vehicleResponse.Master.VehicleId,
-			VehicleTnkb:                   vehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
-			VehicleCode:                   vehicleResponse.Master.VehicleCode,
-			VehicleEngineNumber:           vehicleResponse.Master.VehicleEngineNumber,
-			ContractServiceStatusId:       entity.ContractServiceStatusId,
-		})
-	}
-
-	var mapResponses []map[string]interface{}
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
+		// Construct the final result map
+		result := map[string]interface{}{
 			"company_id":                       response.CompanyId,
 			"contract_service_system_number":   response.ContractServiceSystemNumber,
 			"contract_service_document_number": response.ContractServiceDocumentNumber,
 			"contract_service_from":            response.ContractServiceFrom,
 			"contract_service_to":              response.ContractServiceTo,
-			"brand_id":                         response.BrandId,
-			"brand_name":                       response.BrandName,
-			"brand_code":                       response.BrandCode,
-			"model_id":                         response.ModelId,
-			"model_name":                       response.ModelName,
-			"model_code":                       response.ModelCode,
-			"vehicle_id":                       response.VehicleId,
-			"vehicle_tnkb":                     response.VehicleTnkb,
-			"vehicle_chassis_number":           response.VehicleCode,
-			"vehicle_engine_number":            response.VehicleEngineNumber,
-			"status":                           response.ContractServiceStatusId,
+			"brand_id":                         brandResponse.BrandId,
+			"brand_name":                       brandResponse.BrandName,
+			"brand_code":                       brandResponse.BrandCode,
+			"model_id":                         modelResponse.ModelId,
+			"model_name":                       modelResponse.ModelName,
+			"model_code":                       modelResponse.ModelCode,
+			"vehicle_id":                       vehicleResponse.VehicleID,
+			"vehicle_tnkb":                     vehicleResponse.VehicleRegistrationCertificateTNKB,
+			"vehicle_code":                     vehicleResponse.VehicleChassisNumber,
+			"contract_service_status_id":       response.ContractServiceStatusId,
 		}
-		mapResponses = append(mapResponses, responseMap)
+
+		results = append(results, result)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+	pages.Rows = results
 
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
 // GetById implements transactionworkshoprepository.ContractServiceRepository.
@@ -186,7 +147,7 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 
 	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
 	var vehicleResponses transactionworkshoppayloads.ContractServiceVehicleResponse
-	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
+	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

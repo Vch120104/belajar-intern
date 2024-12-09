@@ -38,12 +38,13 @@ func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.Respon
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_labour_selling_price.company_id":     queryValues.Get("company_id"),
-		"mtr_labour_selling_price.effective_date": queryValues.Get("effective_date"),
-		"mtr_labour_selling_price.bill_to_id":     queryValues.Get("bill_to_id"),
-		"mtr_labour_selling_price.job_type_id":    queryValues.Get("job_type_id"),
-		"mtr_labour_selling_price.description":    queryValues.Get("description"),
-		"mtr_labour_selling_price.brand_id":       queryValues.Get("brand_id"),
+		"mtr_labour_selling_price.company_id":          queryValues.Get("company_id"),
+		"mtr_labour_selling_price.effective_date_from": queryValues.Get("effective_date_from"),
+		"mtr_labour_selling_price.effective_date_to":   queryValues.Get("effective_date_to"),
+		"mtr_labour_selling_price.bill_to_id":          queryValues.Get("bill_to_id"),
+		"mtr_labour_selling_price.job_type_id":         queryValues.Get("job_type_id"),
+		"mtr_labour_selling_price.description":         queryValues.Get("description"),
+		"mtr_labour_selling_price.brand_id":            queryValues.Get("brand_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -55,13 +56,22 @@ func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.LabourSellingPriceService.GetAllSellingPrice(criteria, paginate)
+	result, err := r.LabourSellingPriceService.GetAllSellingPrice(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 type ItemPriceCodeRepository interface {
-	GetAllItemPriceCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllItemPriceCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdItemPriceCode(tx *gorm.DB, id int) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse)
 	GetByCodeItemPriceCode(tx *gorm.DB, itemPriceCode string) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse)
 	SaveItemPriceCode(tx *gorm.DB, request masteritempayloads.SaveItemPriceCode) (masteritementities.ItemPriceCode, *exceptions.BaseErrorResponse)

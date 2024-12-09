@@ -50,7 +50,7 @@ type ChangeStatusShiftScheduleRequest struct {
 type ShiftScheduleDropDownResponse struct {
 	IsActive        bool   `json:"is_active"`
 	ShiftScheduleId int    `json:"shift_schedule_id"`
-	ShiftCode       string `json:"shift_code"`
+	ShiftGroup      string `json:"shift_group"`
 }
 
 type ShiftScheduleOutstandingJAResponse struct {

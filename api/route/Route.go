@@ -78,6 +78,10 @@ func StartRouting(db *gorm.DB) {
 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db, rdb)
 	itemClassController := masteritemcontroller.NewItemClassController(itemClassService)
 
+	//Item Master
+	itemGroupRepository := masteritemrepositoryimpl.NewItemGroupRepositoryImpl()
+	itemGroupService := masteritemserviceimpl.NewItemGroupServiceImpl(itemGroupRepository, db, rdb)
+	itemGroupController := masteritemcontroller.NewItemGroupControllerImpl(itemGroupService)
 	// Item Substitute
 	itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
 	itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db, rdb)
@@ -367,6 +371,16 @@ func StartRouting(db *gorm.DB) {
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
 	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
 
+	//claim supplier
+	ClaimSupplierRepository := transactionsparepartrepositoryimpl.NewClaimSupplierRepositoryImpl()
+	ClaimSupplierService := transactionsparepartserviceimpl.NewClaimSupplierServiceImpl(ClaimSupplierRepository, db, rdb)
+	ClaimSupplierController := transactionsparepartcontroller.NewClaimSupplierControllerImpl(ClaimSupplierService)
+
+	//Item Inquiry
+	ItemInquiryRepository := transactionsparepartrepositoryimpl.StartItemInquiryRepositoryImpl()
+	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
+	ItemInquiryController := transactionsparepartcontroller.NewItemInquiryController(ItemInquiryService)
+
 	//stock transaction
 	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
@@ -491,6 +505,8 @@ func StartRouting(db *gorm.DB) {
 	markupMasterRouter := MarkupMasterRouter(markupMasterController)
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
+	ItemGroupRouter := ItemGroupRouter(itemGroupController)
+
 	priceListRouter := PriceListRouter(priceListController)
 	FieldActionRouter := FieldActionRouter(FieldActionController)
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
@@ -526,11 +542,13 @@ func StartRouting(db *gorm.DB) {
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	GoodsReceiveRouter := GoodsReceiveRouter(GoodsReceiveController)
 	BinningListRouter := BinningListRouter(BinningListController)
+	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
 	LicenseOwnerChangeRouter := LicenseOwnerChangeRouter(LicenseOwnerChangeController)
 
+	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -549,6 +567,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/item-package-detail", itemPackageDetailRouter)
 		r.Mount("/price-list", priceListRouter)
 		r.Mount("/item-model-mapping", ItemModelMappingRouter)
+		r.Mount("/item-group", ItemGroupRouter)
 		//r.Mount("/import-item", ImportItemRouter)
 		r.Mount("/bom", BomRouter)
 		r.Mount("/item-import", itemImportRouter)
@@ -635,8 +654,11 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/goods-receive", GoodsReceiveRouter)
+		r.Mount("/claim-supplier", ClaimSupplierRoute)
 
 		r.Mount("/binning-list", BinningListRouter)
+		r.Mount("/item-inquiry", ItemInquiryRouter)
+
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
 	})

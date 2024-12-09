@@ -10,7 +10,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"reflect"
 	"time"
 )
 
@@ -74,14 +73,27 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 		// Log and retry only for specific errors
 		if os.IsTimeout(err) || err.Error() == "context deadline exceeded" {
 			log.Printf("Retry %d/%d: %v", retry+1, maxRetries, err)
+			// Implement exponential backoff to avoid flooding the API
 			time.Sleep(time.Duration(math.Pow(2, float64(retry))) * time.Second) // Exponential backoff
 			continue
 		}
 
-		break // Stop retrying for other errors
+		// If there are server-side errors, retry with backoff, but avoid retries for 404
+		if isServerError(err) {
+			log.Printf("Retry %d/%d due to server error: %v", retry+1, maxRetries, err)
+			time.Sleep(time.Duration(math.Pow(2, float64(retry))) * time.Second) // Exponential backoff
+			continue
+		}
+
+		break
 	}
 
 	return fmt.Errorf("request failed after %d retries: %w", maxRetries, err)
+}
+
+// Helper function to detect server-side errors
+func isServerError(err error) bool {
+	return err != nil && (err.Error() == "500 Internal Server Error" || err.Error() == "503 Service Unavailable")
 }
 
 // makeRequest executes a single HTTP request
@@ -104,16 +116,67 @@ func makeRequest(method, url string, reqBody []byte, result interface{}) error {
 	return handleResponse(resp, result)
 }
 
-// handleResponse processes the HTTP response
+// handleResponse processes the HTTP response with specific checks
 func handleResponse(resp *http.Response, result interface{}) error {
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		if resp.StatusCode == http.StatusNotFound {
-			log.Printf("Data not found (404) for URL: %s", resp.Request.URL)
-			return fmt.Errorf("data not found")
-		}
-
+	// Check for specific HTTP status codes
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusCreated:
+		// OK and Created responses are successful
+		break
+	case http.StatusBadRequest:
+		// 400 Bad Request
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status code %d: %s", resp.StatusCode, string(body))
+		log.Printf("Bad Request (400) - Invalid syntax: %s", string(body))
+		return fmt.Errorf("bad request (400): %s", string(body))
+	case http.StatusUnauthorized:
+		// 401 Unauthorized
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Unauthorized (401) - Authentication required: %s", string(body))
+		return fmt.Errorf("unauthorized (401): %s", string(body))
+	case http.StatusForbidden:
+		// 403 Forbidden
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Forbidden (403) - Access denied: %s", string(body))
+		return fmt.Errorf("forbidden (403): %s", string(body))
+	case http.StatusNotFound:
+		// 404 Not Found
+		log.Printf("Not Found (404) - Resource not found for URL: %s", resp.Request.URL)
+		return fmt.Errorf("not found (404): %s", resp.Request.URL)
+	case http.StatusMethodNotAllowed:
+		// 405 Method Not Allowed
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Method Not Allowed (405) - Invalid method for resource: %s", string(body))
+		return fmt.Errorf("method not allowed (405): %s", string(body))
+	case http.StatusInternalServerError:
+		// 500 Internal Server Error
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Internal Server Error (500) - Server error at URL: %s, response: %s", resp.Request.URL, string(body))
+		return fmt.Errorf("internal server error (500) at URL: %s: %s", resp.Request.URL, string(body))
+	case http.StatusNotImplemented:
+		// 501 Not Implemented
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Not Implemented (501) - Method not recognized: %s", string(body))
+		return fmt.Errorf("not implemented (501): %s", string(body))
+	case http.StatusBadGateway:
+		// 502 Bad Gateway
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Bad Gateway (502) - Invalid response from upstream: %s", string(body))
+		return fmt.Errorf("bad gateway (502): %s", string(body))
+	case http.StatusServiceUnavailable:
+		// 503 Service Unavailable
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Service Unavailable (503) - Service is temporarily unavailable: %s", string(body))
+		return fmt.Errorf("service unavailable (503): %s", string(body))
+	case http.StatusGatewayTimeout:
+		// 504 Gateway Timeout
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Gateway Timeout (504) - Timeout from upstream: %s", string(body))
+		return fmt.Errorf("gateway timeout (504): %s", string(body))
+	default:
+		// Handle any other unexpected status codes
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("Unexpected status code %d for URL: %s, response: %s", resp.StatusCode, resp.Request.URL, string(body))
+		return fmt.Errorf("unexpected status code %d at URL: %s: %s", resp.StatusCode, resp.Request.URL, string(body))
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -126,15 +189,8 @@ func handleResponse(resp *http.Response, result interface{}) error {
 		return fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	// Unmarshal data into result
-	if reflect.TypeOf(result).Kind() == reflect.Slice {
-		if err := json.Unmarshal(generalResponse.Data, result); err != nil {
-			return fmt.Errorf("failed to unmarshal nested data (slice): %w", err)
-		}
-	} else {
-		if err := json.Unmarshal(generalResponse.Data, result); err != nil {
-			return fmt.Errorf("failed to unmarshal nested data: %w", err)
-		}
+	if err := json.Unmarshal(generalResponse.Data, result); err != nil {
+		return fmt.Errorf("failed to unmarshal nested data: %w", err)
 	}
 
 	return nil
@@ -155,36 +211,6 @@ func Put(url string, body interface{}, result interface{}) error {
 
 func Delete(url string, body interface{}, result interface{}) error {
 	return CallAPI("DELETE", url, body, result)
-}
-
-// GetArray handles array responses
-func GetArray(url string, body interface{}, response interface{}) error {
-	// Set up HTTP client and request
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil) // Adjust method and body as necessary
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Execute the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check status code
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("received non-200 response: %s", resp.Status)
-	}
-
-	// Unmarshal the response body
-	err = json.NewDecoder(resp.Body).Decode(response)
-	if err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return nil
 }
 
 // BatchRequest supports sending multiple requests in one call

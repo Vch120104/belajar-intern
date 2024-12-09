@@ -203,30 +203,23 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
-	queryParams := map[string]string{
-		"mtr_agreement.agreement_id":           queryValues.Get("agreement_id"),
-		"mtr_agreement.brand_id":               queryValues.Get("brand_id"),
-		"mtr_agreement.customer_id":            queryValues.Get("customer_id"),
-		"mtr_customer.customer_name":           queryValues.Get("customer_name"),
-		"mtr_customer.customer_code":           queryValues.Get("customer_code"),
-		"mtr_agreement.profit_center_id":       queryValues.Get("profit_center_id"),
-		"mtr_profit_center.profit_center_name": queryValues.Get("profit_center_name"),
-		"mtr_agreement.company_id":             queryValues.Get("dealer_id"),
-		"mtr_agreement.top_id":                 queryValues.Get("top_id"),
-		"mtr_agreement.is_active":              queryValues.Get("is_active"),
-		"mtr_agreement.agreement_code":         queryValues.Get("agreement_code"),
-		"mtr_agreement.date_from":              queryValues.Get("date_from"),
-		"mtr_agreement.date_to":                queryValues.Get("date_to"),
+	internalFilterCondition := map[string]string{
+		"mtr_agreement.agreement_id":        queryValues.Get("agreement_id"),
+		"mtr_agreement.brand_id":            queryValues.Get("brand_id"),
+		"mtr_agreement.customer_id":         queryValues.Get("customer_id"),
+		"mtr_agreement.profit_center_id":    queryValues.Get("profit_center_id"),
+		"mtr_agreement.company_id":          queryValues.Get("company_id"),
+		"mtr_agreement.top_id":              queryValues.Get("top_id"),
+		"mtr_agreement.is_active":           queryValues.Get("is_active"),
+		"mtr_agreement.agreement_code":      queryValues.Get("agreement_code"),
+		"mtr_agreement.agreement_date_from": queryValues.Get("agreement_date_from"),
+		"mtr_agreement.agreement_date_to":   queryValues.Get("agreement_date_to"),
 	}
 
-	if customerName := queryValues.Get("customer_name"); customerName != "" {
-		queryParams["customer_name"] = customerName
-	}
-	if customerCode := queryValues.Get("customer_code"); customerCode != "" {
-		queryParams["customer_code"] = customerCode
-	}
-	if profitCenterName := queryValues.Get("profit_center_name"); profitCenterName != "" {
-		queryParams["profit_center_name"] = profitCenterName
+	externalFilterCondition := map[string]string{
+		"customer_name":      queryValues.Get("customer_name"),
+		"customer_code":      queryValues.Get("customer_code"),
+		"profit_center_name": queryValues.Get("profit_center_name"),
 	}
 
 	paginate := pagination.Pagination{
@@ -235,21 +228,26 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 		SortOf: chi.URLParam(request, "sort_of"),
 		SortBy: chi.URLParam(request, "sort_by"),
 	}
-	print(queryParams)
 
-	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllAgreement(criteria, paginate)
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
+	result, err := r.AgreementService.GetAllAgreement(internalCriteria, externalCriteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Add Discount Group
@@ -586,18 +584,23 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
+	result, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Discount Group By Id
@@ -659,18 +662,23 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
+	result, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Discount Item By Id
@@ -732,18 +740,23 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
+	result, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Discount Value By Id

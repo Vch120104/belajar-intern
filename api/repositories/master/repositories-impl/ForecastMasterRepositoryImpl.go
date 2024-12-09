@@ -1,16 +1,15 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
-	"reflect"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -98,139 +97,70 @@ func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, I
 	return true, nil
 }
 
-func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define variables
-	var (
-		responses             []masterpayloads.ForecastMasterListResponse
-		getSupplierResponse   []masterpayloads.SupplierResponse
-		getOrderTypeResponse  []masterpayloads.OrderTypeResponse
-		internalServiceFilter []utils.FilterCondition
-		supplierName          string
-		orderTypeName         string
-		responseStruct        = reflect.TypeOf(masterpayloads.ForecastMasterListResponse{})
-	)
+func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	// Apply internal and external service filters
-	for _, fc := range filterCondition {
-		var flag bool
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if fc.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, fc)
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			if strings.Contains(fc.ColumnField, "supplier_name") {
-				supplierName = fc.ColumnValue
-			} else {
-				orderTypeName = fc.ColumnValue
-			}
-		}
-	}
+	var entities []masterentities.ForecastMaster
 
-	// Define table struct
-	tableStruct := masterpayloads.ForecastMasterListResponse{}
+	baseModelQuery := tx.Model(&masterentities.ForecastMaster{})
 
-	// Create join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Apply internal service filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-
-	// Execute query
-	if err := whereQuery.Scan(&responses).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	// Check if no records found
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        gorm.ErrRecordNotFound,
-		}
-	}
-
-	// Handle supplier and order type filters
-	if supplierName != "" || orderTypeName != "" {
-		supplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=100&supplier_name=" + supplierName
-		if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		joinedData, errdf := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
-
-		if errdf != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errdf,
-			}
-		}
-
-		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + orderTypeName
-		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		joinedData, errdf = utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
-
-		if errdf != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errdf,
-			}
-		}
-
-		// Paginate data
-		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-		return dataPaginate, totalPages, totalRows, nil
-	}
-
-	supplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier-list?page=0&limit=10000"
-	if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	joinedData, errdf := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type"
-	if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
-	// Paginate data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
-	return dataPaginate, totalPages, totalRows, nil
+
+	var results []map[string]interface{}
+	for _, entity := range entities {
+		// Fetch supplier data
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entity.SupplierId)
+		if supplierErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        supplierErr.Err,
+			}
+		}
+
+		// Fetch order type
+		getOrderTypeResponse, orderTypeErr := aftersalesserviceapiutils.GetOrderTypeById(entity.OrderTypeId)
+		if orderTypeErr != nil {
+			return pages, orderTypeErr
+		}
+
+		// Fetch moving code
+		getMovingCodeResponse, movingCodeErr := aftersalesserviceapiutils.GetMovingCodeById(entity.MovingCodeId)
+		if movingCodeErr != nil {
+			return pages, movingCodeErr
+		}
+
+		result := map[string]interface{}{
+			"forecast_master_id":            entity.ForecastMasterId,
+			"is_active":                     entity.IsActive,
+			"company_id":                    entity.CompanyId,
+			"supplier_id":                   entity.SupplierId,
+			"supplier_name":                 getSupplierResponse.SupplierName,
+			"moving_code_id":                entity.MovingCodeId,
+			"moving_code_description":       getMovingCodeResponse.MovingCodeName,
+			"order_type_id":                 entity.OrderTypeId,
+			"order_type_name":               getOrderTypeResponse.OrderTypeName,
+			"forecast_master_lead_time":     entity.ForecastMasterLeadTime,
+			"forecast_master_safety_factor": entity.ForecastMasterSafetyFactor,
+			"forecast_master_order_cycle":   entity.ForecastMasterOrderCycle,
+		}
+
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+	return pages, nil
 }
 
 func (r *ForecastMasterRepositoryImpl) UpdateForecastMaster(tx *gorm.DB, req masterpayloads.ForecastMasterResponse, id int) (masterentities.ForecastMaster, *exceptions.BaseErrorResponse) {

@@ -16,6 +16,7 @@ type CurrencyParams struct {
 	Page         int    `json:"page"`
 	Limit        int    `json:"limit"`
 	CurrencyCode string `json:"currency_code"`
+	CurrencyName string `json:"currency_name"`
 }
 
 type CurrencyResponse struct {

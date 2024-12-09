@@ -1,8 +1,9 @@
 package masteroperationrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteroperationentities "after-sales/api/entities/master/operation"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
+
 	exceptions "after-sales/api/exceptions"
 	"errors"
 	"net/http"
@@ -89,35 +90,17 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 ) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var responses []masteroperationpayloads.OperationModelMappingLookup
-	var getBrandResponse []masteroperationpayloads.BrandResponse
-	var getModelResponse []masteroperationpayloads.ModelResponse
-
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var brandCode, modelCode string
+	var internalServiceFilter []utils.FilterCondition
 	responseStruct := reflect.TypeOf(masteroperationpayloads.OperationModelMappingLookup{})
 
 	// Separate internal and external filters
 	for _, filter := range filterCondition {
-		isInternal := false
 		for j := 0; j < responseStruct.NumField(); j++ {
 			field := responseStruct.Field(j)
 			if filter.ColumnField == field.Tag.Get("parent_entity")+"."+field.Tag.Get("json") {
 				internalServiceFilter = append(internalServiceFilter, filter)
-				isInternal = true
 				break
 			}
-		}
-		if !isInternal {
-			externalServiceFilter = append(externalServiceFilter, filter)
-		}
-	}
-
-	// Assign values for external filters (brand and model)
-	for _, extFilter := range externalServiceFilter {
-		if strings.Contains(extFilter.ColumnField, "brand_name") {
-			brandCode = extFilter.ColumnValue
-		} else if strings.Contains(extFilter.ColumnField, "model_code") {
-			modelCode = extFilter.ColumnValue
 		}
 	}
 
@@ -147,43 +130,45 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 		return pages, nil
 	}
 
-	// Fetch Brand Data based on external filters (brandCode)
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_name=" + brandCode
-	if err := utils.Get(unitBrandUrl, &getBrandResponse, nil); err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+	// Fetch Brand and Model Data using the provided utility functions
+	var mapResponses []map[string]interface{}
+	for _, response := range responses {
+		// Fetch Brand data
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        brandErr.Err,
+			}
 		}
+
+		// Fetch Model data
+		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		if modelErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch model data",
+				Err:        modelErr.Err,
+			}
+		}
+
+		// Map the response
+		responseMap := map[string]interface{}{
+			"operation_model_mapping_id": response.OperationModelMappingId,
+			"brand_id":                   response.BrandId,
+			"brand_name":                 brandResponse.BrandName,
+			"model_id":                   response.ModelId,
+			"model_code":                 modelResponse.ModelCode,
+			"operation_id":               response.OperationId,
+			"operation_code":             response.OperationCode,
+			"operation_name":             response.OperationName,
+			"is_active":                  response.IsActive,
+		}
+		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Fetch Model Data based on external filters (modelCode)
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=100000&model_code=" + modelCode
-	if err := utils.Get(unitModelUrl, &getModelResponse, nil); err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	// Join Brand and Model Data
-	joinedData1, err := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData2, err := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	// Paginate the final joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+	// Paginate the final data
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	// Update pagination results
 	pages.Rows = dataPaginate
@@ -251,9 +236,8 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 }
 
 func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// OperationFrtMapping := []masteroperationentities.OperationFrt{}
 	var OperationFrtResponse []masteroperationpayloads.OperationModelMappingFrtRequest
-	var VariantPayloads []masteroperationpayloads.VariantResponse
+	var variantIds []int
 
 	err := tx.Table(masteroperationentities.TableNameOperationFrt).
 		Select("mtr_operation_frt.operation_frt_id AS operation_frt_id, "+
@@ -271,23 +255,25 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 			Err:        err,
 		}
 	}
-	urlVariant := config.EnvConfigs.SalesServiceUrl + "unit-variant?page=0&limit=10000"
-	errUrlVariant := utils.Get(urlVariant, &VariantPayloads, nil)
-	if errUrlVariant != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlVariant,
-		}
+
+	for _, op := range OperationFrtResponse {
+		variantIds = append(variantIds, op.VariantId)
 	}
-	joinedData1, err := utils.DataFrameInnerJoin(OperationFrtResponse, VariantPayloads, "VariantId")
-	if err != nil {
+
+	variantData, errVariant := salesserviceapiutils.GetUnitVariantByMultiId(variantIds)
+	if errVariant != nil {
+		return nil, 0, 0, errVariant
+	}
+
+	joinedData, errJoin := utils.DataFrameInnerJoin(OperationFrtResponse, variantData, "variant_id")
+	if errJoin != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errJoin,
 		}
 	}
 
-	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
+	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return results, totalPages, totalRows, nil
 }

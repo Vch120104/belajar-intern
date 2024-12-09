@@ -6,6 +6,7 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+	"after-sales/api/utils"
 	"fmt"
 	"net/http"
 
@@ -25,7 +26,7 @@ func StartOrderTypeServiceImpl(orderTypeRepo masterrepository.OrderTypeRepositor
 	}
 }
 
-func (s *OrderTypeServiceImpl) GetAllOrderType() ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse) {
+func (s *OrderTypeServiceImpl) GetAllOrderType(filterConditions []utils.FilterCondition) ([]masterpayloads.GetOrderTypeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -40,11 +41,16 @@ func (s *OrderTypeServiceImpl) GetAllOrderType() ([]masterpayloads.GetOrderTypeR
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
-	results, err := s.OrderTypeRepo.GetAllOrderType(tx)
+	results, err := s.OrderTypeRepo.GetAllOrderType(tx, filterConditions)
 
 	if err != nil {
 		return results, err
@@ -67,8 +73,13 @@ func (s *OrderTypeServiceImpl) GetOrderTypeById(id int) (masterpayloads.GetOrder
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.OrderTypeRepo.GetOrderTypeById(tx, id)
@@ -94,8 +105,13 @@ func (s *OrderTypeServiceImpl) GetOrderTypeByName(name string) ([]masterpayloads
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.OrderTypeRepo.GetOrderTypeByName(tx, name)
@@ -121,8 +137,13 @@ func (s *OrderTypeServiceImpl) SaveOrderType(req masterpayloads.OrderTypeSaveReq
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.OrderTypeRepo.SaveOrderType(tx, req)
@@ -148,8 +169,13 @@ func (s *OrderTypeServiceImpl) UpdateOrderType(id int, req masterpayloads.OrderT
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.OrderTypeRepo.UpdateOrderType(tx, id, req)
@@ -175,8 +201,13 @@ func (s *OrderTypeServiceImpl) ChangeStatusOrderType(id int) (masterentities.Ord
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.OrderTypeRepo.ChangeStatusOrderType(tx, id)
@@ -202,8 +233,13 @@ func (s *OrderTypeServiceImpl) DeleteOrderType(id int) (bool, *exceptions.BaseEr
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.OrderTypeRepo.DeleteOrderType(tx, id)

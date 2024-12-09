@@ -41,7 +41,7 @@ func StartPurchasePriceService(PurchasePriceRepo masteritemrepository.PurchasePr
 	}
 }
 
-func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -56,15 +56,20 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.F
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetAllPurchasePrice(tx, filterCondition, pages)
+	results, err := s.PurchasePriceRepo.GetAllPurchasePrice(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *PurchasePriceServiceImpl) UpdatePurchasePrice(id int, req masteritempayloads.PurchasePriceRequest) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
@@ -82,8 +87,13 @@ func (s *PurchasePriceServiceImpl) UpdatePurchasePrice(id int, req masteritempay
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.UpdatePurchasePrice(tx, id, req)
@@ -108,8 +118,13 @@ func (s *PurchasePriceServiceImpl) SavePurchasePrice(req masteritempayloads.Purc
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.SavePurchasePrice(tx, req)
@@ -134,8 +149,13 @@ func (s *PurchasePriceServiceImpl) GetPurchasePriceById(id int, pagination pagin
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.GetPurchasePriceById(tx, id, pagination)
@@ -160,8 +180,13 @@ func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.Purch
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.AddPurchasePrice(tx, req)
@@ -171,7 +196,7 @@ func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.Purch
 	return results, nil
 }
 
-func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -186,15 +211,20 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []u
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, filterCondition, pages)
+	results, err := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailById(id int) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
@@ -212,8 +242,13 @@ func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailById(id int) (masterite
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailById(tx, id)
@@ -238,8 +273,13 @@ func (s *PurchasePriceServiceImpl) UpdatePurchasePriceDetail(Id int, req masteri
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.UpdatePurchasePriceDetail(tx, Id, req)
@@ -264,8 +304,13 @@ func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int, iddet []int) (boo
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	deletemultiid, err := s.PurchasePriceRepo.DeletePurchasePrice(tx, id, iddet)
@@ -290,8 +335,13 @@ func (s *PurchasePriceServiceImpl) ActivatePurchasePriceDetail(id int, iddet []i
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	activatemultiid, err := s.PurchasePriceRepo.ActivatePurchasePriceDetail(tx, id, iddet)
@@ -316,8 +366,13 @@ func (s *PurchasePriceServiceImpl) DeactivatePurchasePriceDetail(id int, iddet [
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	deactivatemultiid, err := s.PurchasePriceRepo.DeactivatePurchasePriceDetail(tx, id, iddet)
@@ -344,8 +399,13 @@ func (s *PurchasePriceServiceImpl) ChangeStatusPurchasePrice(Id int) (masteritem
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 
@@ -429,16 +489,24 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 		Page:  0,
 	}
 
-	results, _, _, errResp := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, internalFilterCondition, paginate)
+	results, errResp := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, internalFilterCondition, paginate)
 	if errResp != nil {
 		return nil, errResp
 	}
 
-	if results == nil {
-		results = []map[string]interface{}{}
+	rows, ok := results.Rows.([]map[string]interface{})
+	if !ok {
+		return nil, &exceptions.BaseErrorResponse{
+			Err:        fmt.Errorf("invalid data type for rows, expected []map[string]interface{}"),
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	data, err := ConvertPurchasePriceMapToStruct(results)
+	if len(rows) == 0 {
+		rows = []map[string]interface{}{}
+	}
+
+	data, err := ConvertPurchasePriceMapToStruct(rows)
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
@@ -523,8 +591,8 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 	var results []masteritempayloads.PurchasePriceDetailResponses
 	var numericRegex = regexp.MustCompile(`^\d*\.?\d+$`)
 
-	var regexCheckInput = regexp.MustCompile(`^\d*(,\d{3})*(\.\d{2})?$`)  // handle 12,345,678.99
-	var regexCheckInput2 = regexp.MustCompile(`^\d*(\.\d{3})*(,\d{2})?$`) // handle 12.345.678,99
+	var regexCheckInput = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(,\d{3})*(\.\d{1,2})?)$`)  // Handles 12,345,678.99
+	var regexCheckInput2 = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(\.\d{3})*(,\d{1,2})?)$`) // Handles 12.345.678,99
 
 	for i, row := range rows {
 		if i == 0 {
@@ -588,9 +656,18 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.UploadRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	for _, value := range req.Data {
+	var dupCheck []string
 
+	for i, value := range req.Data {
 		itemCode := value.ItemCode
+		if len(dupCheck) > 0 && isDuplicate(dupCheck, itemCode) {
+			tx.Rollback()
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "item code: " + itemCode + " already exist in excel file at line: " + strconv.Itoa(i+1),
+			}
+		}
+		dupCheck = append(dupCheck, itemCode)
 
 		itemId, errResp := s.FetchItemId(itemCode)
 		if errResp != nil {
@@ -599,6 +676,20 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 		}
 
 		requestData := convertToPurchasePriceRequest(value, itemId)
+
+		isExist, errExist := s.PurchasePriceRepo.CheckPurchasePriceDetailExistence(tx, requestData.PurchasePriceId, requestData.ItemId)
+		if errExist != nil {
+			tx.Rollback()
+			return false, errExist
+		}
+		if isExist {
+			tx.Rollback()
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "item code: " + itemCode + " already exist in the current header.",
+				Err:        errors.New("item code: " + itemCode + " already exist in the current header"),
+			}
+		}
 
 		_, err := s.PurchasePriceRepo.GetPurchasePriceById(tx, requestData.PurchasePriceId, pagination.Pagination{})
 		if err != nil && err.StatusCode != http.StatusNotFound {
@@ -640,6 +731,15 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 
 	tx.Commit()
 	return true, nil
+}
+
+func isDuplicate(list []string, value string) bool {
+	for _, v := range list {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 func convertToPurchasePriceRequest(detail masteritempayloads.PurchasePriceDetailResponses, itemId int) masteritempayloads.PurchasePriceDetailRequest {
@@ -784,8 +884,13 @@ func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supI
 			tx.Rollback()
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
-			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
 		}
 	}()
 	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate, pages)

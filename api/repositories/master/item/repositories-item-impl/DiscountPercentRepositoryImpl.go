@@ -1,15 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
-	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -22,12 +21,12 @@ func StartDiscountPercentRepositoryImpl() masteritemrepository.DiscountPercentRe
 	return &DiscountPercentRepositoryImpl{}
 }
 
+// In the GetAllDiscountPercent method
 func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tableStruct := masteritempayloads.DiscountPercentRequest{}
 	var orderTypeName string
 	newFilterCondition := []utils.FilterCondition{}
 
-	// Separate order type filters and other conditions
 	for _, filter := range filterCondition {
 		if strings.Contains(filter.ColumnField, "order_type_name") {
 			orderTypeName = filter.ColumnValue
@@ -36,36 +35,36 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 		newFilterCondition = append(newFilterCondition, filter)
 	}
 
-	// Build the join table query
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
-		Joins("LEFT JOIN mtr_discount ON mtr_discount.discount_code_id = mtr_discount_percent.discount_code_id").
+		Joins("INNER JOIN mtr_discount ON mtr_discount.discount_code_id = mtr_discount_percent.discount_code_id").
 		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_order_type ON mtr_order_type.order_type_id = mtr_discount_percent.order_type_id")
 
-	// Apply filter conditions to the query
 	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
 
-	// Handle order_type_name filter via external service
 	var orderTypeIds []int
 	if orderTypeName != "" {
-		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type?page=0&limit=100&order_type_name=" + orderTypeName
-		var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
+		orderTypeParams := aftersalesserviceapiutils.OrderTypeParams{
+			Page: 0, Limit: 100, OrderTypeName: orderTypeName,
+		}
 
-		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
-			for _, orderType := range getOrderTypeResponse {
-				orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
-			}
+		orderTypes, err := aftersalesserviceapiutils.GetAllOrderType(orderTypeParams)
+		if err != nil {
+			return pages, err
+		}
+
+		for _, orderType := range orderTypes {
+			orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 		}
 
 		if len(orderTypeIds) == 0 {
-			orderTypeIds = []int{-1} // Ensure no matches
+			orderTypeIds = []int{-1}
 		}
 
 		whereQuery = whereQuery.Where("mtr_discount_percent.order_type_id IN ?", orderTypeIds)
 	}
 
-	// Execute the query with pagination
-	var responses []masteritempayloads.DiscountPercentListResponse
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
+	var responses []masteritementities.DiscountPercent
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -79,31 +78,42 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 		return pages, nil
 	}
 
-	// Prepare the response map
-	var mapResponses []map[string]interface{}
+	var mapResponses []masteritempayloads.DiscountPercentListResponse
 	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"is_active":            response.IsActive,
-			"discount_percent_id":  response.DiscountPercentId,
-			"discount_code_id":     response.DiscountCodeId,
-			"discount_code":        response.DiscountCode,
-			"discount_description": response.DiscountDescription,
-			"order_type_id":        response.OrderTypeId,
-			"discount":             response.Discount,
+		responseMap := masteritempayloads.DiscountPercentListResponse{
+			IsActive:          response.IsActive,
+			DiscountPercentId: response.DiscountPercentId,
+			DiscountCodeId:    response.DiscountCodeId,
+			Discount:          response.Discount,
+			OrderTypeId:       response.OrderTypeId,
 		}
 
-		// Fetch additional order type details if applicable
-		if response.OrderTypeId != 0 {
-			orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
-			var getOrderTypeResponse masteritempayloads.OrderTypeResponse
+		var discountDetails masteritempayloads.DiscountDetails
+		err := tx.Table("mtr_discount").
+			Select("discount_code, discount_description").
+			Where("discount_code_id = ?", response.DiscountCodeId).
+			Scan(&discountDetails).Error
 
-			if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
-				responseMap["order_type_name"] = getOrderTypeResponse.OrderTypeName
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to fetch data from database",
+				Err:        err,
+			}
+		}
+
+		responseMap.DiscountCode = discountDetails.DiscountCode
+		responseMap.DiscountDescription = discountDetails.DiscountDescription
+
+		if response.OrderTypeId != 0 {
+			orderTypeResponse, err := aftersalesserviceapiutils.GetOrderTypeById(response.OrderTypeId)
+			if err != nil {
+				responseMap.OrderTypeName = ""
 			} else {
-				responseMap["order_type_name"] = ""
+				responseMap.OrderTypeName = orderTypeResponse.OrderTypeName
 			}
 		} else {
-			responseMap["order_type_name"] = ""
+			responseMap.OrderTypeName = ""
 		}
 
 		mapResponses = append(mapResponses, responseMap)

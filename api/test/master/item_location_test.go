@@ -24,9 +24,9 @@ type MockItemLocationService struct {
 	mock.Mock
 }
 
-func (m *MockItemLocationService) GetAllItemLocationDetail(criteria []utils.FilterCondition, paginate pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockItemLocationService) GetAllItemLocationDetail(criteria []utils.FilterCondition, paginate pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(criteria, paginate)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockItemLocationService) PopupItemLocation(criteria []utils.FilterCondition, paginate pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -49,9 +49,9 @@ func (m *MockItemLocationService) DeleteItemLocation(id int) *exceptions.BaseErr
 	return args.Get(0).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockItemLocationService) GetAllItemLoc(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockItemLocationService) GetAllItemLoc(filtercondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filtercondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockItemLocationService) GetByIdItemLoc(id int) (masteritempayloads.ItemLocationGetByIdResponse, *exceptions.BaseErrorResponse) {

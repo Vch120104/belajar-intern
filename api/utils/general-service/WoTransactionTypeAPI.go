@@ -40,7 +40,7 @@ func GetTransactionTypeByID(id int) (WorkOrderTransactionType, *exceptions.BaseE
 
 func GetTransactionTypeByCode(code string) (WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	var transactionType WorkOrderTransactionType
-	url := config.EnvConfigs.GeneralServiceUrl + "work-order-transaction-type/by-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "work-order-transaction-type-by-code/" + code
 
 	err := utils.CallAPI("GET", url, nil, &transactionType)
 	if err != nil {
