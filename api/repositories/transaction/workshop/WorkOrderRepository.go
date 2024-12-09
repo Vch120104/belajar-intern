@@ -59,13 +59,4 @@ type WorkOrderRepository interface {
 	ChangeBillTo(tx *gorm.DB, workorderID int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse)
 	ChangePhoneNo(tx *gorm.DB, workorderID int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse)
 	ConfirmPrice(tx *gorm.DB, workorderID int, detailID []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
-
-	GetServiceRequestByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetClaimByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetClaimItemByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetWOByBillCode(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetDetailWOByClaimBillCode(tx *gorm.DB, workOrderId int, transactionTypeId int, atpmClaimNumber string, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse)
-	GetDetailWOByBillCode(tx *gorm.DB, workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse)
-	GetDetailWOByATPMBillCode(tx *gorm.DB, workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse)
-	GetSupplyByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

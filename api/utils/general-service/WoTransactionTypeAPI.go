@@ -38,7 +38,7 @@ func GetWoTransactionTypeById(id int) (WorkOrderTransactionType, *exceptions.Bas
 	return transactionType, nil
 }
 
-func GetTransactionTypeByCode(code string) (WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+func GetWoTransactionTypeByCode(code string) (WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	var transactionType WorkOrderTransactionType
 	url := config.EnvConfigs.GeneralServiceUrl + "work-order-transaction-type-by-code/" + code
 

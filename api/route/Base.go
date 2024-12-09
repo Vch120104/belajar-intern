@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -1514,16 +1515,6 @@ func WorkOrderRouter(
 	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
 	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)
 	router.Delete("/delete-campaign/{work_order_system_number}", WorkOrderController.DeleteCampaign)
-
-	// add req api mas hengwie
-	router.Get("/request-service/{work_order_system_number}", WorkOrderController.GetServiceRequestByWO)
-	router.Get("/claim-service/{work_order_system_number}", WorkOrderController.GetClaimByWO)
-	router.Get("/claim-item-service/{work_order_system_number}", WorkOrderController.GetClaimItemByWO)
-	router.Get("/transactiontype-service/{work_order_system_number}", WorkOrderController.GetWOByBillCode)
-	router.Get("/claim-detail-service/{work_order_system_number}/{transaction_type_id}/{atpm_claim_number}", WorkOrderController.GetDetailWOByClaimBillCode)
-	router.Get("/claim-bill-service/{work_order_system_number}/{transaction_type_id}", WorkOrderController.GetDetailWOByBillCode)
-	router.Get("/atpm-bill-service/{work_order_system_number}/{transaction_type_id}/{atpm_claim_number}", WorkOrderController.GetDetailWOByATPMBillCode)
-	router.Get("/supply-service/{work_order_system_number}", WorkOrderController.GetSupplyByWO)
 
 	return router
 }

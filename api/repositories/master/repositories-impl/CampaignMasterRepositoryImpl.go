@@ -305,7 +305,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 	jobTypeCampaignId := jobType.JobTypeId
 
 	// Fetch Work Order Transaction Type
-	transactionType, err := generalserviceapiutils.GetTransactionTypeByCode("Campaign")
+	transactionType, err := generalserviceapiutils.GetWoTransactionTypeByCode("Campaign")
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
