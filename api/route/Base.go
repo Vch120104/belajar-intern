@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -1918,6 +1919,7 @@ func LookupRouter(
 	router.Get("/location-available", LookupController.LocationAvailable)
 	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
+	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
 
 	return router
 }
