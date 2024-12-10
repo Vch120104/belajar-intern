@@ -600,23 +600,18 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 	}
 
 	if carWashStatusId != utils.CarWashStatStart {
-		mainTable := "trx_car_wash"
-		mainAlias := "carwash"
-
-		joinTables := []utils.JoinTable{
-			{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
-		}
-
-		joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
 
 		type carWashModel struct {
 			CarWashBayId int `json:"car_wash_bay_id"`
 			CompanyId    int `json:"company_id"`
 		}
+
 		var carWash carWashModel
-		err := joinQuery.Select("bay.car_wash_bay_id", "carwash.company_id").Where(transactionjpcbentities.CarWash{
-			WorkOrderSystemNumber: workOrderSystemNumber,
-		}).Scan(&carWash).Error
+		err := tx.Table("trx_car_wash AS carwash").
+			Select("bay.car_wash_bay_id, carwash.company_id").
+			Joins("LEFT JOIN mtr_car_wash_bay AS bay ON carwash.car_wash_bay_id = bay.car_wash_bay_id").
+			Where("carwash.work_order_system_number = ?", workOrderSystemNumber).
+			Scan(&carWash).Error
 		if err != nil {
 			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
