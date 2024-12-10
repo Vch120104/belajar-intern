@@ -21,7 +21,7 @@ type BomService interface {
 	SaveBomDetail(request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	UpdateBomDetail(id int, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse)
-	GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
 }
