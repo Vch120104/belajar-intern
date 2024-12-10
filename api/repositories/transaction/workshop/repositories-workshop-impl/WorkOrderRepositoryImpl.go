@@ -7,6 +7,7 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	transactionunitentities "after-sales/api/entities/transaction/Unit"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -1073,252 +1074,656 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 		}
 	}
 
-	// Check if there are any work order items without invoices
-	var count int64 //cek statusid <> 8(closed), billcode <> no_charge (5), substituteid
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id <> ? AND substitute_type_id <> ?",
-			Id, utils.WoStatClosed, 5, 0).
-		Count(&count).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order items from the database",
-			Err:        err,
-		}
-	}
-	if count > 0 {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Detail Work Order without Invoice No must be deleted",
-			Err:        err,
-		}
-	}
+	//--Tambahan validasi pada saat Status = New dan semua Item sudah memiliki Invoice
+	//--Karena Status = Ready terjadi saat Operation di Alokasi
+	if entity.WorkOrderStatusId == utils.WoStatNew {
 
-	// Check for warranty items
-	var allPtpSupply bool //cek statusid <> 8(closed), billcode <> warranty (6), substituteid
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_type_id <> ?",
-			Id, utils.WoStatClosed, 6, 0).
-		Count(&count).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve warranty items from the database",
-			Err:        err,
+		var allInvoice int
+		// fetch wo transaction type api no charge
+		getWorkOrderTrxTypeNoCharge, workOrderTypeErr := generalserviceapiutils.GetWoTransactionTypeByCode("N")
+		if workOrderTypeErr != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: workOrderTypeErr.StatusCode,
+				Message:    "Failed to fetch work order type data from external service",
+				Err:        workOrderTypeErr.Err,
+			}
 		}
-	}
-	if count == 0 {
-		allPtpSupply = true
-	} else {
-		// Validate part-to-part supply //cek statusid <> 8(closed), billcode <> warranty (6), substituteid , warrantyclaim_type = 0 (part), frt_qty > supply_qty
-		err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-			Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_type_id <> ? AND warranty_claim_type_id = ? AND frt_qty > supply_qty",
-				Id, utils.WoStatClosed, 6, 0, 0).
-			Count(&count).Error
-		if err != nil {
+
+		var existsPrimary bool
+		err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+			Select("work_order_operation_item_line").
+			Where(
+				"work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id <> ? AND substitute_type_id <> ?",
+				Id,
+				utils.WoStatClosed,
+				getWorkOrderTrxTypeNoCharge.WoTransactionTypeId,
+				0,
+			).
+			Limit(1).
+			Find(&existsPrimary).Error
+
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to validate part-to-part supply",
-				Err:        err,
-			}
-		}
-		if count > 0 {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "Warranty Item (PTP) must be supplied",
+				Message:    "Failed to check primary condition",
 				Err:        err,
 			}
 		}
 
-		// Validate part-to-money and operation status //cek statusid <> 8(closed), billcode <> warranty (6), substituteid , warrantyclaim_type = 0 (part)
-		err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-			Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_type_id <> ? AND warranty_claim_type_id <> ?",
-				Id, utils.WoStatClosed, 6, 0, 0).
-			Count(&count).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to validate part-to-money and operation status",
-				Err:        err,
+		// set `AllInvoice = 0`
+		if existsPrimary {
+			allInvoice = 0
+		} else {
+			var existsSecondary bool
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Select("work_order_operation_item_line").
+				Where("work_order_system_number = ?", Id).
+				Limit(1).
+				Find(&existsSecondary).Error
+
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check secondary condition",
+					Err:        err,
+				}
+			}
+
+			if existsSecondary {
+				// set `AllInvoice = 0`
+				allInvoice = 0
+			} else {
+				// set `AllInvoice = 1`
+				allInvoice = 1
 			}
 		}
-		if count > 0 {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "Warranty Item (PTM)/Operation must be Invoiced",
-				Err:        err,
+
+		if entity.WorkOrderStatusId == utils.WoStatNew && allInvoice == 0 {
+			// fetch wo transaction type api no charge
+			getWorkOrderTrxTypeNoCharge, workOrderTypeErr := generalserviceapiutils.GetWoTransactionTypeByCode("N")
+			if workOrderTypeErr != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: workOrderTypeErr.StatusCode,
+					Message:    "Failed to fetch work order type data from external service",
+					Err:        workOrderTypeErr.Err,
+				}
 			}
-		}
 
-		allPtpSupply = true
-	}
+			var count int64
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id <> ? AND substitute_type_id <> ?",
+					Id, utils.WoStatClosed, getWorkOrderTrxTypeNoCharge.WoTransactionTypeId, 0).
+				Count(&count).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve work order items from the database",
+					Err:        err,
+				}
+			}
 
-	// Check if all items/operations/packages other than warranty are closed
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Where("work_order_system_number = ? AND work_order_status_id <> ? AND substitute_type_id <> ? AND transaction_type_id NOT IN (?, ?)",
-			Id, utils.WoStatClosed, 0, 6, 5).
-		Count(&count).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to check if all items/operations/packages are closed",
-			Err:        err,
-		}
-	}
-	if allPtpSupply && count > 0 {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "There is Work Order detail that has not been Invoiced",
-			Err:        err,
-		}
-	}
+			if count > 0 {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusConflict,
+					Message:    "Detail Work Order with out Invoice No must be deleted",
+					Err:        err,
+				}
+			}
 
-	// Validate mileage and update vehicle master if necessary
-	var servMileage, lastKm int
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Where("work_order_system_number = ?", Id).
-		Select("service_mileage").Scan(&servMileage).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve service mileage",
-			Err:        err,
-		}
-	}
-	err = tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").
-		Where("vehicle_chassis_number = ?", entity.VehicleChassisNumber).
-		Select("vehicle_last_km").
-		Scan(&lastKm).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve last mileage",
-			Err:        err,
-		}
-	}
-	if servMileage <= lastKm {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Service Mileage must be larger than Last Mileage.",
-			Err:        err,
-		}
-	}
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				UpdateColumns(map[string]interface{}{
+					"work_order_status_id": utils.WoStatClosed,
+				}).
+				Where("work_order_system_number = ?", Id).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update status work order",
+					Err:        err,
+				}
+			}
 
-	// Update vehicle master
-	err = tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").Where("vehicle_chassis_number = ?", entity.VehicleChassisNumber).
-		Updates(map[string]interface{}{
-			"vehicle_last_km":           servMileage,
-			"vehicle_last_service_date": entity.WorkOrderDate,
-		}).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update vehicle master",
-			Err:        err,
-		}
-	}
+			//--DELETE WO FROM CAR_WASH
+			err = tx.Model(&transactionjpcbentities.CarWash{}).
+				Where("work_order_system_number = ?", Id).
+				Delete(&transactionjpcbentities.CarWash{}).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to delete work order from car wash",
+					Err:        err,
+				}
+			}
 
-	// If Work Order still has DP Payment not allocated for Invoice
-	type DPPaymentDetails struct {
-		DPPayment    float64 `gorm:"column:downpayment_payment"`
-		DPAllocToInv float64 `gorm:"column:downpayment_payment_to_invoice"`
-	}
+			// update service request
+			if entity.ServiceRequestSystemNumber != 0 {
+				// fetch service request status api closed
+				getServiceRequestStatusClosed, serviceRequestStatusErr := generalserviceapiutils.GetServiceRequestStatusByCode("C")
+				if serviceRequestStatusErr != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: serviceRequestStatusErr.StatusCode,
+						Message:    "Failed to fetch service request status data from external service",
+						Err:        serviceRequestStatusErr.Err,
+					}
+				}
 
-	var details DPPaymentDetails
-	var dpOverpay float64
+				err = tx.Model(&transactionworkshopentities.ServiceRequest{}).
+					Where("service_request_system_number = ?", entity.ServiceRequestSystemNumber).
+					Update("service_request_status_id", getServiceRequestStatusClosed.ServiceRequestStatusID).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update service request status",
+						Err:        err,
+					}
+				}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
-		Select("downpayment_payment, downpayment_payment_to_invoice").
-		Scan(&details).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve DP payment details",
-			Err:        err,
-		}
-	}
+			} else if entity.PDISystemNumber != 0 && entity.PDILineNumber != 0 {
+				var bookingSystemNo int64
+				err := tx.Model(&transactionunitentities.PdiRequestDetail{}).
+					Select("COALESCE(booking_system_number, 0)").
+					Where("pdi_request_system_number = ? AND pdi_request_detail_line_number = ?", entity.PDISystemNumber, entity.PDILineNumber).
+					Scan(&bookingSystemNo).Error
 
-	if details.DPPayment-details.DPAllocToInv > 0 {
-		dpOverpay = details.DPPayment - details.DPAllocToInv
-	}
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to retrieve booking system number from the database",
+						Err:        err,
+					}
+				}
 
-	// Generate DP Other
-	// Call dbo.uspg_ctDPIn_Insert and generate journal here
-	// TODO: Implement logic for uspg_ctDPIn_Insert and journal generation
+				var PDIStatusId int
+				if bookingSystemNo == 0 {
+					// fetch pdi status api accept if booking system number is 0
+					getPDIStatusAccept, pdiStatusErr := generalserviceapiutils.GetPDIStatusByCode("20")
+					if pdiStatusErr != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: pdiStatusErr.StatusCode,
+							Message:    "Failed to fetch pdi status data from external service",
+							Err:        pdiStatusErr.Err,
+						}
+					}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
-		Updates(map[string]interface{}{
-			"downpayment_payment_allocated": details.DPPayment,
-			"downpayment_overpay":           dpOverpay,
-		}).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update DP payment details",
-			Err:        err,
-		}
-	}
+					PDIStatusId = getPDIStatusAccept.PDIStatusId
 
-	// Determine customer type and set event number
-	// fetch customer
-	getCustomerInfo, custErr := generalserviceapiutils.GetCustomerMasterDetailById(entity.CustomerId)
-	if custErr != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: custErr.StatusCode,
-			Message:    "Failed to fetch customer data from external service",
-			Err:        custErr.Err,
-		}
-	}
+				} else {
+					// fetch pdi status api booking
+					getPDIStatusBooking, pdiStatusErr := generalserviceapiutils.GetPDIStatusByCode("40")
+					if pdiStatusErr != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: pdiStatusErr.StatusCode,
+							Message:    "Failed to fetch pdi status data from external service",
+							Err:        pdiStatusErr.Err,
+						}
+					}
 
-	custTypeId := getCustomerInfo.ClientTypeId
+					PDIStatusId = getPDIStatusBooking.PDIStatusId
+				}
 
-	eventNo := ""
-	switch custTypeId {
-	case 1:
-		eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
-	case 2:
-		eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_D"
-	case 3:
-		eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_A"
-	default:
-		eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
-	}
+				err = tx.Model(&transactionunitentities.PdiRequestDetail{}).
+					Where("pdi_request_system_number = ? AND pdi_request_detail_line_number = ?", entity.PDISystemNumber, entity.PDILineNumber).
+					Update("pdi_status_id", PDIStatusId).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update pdi status",
+						Err:        err,
+					}
+				}
 
-	if eventNo == "" {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Event for Closing Work Order is not exists",
-			Err:        err,
-		}
-	}
+			} else if entity.BookingSystemNumber != 0 && entity.EstimationSystemNumber != 0 && entity.PDISystemNumber != 0 && entity.PDILineNumber != 0 && entity.ServiceRequestSystemNumber != 0 {
+				var BatchSystemNumber int64
 
-	// case "dealer", "imsi":
-	// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_D"
-	// case "atpm", "salim", "maintained":
-	// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_A"
-	// default:
-	// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
-	// }
-	// if eventNo == "" {
-	// 	return false, &exceptions.BaseErrorResponse{Message: "Event for Returning DP Customer to DP Other is not exists"}
-	// }
+				if entity.BookingSystemNumber != 0 {
+					err = tx.Model(&transactionworkshopentities.BookingEstimation{}).
+						Select("batch_system_number").
+						Where("booking_system_number = ? ", entity.BookingSystemNumber).
+						Scan(&BatchSystemNumber).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to retrieve batch system number from the database",
+							Err:        err,
+						}
+					}
+				} else {
 
-	// Generate Journal (DP Customer -> DP Other)
-	// Call usp_comJournalAction here
-	// TODO: Implement logic for usp_comJournalAction
+					err = tx.Model(&transactionworkshopentities.BookingEstimation{}).
+						Select("batch_system_number").
+						Where("estimation_system_number = ? ", entity.EstimationSystemNumber).
+						Scan(&BatchSystemNumber).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to retrieve batch system number from the database",
+							Err:        err,
+						}
+					}
+				}
 
-	// Update JOURNAL_SYS_NO on DPOT
-	// TODO: Implement logic for updating JOURNAL_SYS_NO on DPOT
-	//}
+				if BatchSystemNumber != 0 {
 
-	// Update the work order status to 8 (Closed)
-	entity.WorkOrderStatusId = utils.WoStatClosed
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to close the work order",
-			Err:        err,
+					err = tx.Model(&transactionworkshopentities.BookingEstimation{}).
+						UpdateColumns(map[string]interface{}{
+							"batch_status_id": 2,
+						}).
+						Where("batch_system_number = ?", BatchSystemNumber).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to update batch status",
+							Err:        err,
+						}
+					}
+
+				}
+				//-- RPS/06/17/00677
+				//-- mohon bantuan untuk perbaikan program saat WO sudah ada pembayaran kemudian WO diclose dari menu WO, pembayaran menjadi DPOT dan membentuk jurnal seperti WO Overpay.kalau perlu diskusi, nanti bisa dengan saya dan pak Santo juga.
+				//-- If Work Order still has DP Payment not allocated for Invoice
+				var exists bool
+				err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+					Select("work_order_system_number").
+					Where("work_order_system_number = ? AND work_order_status_id = ? AND (downpayment_payment - downpayment_payment_to_invoice) > 0", Id, utils.WoStatClosed).
+					Find(&exists).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to check if Work Order still has DP Payment not allocated for Invoice",
+						Err:        err,
+					}
+				}
+				if exists {
+
+					// --Generate DP Other Payment
+					//var RefType = "DPI08"
+					var Total_Dp_Overpay float64
+
+					err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+						Select("COALESCE(downpayment_payment - downpayment_payment_to_invoice, 0) as total_dp_overpay").
+						Where("work_order_system_number = ? AND work_order_status_id = ? AND (downpayment_payment - downpayment_payment_to_invoice) > 0", Id, utils.WoStatClosed).
+						Scan(&Total_Dp_Overpay).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to retrieve total DP Overpay from the database",
+							Err:        err,
+						}
+					}
+
+					// Generate ctDPIn (DP Other)
+					// Call dbo.uspg_ctDPIn_Insert here
+					// TODO: Implement logic for dbo.uspg_ctDPIn_Insert
+					// @Option = 5, -- int
+					// @Company_Code = @Company_Code, -- numeric
+					// @Ref_Type = @Ref_Type, -- varchar(10)
+					// @Ref_Sys_No = @Wo_Sys_No, -- numeric
+					// @Ref_Doc_No = @Wo_Doc_No,
+					// @Creation_User_Id = @Change_User_Id, -- varchar(10)
+					// @Change_User_Id = @Change_User_Id, -- varchar(10)
+					// @Total_Diff = @Total_Dp_Overpay, -- numeric
+					// @Di_Date = @Change_Datetime ,
+					// @Vehicle_Brand = @Vehicle_Brand
+					// --End Generate DP Other--
+
+					// update work order
+					err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+						UpdateColumns(map[string]interface{}{
+							"downpayment_payment_to_invoice": gorm.Expr("downpayment_payment"),
+							"downpayment_overpay":            Total_Dp_Overpay,
+						}).
+						Where("work_order_system_number = ?", Id).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to update work order DP Payment to Invoice",
+							Err:        err,
+						}
+					}
+
+					// case "dealer", "imsi":
+					// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_D"
+					// case "atpm", "salim", "maintained":
+					// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_A"
+					// default:
+					// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
+					// }
+
+					// Determine customer type and set event number
+					getCustomerInfo, custErr := generalserviceapiutils.GetCustomerMasterDetailById(entity.CustomerId)
+					if custErr != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: custErr.StatusCode,
+							Message:    "Failed to fetch customer data from external service",
+							Err:        custErr.Err,
+						}
+					}
+
+					custTypeId := getCustomerInfo.ClientTypeId
+
+					eventNo := ""
+					switch custTypeId {
+					case 1:
+						eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
+					case 2:
+						eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_D"
+					case 3:
+						eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_A"
+					default:
+						eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
+					}
+
+					if eventNo == "" {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Event for Returning DP Customer to DP Other is not exists",
+							Err:        err,
+						}
+					}
+
+					// Generate Journal (DP Customer -> DP Other)
+					// Call usp_comJournalAction here
+					// TODO: Implement logic for usp_comJournalAction
+
+					// Update JOURNAL_SYS_NO on DPOT
+					// TODO: Implement logic for updating JOURNAL_SYS_NO on DPOT
+					//}
+				}
+
+			}
+		} else {
+			// fetch wo transaction type api warranty
+			getWorkOrderTrxTypeWarranty, workOrderTypeErr := generalserviceapiutils.GetWoTransactionTypeByCode("W")
+			if workOrderTypeErr != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: workOrderTypeErr.StatusCode,
+					Message:    "Failed to fetch work order type data from external service",
+					Err:        workOrderTypeErr.Err,
+				}
+			}
+			var allPtpSupply bool
+			var count int64
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_type_id <> ?",
+					Id, utils.WoStatClosed, getWorkOrderTrxTypeWarranty.WoTransactionTypeId, 0).
+				Count(&count).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve warranty items from the database",
+					Err:        err,
+				}
+			}
+			if count == 0 {
+				allPtpSupply = true
+			} else {
+
+				// --Jika ada bill code warranty,
+				// 	--1.Validasi part to part harus tersupply semua
+				// 	--2.Validasi part to money dan operation harus status close
+				// fetch wo transaction type api warranty
+				getWorkOrderTrxTypeWarranty, workOrderTypeErr = generalserviceapiutils.GetWoTransactionTypeByCode("W")
+				if workOrderTypeErr != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: workOrderTypeErr.StatusCode,
+						Message:    "Failed to fetch work order type data from external service",
+						Err:        workOrderTypeErr.Err,
+					}
+				}
+
+				// fetch warranty claim type api part to part
+				getWarrantyClaimTypeResponses, warrantyClaimTypeErr := generalserviceapiutils.GetWarrantyClaimTypeByCode("PP")
+				if warrantyClaimTypeErr != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: warrantyClaimTypeErr.StatusCode,
+						Message:    "Failed to fetch warranty claim type data from external service",
+						Err:        warrantyClaimTypeErr.Err,
+					}
+				}
+				// --Validasi 1--
+				// Validate part-to-part supply //cek statusid <> 8(closed), billcode <> warranty (6), substituteid , warrantyclaim_type = 0 (part), frt_qty > supply_qty
+				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_type_id <> ? AND warranty_claim_type_id = ? AND frt_qty > supply_qty",
+						Id, utils.WoStatClosed, getWorkOrderTrxTypeWarranty.WoTransactionTypeId, 0, getWarrantyClaimTypeResponses.WarrantyClaimTypeId).
+					Count(&count).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to validate part-to-part supply",
+						Err:        err,
+					}
+				}
+				if count > 0 {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Message:    "Warranty Item (PTP) must be supplied",
+						Err:        err,
+					}
+				}
+
+				// fetch wo transaction type api warranty
+				getWorkOrderTrxTypeWarranty, workOrderTypeErr = generalserviceapiutils.GetWoTransactionTypeByCode("W")
+				if workOrderTypeErr != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: workOrderTypeErr.StatusCode,
+						Message:    "Failed to fetch work order type data from external service",
+						Err:        workOrderTypeErr.Err,
+					}
+				}
+				// --Validasi 2--
+				// Validate part-to-money and operation status //cek statusid <> 8(closed), billcode <> warranty (6), substituteid , warrantyclaim_type = 0 (part)
+				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_type_id <> ? AND warranty_claim_type_id <> ?",
+						Id, utils.WoStatClosed, getWorkOrderTrxTypeWarranty.WoTransactionTypeId, 0, 0).
+					Count(&count).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to validate part-to-money and operation status",
+						Err:        err,
+					}
+				}
+				if count > 0 {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Message:    "Warranty Item (PTM)/Operation must be Invoiced",
+						Err:        err,
+					}
+				}
+				allPtpSupply = true
+			}
+			// Check if all items/operations/packages other than warranty are closed
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_status_id <> ? AND substitute_type_id <> ? AND transaction_type_id NOT IN (?, ?)",
+					Id, utils.WoStatClosed, 0, 6, 5).
+				Count(&count).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check if all items/operations/packages are closed",
+					Err:        err,
+				}
+			}
+			if allPtpSupply && count > 0 {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "There is Work Order detail that has not been Invoiced",
+					Err:        err,
+				}
+			}
+			// Validate mileage and update vehicle master
+			var servMileage, lastKm int
+			err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+				Where("work_order_system_number = ?", Id).
+				Select("service_mileage").Scan(&servMileage).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve service mileage",
+					Err:        err,
+				}
+			}
+			err = tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").
+				Where("vehicle_chassis_number = ?", entity.VehicleChassisNumber).
+				Select("vehicle_last_km").
+				Scan(&lastKm).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve last mileage",
+					Err:        err,
+				}
+			}
+			if servMileage <= lastKm {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "Service Mileage must be larger than Last Mileage.",
+					Err:        err,
+				}
+			}
+
+			// Update vehicle master
+			err = tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").Where("vehicle_chassis_number = ?", entity.VehicleChassisNumber).
+				Updates(map[string]interface{}{
+					"vehicle_last_km":           servMileage,
+					"vehicle_last_service_date": entity.WorkOrderDate,
+				}).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update vehicle master",
+					Err:        err,
+				}
+			}
+
+			// --== UPDATE STATUS DI HEADER DAN DETAIL MENJADI CLOSED ==--
+			// UPDATE wtWorkOrder0
+			// SET	WO_STATUS = @WoStatClose ,
+			// 	WO_CLOSE_DATE = @Change_Datetime ,
+			// 	CHANGE_NO = CHANGE_NO + 1 ,
+			// 	CHANGE_USER_ID = @Change_User_Id  ,
+			// 	CHANGE_DATETIME = @Change_Datetime
+			// WHERE WO_SYS_NO = @WO_SYS_NO
+
+			// EXEC dbo.uspg_wtWorkOrder0_Update
+			// @Option = 9,
+			// @Wo_Sys_No = @Wo_Sys_No,
+			// @Change_User_Id = @Change_User_Id
+
+			// EXEC dbo.uspg_wtWorkOrder0_Update
+			// @Option = 10,
+			// @Wo_Sys_No = @Wo_Sys_No,
+			// @Change_User_Id = @Change_User_Id
+
+			// If Work Order still has DP Payment not allocated for Invoice
+			type DPPaymentDetails struct {
+				DPPayment    float64 `gorm:"column:downpayment_payment"`
+				DPAllocToInv float64 `gorm:"column:downpayment_payment_to_invoice"`
+			}
+
+			var details DPPaymentDetails
+			var dpOverpay float64
+
+			err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
+				Select("downpayment_payment, downpayment_payment_to_invoice").
+				Scan(&details).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve DP payment details",
+					Err:        err,
+				}
+			}
+
+			if details.DPPayment-details.DPAllocToInv > 0 {
+				dpOverpay = details.DPPayment - details.DPAllocToInv
+			}
+
+			// Generate ctDPIn (DP Other)
+			// Call dbo.uspg_ctDPIn_Insert here
+			// TODO: Implement logic for dbo.uspg_ctDPIn_Insert
+			// @Option = 5, -- int
+			// @Company_Code = @Company_Code, -- numeric
+			// @Ref_Type = @Ref_Type, -- varchar(10)
+			// @Ref_Sys_No = @Wo_Sys_No, -- numeric
+			// @Ref_Doc_No = @Wo_Doc_No,
+			// @Creation_User_Id = @Change_User_Id, -- varchar(10)
+			// @Change_User_Id = @Change_User_Id, -- varchar(10)
+			// @Total_Diff = @Total_Dp_Overpay, -- numeric
+			// @Di_Date = @Change_Datetime ,
+			// @Vehicle_Brand = @Vehicle_Brand
+			// --End Generate DP Other--
+
+			err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
+				Updates(map[string]interface{}{
+					"downpayment_payment_allocated": details.DPPayment,
+					"downpayment_overpay":           dpOverpay,
+				}).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update DP payment details",
+					Err:        err,
+				}
+			}
+
+			// case "dealer", "imsi":
+			// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_D"
+			// case "atpm", "salim", "maintained":
+			// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_A"
+			// default:
+			// 	eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
+			// }
+
+			// Determine customer type and set event number
+			getCustomerInfo, custErr := generalserviceapiutils.GetCustomerMasterDetailById(entity.CustomerId)
+			if custErr != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: custErr.StatusCode,
+					Message:    "Failed to fetch customer data from external service",
+					Err:        custErr.Err,
+				}
+			}
+
+			custTypeId := getCustomerInfo.ClientTypeId
+
+			eventNo := ""
+			switch custTypeId {
+			case 1:
+				eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
+			case 2:
+				eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_D"
+			case 3:
+				eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO_A"
+			default:
+				eventNo = "GL_EVENT_NO_CLOSE_ORDER_WO"
+			}
+
+			if eventNo == "" {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Event for Returning DP Customer to DP Other is not exists",
+					Err:        err,
+				}
+			}
+
+			// Generate Journal (DP Customer -> DP Other)
+			// Call usp_comJournalAction here
+			// TODO: Implement logic for usp_comJournalAction
+
+			// Update JOURNAL_SYS_NO on DPOT
+			// TODO: Implement logic for updating JOURNAL_SYS_NO on DPOT
+			//}
+
+			entity.WorkOrderStatusId = utils.WoStatClosed
+			err = tx.Save(&entity).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to close the work order",
+					Err:        err,
+				}
+			}
 		}
 	}
 
@@ -4407,7 +4812,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select(`
 			line_type_id, ISNULL(invoice_system_number, 0) AS invoice_system_number,
-			ISNULL(warehouse_id, 0) AS warehouse_group, 
+			ISNULL(warehouse_id, 0) AS warehouse_group,
 			operation_item_code, transaction_type_id
 		`).
 		Where("work_order_system_number = ? AND work_order_operation_item_line IN (?)", workOrderId, idwos).
@@ -4421,9 +4826,18 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 		}
 	}
 
-	// Check transaction type
-	if detailentity.TransactionTypeId != 2 {
+	// Fetch wo transaction type campaign
+	wotransactionType, fetchErr := generalserviceapiutils.GetWoTransactionTypeByCode("G")
+	if fetchErr != nil {
+		return false, fetchErr
+	}
+
+	// Check transaction type bukan campaign
+	// logic Validasi Jenis Transaksi ,Cek Ketersediaan Stok, Proses Substitusi,Penghitungan Total dan Diskon, Update Work Order
+	if detailentity.TransactionTypeId != wotransactionType.WoTransactionTypeId {
 		if detailentity.InvoiceSystemNumber == 0 {
+
+			// Check if the line type is an operation or package
 			if detailentity.LineTypeId == utils.LinetypeOperation || detailentity.LineTypeId == utils.LinetypePackage {
 				var supplyQty float64
 				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -4613,9 +5027,9 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									}
 								}
 
-								// If the substitute item does not exist, insert it
+								// check if the substitute item does not exist
 								if count == 0 {
-									// Get operation item price using custom logic
+									// Get operation item price from the lookup repository
 									var oprItemPrice float64
 
 									// Fetch Opr_Item_Price
@@ -4650,11 +5064,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 								}()
 
 							}
-
 						}
-
-						// If substitute not found, return true with no errors
-						return true, nil
 					}
 				}
 			}
@@ -4710,14 +5120,12 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 			}
 
-			// nilai warranty_claim_type_id berdasarkan kondisi
 			if detailentity.LineTypeId != utils.LinetypeOperation && detailentity.LineTypeId != utils.LinetypePackage {
 				warrantyClaimType = entity.ATPMWCFDocNo
 			} else {
 				warrantyClaimType = ""
 			}
 
-			// nilai discountPercent berdasarkan kondisi
 			discountPercent = oprItemPriceDisc
 			if oprItemPriceDisc == 0 {
 				discountPercent = 0
@@ -4866,28 +5274,33 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 			}
 
+			GetApprovalStatus, GetApprovalStatusErr := generalserviceapiutils.GetApprovalStatusByCode("20")
+			if GetApprovalStatusErr != nil {
+				return false, GetApprovalStatusErr
+			}
+
 			// Calculate discounts and VAT
 			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 				Select(`
 					SUM(CASE
 						WHEN line_type_id = ? THEN
-							CASE WHEN approval_id = "20" AND ISNULL(operation_item_discount_request_amount, 0) > 0
+							CASE WHEN approval_id = ? AND ISNULL(operation_item_discount_request_amount, 0) > 0
 							THEN ISNULL(operation_item_discount_request_amount, 0)
 							ELSE ISNULL(operation_item_discount_amount, 0)
 							END
 						ELSE
-							CASE WHEN approval_id = "20" AND ISNULL(operation_item_discount_request_amount, 0) > 0
+							CASE WHEN approval_id = ? AND ISNULL(operation_item_discount_request_amount, 0) > 0
 							THEN ISNULL(operation_item_discount_request_amount, 0)
 							ELSE ISNULL(operation_item_discount_amount, 0)
-							END 
-							
+							END
+
 							*
 
 							CASE WHEN LINE_TYPE <> ? THEN ISNULL(frt_quantity, 0)
 							ELSE CASE WHEN ISNULL(supply_quantity, 0) > 0
 							THEN ISNULL(supply_quantity, 0) ELSE ISNULL(frt_quantity, 0) END
 							END
-					END)`, utils.LinetypePackage, utils.LinetypeOperation).
+					END)`, utils.LinetypePackage, GetApprovalStatus.ApprovalStatusId, GetApprovalStatus.ApprovalStatusId, utils.LinetypeOperation).
 				Scan(&totals.TotalDisc).Error
 
 			if err != nil {
