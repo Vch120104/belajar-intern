@@ -64,7 +64,6 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	// Define query parameters
 	queryParams := map[string]string{
 		"bom_master_id":             queryValues.Get("bom_master_id"), // Ambil nilai bom_master_id tanpa mtr_bom_master.
 		"item_id":                   queryValues.Get("item_id"),
@@ -73,7 +72,6 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 		"bom_master_qty":            queryValues.Get("bom_master_qty"),
 	}
 
-	// Extract pagination parameters
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -81,10 +79,8 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Build filter condition based on query parameters
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	// Call service to get paginated data
 	paginatedData, err := r.BomService.GetBomMasterList(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -453,7 +449,6 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 		"is_active":       queryValues.Get("is_active"),
 	}
 
-	// Extract pagination parameters
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -461,23 +456,25 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Build filter condition based on query parameters
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.BomService.GetBomItemList(criteria, paginate)
+	paginatedData, err := r.BomService.GetBomItemList(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	// Construct the response
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		paginatedData.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
+
 }
 
 // @Summary Delete Bom Detail
