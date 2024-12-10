@@ -192,7 +192,7 @@ func (c *ClaimSupplierRepositoryImpl) GetItemClaimById(db *gorm.DB, itemClaimId 
 		return itemClaimReponse, errDocStatus
 	}
 	//get supplier
-	supplierData, errSupplier := generalserviceapiutils.GetSupplierMasterByID(itemClaim.SupplierId)
+	supplierData, errSupplier := generalserviceapiutils.GetSupplierMasterById(itemClaim.SupplierId)
 	if errSupplier != nil {
 		return itemClaimReponse, errSupplier
 	}
@@ -636,7 +636,7 @@ func (c *ClaimSupplierRepositoryImpl) GetAllItemClaim(db *gorm.DB, page paginati
 	}
 	for i, item := range response {
 		//get supplier
-		supplier, supplierErr := generalserviceapiutils.GetSupplierMasterByID(item.SupplierId)
+		supplier, supplierErr := generalserviceapiutils.GetSupplierMasterById(item.SupplierId)
 		if supplierErr != nil {
 			return page, supplierErr
 		}

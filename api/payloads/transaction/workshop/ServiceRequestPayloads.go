@@ -38,7 +38,7 @@ type ServiceRequestSaveRequest struct {
 	BookingSystemNumber        int       `json:"booking_system_number"`
 	EstimationSystemNumber     int       `json:"estimation_system_number"`
 	WorkOrderSystemNumber      int       `json:"work_order_system_number"`
-	ReferenceDocSystemNumber   int       `json:"reference_doc_system_number"`
+	ReferenceSystemNumber      int       `json:"reference_system_number"`
 	ProfitCenterId             int       `json:"profit_center_id"`
 	CompanyId                  int       `json:"company_id"`
 	DealerRepresentativeId     int       `json:"dealer_representative_id"`

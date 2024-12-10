@@ -121,7 +121,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 	var results []map[string]interface{}
 	for _, entity := range entities {
 		// Fetch supplier data
-		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(entity.SupplierId)
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entity.SupplierId)
 		if supplierErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,

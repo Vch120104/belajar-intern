@@ -322,7 +322,7 @@ func (s *BomServiceImpl) UpdateBomDetail(id int, req masteritempayloads.BomDetai
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -346,11 +346,11 @@ func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition,
 			}
 		}
 	}()
-	results, totalPages, totalRows, err := s.BomRepository.GetBomItemList(tx, filterCondition, pages)
+	results, err := s.BomRepository.GetBomItemList(tx, filterCondition, pages)
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse) {

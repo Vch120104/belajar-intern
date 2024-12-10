@@ -85,7 +85,7 @@ type EmployeeMasterResponses struct {
 	BankAccount       BackAccount   `json:"bank_account"`
 }
 
-func GetEmployeeByID(id int) (EmployeeMasterResponse, *exceptions.BaseErrorResponse) {
+func GetEmployeeById(id int) (EmployeeMasterResponse, *exceptions.BaseErrorResponse) {
 	var getEmployee EmployeeMasterResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(id)
 

@@ -131,7 +131,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			}
 		}
 
-		getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(workOrderReq.StatusId)
+		getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusById(workOrderReq.StatusId)
 		if workOrderStatusErr != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -737,7 +737,7 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	}
 
 	// fetch data status work order
-	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusById(entity.WorkOrderStatusId)
 	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1786,7 +1786,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
-		transactionTypeResponse, transactionTypeErr := generalserviceapiutils.GetTransactionTypeByID(workOrderReq.TransactionTypeId)
+		transactionTypeResponse, transactionTypeErr := generalserviceapiutils.GetWoTransactionTypeById(workOrderReq.TransactionTypeId)
 		if transactionTypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1795,7 +1795,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
-		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeByID(workOrderReq.JobTypeId)
+		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeById(workOrderReq.JobTypeId)
 		if jobTypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -3301,7 +3301,7 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 	}
 
 	// fetch data status work order
-	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusById(entity.WorkOrderStatusId)
 	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderBookingResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -3722,7 +3722,7 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 	}
 
 	// fetch data status work order
-	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusById(entity.WorkOrderStatusId)
 	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
