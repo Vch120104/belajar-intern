@@ -94,3 +94,18 @@ type ItemSubstituteDetailForItemInquiryResponse struct {
 	Quantity               float64 `json:"quantity"`
 	Sequence               int     `json:"sequence"`
 }
+
+type GetPartNumberItemImportResponse struct {
+	ItemId       int    `json:"item_id"`
+	ItemCode     string `json:"item_code"`
+	ItemName     string `json:"item_name"`
+	SupplierId   int    `json:"supplier_id"`
+	SupplierCode string `json:"supplier_code"`
+	SupplierName string `json:"supplier_name"`
+}
+
+type ItemImportSupplierResponse struct {
+	SupplierId   int    `json:"supplier_id"`
+	SupplierCode string `json:"supplier_code"`
+	SupplierName string `json:"supplier_name"`
+}
