@@ -1039,8 +1039,8 @@ type WorkOrderDetailResponse struct {
 	OperationItemDiscountPercent        float64   `json:"operation_item_discount_percent"`
 	OperationItemDiscountRequestPercent float64   `json:"operation_item_discount_request_percent"`
 	OperationItemCode                   string    `json:"operation_item_code"`
-	OperationItemName                   string    `json:"operation_item_name"`
 	AtpmWCFTypeId                       int       `json:"warranty_claim_type_id"`
+	WarrantyClaimTypeDescription        string    `json:"warranty_claim_type_description"`
 	TotalCostOfGoodsSold                float64   `json:"total_cost_of_goods_sold"`
 	ServiceCategoryId                   int       `json:"service_category_id"`
 	PphAmount                           float64   `json:"pph_amount"`
@@ -1052,14 +1052,16 @@ type WorkOrderDetailResponse struct {
 	QualityControlExtraFrt              float64   `json:"quality_control_extra_frt"`
 	QualityControlExtraReason           string    `json:"quality_control_extra_reason"`
 	SubstituteTypeId                    int       `json:"substitute_type_id"`
-	SubstituteItemCode                  string    `json:"substitute_item_code"`
+	SubstituteTypeName                  string    `json:"substitute_type_description"`
 	AtpmClaimNumber                     string    `json:"atpm_claim_number"`
 	AtpmClaimDate                       time.Time `json:"atpm_claim_date"`
+	Package                             string    `json:"package"`
 	PurchaseRequestSystemNumber         int       `json:"purchase_request_system_number"`
 	PurchaseRequestDetailId             int       `json:"purchase_request_detail_id"`
 	PurchaseOrderSystemNumber           int       `json:"purchase_order_system_number"`
 	PurchaseOrderLine                   int       `json:"purchase_order_line"`
 	InvoiceSystemNumber                 int       `json:"invoice_system_number"`
+	InvoiceDate                         time.Time `json:"invoice_date"`
 	GoodsReceiveQuantity                float64   `json:"goods_receive_quantity"`
 	QualityControlTotalExtraFrt         float64   `json:"quality_control_total_extra_frt"`
 	ReorderNumber                       float64   `json:"reorder_number"`
@@ -1067,15 +1069,19 @@ type WorkOrderDetailResponse struct {
 	IncentiveSystemNumber               int       `json:"incentive_system_number"`
 	Bypass                              bool      `json:"bypass"`
 	TechnicianId                        int       `json:"technician_id"`
-	UserEmployeeId                      int       `json:"user_employee_id"`
+	TechnicianName                      string    `json:"technician_name"`
+	ForemanId                           int       `json:"foreman_id"`
+	ForemanName                         string    `json:"foreman_name"`
 	RecSystemNumber                     int       `json:"recall_system_number"`
 	Request                             string    `json:"request"`
 	FrtQuantityExpress                  float64   `json:"frt_quantity_express"`
 	PriceListId                         int       `json:"price_list_id"`
-	ClaimSystemNumber                   int       `json:"claim_system_number"`
+	ClaimNumber                         string    `json:"claim_number"`
 	QualityControlPassDatetime          time.Time `json:"quality_control_pass_datetime"`
 	ExtendedWarranty                    bool      `json:"extended_warranty"`
 	RemarkExtendedWarranty              string    `json:"remark_extended_warranty"`
+	WarehouseGroupName                  string    `json:"warehouse_group_name"`
+	PendingReason                       string    `json:"pending_reason"`
 }
 
 type WorkOrderAffiliate struct {
@@ -1220,12 +1226,12 @@ type WorkOrderContractServiceResponse struct {
 }
 
 type WorkOrderGeneralRepairPackageRequest struct {
-	CompanyId   int `json:"company_id"`
-	CPCCode     int `json:"cpc_code"`
-	AgreementId int `json:"agreement_id"`
-	VehicleId   int `json:"vehicle_id"`
-	BrandId     int `json:"brand_id"`
-	PackageId   int `json:"package_id"`
+	CompanyId   int    `json:"company_id"`
+	CPCCode     string `json:"cpc_code"`
+	AgreementId int    `json:"agreement_id"`
+	VehicleId   int    `json:"vehicle_id"`
+	BrandId     int    `json:"brand_id"`
+	PackageId   int    `json:"package_id"`
 }
 
 type WorkOrderFieldActionRequest struct {

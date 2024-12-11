@@ -1415,3 +1415,28 @@ func (s *WorkOrderServiceImpl) AddFieldAction(workOrderId int, request transacti
 	}
 	return save, nil
 }
+
+func (s *WorkOrderServiceImpl) CalculateWorkOrderTotal(workOrderId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+			}
+		}
+	}()
+	result, err := s.structWorkOrderRepo.CalculateWorkOrderTotal(tx, workOrderId)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}

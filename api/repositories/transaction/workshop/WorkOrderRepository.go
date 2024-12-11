@@ -52,6 +52,7 @@ type WorkOrderRepository interface {
 	SaveAffiliated(tx *gorm.DB, workorderID int, detailID int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
 
 	GenerateDocumentNumber(tx *gorm.DB, workorderID int) (string, *exceptions.BaseErrorResponse)
+	CalculateWorkOrderTotal(tx *gorm.DB, workorderID int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
 	DeleteCampaign(tx *gorm.DB, workorderID int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse)
 	AddContractService(tx *gorm.DB, workorderID int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	AddGeneralRepairPackage(tx *gorm.DB, workorderID int, request transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)

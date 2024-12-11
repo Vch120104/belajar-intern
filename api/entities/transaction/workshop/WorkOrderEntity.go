@@ -65,7 +65,8 @@ type WorkOrder struct {
 	TotalMaterial                      *float64          `gorm:"column:total_material;default:null" json:"total_material"`
 	TotalConsumableMaterial            *float64          `gorm:"column:total_consumable_material;default:null" json:"total_consumable_material"`
 	TotalSublet                        *float64          `gorm:"column:total_sublet;default:null" json:"total_sublet"`
-	TotalPriceAccessories              *float64          `gorm:"column:total_price_accessories;default:null" json:"total_price_accessories"`
+	TotalAccessories                   *float64          `gorm:"column:total_accessories;default:null" json:"total_accessories"`
+	TotalSouvenir                      *float64          `gorm:"column:total_souvenir;default:null" json:"total_souvenir"`
 	TotalDiscount                      *float64          `gorm:"column:total_discount;default:null" json:"total_discount"`
 	Total                              *float64          `gorm:"column:total;default:null" json:"total"`
 	TotalVAT                           *float64          `gorm:"column:total_vat;default:null" json:"total_vat"`

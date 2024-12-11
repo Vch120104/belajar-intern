@@ -12,6 +12,7 @@ type WorkOrderService interface {
 
 	// Lookup Function
 	GenerateDocumentNumber(workOrderId int) (string, *exceptions.BaseErrorResponse)
+	CalculateWorkOrderTotal(workOrderId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
 
 	// normal function
 	New(request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)

@@ -1461,6 +1461,7 @@ func WorkOrderRouter(
 
 	// generate document
 	router.Post("/normal/document-number/{work_order_system_number}", WorkOrderController.GenerateDocumentNumber)
+	router.Get("/normal/calculate-total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
 
 	//add trx normal
 	router.Get("/", WorkOrderController.GetAll)
