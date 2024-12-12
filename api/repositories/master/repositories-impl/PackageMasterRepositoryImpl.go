@@ -561,6 +561,46 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 	return entities, nil
 }
 
+func (r *PackageMasterRepositoryImpl) GetPackageLatestId(tx *gorm.DB) (masterpayloads.LatestPackageAndLineTypeResponse, *exceptions.BaseErrorResponse) {
+	lineResponse := masterpayloads.LatestPackageAndLineTypeResponse{}
+
+	err := tx.Table("mtr_package").
+		Select("package_id, profit_center_id").
+		Order("package_id DESC").
+		Limit(1).
+		Scan(&lineResponse).Error
+
+	if err != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return lineResponse, nil
+}
+
+func (r *PackageMasterRepositoryImpl) SavePackageToMappingItemOperation(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: 0,
+		LineTypeId:      1,
+		ItemId:          0,
+		OperationId:     0,
+		PackageId:       Id,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
 func (r *PackageMasterRepositoryImpl) PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMasterDetail{
 		IsActive:                   req.IsActive,
