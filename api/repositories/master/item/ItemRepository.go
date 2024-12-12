@@ -31,4 +31,6 @@ type ItemRepository interface {
 	GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	CheckItemCodeExist(tx *gorm.DB, itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse)
 	GetPrincipalCatalog(tx *gorm.DB) ([]masteritempayloads.GetPrincipalCatalog, *exceptions.BaseErrorResponse)
+	GetItemLatestId(tx *gorm.DB) (masteritempayloads.LatestItemAndLineTypeResponse, *exceptions.BaseErrorResponse)
+	SaveItemToMappingItemOperation(tx *gorm.DB, response masteritempayloads.LatestItemAndLineTypeResponse) (bool, *exceptions.BaseErrorResponse)
 }
