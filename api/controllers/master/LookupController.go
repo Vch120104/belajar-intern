@@ -41,6 +41,7 @@ type LookupController interface {
 	LocationAvailable(writer http.ResponseWriter, request *http.Request)
 	ItemDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
+	GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -944,6 +945,39 @@ func (r *LookupControllerImpl) ItemSubstituteDetailForItemInquiry(writer http.Re
 	}
 
 	item, baseErr := r.LookupService.ItemSubstituteDetailForItemInquiry(criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	internalFilterCondition := map[string]string{
+		"mtr_item.item_code": queryValues.Get("item_code"),
+		"mtr_item.item_name": queryValues.Get("item_name"),
+	}
+	externalFilterCondition := map[string]string{
+		"supplier_code": queryValues.Get("supplier_code"),
+		"supplier_name": queryValues.Get("supplier_name"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	item, baseErr := r.LookupService.GetPartNumberItemImport(internalCriteria, externalCriteria, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)

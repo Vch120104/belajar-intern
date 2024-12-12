@@ -14,6 +14,7 @@ import (
 	"after-sales/api/utils"
 	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
@@ -4145,6 +4146,102 @@ func (r *LookupRepositoryImpl) ItemSubstituteDetailForItemInquiry(tx *gorm.DB, f
 	pages.Rows = utils.ModifyKeysInResponse(joinedResponse)
 	pages.TotalPages = totalPages
 	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
+}
+
+// new req used for part number lookup in item import
+func (r *LookupRepositoryImpl) GetPartNumberItemImport(tx *gorm.DB, internalCondition []utils.FilterCondition, externalCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Item{}
+	response := []masterpayloads.GetPartNumberItemImportResponse{}
+
+	var supplierCode string
+	var supplierName string
+	for _, filter := range externalCondition {
+		if strings.Contains(filter.ColumnField, "supplier_code") {
+			supplierCode = filter.ColumnValue
+		}
+		if strings.Contains(filter.ColumnField, "supplier_name") {
+			supplierName = filter.ColumnValue
+		}
+	}
+
+	baseModelQuery := tx.Model(&entities).
+		Joins("INNER JOIN mtr_item_group mig ON mig.item_group_id = mtr_item.item_group_id").
+		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
+		Where("mig.item_group_code = 'IN' AND mit.item_type_code = 'G'")
+
+	if supplierCode != "" || supplierName != "" {
+		supplierParams := generalserviceapiutils.SupplierMasterParams{
+			Page:         0,
+			Limit:        1000,
+			SupplierCode: supplierCode,
+			SupplierName: supplierName,
+		}
+
+		supplierResponse, supplierError := generalserviceapiutils.GetAllSupplierMaster(supplierParams)
+		if supplierError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: supplierError.StatusCode,
+				Message:    "Error fetching supplier data",
+				Err:        supplierError.Err,
+			}
+		}
+
+		if len(supplierResponse) == 0 {
+			internalCondition = append(internalCondition, utils.FilterCondition{
+				ColumnField: "mtr_item.supplier_id",
+				ColumnValue: "-1",
+			})
+		} else {
+			var supplierIdFilter []int
+			for _, supplier := range supplierResponse {
+				supplierIdFilter = append(supplierIdFilter, supplier.SupplierId)
+			}
+			baseModelQuery = baseModelQuery.Where("mtr_item.supplier_id IN ?", supplierIdFilter)
+		}
+	}
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, internalCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Scan(&response).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching item master data",
+			Err:        err,
+		}
+	}
+
+	supplierIds := []int{}
+	for _, resp := range response {
+		if resp.SupplierId > 0 {
+			supplierIds = append(supplierIds, resp.SupplierId)
+		}
+	}
+
+	supplierResponse := []masterpayloads.ItemImportSupplierResponse{}
+	if len(supplierIds) > 0 {
+		supplierError := generalserviceapiutils.GetSupplierMasterByMultiId(supplierIds, &supplierResponse)
+		if supplierError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching supplier data",
+				Err:        supplierError.Err,
+			}
+		}
+	}
+
+	for i := 0; i < len(response); i++ {
+		for j := 0; j < len(supplierResponse); j++ {
+			if response[i].SupplierId == supplierResponse[j].SupplierId {
+				response[i].SupplierCode = supplierResponse[j].SupplierCode
+				response[i].SupplierName = supplierResponse[j].SupplierName
+				break
+			}
+		}
+	}
+
+	pages.Rows = response
 
 	return pages, nil
 }

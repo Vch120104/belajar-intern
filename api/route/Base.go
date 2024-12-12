@@ -1929,6 +1929,7 @@ func LookupRouter(
 	router.Get("/location-available", LookupController.LocationAvailable)
 	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
+	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
 
 	return router
 }
