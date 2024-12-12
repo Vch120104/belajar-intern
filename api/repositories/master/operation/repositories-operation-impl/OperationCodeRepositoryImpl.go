@@ -1,6 +1,7 @@
 package masteroperationrepositoryimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -44,6 +45,46 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCon
 	pages.Rows = entities
 
 	return pages, nil
+}
+
+func (r *OperationCodeRepositoryImpl) GetOperationCodeLatestId(tx *gorm.DB) (int, *exceptions.BaseErrorResponse) {
+	var latestID int
+
+	err := tx.Table("mtr_operation_code").
+		Select("operation_id").
+		Order("operation_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return latestID, nil
+}
+
+func (r *OperationCodeRepositoryImpl) SaveOperationToMappingItemOperation(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: 0,
+		LineTypeId:      2,
+		ItemId:          0,
+		OperationId:     Id,
+		PackageId:       0,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }
 
 func (*OperationCodeRepositoryImpl) GetAllOperationCodeDropDown(tx *gorm.DB) ([]masteroperationpayloads.OperationCodeGetAll, *exceptions.BaseErrorResponse) {
