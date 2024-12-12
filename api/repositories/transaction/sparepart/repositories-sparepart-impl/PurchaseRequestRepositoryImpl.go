@@ -911,6 +911,9 @@ func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, reque
 	entities.PurchaseRequestDocumentNumber = docNo
 	entities.ChangeNo = entities.ChangeNo + 1
 	entities.UpdatedDate = &request.UpdatedDate
+	if request.UpdatedByUserId == 0 {
+		request.UpdatedByUserId = 1231
+	}
 	entities.UpdatedByUserId = request.UpdatedByUserId
 
 	err = db.Save(&entities).Error
