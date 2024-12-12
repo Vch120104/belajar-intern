@@ -112,6 +112,11 @@ func StartRouting(db *gorm.DB) {
 	PurchasePriceService := masteritemserviceimpl.StartPurchasePriceService(PurchasePriceRepository, db, rdb)
 	PurchasePriceController := masteritemcontroller.NewPurchasePriceController(PurchasePriceService)
 
+	// Item Type
+	itemTypeRepository := masteritemrepositoryimpl.StartItemTypeRepositoryImpl()
+	itemTypeService := masteritemserviceimpl.StartItemTypeService(itemTypeRepository, db, rdb)
+	itemTypeController := masteritemcontroller.NewItemTypeController(itemTypeService)
+
 	// Item Operation
 	ItemOperationRepository := masterrepositoryimpl.StartItemOperationRepositoryImpl()
 	ItemOperationService := masterserviceimpl.StartItemOperationService(ItemOperationRepository, db, rdb)
@@ -471,6 +476,7 @@ func StartRouting(db *gorm.DB) {
 	ItemPriceCodeRouter := ItemPriceCodeRouter(ItemPriceCodeController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	PurchasePriceRouter := PurchasePriceRouter(PurchasePriceController)
+	itemTypeRouter := ItemTypeRouter(itemTypeController)
 	LandedCostMasterRouter := LandedCostMasterRouter(LandedCostController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
@@ -574,7 +580,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/item-price-code", ItemPriceCodeRouter)
 		r.Mount("/purchase-price", PurchasePriceRouter)
-
+		r.Mount("/item-type", itemTypeRouter)
 		r.Mount("/landed-cost", LandedCostMasterRouter)
 		//r.Mount("/import-duty", ImportDutyRouter)
 
