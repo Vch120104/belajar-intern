@@ -8,10 +8,10 @@ import (
 	"after-sales/api/utils"
 )
 
-type ItemOperationService interface {
+type MappingItemOperationService interface {
 	GetAllItemOperation(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdItemOperation(id int) (masterpayloads.ItemOperationPost, *exceptions.BaseErrorResponse)
-	PostItemOperation(req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse)
+	PostItemOperation(req masterpayloads.ItemOperationPost) (masterentities.MappingItemOperation, *exceptions.BaseErrorResponse)
 	DeleteItemOperation(id int) (bool, *exceptions.BaseErrorResponse)
-	UpdateItemOperation(id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse)
+	UpdateItemOperation(id int, req masterpayloads.ItemOperationPost) (masterentities.MappingItemOperation, *exceptions.BaseErrorResponse)
 }

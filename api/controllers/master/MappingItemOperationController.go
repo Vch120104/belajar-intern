@@ -25,10 +25,10 @@ type ItemOperationController interface {
 }
 
 type ItemOperationControllerImpl struct {
-	ItemOperationService masterservice.ItemOperationService
+	ItemOperationService masterservice.MappingItemOperationService
 }
 
-func NewItemOperationController(ItemOperationService masterservice.ItemOperationService) ItemOperationController {
+func NewItemOperationController(ItemOperationService masterservice.MappingItemOperationService) ItemOperationController {
 	return &ItemOperationControllerImpl{
 		ItemOperationService: ItemOperationService,
 	}
