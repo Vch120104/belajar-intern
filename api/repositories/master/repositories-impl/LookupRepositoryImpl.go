@@ -559,23 +559,24 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", 1).
+			Where("A.is_active = ?", true).
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
-			Select("DISTINCT oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
-				"ofrt.frt_hour AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
+			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
 				"oe.operation_entries_description AS operation_entries_description, ok.operation_key_code AS operation_key_code, "+
 				"ok.operation_key_description AS operation_key_description").
 			Joins("LEFT JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
 			Joins("LEFT JOIN mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
 			Joins("LEFT JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
-			Where("oc.is_active = ?", 1).
-			Group("oc.operation_id, oc.operation_code, oc.operation_name, ofrt.frt_hour, " +
-				"oe.operation_entries_code, oe.operation_entries_description, ok.operation_key_code, ok.operation_key_description").
+			Where("oc.is_active = ?", true).
+			Group("oc.operation_id, oc.operation_code, oc.operation_name, " +
+				"oe.operation_entries_code, oe.operation_entries_description, " +
+				"ok.operation_key_code, ok.operation_key_description").
 			Order("oc.operation_id")
 
 	case utils.LinetypeSparepart:
@@ -618,7 +619,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -661,7 +662,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -710,7 +711,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -756,7 +757,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, 1).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -796,7 +797,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, 1).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -836,7 +837,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -876,7 +877,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, 1).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
@@ -950,27 +951,27 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", 1).
+			Where("A.is_active = ?", true).
 			Where("A.package_code = ?", oprItemCode).
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
-			Select("DISTINCT oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
-				"ofrt.frt_hour AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
+			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
 				"oe.operation_entries_description AS operation_entries_description, ok.operation_key_code AS operation_key_code, "+
 				"ok.operation_key_description AS operation_key_description").
 			Joins("LEFT JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
 			Joins("LEFT JOIN mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
 			Joins("LEFT JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
-			Where("oc.is_active = ?", 1).
+			Where("oc.is_active = ?", true).
 			Where("oc.operation_code = ?", oprItemCode).
-			Group("oc.operation_id, oc.operation_code, oc.operation_name, ofrt.frt_hour, " +
-				"oe.operation_entries_code, oe.operation_entries_description, ok.operation_key_code, ok.operation_key_description").
+			Group("oc.operation_id, oc.operation_code, oc.operation_name, " +
+				"oe.operation_entries_code, oe.operation_entries_description, " +
+				"ok.operation_key_code, ok.operation_key_description").
 			Order("oc.operation_id")
-
 	case utils.LinetypeSparepart:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
@@ -1011,7 +1012,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1055,7 +1056,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1105,7 +1106,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1152,7 +1153,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, 1).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1193,7 +1194,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, 1).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1234,7 +1235,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1275,7 +1276,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, 1).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Where("A.item_code = ?", oprItemCode).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1350,25 +1351,26 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", 1).
+			Where("A.is_active = ?", true).
 			Where("A.package_id = ?", oprItemId).
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
-			Select("DISTINCT oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
-				"ofrt.frt_hour AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
+			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
 				"oe.operation_entries_description AS operation_entries_description, ok.operation_key_code AS operation_key_code, "+
 				"ok.operation_key_description AS operation_key_description").
 			Joins("LEFT JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
 			Joins("LEFT JOIN mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
 			Joins("LEFT JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
-			Where("oc.is_active = ?", 1).
+			Where("oc.is_active = ?", true).
 			Where("oc.operation_id = ?", oprItemId).
-			Group("oc.operation_id, oc.operation_code, oc.operation_name, ofrt.frt_hour, " +
-				"oe.operation_entries_code, oe.operation_entries_description, ok.operation_key_code, ok.operation_key_description").
+			Group("oc.operation_id, oc.operation_code, oc.operation_name, " +
+				"oe.operation_entries_code, oe.operation_entries_description, " +
+				"ok.operation_key_code, ok.operation_key_description").
 			Order("oc.operation_id")
 
 	case utils.LinetypeSparepart:
@@ -1411,7 +1413,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1455,7 +1457,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1505,7 +1507,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1552,7 +1554,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, 1).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1593,7 +1595,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, 1).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1634,7 +1636,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, 1).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
@@ -1675,7 +1677,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, 1).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Where("A.item_id = ?", oprItemId).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
