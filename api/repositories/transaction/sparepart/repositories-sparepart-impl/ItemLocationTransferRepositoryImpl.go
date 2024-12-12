@@ -229,3 +229,40 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransfer(tx *gorm
 
 	return responses, nil
 }
+
+// uspg_atTrfReq0_Update
+// IF @Option = 3
+func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransfer(tx *gorm.DB, id int, request transactionsparepartpayloads.UpdateItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
+	var itemLocationTransferEntity transactionsparepartentities.ItemWarehouseTransferRequest
+	err := tx.Limit(1).Find(&itemLocationTransferEntity, id).Error
+	if err != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request data not found"),
+		}
+	}
+
+	var responses transactionsparepartpayloads.GetItemLocationTransferByIdResponse
+	errUpdateItemLocationTransfer := tx.Model(&itemLocationTransferEntity).
+		Updates(map[string]interface{}{
+			"request_from_warehouse_id": request.RequestFromWarehouseId,
+			"request_to_warehouse_id":   request.RequestToWarehouseId,
+			"purpose":                   request.Purpose,
+		}).
+		Scan(&responses).Error
+	if errUpdateItemLocationTransfer != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUpdateItemLocationTransfer,
+		}
+	}
+
+	return responses, nil
+}

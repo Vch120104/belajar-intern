@@ -24,6 +24,7 @@ type ItemLocationTransferController interface {
 	GetAllItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	GetItemLocationTransferById(writer http.ResponseWriter, request *http.Request)
 	InsertItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
+	UpdateItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemLocationTransferController(
@@ -98,10 +99,34 @@ func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransfer(writer h
 		return
 	}
 
-	create, err := c.ItemLocationTransferService.InsertItemLocationTransfer(formRequest)
+	response, err := c.ItemLocationTransferService.InsertItemLocationTransfer(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Create Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) UpdateItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_system_number"))
+
+	formRequest := transactionsparepartpayloads.UpdateItemLocationTransferRequest{}
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	response, err := c.ItemLocationTransferService.UpdateItemLocationTransfer(transferRequestSystemNumber, formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
 }
