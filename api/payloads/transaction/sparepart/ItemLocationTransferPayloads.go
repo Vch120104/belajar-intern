@@ -71,3 +71,8 @@ type UpdateItemLocationTransferRequest struct {
 	RequestToWarehouseId   int     `json:"request_to_warehouse_id" validate:"required"`
 	Purpose                *string `json:"purpose"`
 }
+
+type AcceptItemLocationTransferRequest struct {
+	ApprovalById   *int    `json:"approval_by_id"`
+	ApprovalRemark *string `json:"approval_remark"`
+}
