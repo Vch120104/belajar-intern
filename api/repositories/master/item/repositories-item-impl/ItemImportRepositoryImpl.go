@@ -11,6 +11,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -174,13 +175,11 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 
 		if len(suppliers) == 0 {
-
 			internalFilter = append(internalFilter, utils.FilterCondition{
 				ColumnField: "mtr_item_import.supplier_id",
 				ColumnValue: "-1",
 			})
 		} else {
-
 			if len(supplierCode) > 0 && len(suppliers) > 1 {
 				query = query.Where("Supplier.supplier_code LIKE ?", fmt.Sprintf("%%%s%%", supplierCode))
 			} else {
@@ -193,9 +192,19 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
+	// Apply internal filters
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
+	var totalRows int64
+	err := whereQuery.Count(&totalRows).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	err = whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -219,18 +228,18 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		return pages, err
 	}
 
-	joinedData, joinErr := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
-	if joinErr != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        joinErr,
+	for idx := range responses {
+		for _, supplier := range supplierResponses {
+			if responses[idx].SupplierId == supplier.SupplierId {
+				responses[idx].SupplierCode = supplier.SupplierCode
+				responses[idx].SupplierName = supplier.SupplierName
+			}
 		}
 	}
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-	pages.Rows = dataPaginate
-	pages.TotalRows = int64(totalRows)
-	pages.TotalPages = totalPages
+	pages.Rows = responses
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
 
 	return pages, nil
 }

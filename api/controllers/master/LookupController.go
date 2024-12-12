@@ -74,7 +74,7 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCode(linetypeId, paginate, criteria)
+	lookup, baseErr := r.LookupService.ItemOprCode(linetypeId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -84,7 +84,16 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		lookup.Limit,
+		lookup.Page,
+		int64(lookup.TotalRows),
+		lookup.TotalPages,
+	)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
@@ -107,7 +116,6 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("itemCode", itemCode)
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{}
@@ -119,7 +127,7 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
+	lookup, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -129,7 +137,16 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		lookup.Limit,
+		lookup.Page,
+		int64(lookup.TotalRows),
+		lookup.TotalPages,
+	)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, request *http.Request) {
@@ -156,7 +173,7 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByID(linetypeId, itemId, paginate, criteria)
+	lookup, baseErr := r.LookupService.ItemOprCodeByID(linetypeId, itemId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -166,7 +183,16 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		lookup.Limit,
+		lookup.Page,
+		int64(lookup.TotalRows),
+		lookup.TotalPages,
+	)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request) {
