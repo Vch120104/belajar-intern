@@ -9,15 +9,17 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemGroupController interface {
 	GetAllItemGroupWithPagination(writer http.ResponseWriter, request *http.Request)
 	GetAllItemGroup(writer http.ResponseWriter, request *http.Request)
 	GetItemGroupById(writer http.ResponseWriter, request *http.Request)
+	GetItemGroupByCode(writer http.ResponseWriter, request *http.Request)
 	DeleteItemGroupById(writer http.ResponseWriter, request *http.Request)
 	UpdateItemGroupById(writer http.ResponseWriter, request *http.Request)
 	UpdateStatusItemGroupById(writer http.ResponseWriter, request *http.Request)
@@ -180,6 +182,16 @@ func (i *ItemGroupControllerImpl) NewItemGroup(writer http.ResponseWriter, reque
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "create Data Successfully", 201)
+}
+
+func (i *ItemGroupControllerImpl) GetItemGroupByCode(writer http.ResponseWriter, request *http.Request) {
+	code := chi.URLParam(request, "item_group_code")
+	res, errData := i.service.GetItemGroupByCode(code)
+	if errData != nil {
+		helper.ReturnError(writer, request, errData)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Get Data Successfully", 200)
 }
 
 func NewItemGroupControllerImpl(service masteritemservice.ItemGroupService) ItemGroupController {
