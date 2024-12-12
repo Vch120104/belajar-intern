@@ -22,7 +22,7 @@ type ItemOperationServiceImpl struct {
 	RedisClient             *redis.Client // Redis client
 }
 
-func StartItemOperationService(ItemOperationRepo masterrepository.ItemOperationRepository, db *gorm.DB, redisClient *redis.Client) masterservice.ItemOperationService {
+func StartItemOperationService(ItemOperationRepo masterrepository.ItemOperationRepository, db *gorm.DB, redisClient *redis.Client) masterservice.MappingItemOperationService {
 	return &ItemOperationServiceImpl{
 		ItemOperationRepository: ItemOperationRepo,
 		DB:                      db,
@@ -94,7 +94,7 @@ func (s *ItemOperationServiceImpl) GetByIdItemOperation(id int) (masterpayloads.
 	return result, nil
 }
 
-func (s *ItemOperationServiceImpl) PostItemOperation(req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
+func (s *ItemOperationServiceImpl) PostItemOperation(req masterpayloads.ItemOperationPost) (masterentities.MappingItemOperation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -121,7 +121,7 @@ func (s *ItemOperationServiceImpl) PostItemOperation(req masterpayloads.ItemOper
 	result, err := s.ItemOperationRepository.PostItemOperation(tx, req)
 
 	if err != nil {
-		return masterentities.ItemOperation{}, err
+		return masterentities.MappingItemOperation{}, err
 	}
 	return result, nil
 }
@@ -158,7 +158,7 @@ func (s *ItemOperationServiceImpl) DeleteItemOperation(id int) (bool, *exception
 	return result, nil
 }
 
-func (s *ItemOperationServiceImpl) UpdateItemOperation(id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
+func (s *ItemOperationServiceImpl) UpdateItemOperation(id int, req masterpayloads.ItemOperationPost) (masterentities.MappingItemOperation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -185,7 +185,7 @@ func (s *ItemOperationServiceImpl) UpdateItemOperation(id int, req masterpayload
 	result, err := s.ItemOperationRepository.UpdateItemOperation(tx, id, req)
 
 	if err != nil {
-		return masterentities.ItemOperation{}, err
+		return masterentities.MappingItemOperation{}, err
 	}
 	return result, nil
 }

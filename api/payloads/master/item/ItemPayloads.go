@@ -80,6 +80,11 @@ type UserDetailResponse struct {
 	EmployeeName   string `json:"employee_name"`
 }
 
+type LatestItemAndLineTypeResponse struct {
+	ItemId     int `json:"item_id"`
+	LineTypeId int `json:"line_type_id"`
+}
+
 type ItemRequest struct {
 	IsActive                     bool    `json:"is_active"`
 	ItemId                       int     `json:"item_id"`

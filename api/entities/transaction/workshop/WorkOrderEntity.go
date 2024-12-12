@@ -65,7 +65,8 @@ type WorkOrder struct {
 	TotalMaterial                      *float64          `gorm:"column:total_material;default:null" json:"total_material"`
 	TotalConsumableMaterial            *float64          `gorm:"column:total_consumable_material;default:null" json:"total_consumable_material"`
 	TotalSublet                        *float64          `gorm:"column:total_sublet;default:null" json:"total_sublet"`
-	TotalPriceAccessories              *float64          `gorm:"column:total_price_accessories;default:null" json:"total_price_accessories"`
+	TotalAccessories                   *float64          `gorm:"column:total_accessories;default:null" json:"total_accessories"`
+	TotalSouvenir                      *float64          `gorm:"column:total_souvenir;default:null" json:"total_souvenir"`
 	TotalDiscount                      *float64          `gorm:"column:total_discount;default:null" json:"total_discount"`
 	Total                              *float64          `gorm:"column:total;default:null" json:"total"`
 	TotalVAT                           *float64          `gorm:"column:total_vat;default:null" json:"total_vat"`
@@ -115,6 +116,8 @@ type WorkOrder struct {
 	JobOnHoldReason                    string            `gorm:"column:job_on_hold_reason;size:50;" json:"job_on_hold_reason"`
 	CustomerExpress                    bool              `gorm:"column:customer_express;default:false;" json:"customer_express"`
 	CPTitlePrefix                      string            `gorm:"column:contact_person_title_prefix;size:50;" json:"contact_person_title_prefix"`
+	IDType                             *int              `gorm:"column:id_type;size:30;" json:"id_type"`
+	IDNumber                           *string           `gorm:"column:id_number;size:150;default:null" json:"id_number"`
 	WorkOrderDetail                    []WorkOrderDetail `gorm:"foreignKey:WorkOrderSystemNumber;references:WorkOrderSystemNumber" json:"work_order_detail"`
 }
 
