@@ -403,22 +403,18 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 
 		}
 		var UomRate float64
-		var QtyRes float64
-		if UomItemResponse.SourceConvertion == 0 {
-			QtyRes = 0
-		} else {
-			QtyRes = *res.ItemQuantity * UomItemResponse.TargetConvertion
+		//var QtyRes float64
+		//if UomItemResponse.SourceConvertion == 0 {
+		//	QtyRes = 0
+		//} else {
+		//	QtyRes = *res.ItemQuantity * UomItemResponse.TargetConvertion
+		//
+		//}
 
-		}
-		if UomItemResponse.SourceConvertion == 0 {
-			return paginationResponses, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "Failed to fetch Uom Source Convertion From External Data",
-				Err:        err,
-			}
-		}
-		UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+		//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+		//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+		UomRate = UomItemResponse.SourceConvertion
+
 		result := transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
 			PurchaseRequestDetailSystemNumber: res.PurchaseRequestDetailSystemNumber,
 			PurchaseRequestSystemNumber:       res.PurchaseRequestSystemNumber,
@@ -492,23 +488,17 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	//	}
 	//}
 	var UomRate float64
-	var QtyRes float64
-	if UomItemResponse.SourceConvertion == 0 {
-		QtyRes = 0
-	} else {
-		QtyRes = *response.ItemQuantity * UomItemResponse.TargetConvertion
+	//var QtyRes float64
+	//if UomItemResponse.SourceConvertion == 0 {
+	//	QtyRes = 0
+	//} else {
+	//	QtyRes = *response.ItemQuantity * UomItemResponse.TargetConvertion
+	//
+	//}
 
-	}
-	if UomItemResponse.SourceConvertion == 0 {
-		return result, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Source Convertion From External Data",
-			Err:        err,
-		}
-	}
-	UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-
+	//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	UomRate = UomItemResponse.SourceConvertion
 	result = transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
 		PurchaseRequestDetailSystemNumber: response.PurchaseRequestDetailSystemNumber,
 		PurchaseRequestSystemNumber:       response.PurchaseRequestSystemNumber,
@@ -921,6 +911,9 @@ func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, reque
 	entities.PurchaseRequestDocumentNumber = docNo
 	entities.ChangeNo = entities.ChangeNo + 1
 	entities.UpdatedDate = &request.UpdatedDate
+	if request.UpdatedByUserId == 0 {
+		request.UpdatedByUserId = 1231
+	}
 	entities.UpdatedByUserId = request.UpdatedByUserId
 
 	err = db.Save(&entities).Error
@@ -1112,23 +1105,17 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 		//	}
 		//}
 		var UomRate float64
-		var QtyRes float64
-		if UomItemResponse.SourceConvertion == 0 {
-			QtyRes = 0
-		} else {
-			QtyRes = res.Quantity * UomItemResponse.TargetConvertion
+		//var QtyRes float64
+		//if UomItemResponse.SourceConvertion == 0 {
+		//	QtyRes = 0
+		//} else {
+		//	QtyRes = res.Quantity * UomItemResponse.TargetConvertion
+		//
+		//}
 
-		}
-		if UomItemResponse.SourceConvertion == 0 {
-			return page, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Uom Source Conversion From External Data",
-				Err:        err,
-			}
-		}
-		UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-
+		//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+		//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+		UomRate = UomItemResponse.SourceConvertion
 		//uomentities := masteritementities.UomItem{}
 		res.UnitOfMeasurementCode = ""
 		err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
@@ -1255,24 +1242,18 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 			Err:        err,
 		}
 	}
-	var QtyRes float64
-	if UomItemResponse.SourceConvertion == nil {
-		QtyRes = 0
-	} else {
-		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
-
-	}
-	if UomItemResponse.SourceConvertion == nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Source Conversion From External Data",
-			Err:        err,
-		}
-	}
+	//var QtyRes float64
+	//if UomItemResponse.SourceConvertion == nil {
+	//	QtyRes = 0
+	//} else {
+	//	QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+	//
+	//}
 
 	var UomRate float64
-	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	//UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	UomRate = UomItemResponse.SourceConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
 		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&response.UnitOfMeasurementCode).Error
@@ -1366,23 +1347,23 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 		}
 	}
 	var UomRate float64
-	var QtyRes float64
-	if UomItemResponse.SourceConvertion == nil {
-		QtyRes = 0
-	} else {
-		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
-
-	}
-	if UomItemResponse.SourceConvertion == nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Source Conversion From External Data",
-			Err:        err,
-		}
-	}
-	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-
+	//var QtyRes float64
+	//if UomItemResponse.SourceConvertion == nil {
+	//	QtyRes = 0
+	//} else {
+	//	QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+	//
+	//}
+	//if UomItemResponse.SourceConvertion == nil {
+	//	return response, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Message:    "Failed to fetch Uom Source Conversion From External Data",
+	//		Err:        err,
+	//	}
+	//}
+	//UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	UomRate = UomItemResponse.SourceConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
 		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", response.ItemId, "P").Scan(&response.UnitOfMeasurementCode).Error
