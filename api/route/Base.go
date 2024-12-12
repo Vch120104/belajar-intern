@@ -1884,6 +1884,21 @@ func SalesOrderRouter(
 	return router
 }
 
+func ItemLocationTransferRouter(
+	itemLocationTransferController transactionsparepartcontroller.ItemLocationTransferController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
+
+	return router
+}
+
 func LookupRouter(
 	LookupController mastercontroller.LookupController,
 ) chi.Router {
