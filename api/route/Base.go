@@ -289,6 +289,7 @@ func ItemGroupRouter(
 	router.Get("/list", ItemGroupController.GetAllItemGroupWithPagination)
 	router.Get("/dropdown", ItemGroupController.GetAllItemGroup)
 	router.Get("/{item_group_id}", ItemGroupController.GetItemGroupById)
+	router.Get("/code/{item_group_code}", ItemGroupController.GetItemGroupByCode)
 	router.Put("/{item_group_id}", ItemGroupController.UpdateItemGroupById)
 	router.Patch("/{item_group_id}", ItemGroupController.UpdateStatusItemGroupById)
 	router.Get("/multi-id/{item_group_id}", ItemGroupController.GetItemGroupByMultiId)
@@ -689,6 +690,24 @@ func ItemInquiryRouter(
 
 	router.Get("/", ItemInquiryController.GetAllItemInquiry)
 	router.Get("/by-id", ItemInquiryController.GetByIdItemInquiry)
+
+	return router
+}
+
+func ItemTypeRouter(
+	ItemTypeController masteritemcontroller.ItemTypeController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemTypeController.GetAllItemType)
+	router.Get("/{item_type_id}", ItemTypeController.GetItemTypeById)
+	router.Post("/", ItemTypeController.SaveItemType)
+	router.Patch("/{item_type_id}", ItemTypeController.ChangeStatusItemType)
+	router.Get("/code/{item_type_code}", ItemTypeController.GetItemTypeByCode)
+	router.Get("/drop-down", ItemTypeController.GetItemTypeDropDown)
 
 	return router
 }

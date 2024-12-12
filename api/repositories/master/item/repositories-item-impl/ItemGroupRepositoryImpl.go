@@ -8,9 +8,10 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"gorm.io/gorm"
 	"net/http"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type ItemGroupRepositoryImpl struct {
@@ -161,6 +162,26 @@ func (i *ItemGroupRepositoryImpl) GetItemGroupById(db *gorm.DB, id int) (masteri
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 			Message:    "there is error when getting item group pleae check input",
+		}
+	}
+	return entities, nil
+}
+
+func (i *ItemGroupRepositoryImpl) GetItemGroupByCode(db *gorm.DB, code string) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemGroup{}
+	err := db.Model(&entities).Where(masteritementities.ItemGroup{ItemGroupCode: code}).First(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+				Message:    "item group with that code is not found please check input",
+			}
+		}
+		return entities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get item group by code please check input",
 		}
 	}
 	return entities, nil

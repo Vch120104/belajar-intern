@@ -30,7 +30,7 @@ func StartLookupService(LookupRepo masterrepository.LookupRepository, db *gorm.D
 	}
 }
 
-func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -55,15 +55,15 @@ func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Paginat
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCode(tx, linetypeId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCode(tx, linetypeId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -88,15 +88,15 @@ func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCodeByCode(tx, linetypeId, oprItemCode, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeByCode(tx, linetypeId, oprItemCode, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -121,12 +121,12 @@ func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCodeByID(tx, linetypeId, oprItemId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeByID(tx, linetypeId, oprItemId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
 func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

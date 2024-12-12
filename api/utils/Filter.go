@@ -44,62 +44,52 @@ type FilterCondition struct {
 //   - The modified GORM database query is then returned as the result.
 func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	var queryWhere []string
-	var columnValue, columnName []string
-	var condition string
-	var key string
 
-	// Iterate through the criteria and prepare the column values and column names
 	for _, c := range criteria {
-		columnValue = append(columnValue, c.ColumnValue)
-		columnName = append(columnName, c.ColumnField)
-	}
-
-	// Apply conditions based on column values and field names
-	for i := 0; i < len(columnValue); i++ {
-		// Handle boolean-like values (true, false, Active)
-		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
-			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
-			columnValue[i] = n[columnValue[i]]
+		// Abaikan filter jika nilai kosong
+		if c.ColumnValue == "" {
+			continue
 		}
 
-		// Handle date range filters (_from and _to suffix)
-		if strings.HasSuffix(columnName[i], "_from") {
-			key = strings.TrimSuffix(columnName[i], "_from")
-			condition = key + " >= '" + columnValue[i] + "'"
-		} else if strings.HasSuffix(columnName[i], "_to") {
-			key = strings.TrimSuffix(columnName[i], "_to")
-			condition = key + " <= '" + columnValue[i] + "'"
-		} else if strings.Contains(columnName[i], "date") {
+		column := c.ColumnField
+		value := c.ColumnValue
+		var condition string
+
+		if strings.ToLower(value) == "true" || strings.ToLower(value) == "false" {
+			// Handle boolean values
+			boolMap := map[string]string{"true": "1", "false": "0"}
+			condition = column + " = " + boolMap[strings.ToLower(value)]
+		} else if strings.HasSuffix(column, "_from") {
+			// Handle range filter (>=)
+			key := strings.TrimSuffix(column, "_from")
+			condition = key + " >= '" + value + "'"
+		} else if strings.HasSuffix(column, "_to") {
+			// Handle range filter (<=)
+			key := strings.TrimSuffix(column, "_to")
+			condition = key + " <= '" + value + "'"
+		} else if strings.Contains(column, "date") {
 			// Handle exact date match
-			parsedDate, err := time.Parse("2006-01-02", columnValue[i])
-			if err != nil {
-				continue
+			parsedDate, err := time.Parse("2006-01-02", value)
+			if err == nil {
+				condition = column + " = '" + parsedDate.Format("2006-01-02") + "'"
 			}
-			condition = columnName[i] + " = '" + parsedDate.Format("2006-01-02") + "'"
-		} else if strings.Contains(columnName[i], "id") {
-			// Handle ID filtering
-			if strings.Contains(columnName[i], "#multiple") {
-				condition = columnName[i] + " IN (" + columnValue[i] + ")"
-			} else {
-				condition = columnName[i] + " = '" + columnValue[i] + "'"
-			}
-		} else if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
-			// Handle boolean-like values
-			boolMap := map[string]string{"true": "1", "false": "0", "Active": "1"}
-			condition = columnName[i] + " = '" + boolMap[strings.ToLower(columnValue[i])] + "'"
+		} else if strings.HasSuffix(column, "#multiple") {
+			// Handle IN condition
+			key := strings.TrimSuffix(column, "#multiple")
+			values := strings.Split(value, ",")
+			quotedValues := "'" + strings.Join(values, "','") + "'"
+			condition = key + " IN (" + quotedValues + ")"
 		} else {
-			// Default condition (LIKE match for text)
-			condition = columnName[i] + " LIKE '%" + columnValue[i] + "%'"
+			// Default to LIKE condition
+			condition = column + " LIKE '%" + value + "%'"
 		}
 
-		// Add the condition to the WHERE clause
-		queryWhere = append(queryWhere, condition)
+		if condition != "" {
+			queryWhere = append(queryWhere, condition)
+		}
 	}
 
-	// Combine all conditions using AND and apply them to the GORM query
-	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
-
-	return queryFinal
+	return db.Where(strings.Join(queryWhere, " AND "))
 }
 
 // DefineInternalExternalFilter categorizes filter conditions into internal and external filters based on the provided table structure.

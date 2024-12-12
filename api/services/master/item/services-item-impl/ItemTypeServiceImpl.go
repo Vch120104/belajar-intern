@@ -2,7 +2,7 @@ package masteritemserviceimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	"after-sales/api/exceptions"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -11,20 +11,29 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/redis/go-redis/v9"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
-type ItemGroupServiceImpl struct {
-	repository masteritemrepository.ItemGroupRepository
-	DB         *gorm.DB
-	rdb        *redis.Client
+type ItemTypeServiceImpl struct {
+	ItemTypeRepo masteritemrepository.ItemTypeRepository
+	DB           *gorm.DB
+	RedisClient  *redis.Client // Redis client
 }
 
-func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func StartItemTypeService(itemTypeRepo masteritemrepository.ItemTypeRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.ItemTypeService {
+	return &ItemTypeServiceImpl{
+		ItemTypeRepo: itemTypeRepo,
+		DB:           db,
+		RedisClient:  redisClient,
+	}
+}
+
+func (s *ItemTypeServiceImpl) GetAllItemType(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -45,16 +54,19 @@ func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []ut
 			}
 		}
 	}()
-	results, err := i.repository.GetAllItemGroupWithPagination(tx, internalFilter, pages)
+	results, err := s.ItemTypeRepo.GetAllItemType(tx, filter, pages)
+
 	if err != nil {
 		return results, err
 	}
+
 	return results, nil
 }
 
-func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func (s *ItemTypeServiceImpl) GetItemTypeById(id int) (masteritempayloads.ItemTypeResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -75,17 +87,19 @@ func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementitie
 			}
 		}
 	}()
+	results, err := s.ItemTypeRepo.GetItemTypeById(tx, id)
 
-	results, err := i.repository.GetAllItemGroup(tx, code)
 	if err != nil {
 		return results, err
 	}
+
 	return results, nil
 }
 
-func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func (s *ItemTypeServiceImpl) GetItemTypeByCode(itemTypeCode string) (masteritempayloads.ItemTypeResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -106,16 +120,19 @@ func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.Item
 			}
 		}
 	}()
-	results, err := i.repository.GetItemGroupById(tx, id)
+	results, err := s.ItemTypeRepo.GetItemTypeByCode(tx, itemTypeCode)
+
 	if err != nil {
 		return results, err
 	}
+
 	return results, nil
 }
 
-func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func (s *ItemTypeServiceImpl) CreateItemType(request masteritempayloads.ItemTypeRequest) (masteritementities.ItemType, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -136,16 +153,19 @@ func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.Ba
 			}
 		}
 	}()
-	results, err := i.repository.DeleteItemGroupById(tx, id)
+	entities, err := s.ItemTypeRepo.CreateItemType(tx, request)
+
 	if err != nil {
-		return results, err
+		return entities, err
 	}
-	return results, nil
+
+	return entities, nil
 }
 
-func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.ItemGroupUpdatePayload, id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func (s *ItemTypeServiceImpl) SaveItemType(id int, request masteritempayloads.ItemTypeRequest) (masteritementities.ItemType, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -166,16 +186,19 @@ func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.It
 			}
 		}
 	}()
-	results, err := i.repository.UpdateItemGroupById(tx, payload, id)
+	entities, err := s.ItemTypeRepo.SaveItemType(tx, id, request)
+
 	if err != nil {
-		return results, err
+		return entities, err
 	}
-	return results, nil
+
+	return entities, nil
 }
 
-func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func (s *ItemTypeServiceImpl) ChangeStatusItemType(id int) (masteritempayloads.ItemTypeResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -196,16 +219,19 @@ func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementi
 			}
 		}
 	}()
-	results, err := i.repository.UpdateStatusItemGroupById(tx, id)
+	results, err := s.ItemTypeRepo.ChangeStatusItemType(tx, id)
+
 	if err != nil {
 		return results, err
 	}
+
 	return results, nil
 }
 
-func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
+func (s *ItemTypeServiceImpl) GetItemTypeDropDown() ([]masteritempayloads.ItemTypeDropDownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -226,77 +252,11 @@ func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masterit
 			}
 		}
 	}()
-	results, err := i.repository.GetItemGroupByMultiId(tx, multiId)
+	results, err := s.ItemTypeRepo.GetItemTypeDropDown(tx)
+
 	if err != nil {
 		return results, err
 	}
-	return results, nil
-}
 
-func (i *ItemGroupServiceImpl) NewItemGroup(payload masteritempayloads.NewItemGroupPayload) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	results, err := i.repository.NewItemGroup(tx, payload)
-	if err != nil {
-		return results, err
-	}
 	return results, nil
-}
-
-func (i *ItemGroupServiceImpl) GetItemGroupByCode(code string) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
-	tx := i.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	results, err := i.repository.GetItemGroupByCode(tx, code)
-	if err != nil {
-		return results, err
-	}
-	return results, nil
-}
-
-func NewItemGroupServiceImpl(repo masteritemrepository.ItemGroupRepository, DB *gorm.DB, rdb *redis.Client) masteritemservice.ItemGroupService {
-	return &ItemGroupServiceImpl{
-		repository: repo,
-		DB:         DB,
-		rdb:        rdb,
-	}
 }

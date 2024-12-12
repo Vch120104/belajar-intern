@@ -12,6 +12,7 @@ type ItemGroupService interface {
 	GetAllItemGroupWithPagination(internalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllItemGroup(code string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse)
 	GetItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse)
+	GetItemGroupByCode(code string) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse)
 	DeleteItemGroupById(id int) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemGroupById(payload masteritempayloads.ItemGroupUpdatePayload, id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse)
 	UpdateStatusItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse)
