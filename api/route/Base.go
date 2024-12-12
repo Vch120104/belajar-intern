@@ -1909,6 +1909,7 @@ func ItemLocationTransferRouter(
 	router.Post("/", itemLocationTransferController.InsertItemLocationTransfer)
 	router.Put("/{transfer_request_system_number}", itemLocationTransferController.UpdateItemLocationTransfer)
 	router.Put("/accept/{transfer_request_system_number}", itemLocationTransferController.AcceptItemLocationTransfer)
+	router.Put("/reject/{transfer_request_system_number}", itemLocationTransferController.RejectItemLocationTransfer)
 
 	return router
 }

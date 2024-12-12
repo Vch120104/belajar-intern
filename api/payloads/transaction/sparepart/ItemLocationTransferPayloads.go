@@ -76,3 +76,8 @@ type AcceptItemLocationTransferRequest struct {
 	ApprovalById   *int    `json:"approval_by_id"`
 	ApprovalRemark *string `json:"approval_remark"`
 }
+
+type RejectItemLocationTransferRequest struct {
+	ApprovalById   *int    `json:"approval_by_id"`
+	ApprovalRemark *string `json:"approval_remark"`
+}

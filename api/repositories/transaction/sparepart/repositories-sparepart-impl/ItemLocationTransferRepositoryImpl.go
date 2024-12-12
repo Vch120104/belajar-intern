@@ -315,3 +315,52 @@ func (r *ItemLocationTransferRepositoryImpl) AcceptItemLocationTransfer(tx *gorm
 
 	return responses, nil
 }
+
+// uspg_atTrfReq0_Update
+// IF @Option = 6
+func (r *ItemLocationTransferRepositoryImpl) RejectItemLocationTransfer(tx *gorm.DB, id int, request transactionsparepartpayloads.RejectItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
+	var itemLocationTransferEntity transactionsparepartentities.ItemWarehouseTransferRequest
+	err := tx.Limit(1).Find(&itemLocationTransferEntity, id).Error
+	if err != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request data not found"),
+		}
+	}
+
+	var itemTransferStatusReject masteritementities.ItemTransferStatus
+	errItemTransferStatusReject := tx.Where("item_transfer_status_code = ?", "30").First(&itemTransferStatusReject).Error
+	if errItemTransferStatusReject != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errItemTransferStatusReject,
+		}
+	}
+
+	currentTime := time.Now().Truncate(24 * time.Hour)
+
+	var responses transactionsparepartpayloads.GetItemLocationTransferByIdResponse
+	errUpdateItemLocationTransfer := tx.Model(&itemLocationTransferEntity).
+		Updates(map[string]interface{}{
+			"transfer_request_status_id": itemTransferStatusReject.ItemTransferStatusId,
+			"approval_by_id":             request.ApprovalById,
+			"approval_date":              currentTime,
+			"approval_remark":            request.ApprovalRemark,
+		}).
+		Scan(&responses).Error
+	if errUpdateItemLocationTransfer != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUpdateItemLocationTransfer,
+		}
+	}
+
+	return responses, nil
+}
