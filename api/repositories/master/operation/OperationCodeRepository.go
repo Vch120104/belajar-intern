@@ -18,4 +18,6 @@ type OperationCodeRepository interface {
 	GetOperationCodeByCode(*gorm.DB, string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse)
 	UpdateItemCode(tx *gorm.DB, id int, req masteroperationpayloads.OperationCodeUpdate) (bool, *exceptions.BaseErrorResponse)
 	GetAllOperationCodeDropDown(tx *gorm.DB) ([]masteroperationpayloads.OperationCodeGetAll, *exceptions.BaseErrorResponse)
+	GetOperationCodeLatestId(tx *gorm.DB) (int, *exceptions.BaseErrorResponse)
+	SaveOperationToMappingItemOperation(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 }

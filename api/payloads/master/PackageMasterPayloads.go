@@ -48,3 +48,8 @@ type PackageMasterForCampaignMaster struct {
 	PackageCode string `json:"package_code"`
 	PackageName string `json:"package_name"`
 }
+
+type LatestPackageAndLineTypeResponse struct {
+	PackageId      int `json:"package_id"`
+	ProfitCenterId int `json:"profit_center_id"`
+}
