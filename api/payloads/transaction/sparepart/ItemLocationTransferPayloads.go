@@ -57,12 +57,10 @@ type GetItemLocationTransferByIdResponse struct {
 }
 
 type InsertItemLocationTransferRequest struct {
-	CompanyId               int        `json:"company_id"`
-	TransferRequestStatusId int        `json:"transfer_request_status_id"`
-	TransferRequestDate     *time.Time `json:"transfer_request_date"`
+	CompanyId               int        `json:"company_id" validate:"required"`
 	TransferRequestById     *int       `json:"transfer_request_by_id"`
-	RequestFromWarehouseId  int        `json:"request_from_warehouse_id"`
-	RequestToWarehouseId    int        `json:"request_to_warehouse_id"`
+	RequestFromWarehouseId  int        `json:"request_from_warehouse_id" validate:"required"`
+	RequestToWarehouseId    int        `json:"request_to_warehouse_id" validate:"required"`
 	Purpose                 *string    `json:"purpose"`
 	TransferInSystemNumber  *int       `json:"transfer_in_system_number"`
 	TransferOutSystemNumber *int       `json:"transfer_out_system_number"`

@@ -2,10 +2,14 @@ package transactionsparepartcontroller
 
 import (
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -19,6 +23,7 @@ type ItemLocationTransferControllerImpl struct {
 type ItemLocationTransferController interface {
 	GetAllItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	GetItemLocationTransferById(writer http.ResponseWriter, request *http.Request)
+	InsertItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemLocationTransferController(
@@ -28,7 +33,7 @@ func NewItemLocationTransferController(
 		ItemLocationTransferService: itemLocationTransferServiceService,
 	}
 }
-func (r *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
+func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
@@ -49,9 +54,9 @@ func (r *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer h
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	response, err := r.ItemLocationTransferService.GetAllItemLocationTransfer(criteria, paginate)
+	response, err := c.ItemLocationTransferService.GetAllItemLocationTransfer(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -67,14 +72,36 @@ func (r *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer h
 	)
 }
 
-func (r *ItemLocationTransferControllerImpl) GetItemLocationTransferById(writer http.ResponseWriter, request *http.Request) {
+func (c *ItemLocationTransferControllerImpl) GetItemLocationTransferById(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_system_number"))
 
-	response, err := r.ItemLocationTransferService.GetItemLocationTransferById(transferRequestSystemNumber)
+	response, err := c.ItemLocationTransferService.GetItemLocationTransferById(transferRequestSystemNumber)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
+	formRequest := transactionsparepartpayloads.InsertItemLocationTransferRequest{}
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := c.ItemLocationTransferService.InsertItemLocationTransfer(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusOK)
 }

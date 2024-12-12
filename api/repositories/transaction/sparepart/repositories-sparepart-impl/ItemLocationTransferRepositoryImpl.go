@@ -1,6 +1,7 @@
 package transactionsparepartrepositoryimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
@@ -10,6 +11,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -188,4 +190,42 @@ func (r *ItemLocationTransferRepositoryImpl) GetItemLocationTransferById(tx *gor
 	}
 
 	return response, nil
+}
+
+// uspg_atTrfReq0_Insert
+// IF @Option = 0
+func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransfer(tx *gorm.DB, request transactionsparepartpayloads.InsertItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
+	var itemTransferStatusDraft masteritementities.ItemTransferStatus
+	errItemTransferStatusDraft := tx.Where("item_transfer_status_code = ?", "10").First(&itemTransferStatusDraft).Error
+	if errItemTransferStatusDraft != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errItemTransferStatusDraft,
+		}
+	}
+
+	currentTime := time.Now().Truncate(24 * time.Hour)
+
+	entities := transactionsparepartentities.ItemWarehouseTransferRequest{
+		CompanyId:               request.CompanyId,
+		TransferRequestStatusId: itemTransferStatusDraft.ItemTransferStatusId,
+		TransferRequestDate:     &currentTime,
+		TransferRequestById:     request.TransferRequestById,
+		RequestFromWarehouseId:  request.RequestFromWarehouseId,
+		RequestToWarehouseId:    request.RequestToWarehouseId,
+		Purpose:                 request.Purpose,
+		TransferInSystemNumber:  request.TransferInSystemNumber,
+		TransferOutSystemNumber: request.TransferOutSystemNumber,
+	}
+
+	var responses transactionsparepartpayloads.GetItemLocationTransferByIdResponse
+	err := tx.Create(&entities).Scan(&responses).Error
+	if err != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return responses, nil
 }

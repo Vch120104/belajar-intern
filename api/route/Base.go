@@ -1906,6 +1906,7 @@ func ItemLocationTransferRouter(
 
 	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
 	router.Get("/{transfer_request_system_number}", itemLocationTransferController.GetItemLocationTransferById)
+	router.Post("/", itemLocationTransferController.InsertItemLocationTransfer)
 
 	return router
 }
