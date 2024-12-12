@@ -46,7 +46,6 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	var queryWhere []string
 
 	for _, c := range criteria {
-		// Abaikan filter jika nilai kosong
 		if c.ColumnValue == "" {
 			continue
 		}
