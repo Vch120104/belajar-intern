@@ -1895,6 +1895,7 @@ func ItemLocationTransferRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
+	router.Get("/{transfer_request_system_number}", itemLocationTransferController.GetItemLocationTransferById)
 
 	return router
 }

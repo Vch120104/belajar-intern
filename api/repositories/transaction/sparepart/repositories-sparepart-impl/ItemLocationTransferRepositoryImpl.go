@@ -41,7 +41,7 @@ func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransfer(tx *gorm
 			"RequestFromWarehouse.warehouse_name as request_from_warehouse_name",
 			"RequestFromWarehouse.warehouse_group_id as request_from_warehouse_group_id",
 			"RequestFromWarehouseGroup.warehouse_group_code as request_from_warehouse_group_code",
-			"RequestFromWarehouseGroup.warehouse_group_name asrequest_from_warehouse_group_name",
+			"RequestFromWarehouseGroup.warehouse_group_name as request_from_warehouse_group_name",
 			"trx_item_warehouse_transfer_request.request_to_warehouse_id",
 			"RequestToWarehouse.warehouse_code as request_to_warehouse_code",
 			"RequestToWarehouse.warehouse_name as request_to_warehouse_name",
@@ -77,7 +77,7 @@ func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransfer(tx *gorm
 		if employeeError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        employeeError,
 			}
 		}
 		if employeePayloads.UserEmployeeId == 0 {
@@ -94,4 +94,98 @@ func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransfer(tx *gorm
 	pages.Rows = responsesCrossService
 
 	return pages, nil
+}
+
+// uspg_atTrfReq0_Select
+// IF @Option = 0
+func (r *ItemLocationTransferRepositoryImpl) GetItemLocationTransferById(tx *gorm.DB, id int) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
+	var entities transactionsparepartentities.ItemWarehouseTransferRequest
+	var response transactionsparepartpayloads.GetItemLocationTransferByIdResponse
+
+	err := tx.Model(&entities).
+		Select(
+			"trx_item_warehouse_transfer_request.company_id",
+			"trx_item_warehouse_transfer_request.transfer_request_system_number",
+			"trx_item_warehouse_transfer_request.transfer_request_document_number",
+			"trx_item_warehouse_transfer_request.transfer_request_status_id",
+			"TransferRequestStatus.item_transfer_status_code as transfer_request_status_code",
+			"TransferRequestStatus.item_transfer_status_description as transfer_request_status_description",
+			"trx_item_warehouse_transfer_request.transfer_request_date",
+			"trx_item_warehouse_transfer_request.transfer_request_by_id",
+			"trx_item_warehouse_transfer_request.request_from_warehouse_id",
+			"RequestFromWarehouse.warehouse_code as request_from_warehouse_code",
+			"RequestFromWarehouse.warehouse_name as request_from_warehouse_name",
+			"RequestFromWarehouse.warehouse_group_id as request_from_warehouse_group_id",
+			"RequestFromWarehouseGroup.warehouse_group_code as request_from_warehouse_group_code",
+			"RequestFromWarehouseGroup.warehouse_group_name as request_from_warehouse_group_name",
+			"trx_item_warehouse_transfer_request.request_to_warehouse_id",
+			"RequestToWarehouse.warehouse_code as request_to_warehouse_code",
+			"RequestToWarehouse.warehouse_name as request_to_warehouse_name",
+			"RequestToWarehouse.warehouse_group_id as request_to_warehouse_group_id",
+			"RequestToWarehouseGroup.warehouse_group_code as request_to_warehouse_group_code",
+			"RequestToWarehouseGroup.warehouse_group_name as request_to_warehouse_group_name",
+			"trx_item_warehouse_transfer_request.purpose",
+			"trx_item_warehouse_transfer_request.transfer_in_system_number",
+			"trx_item_warehouse_transfer_request.transfer_out_system_number",
+			"trx_item_warehouse_transfer_request.approval_by_id",
+			"trx_item_warehouse_transfer_request.approval_date",
+			"trx_item_warehouse_transfer_request.approval_remark",
+		).
+		Joins("LEFT JOIN mtr_item_transfer_status TransferRequestStatus ON TransferRequestStatus.item_transfer_status_id = trx_item_warehouse_transfer_request.transfer_request_status_id").
+		Joins("LEFT JOIN mtr_warehouse_master RequestFromWarehouse ON RequestFromWarehouse.warehouse_id = trx_item_warehouse_transfer_request.request_from_warehouse_id").
+		Joins("LEFT JOIN mtr_warehouse_group RequestFromWarehouseGroup ON RequestFromWarehouseGroup.warehouse_group_id = RequestFromWarehouse.warehouse_group_id").
+		Joins("LEFT JOIN mtr_warehouse_master RequestToWarehouse ON RequestToWarehouse.warehouse_id = trx_item_warehouse_transfer_request.request_to_warehouse_id").
+		Joins("LEFT JOIN mtr_warehouse_group RequestToWarehouseGroup ON RequestToWarehouseGroup.warehouse_group_id = RequestToWarehouse.warehouse_group_id").
+		Where("trx_item_warehouse_transfer_request.transfer_request_system_number = ?", id).
+		Scan(&response).Error
+
+	if err != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if response.TransferRequestSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request data not found"),
+		}
+	}
+
+	if response.TransferRequestById != nil {
+		transferRequestByPayloads, transferRequestByError := generalserviceapiutils.GetUserDetailsByID(*response.TransferRequestById)
+		if transferRequestByError != nil {
+			return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        transferRequestByError,
+			}
+		}
+		if transferRequestByPayloads.UserEmployeeId == 0 {
+			return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("transfer request by name data not found"),
+			}
+		}
+		response.TransferRequestByName = &transferRequestByPayloads.EmployeeName
+	}
+
+	if response.ApprovalById != nil {
+		approvalByPayloads, approvalByError := generalserviceapiutils.GetUserDetailsByID(*response.ApprovalById)
+		if approvalByError != nil {
+			return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        approvalByError,
+			}
+		}
+		if approvalByPayloads.UserEmployeeId == 0 {
+			return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("approval by name data not found"),
+			}
+		}
+		response.ApprovalByName = &approvalByPayloads.EmployeeName
+	}
+
+	return response, nil
 }

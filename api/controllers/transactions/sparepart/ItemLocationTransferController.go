@@ -7,6 +7,9 @@ import (
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemLocationTransferControllerImpl struct {
@@ -15,6 +18,7 @@ type ItemLocationTransferControllerImpl struct {
 
 type ItemLocationTransferController interface {
 	GetAllItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
+	GetItemLocationTransferById(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemLocationTransferController(
@@ -61,4 +65,16 @@ func (r *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer h
 		int64(response.TotalRows),
 		response.TotalPages,
 	)
+}
+
+func (r *ItemLocationTransferControllerImpl) GetItemLocationTransferById(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_system_number"))
+
+	response, err := r.ItemLocationTransferService.GetItemLocationTransferById(transferRequestSystemNumber)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
 }
