@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -354,6 +355,60 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 	return response, nil
 
+}
+
+func (r *ItemRepositoryImpl) GetItemLatestId(tx *gorm.DB) (masteritempayloads.LatestItemAndLineTypeResponse, *exceptions.BaseErrorResponse) {
+	var latestID int
+	lineResponse := masteritempayloads.LatestItemAndLineTypeResponse{}
+
+	err := tx.Table("mtr_item").
+		Select("item_id").
+		Order("item_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if err != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	errLine := tx.Table("mtr_item mi").
+		Select("DISTINCT mi.item_id, mic.item_class_id, mic.line_type_id").
+		Joins("JOIN mtr_item_class mic ON mi.item_class_id = mic.item_class_id").
+		Where("mi.item_id = ?", latestID).
+		Scan(&lineResponse).Error
+
+	if errLine != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return lineResponse, nil
+}
+
+func (r *ItemRepositoryImpl) SaveItemToMappingItemOperation(tx *gorm.DB, response masteritempayloads.LatestItemAndLineTypeResponse) (bool, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: 0,
+		LineTypeId:      response.LineTypeId,
+		ItemId:          response.ItemId,
+		OperationId:     0,
+		PackageId:       0,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
