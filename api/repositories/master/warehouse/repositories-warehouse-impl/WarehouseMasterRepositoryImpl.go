@@ -799,7 +799,7 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 
 	baseModelQuery := tx.Model(&masterwarehouseentities.WarehouseAuthorize{}).
 		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.user_id").
-		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id")
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_detail_id")
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 

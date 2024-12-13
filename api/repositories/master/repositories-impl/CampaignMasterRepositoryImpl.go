@@ -4,6 +4,7 @@ import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -305,7 +306,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 	jobTypeCampaignId := jobType.JobTypeId
 
 	// Fetch Work Order Transaction Type
-	transactionType, err := generalserviceapiutils.GetWoTransactionTypeByCode("Campaign")
+	transactionType, err := generalserviceapiutils.GetWoTransactionTypeByCode("G")
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -339,9 +340,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 
 		// Fetch Warehouse Group
 		var warehouseGroup string
-		if err := tx.Model(&masterentities.WarehouseGroupMappingEntities{}).
-			Select("warehouse_group_mapping_description").
-			Where("warehouse_group_type_code = ?", "WHS_GRP_CAMPAIGN").
+		if err := tx.Model(&masterwarehouseentities.WarehouseGroup{}).
+			Select("warehouse_group_type_code").
+			Where("warehouse_group_mapping_id = ?", 1). //Warehouse Group For Campaign
 			First(&warehouseGroup).Error; err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -533,8 +534,8 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 		return nil, modelErr
 	}
 
-	// Construct the final response with payload and related brand/model information
 	result := map[string]interface{}{
+		"is_active":            payloads.IsActive,
 		"campaign_id":          payloads.CampaignId,
 		"campaign_code":        payloads.CampaignCode,
 		"campaign_name":        payloads.CampaignName,
@@ -653,8 +654,8 @@ func (r *CampaignMasterRepositoryImpl) GetByCodeCampaignMaster(tx *gorm.DB, code
 		return nil, modelErr
 	}
 
-	// Construct the final response with payload and related brand/model information
 	result := map[string]interface{}{
+		"is_active":            payloads.IsActive,
 		"campaign_id":          payloads.CampaignId,
 		"campaign_code":        payloads.CampaignCode,
 		"campaign_name":        payloads.CampaignName,
