@@ -434,7 +434,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []
 func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
 
 	// Validasi AgreementSelection
-	if req.AgreementSelection != 0 && req.AgreementSelection != 1 {
+	if req.AgreementSelection != 1 && req.AgreementSelection != 2 {
 		return masterentities.AgreementDiscountGroupDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("agreement Selection not valid"),
@@ -651,9 +651,9 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 	var results []map[string]interface{}
 	for _, entity := range entities {
 		selectionName := "unknown"
-		if entity.AgreementSelection == 0 {
+		if entity.AgreementSelection == 1 {
 			selectionName = "discount"
-		} else if entity.AgreementSelection == 1 {
+		} else if entity.AgreementSelection == 2 {
 			selectionName = "markup"
 		}
 
