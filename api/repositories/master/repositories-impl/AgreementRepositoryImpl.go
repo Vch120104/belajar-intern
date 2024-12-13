@@ -35,8 +35,17 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement",
 			Err:        err,
 		}
 	}
@@ -736,18 +745,27 @@ func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterConditi
 	return pages, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, DiscountGroupId, AgreementId int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, AgreementId int, DiscountGroupId int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscountGroupDetail{}
 	response := masterpayloads.DiscountGroupRequest{}
 
 	err := tx.Model(&entities).
-		Where("agreement_discount_group_id = ? AND agreement_id = ?", DiscountGroupId, AgreementId).
+		Where(" agreement_id = ? AND agreement_discount_group_id = ? ", AgreementId, DiscountGroupId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount Group not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount Group",
 			Err:        err,
 		}
 	}
@@ -762,18 +780,27 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, Dis
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, ItemDiscountId, AgreementId int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, AgreementId int, ItemDiscountId int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementItemDetail{}
 	response := masterpayloads.ItemDiscountRequest{}
 
 	err := tx.Model(&entities).
-		Where("agreement_item_id = ? AND agreement_id = ?", ItemDiscountId, AgreementId).
+		Where("agreement_id = ? AND agreement_item_id = ? ", AgreementId, ItemDiscountId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount Item not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount Item",
 			Err:        err,
 		}
 	}
@@ -789,18 +816,27 @@ func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, Item
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, DiscountValueId, AgreementId int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, AgreementId int, DiscountValueId int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscount{}
 	response := masterpayloads.DiscountValueRequest{}
 
 	err := tx.Model(&entities).
-		Where("agreement_discount_id = ? AND agreement_id = ?", DiscountValueId, AgreementId).
+		Where("agreement_id = ? AND agreement_discount_id = ?  ", AgreementId, DiscountValueId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount value not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount value",
 			Err:        err,
 		}
 	}
