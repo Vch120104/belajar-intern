@@ -1086,23 +1086,29 @@ func AgreementRouter(
 	router.Put("/{agreement_id}", AgreementController.UpdateAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
-	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/{agreement_id}/discount/group", AgreementController.GetDiscountGroupAgreementByHeaderId)
 	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
 	router.Put("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.UpdateDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+	router.Delete("/{agreement_id}/discount/group/{multi_id}", AgreementController.DeleteMultiIdDiscountGroup)
 
-	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/{agreement_id}/discount/item", AgreementController.GetDiscountItemAgreementByHeaderId)
 	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
 	router.Put("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.UpdateItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+	router.Delete("/{agreement_id}/discount/item/{multi_id}", AgreementController.DeleteMultiIdItemDiscount)
 
-	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/{agreement_id}/discount/value", AgreementController.GetDiscountValueAgreementByHeaderId)
 	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
 	router.Put("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.UpdateDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
+	router.Delete("/{agreement_id}/discount/value/{multi_id}", AgreementController.DeleteMultiIdDiscountValue)
 
 	return router
 }
