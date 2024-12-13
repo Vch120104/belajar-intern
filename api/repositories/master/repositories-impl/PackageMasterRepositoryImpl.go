@@ -240,16 +240,15 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 		if detail.LineTypeId != lineTypeOpr.LineTypeId && detail.LineTypeId != 0 {
 			err = tx.Table("mtr_item").
 				Select("item_name, item_code").
-				Joins("JOIN mtr_item_operation ON mtr_item.item_id = mtr_item_operation.item_operation_model_mapping_id").
-				Joins("JOIN mtr_package_master_detail ON mtr_package_master_detail.item_operation_id = mtr_item_operation.item_operation_id").
+				Joins("JOIN mtr_mapping_item_operation ON mtr_item.item_id = mtr_mapping_item_operation.item_id").
+				Joins("JOIN mtr_package_master_detail ON mtr_package_master_detail.item_operation_id = mtr_mapping_item_operation.item_operation_id").
 				Where("mtr_package_master_detail.package_detail_id = ?", detail.PackageDetailId).
 				Scan(&item).Error
 		} else {
 			err = tx.Table("mtr_operation_code").
 				Select("operation_name, operation_code").
-				Joins("JOIN mtr_operation_model_mapping ON mtr_operation_code.operation_id = mtr_operation_model_mapping.operation_id").
-				Joins("JOIN mtr_item_operation ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_item_operation.item_operation_model_mapping_id").
-				Joins("JOIN mtr_package_master_detail ON mtr_item_operation.item_operation_id = mtr_package_master_detail.item_operation_id").
+				Joins("JOIN mtr_mapping_item_operation ON mtr_operation_code.operation_id = mtr_mapping_item_operation.operation_id").
+				Joins("JOIN mtr_package_master_detail ON mtr_package_master_detail.item_operation_id = mtr_mapping_item_operation.item_operation_id").
 				Where("mtr_package_master_detail.package_detail_id = ?", detail.PackageDetailId).
 				Scan(&operation).Error
 		}
@@ -458,19 +457,16 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 		}
 	}
 	if detailpayloads.LineTypeId != 9 && detailpayloads.LineTypeId != 0 {
-		err = tx.Select("mtr_item.item_name,mtr_item.item_code").Table("mtr_package_master_detail").
-			Joins("join mtr_item_operation on mtr_item_operation.item_operation_id=mtr_package_master_detail.item_operation_id").
-			Joins("join mtr_item on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
+		err = tx.Table("mtr_package_master_detail").Select("mtr_item.item_name,mtr_item.item_code").
+			Joins("join mtr_mapping_item_operation on mtr_mapping_item_operation.item_operation_id=mtr_package_master_detail.item_operation_id").
+			Joins("join mtr_item on mtr_item.item_id=mtr_mapping_item_operation.item_id").
 			Where("mtr_package_master_detail.package_detail_id=?", id).
-			Scan(&item).
-			Error
+			Scan(&item).Error
 	} else {
-		err = tx.Select("operation_code.operation_name,operation_code.operation_code").Where("package_detail_id=?", id).
-			Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_master_detail.item_operation_id").
-			Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.item_operation_model_mapping_id").
-			Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").
-			Select("mtr_operation_code.operation_code,mtr_operation_code.operation_name").
-			Table("mtr_package_master_detail").
+		err = tx.Table("mtr_package_master_detail").Select("mtr_operation_code.operation_code,mtr_operation_code.operation_name").
+			Joins("join mtr_mapping_item_operation on mtr_mapping_item_operation.item_operation_id = mtr_package_master_detail.item_operation_id").
+			Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_mapping_item_operation.operation_id").
+			Where("package_detail_id=?", id).
 			Scan(&operation).Error
 	}
 
