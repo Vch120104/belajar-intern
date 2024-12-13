@@ -14,6 +14,7 @@ import (
 	"after-sales/api/validation"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -807,11 +808,25 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/by-code/{agreement_code} [get]
 func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter, request *http.Request) {
-	agreementCode := chi.URLParam(request, "agreement_code")
 
-	result, err := r.AgreementService.GetAgreementByCode(agreementCode)
+	encodedAgreementCode := chi.URLParam(request, "*")
+
+	if len(encodedAgreementCode) > 0 && encodedAgreementCode[0] == '/' {
+		encodedAgreementCode = encodedAgreementCode[1:]
+	}
+
+	agreementCode, err := url.PathUnescape(encodedAgreementCode)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed to decode agreement code"),
+		})
+		return
+	}
+
+	result, baseErr := r.AgreementService.GetAgreementByCode(agreementCode)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
 	}
 

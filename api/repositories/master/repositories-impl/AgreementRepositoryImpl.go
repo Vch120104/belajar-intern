@@ -760,9 +760,7 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response := masterpayloads.AgreementResponse{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.Agreement{
-			AgreementCode: AgreementCode,
-		}).
+		Where("agreement_code = ?", AgreementCode).
 		First(&entities).
 		Error
 
@@ -782,12 +780,39 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 		}
 	}
 
+	// fetch data client type from utils cross service
+	clientTypeResponse, clientTypeErr := generalserviceapiutils.GetClientTypeById(customerResponse.ClientTypeId)
+	if clientTypeErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        clientTypeErr.Err,
+		}
+	}
+
 	// fetch data company from utils cross service
 	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
 	if compErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        compErr.Err,
+		}
+	}
+
+	// fetch data profit center from utils cross service
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entities.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	// fetch term of payment from utils cross service
+	termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entities.TopId)
+	if termOfPaymentErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        termOfPaymentErr.Err,
 		}
 	}
 
@@ -815,6 +840,10 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
+	response.CustomerType = clientTypeResponse.ClientTypeDescription
+	response.ProfitCenterName = profitCenterResponse.ProfitCenterName
+	response.TermOfPaymentCode = termOfPaymentResponse.TermOfPaymentCode
+	response.TermOfPaymentName = termOfPaymentResponse.TermOfPaymentName
 
 	return response, nil
 }
