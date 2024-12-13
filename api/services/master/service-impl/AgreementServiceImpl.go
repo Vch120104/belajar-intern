@@ -30,7 +30,7 @@ func StartAgreementService(AgreementRepo masterrepository.AgreementRepository, d
 	}
 }
 
-func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 

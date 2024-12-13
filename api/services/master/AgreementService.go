@@ -9,7 +9,7 @@ import (
 )
 
 type AgreementService interface {
-	GetAgreementById(int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
+	GetAgreementById(int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	GetAgreementByCode(string) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	SaveAgreement(masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	UpdateAgreement(int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)

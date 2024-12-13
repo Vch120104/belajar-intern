@@ -25,14 +25,12 @@ func StartAgreementRepositoryImpl() masterrepository.AgreementRepository {
 	return &AgreementRepositoryImpl{}
 }
 
-func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Agreement{}
-	response := masterpayloads.AgreementRequest{}
+	response := masterpayloads.AgreementResponse{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.Agreement{
-			AgreementId: AgreementId,
-		}).
+		Where("agreement_id = ?", AgreementId).
 		First(&entities).
 		Error
 
@@ -43,17 +41,79 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 		}
 	}
 
+	// fetch data customer from utils cross service
+	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterById(entities.CustomerId)
+	if custErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        custErr.Err,
+		}
+	}
+
+	// fetch data client type from utils cross service
+	clientTypeResponse, clientTypeErr := generalserviceapiutils.GetClientTypeById(customerResponse.ClientTypeId)
+	if clientTypeErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        clientTypeErr.Err,
+		}
+	}
+
+	// fetch data company from utils cross service
+	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
+	if compErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        compErr.Err,
+		}
+	}
+
+	// fetch data profit center from utils cross service
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entities.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	// fetch term of payment from utils cross service
+	termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entities.TopId)
+	if termOfPaymentErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        termOfPaymentErr.Err,
+		}
+	}
+
 	response.AgreementId = entities.AgreementId
 	response.AgreementCode = entities.AgreementCode
 	response.IsActive = entities.IsActive
 	response.BrandId = entities.BrandId
 	response.CustomerId = entities.CustomerId
+	response.CustomerName = customerResponse.CustomerName
+	response.CustomerCode = customerResponse.CustomerCode
+	response.AddressStreet1 = customerResponse.AddressStreet1
+	response.AddressStreet2 = customerResponse.AddressStreet2
+	response.AddressStreet3 = customerResponse.AddressStreet3
+	response.VillageName = customerResponse.VillageName
+	response.VillageZipCode = customerResponse.VillageZipCode
+	response.DistrictName = customerResponse.DistrictName
+	response.CityName = customerResponse.CityName
+	response.ProvinceName = customerResponse.ProvinceName
+	response.CountryName = customerResponse.CountryName
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
 	response.CompanyId = entities.CompanyId
+	response.CompanyName = companyResponse.CompanyName
+	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
+	response.CustomerType = clientTypeResponse.ClientTypeDescription
+	response.ProfitCenterName = profitCenterResponse.ProfitCenterName
+	response.TermOfPaymentCode = termOfPaymentResponse.TermOfPaymentCode
+	response.TermOfPaymentName = termOfPaymentResponse.TermOfPaymentName
 
 	return response, nil
 }
@@ -384,7 +444,7 @@ func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int,
 	entities := masterentities.AgreementDiscountGroupDetail{
 		AgreementId:               AgreementId,
 		AgreementSelection:        req.AgreementSelection,
-		AgreementOrderType:        req.AgreementOrderTypeId,
+		AgreementOrderTypeId:      req.AgreementOrderTypeId,
 		AgreementDiscountMarkupId: req.AgreementDiscountMarkup,
 		AgreementDiscount:         req.AgreementDiscount,
 		AgreementDetailRemarks:    req.AgreementDetailRemaks,
@@ -598,7 +658,7 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 		}
 
 		// fetch order type from utils cross service
-		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderType)
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
 		if orderTypeError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: orderTypeError.StatusCode,
@@ -611,7 +671,7 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 			"agreement_id":                 entity.AgreementId,
 			"agreement_selection":          entity.AgreementSelection,
 			"agreement_selection_name":     selectionName,
-			"agreement_order_type":         entity.AgreementOrderType,
+			"agreement_order_type_id":      entity.AgreementOrderTypeId,
 			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
 			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
 			"agreement_discount":           entity.AgreementDiscount,
@@ -694,7 +754,7 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, Dis
 
 	response.AgreementId = entities.AgreementId
 	response.AgreementSelection = entities.AgreementSelection
-	response.AgreementOrderTypeId = entities.AgreementOrderType
+	response.AgreementOrderTypeId = entities.AgreementOrderTypeId
 	response.AgreementDiscountMarkup = entities.AgreementDiscountMarkupId
 	response.AgreementDiscount = entities.AgreementDiscount
 	response.AgreementDetailRemaks = entities.AgreementDetailRemarks
@@ -880,7 +940,7 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementByHeaderId(tx *gorm.D
 		}
 
 		// fetch order type from utils cross service
-		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderType)
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
 		if orderTypeError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: orderTypeError.StatusCode,
@@ -893,7 +953,7 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementByHeaderId(tx *gorm.D
 			"agreement_id":                 entity.AgreementId,
 			"agreement_selection":          entity.AgreementSelection,
 			"agreement_selection_name":     selectionName,
-			"agreement_order_type":         entity.AgreementOrderType,
+			"agreement_order_type_id":      entity.AgreementOrderTypeId,
 			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
 			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
 			"agreement_discount":           entity.AgreementDiscount,
