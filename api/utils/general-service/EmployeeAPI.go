@@ -223,28 +223,6 @@ func GetAllUserDetail(params UserDetailParams) ([]UserDetailsResponse, *exceptio
 	return getUserDetailMaster, nil
 }
 
-func GetUserDetailByParamUserID(userId int) (*UserDetailsResponse, *exceptions.BaseErrorResponse) {
-	params := UserDetailParams{
-		UserId: userId,
-		Limit:  1, // Ambil hanya satu data
-		Page:   1,
-	}
-
-	userDetails, err := GetAllUserDetail(params)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(userDetails) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    fmt.Sprintf("User with ID %d not found", userId),
-		}
-	}
-
-	return &userDetails[0], nil
-}
-
 func GetUserDetailsByID(id int) (UserDetailsResponse, *exceptions.BaseErrorResponse) {
 	var userDetails UserDetailsResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "user-detail?user_id=" + strconv.Itoa(id)
