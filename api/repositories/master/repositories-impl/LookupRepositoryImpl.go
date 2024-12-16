@@ -553,14 +553,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 	switch linetypeId {
 	case utils.LinetypePackage:
 		baseQuery = baseQuery.Table("mtr_package A").
-			Select("A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
+			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
+				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
 			Where("A.is_active = ?", true).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
 	case utils.LinetypeOperation:
@@ -945,15 +945,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	switch linetypeId {
 	case utils.LinetypePackage:
 		baseQuery = baseQuery.Table("mtr_package A").
-			Select("A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
+			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
+				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
 			Where("A.is_active = ?", true).
 			Where("A.package_code = ?", oprItemCode).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
 	case utils.LinetypeOperation:
@@ -1345,15 +1345,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	switch linetypeId {
 	case utils.LinetypePackage:
 		baseQuery = baseQuery.Table("mtr_package A").
-			Select("A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
+			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
+				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
 			Where("A.is_active = ?", true).
 			Where("A.package_id = ?", oprItemId).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
 	case utils.LinetypeOperation:
