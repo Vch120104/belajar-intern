@@ -364,6 +364,28 @@ func (r *ItemLocationTransferRepositoryImpl) RejectItemLocationTransfer(tx *gorm
 	return responses, nil
 }
 
+func (r *ItemLocationTransferRepositoryImpl) DeleteItemLocationTransfer(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	errDeleteDetail := tx.
+		Where("transfer_request_system_number = ?", id).
+		Delete(&transactionsparepartentities.ItemWarehouseTransferRequestDetail{}).Error
+	if errDeleteDetail != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errDeleteDetail,
+		}
+	}
+
+	errDelete := tx.Delete(&transactionsparepartentities.ItemWarehouseTransferRequest{}, id).Error
+	if errDelete != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errDelete,
+		}
+	}
+
+	return true, nil
+}
+
 // uspg_atTrfReq1_Insert
 // IF @Option = 0
 func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx *gorm.DB, request transactionsparepartpayloads.InsertItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {

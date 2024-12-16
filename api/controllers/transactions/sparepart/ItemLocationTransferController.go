@@ -28,6 +28,7 @@ type ItemLocationTransferController interface {
 	UpdateItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	AcceptItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	RejectItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
+	DeleteItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 
 	InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
@@ -184,6 +185,18 @@ func (c *ItemLocationTransferControllerImpl) RejectItemLocationTransfer(writer h
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) DeleteItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_system_number"))
+
+	response, err := c.ItemLocationTransferService.DeleteItemLocationTransfer(transferRequestSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Delete Data Successfully", http.StatusOK)
 }
 
 func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {
