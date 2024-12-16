@@ -87,7 +87,7 @@ type EmployeeMasterResponses struct {
 
 func GetEmployeeByID(id int) (EmployeeMasterResponse, *exceptions.BaseErrorResponse) {
 	var getEmployee EmployeeMasterResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(id)
+	url := config.EnvConfigs.GeneralServiceUrl + "user-detail?user_id=" + strconv.Itoa(id)
 
 	err := utils.CallAPI("GET", url, nil, &getEmployee)
 	if err != nil {

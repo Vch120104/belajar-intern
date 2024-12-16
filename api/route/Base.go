@@ -602,6 +602,7 @@ func LocationStockRouter(
 
 	router.Get("/", LocationStock.GetAllLocationStock)
 	router.Put("/", LocationStock.UpdateLocationStock)
+	router.Get("/available_quantity", LocationStock.GetAvailableQuantity)
 	return router
 }
 
@@ -1877,9 +1878,14 @@ func SalesOrderRouter(
 	SalesOrderController transactionsparepartcontroller.SalesOrderController,
 ) chi.Router {
 	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
-
+	router.Post("/estimation", SalesOrderController.InsertSalesOrderHeader)
+	router.Get("/", SalesOrderController.GetAllSalesOrder)
+	router.Delete("/{sales_order_system_number}", SalesOrderController.VoidSalesOrder)
 	return router
 }
 

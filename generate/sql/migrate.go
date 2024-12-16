@@ -2,8 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-	masterentities "after-sales/api/entities/master"
-
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -165,8 +163,9 @@ func Migrate() {
 		//&masterwarehouseentities.WarehouseCostingType{},
 		//&masterentities.StockTransactionType{},
 		//&masterentities.StockTransactionReason{},
-		&masterentities.PurchaseOrderTypeSalesOrderEntity{},
+		//&masterentities.PurchaseOrderTypeSalesOrderEntity{},
 
+		//&masterentities.TransactionTypeSalesOrder{},
 		//
 
 		//&transactionjpcbentities.SettingTechnician{},
@@ -232,6 +231,7 @@ func Migrate() {
 		//&transactionsparepartentities.StockTransaction{},
 		//&transactionsparepartentities.GoodsReceiveDetail{},
 		// &transactionsparepartentities.GoodsReceive{},
+		//&transactionsparepartentities.SalesOrder{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

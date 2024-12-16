@@ -1,12 +1,17 @@
 package transactionsparepartservice
 
 import (
-	exceptions "after-sales/api/exceptions"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	"after-sales/api/exceptions"
+	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
-
-	"gorm.io/gorm"
+	"after-sales/api/utils"
 )
 
-type SalesOrderService interface {
-	GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptions.BaseErrorResponse)
+// service sales order service
+type SalesOrderServiceInterface interface {
+	InsertSalesOrderHeader(payload transactionsparepartpayloads.SalesOrderInsertHeaderPayload) (transactionsparepartentities.SalesOrder, *exceptions.BaseErrorResponse)
+	GetSalesOrderByID(Id int) (transactionsparepartpayloads.SalesOrderEstimationGetByIdResponse, *exceptions.BaseErrorResponse)
+	GetAllSalesOrder(pages pagination.Pagination, condition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	VoidSalesOrder(salesOrderId int) (bool, *exceptions.BaseErrorResponse)
 }

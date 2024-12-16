@@ -123,6 +123,22 @@ var CreateDataFailed string = "Create Data Successfully"
 var UpdateDataFailed string = "Update Data Failed"
 var DeleteDataFailed string = "Delete Data Failed"
 
+// approval code
+var ApprovalCancelledCode string = "80"   // Cancelled
+var ApprovalClosedCode string = "99"      // Closed
+var ApprovalCompleteCode string = "30"    // Complete
+var ApprovalDraftCode string = "10"       // Draft
+var ApprovalNewCode string = "0"          // New
+var ApprovalOutstandingCode string = "5"  // Outstanding
+var ApprovalReadyCode string = "11"       // Ready
+var ApprovalWaitApproveCode string = "15" // Wait Approve
+var ApprovalApprovedCode string = "20"    // Approved
+var ApprovalTestDataCode string = "120"   // Test Data
+var ApprovalWaitVerifyCode string = "12"  // Wait Verify
+var ApprovalWaitCancelCode string = "25"  // Wait Cancel
+var ApprovalConfirmedCode string = "21"   // Confirmed
+var ApprovalReplacedCode string = "31"    // Replaced
+
 // Error
 var CannotSendEmail string = "Cannot Send Email"
 var DataExists string = "Data Already Exists"

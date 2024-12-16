@@ -29,7 +29,7 @@ type SalesOrderDetail struct {
 	DiscountAmount                                     float64                            `gorm:"column:discount_amount;not null" json:"discount_amount"`
 	DiscountRequestPercent                             float64                            `gorm:"column:discount_request_percent;not null" json:"discount_request_percent"`
 	DiscountRequestAmount                              float64                            `gorm:"column:discount_request_amount;not null" json:"discount_request_amount"`
-	Remark                                             string                             `gorm:"column:remark;size:256;not null" json:"remark"`
+	Remark                                             string                             `gorm:"column:remark;size:256	;not null" json:"remark"`
 	ApprovalRequestNumber                              *int                               `gorm:"column:approval_reqeust_number;size:30" json:"approval_request_number"` // FK to trx_approval_request_source in ?
 	ApprovalRemark                                     string                             `gorm:"column:approval_remark;size:256;not null" json:"approval_remark"`
 	VehicleSalesOrderSystemNumber                      *int                               `gorm:"column:vehicle_sales_order_system_number;size:30" json:"vehicle_sales_order_system_number"`                                               // FK to trx_vehicle_sales_order in sales-service
