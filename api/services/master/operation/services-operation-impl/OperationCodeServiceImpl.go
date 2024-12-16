@@ -3,6 +3,7 @@ package masteroperationserviceimpl
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
@@ -182,6 +183,18 @@ func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads
 	if err != nil {
 		return result, err
 	}
+
+	latestID, errGet := s.operationCodeRepo.GetOperationCodeLatestId(tx)
+	if errGet != nil {
+		return result, errGet
+	}
+
+	_, errDetail := s.operationCodeRepo.SaveOperationToMappingItemOperation(tx, latestID)
+	defer helper.CommitOrRollback(tx, err)
+	if errDetail != nil {
+		return result, errDetail
+	}
+
 	return result, nil
 }
 

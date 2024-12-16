@@ -3,6 +3,7 @@ package masterserviceimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -216,6 +217,20 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 	if err != nil {
 		return masterentities.PackageMaster{}, err
 	}
+
+	resp, errGet := s.PackageMasterRepo.GetPackageLatestId(tx)
+	if errGet != nil {
+		return result, errGet
+	}
+
+	if resp.ProfitCenterId == 4 {
+		_, errDetail := s.PackageMasterRepo.SavePackageToMappingItemOperation(tx, resp.PackageId)
+		defer helper.CommitOrRollback(tx, err)
+		if errDetail != nil {
+			return result, errDetail
+		}
+	}
+
 	return result, nil
 }
 

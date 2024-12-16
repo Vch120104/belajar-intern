@@ -64,9 +64,11 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"opr_item_code": queryValues.Get("opr_item_code"),
-		"opr_item_name": queryValues.Get("opr_item_name"),
+		"package_id":   queryValues.Get("package_id"),
+		"operation_id": queryValues.Get("operation_id"),
+		"item_id":      queryValues.Get("item_id"),
 	}
+
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -74,6 +76,7 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
+
 	lookup, baseErr := r.LookupService.ItemOprCode(linetypeId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {

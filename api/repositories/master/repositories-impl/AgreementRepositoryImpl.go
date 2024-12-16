@@ -25,21 +25,73 @@ func StartAgreementRepositoryImpl() masterrepository.AgreementRepository {
 	return &AgreementRepositoryImpl{}
 }
 
-func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Agreement{}
-	response := masterpayloads.AgreementRequest{}
+	response := masterpayloads.AgreementResponse{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.Agreement{
-			AgreementId: AgreementId,
-		}).
+		Where("agreement_id = ?", AgreementId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement",
 			Err:        err,
+		}
+	}
+
+	// fetch data customer from utils cross service
+	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterById(entities.CustomerId)
+	if custErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        custErr.Err,
+		}
+	}
+
+	// fetch data client type from utils cross service
+	clientTypeResponse, clientTypeErr := generalserviceapiutils.GetClientTypeById(customerResponse.ClientTypeId)
+	if clientTypeErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        clientTypeErr.Err,
+		}
+	}
+
+	// fetch data company from utils cross service
+	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
+	if compErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        compErr.Err,
+		}
+	}
+
+	// fetch data profit center from utils cross service
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entities.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	// fetch term of payment from utils cross service
+	termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entities.TopId)
+	if termOfPaymentErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        termOfPaymentErr.Err,
 		}
 	}
 
@@ -48,17 +100,50 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 	response.IsActive = entities.IsActive
 	response.BrandId = entities.BrandId
 	response.CustomerId = entities.CustomerId
+	response.CustomerName = customerResponse.CustomerName
+	response.CustomerCode = customerResponse.CustomerCode
+	response.AddressStreet1 = customerResponse.AddressStreet1
+	response.AddressStreet2 = customerResponse.AddressStreet2
+	response.AddressStreet3 = customerResponse.AddressStreet3
+	response.VillageName = customerResponse.VillageName
+	response.VillageZipCode = customerResponse.VillageZipCode
+	response.DistrictName = customerResponse.DistrictName
+	response.CityName = customerResponse.CityName
+	response.ProvinceName = customerResponse.ProvinceName
+	response.CountryName = customerResponse.CountryName
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
 	response.CompanyId = entities.CompanyId
+	response.CompanyName = companyResponse.CompanyName
+	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
+	response.CustomerType = clientTypeResponse.ClientTypeDescription
+	response.ProfitCenterName = profitCenterResponse.ProfitCenterName
+	response.TermOfPaymentCode = termOfPaymentResponse.TermOfPaymentCode
+	response.TermOfPaymentName = termOfPaymentResponse.TermOfPaymentName
 
 	return response, nil
 }
 
 func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
+	// Validasi: tidak ada AgreementCode yang sama dalam satu CompanyId
+	var existingAgreement masterentities.Agreement
+	err := tx.Where("agreement_code = ? AND company_id = ?", req.AgreementCode, req.CompanyId).First(&existingAgreement).Error
+
+	if err == nil {
+		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errors.New("agreement code already exists in the same company"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	entities := masterentities.Agreement{
 		AgreementCode:     req.AgreementCode,
 		BrandId:           req.BrandId,
@@ -72,8 +157,7 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 		CustomerId:        req.CustomerId,
 	}
 
-	err := tx.Save(&entities).Error
-
+	err = tx.Save(&entities).Error
 	if err != nil {
 		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -359,7 +443,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []
 func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
 
 	// Validasi AgreementSelection
-	if req.AgreementSelection != 0 && req.AgreementSelection != 1 {
+	if req.AgreementSelection != 1 && req.AgreementSelection != 2 {
 		return masterentities.AgreementDiscountGroupDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("agreement Selection not valid"),
@@ -369,7 +453,7 @@ func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int,
 	entities := masterentities.AgreementDiscountGroupDetail{
 		AgreementId:               AgreementId,
 		AgreementSelection:        req.AgreementSelection,
-		AgreementOrderType:        req.AgreementOrderTypeId,
+		AgreementOrderTypeId:      req.AgreementOrderTypeId,
 		AgreementDiscountMarkupId: req.AgreementDiscountMarkup,
 		AgreementDiscount:         req.AgreementDiscount,
 		AgreementDetailRemarks:    req.AgreementDetailRemaks,
@@ -576,14 +660,14 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 	var results []map[string]interface{}
 	for _, entity := range entities {
 		selectionName := "unknown"
-		if entity.AgreementSelection == 0 {
+		if entity.AgreementSelection == 1 {
 			selectionName = "discount"
-		} else if entity.AgreementSelection == 1 {
+		} else if entity.AgreementSelection == 2 {
 			selectionName = "markup"
 		}
 
 		// fetch order type from utils cross service
-		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderType)
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
 		if orderTypeError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: orderTypeError.StatusCode,
@@ -596,7 +680,7 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 			"agreement_id":                 entity.AgreementId,
 			"agreement_selection":          entity.AgreementSelection,
 			"agreement_selection_name":     selectionName,
-			"agreement_order_type":         entity.AgreementOrderType,
+			"agreement_order_type_id":      entity.AgreementOrderTypeId,
 			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
 			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
 			"agreement_discount":           entity.AgreementDiscount,
@@ -661,28 +745,34 @@ func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterConditi
 	return pages, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, DiscountGroupId, AgreementId int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, AgreementId int, DiscountGroupId int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscountGroupDetail{}
 	response := masterpayloads.DiscountGroupRequest{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.AgreementDiscountGroupDetail{
-			AgreementDiscountGroupId: DiscountGroupId,
-			AgreementId:              AgreementId,
-		}).
+		Where(" agreement_id = ? AND agreement_discount_group_id = ? ", AgreementId, DiscountGroupId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount Group not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount Group",
 			Err:        err,
 		}
 	}
 
 	response.AgreementId = entities.AgreementId
 	response.AgreementSelection = entities.AgreementSelection
-	response.AgreementOrderTypeId = entities.AgreementOrderType
+	response.AgreementOrderTypeId = entities.AgreementOrderTypeId
 	response.AgreementDiscountMarkup = entities.AgreementDiscountMarkupId
 	response.AgreementDiscount = entities.AgreementDiscount
 	response.AgreementDetailRemaks = entities.AgreementDetailRemarks
@@ -690,21 +780,27 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, Dis
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, ItemDiscountId, AgreementId int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, AgreementId int, ItemDiscountId int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementItemDetail{}
 	response := masterpayloads.ItemDiscountRequest{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.AgreementItemDetail{
-			AgreementItemId: ItemDiscountId,
-			AgreementId:     AgreementId,
-		}).
+		Where("agreement_id = ? AND agreement_item_id = ? ", AgreementId, ItemDiscountId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount Item not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount Item",
 			Err:        err,
 		}
 	}
@@ -720,21 +816,27 @@ func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, Item
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, DiscountValueId, AgreementId int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, AgreementId int, DiscountValueId int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscount{}
 	response := masterpayloads.DiscountValueRequest{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.AgreementDiscount{
-			AgreementDiscountId: DiscountValueId,
-			AgreementId:         AgreementId,
-		}).
+		Where("agreement_id = ? AND agreement_discount_id = ?  ", AgreementId, DiscountValueId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount value not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount value",
 			Err:        err,
 		}
 	}
@@ -754,9 +856,7 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response := masterpayloads.AgreementResponse{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.Agreement{
-			AgreementCode: AgreementCode,
-		}).
+		Where("agreement_code = ?", AgreementCode).
 		First(&entities).
 		Error
 
@@ -776,12 +876,39 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 		}
 	}
 
+	// fetch data client type from utils cross service
+	clientTypeResponse, clientTypeErr := generalserviceapiutils.GetClientTypeById(customerResponse.ClientTypeId)
+	if clientTypeErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        clientTypeErr.Err,
+		}
+	}
+
 	// fetch data company from utils cross service
 	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
 	if compErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        compErr.Err,
+		}
+	}
+
+	// fetch data profit center from utils cross service
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entities.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	// fetch term of payment from utils cross service
+	termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entities.TopId)
+	if termOfPaymentErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        termOfPaymentErr.Err,
 		}
 	}
 
@@ -809,6 +936,175 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
+	response.CustomerType = clientTypeResponse.ClientTypeDescription
+	response.ProfitCenterName = profitCenterResponse.ProfitCenterName
+	response.TermOfPaymentCode = termOfPaymentResponse.TermOfPaymentCode
+	response.TermOfPaymentName = termOfPaymentResponse.TermOfPaymentName
 
 	return response, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementByHeaderId(tx *gorm.DB, AgreementId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.AgreementDiscountGroupDetail{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementDiscountGroupDetail{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	whereQuery = whereQuery.Where("agreement_id = ?", AgreementId)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	var results []map[string]interface{}
+	for _, entity := range entities {
+		selectionName := "unknown"
+		if entity.AgreementSelection == 0 {
+			selectionName = "discount"
+		} else if entity.AgreementSelection == 1 {
+			selectionName = "markup"
+		}
+
+		// fetch order type from utils cross service
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
+		if orderTypeError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: orderTypeError.StatusCode,
+				Err:        orderTypeError.Err,
+			}
+		}
+
+		result := map[string]interface{}{
+			"agreement_discount_group_id":  entity.AgreementDiscountGroupId,
+			"agreement_id":                 entity.AgreementId,
+			"agreement_selection":          entity.AgreementSelection,
+			"agreement_selection_name":     selectionName,
+			"agreement_order_type_id":      entity.AgreementOrderTypeId,
+			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
+			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
+			"agreement_discount":           entity.AgreementDiscount,
+			"agreement_detail_remarks":     entity.AgreementDetailRemarks,
+		}
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountItemAgreementByHeaderId(tx *gorm.DB, AgreementId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.AgreementItemDetail{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementItemDetail{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	whereQuery = whereQuery.Where("agreement_id = ?", AgreementId)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.AgreementItemDetail{}
+		return pages, nil
+	}
+
+	pages.Rows = entities
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountValueAgreementByHeaderId(tx *gorm.DB, AgreementId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	entities := []masterentities.AgreementDiscount{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementDiscount{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	whereQuery = whereQuery.Where("agreement_id = ?", AgreementId)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.AgreementDiscount{}
+		return pages, nil
+	}
+
+	pages.Rows = entities
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteMultiIdDiscountGroup(tx *gorm.DB, AgreementId int, DiscountGroupIds []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementDiscountGroupDetail
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_group_id IN (?)", AgreementId, DiscountGroupIds).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting discount group",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteMultiIdItemDiscount(tx *gorm.DB, AgreementId int, ItemDiscountIds []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementItemDetail
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_item_id IN (?)", AgreementId, ItemDiscountIds).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting item discount",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteMultiIdDiscountValue(tx *gorm.DB, AgreementId int, DiscountValueIds []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementDiscount
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_id IN (?)", AgreementId, DiscountValueIds).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting discount value",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
 }
