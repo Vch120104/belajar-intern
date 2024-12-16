@@ -30,6 +30,7 @@ type ItemLocationTransferController interface {
 	RejectItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 
+	GetAllItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
@@ -42,6 +43,7 @@ func NewItemLocationTransferController(
 		ItemLocationTransferService: itemLocationTransferServiceService,
 	}
 }
+
 func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -197,6 +199,40 @@ func (c *ItemLocationTransferControllerImpl) DeleteItemLocationTransfer(writer h
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Delete Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_item_warehouse_transfer_request_detail.transfer_request_system_number": queryValues.Get("transfer_request_system_number"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	response, err := c.ItemLocationTransferService.GetAllItemLocationTransferDetail(criteria, paginate)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		response.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		response.Limit,
+		response.Page,
+		int64(response.TotalRows),
+		response.TotalPages,
+	)
 }
 
 func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {

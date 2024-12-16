@@ -364,6 +364,8 @@ func (r *ItemLocationTransferRepositoryImpl) RejectItemLocationTransfer(tx *gorm
 	return responses, nil
 }
 
+// uspg_atTrfReq0_Delete
+// IF @Option = 1
 func (r *ItemLocationTransferRepositoryImpl) DeleteItemLocationTransfer(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	errDeleteDetail := tx.
 		Where("transfer_request_system_number = ?", id).
@@ -384,6 +386,47 @@ func (r *ItemLocationTransferRepositoryImpl) DeleteItemLocationTransfer(tx *gorm
 	}
 
 	return true, nil
+}
+
+// uspg_atTrfReq1_Select
+// IF @Option = 4
+func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransferDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var entities transactionsparepartentities.ItemWarehouseTransferRequestDetail
+	var responses []transactionsparepartpayloads.GetAllItemLocationTransferDetailResponse
+
+	baseModelQuery := tx.Model(&entities).
+		Select(
+			"trx_item_warehouse_transfer_request_detail.transfer_request_detail_system_number",
+			"trx_item_warehouse_transfer_request_detail.transfer_request_system_number",
+			"trx_item_warehouse_transfer_request_detail.item_id",
+			"Item.item_code",
+			"Item.item_name",
+			"Item.unit_of_measurement_stock_id",
+			"UnitOfMeasurementStock.uom_code as unit_of_measurement_stock_code",
+			"UnitOfMeasurementStock.uom_description as unit_of_measurement_stock_description",
+			"trx_item_warehouse_transfer_request_detail.request_quantity",
+			"trx_item_warehouse_transfer_request_detail.location_id_from",
+			"LocationFrom.warehouse_location_code as location_code_from",
+			"trx_item_warehouse_transfer_request_detail.location_id_to",
+			"LocationTo.warehouse_location_code as location_code_to",
+		).
+		Joins("LEFT JOIN mtr_item Item ON Item.item_id = trx_item_warehouse_transfer_request_detail.item_id").
+		Joins("LEFT JOIN mtr_uom UnitOfMeasurementStock ON UnitOfMeasurementStock.uom_id = Item.unit_of_measurement_stock_id").
+		Joins("LEFT JOIN mtr_warehouse_location LocationFrom ON LocationFrom.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_from").
+		Joins("LEFT JOIN mtr_warehouse_location LocationTo ON LocationTo.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_to")
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.Rows = responses
+
+	return pages, nil
 }
 
 // uspg_atTrfReq1_Insert
@@ -440,7 +483,7 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 			)
 		,0)) as quantity_available`,
 		).
-		Joins("LEFT JOIN mtr_warehouse_master AS B ON mtr_location_stock.company_id = B.COMPANY_CODE AND mtr_location_stock.warehouse_id = B.warehouse_id").
+		Joins("LEFT JOIN mtr_warehouse_master AS B ON mtr_location_stock.company_id = B.company_id AND mtr_location_stock.warehouse_id = B.warehouse_id").
 		Where("mtr_location_stock.company_id = ?", itemLocationTransferEntity.CompanyId).
 		Where("mtr_location_stock.period_month = ?", periodResponse.PeriodMonth).
 		Where("mtr_location_stock.period_year = ?", periodResponse.PeriodYear).
