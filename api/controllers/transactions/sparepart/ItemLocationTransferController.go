@@ -27,6 +27,8 @@ type ItemLocationTransferController interface {
 	UpdateItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	AcceptItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	RejectItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
+
+	InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemLocationTransferController(
@@ -179,4 +181,26 @@ func (c *ItemLocationTransferControllerImpl) RejectItemLocationTransfer(writer h
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {
+	formRequest := transactionsparepartpayloads.InsertItemLocationTransferDetailRequest{}
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	response, err := c.ItemLocationTransferService.InsertItemLocationTransferDetail(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Create Data Successfully", http.StatusOK)
 }

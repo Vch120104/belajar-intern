@@ -81,3 +81,20 @@ type RejectItemLocationTransferRequest struct {
 	ApprovalById   *int    `json:"approval_by_id"`
 	ApprovalRemark *string `json:"approval_remark"`
 }
+
+type GetItemLocationTransferDetailByIdResponse struct {
+	TransferRequestDetailSystemNumber int  `json:"transfer_request_detail_system_number"`
+	TransferRequestSystemNumber       int  `json:"transfer_request_system_number"`
+	ItemId                            *int `json:"item_id"`
+	RequestQuantity                   *int `json:"request_quantity"`
+	LocationIdFrom                    *int `json:"location_id_from"`
+	LocationIdTo                      *int `json:"location_id_to"`
+}
+
+type InsertItemLocationTransferDetailRequest struct {
+	TransferRequestSystemNumber int  `json:"transfer_request_system_number" validate:"required"`
+	ItemId                      *int `json:"item_id" validate:"required"`
+	RequestQuantity             *int `json:"request_quantity" validate:"required"`
+	LocationIdFrom              *int `json:"location_id_from" validate:"required"`
+	LocationIdTo                *int `json:"location_id_to" validate:"required"`
+}

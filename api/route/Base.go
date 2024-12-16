@@ -1904,12 +1904,16 @@ func ItemLocationTransferRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
+	// Header
 	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
 	router.Get("/{transfer_request_system_number}", itemLocationTransferController.GetItemLocationTransferById)
 	router.Post("/", itemLocationTransferController.InsertItemLocationTransfer)
 	router.Put("/{transfer_request_system_number}", itemLocationTransferController.UpdateItemLocationTransfer)
 	router.Put("/accept/{transfer_request_system_number}", itemLocationTransferController.AcceptItemLocationTransfer)
 	router.Put("/reject/{transfer_request_system_number}", itemLocationTransferController.RejectItemLocationTransfer)
+
+	// Detail
+	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransfer)
 
 	return router
 }
