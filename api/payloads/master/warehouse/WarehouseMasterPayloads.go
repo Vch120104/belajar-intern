@@ -247,8 +247,8 @@ type AuthorizedUserResponse struct {
 }
 
 type WarehouseAuthorize struct {
-	WarehouseAuthorizedId int `json:"warehouse_authorized_id"`
-	EmployeeId            int `json:"employee_id"`
-	CompanyId             int `json:"company_id"`
-	WarehouseId           int `json:"warehouse_id"`
+	WarehouseAuthorizedId int `json:"warehouse_authorized_id" parent_entity:"mtr_warehouse_authorized" main_table:"mtr_warehouse_authorized"`
+	EmployeeId            int `json:"employee_id" parent_entity:"mtr_warehouse_authorized"`
+	CompanyId             int `json:"company_id" parent_entity:"mtr_warehouse_authorized"`
+	WarehouseId           int `json:"warehouse_id" parent_entity:"mtr_warehouse_authorized"`
 }

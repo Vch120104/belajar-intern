@@ -305,7 +305,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// User
-	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserCompanyAccessById(entities.UserId)
+	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserDetailsByID(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
 		userDetails = masterwarehousepayloads.UserResponse{
@@ -797,14 +797,16 @@ func (r *WarehouseMasterImpl) ChangeStatus(tx *gorm.DB, warehouseId int) (master
 func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []masterwarehouseentities.WarehouseAuthorize
 
+	// Query dasar dengan join ke tabel yang dibutuhkan
 	baseModelQuery := tx.Model(&masterwarehouseentities.WarehouseAuthorize{}).
-		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.user_id").
-		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_detail_id")
+		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_company_access.username, mtr_user_company_access.user_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_company_access ON mtr_warehouse_authorize.employee_id = mtr_user_company_access.user_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_user_company_access.user_id = mtr_user_details.user_id")
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	queryWithFilters := utils.ApplyFilter(baseModelQuery, filterCondition)
 
 	var totalRows int64
-	if err := whereQuery.Count(&totalRows).Error; err != nil {
+	if err := queryWithFilters.Count(&totalRows).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count authorized user records",
@@ -817,7 +819,7 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 		return pages, nil
 	}
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	err := queryWithFilters.Scopes(pagination.Paginate(&pages, queryWithFilters)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -828,7 +830,6 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 
 	var results []map[string]interface{}
 	for _, entity := range entities {
-
 		userDetails, err := generalserviceapiutils.GetUserDetailsByID(entity.EmployeeId)
 		if err != nil {
 			return pages, err
@@ -836,9 +837,9 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 
 		result := map[string]interface{}{
 			"warehouse_authorize_id": entity.WarehouseAuthorizedId,
-			"employee_id":            entity.EmployeeId,
+			"username":               userDetails.Username,
 			"employee_name":          userDetails.EmployeeName,
-			"user_id":                userDetails.UserId,
+			"employee_id":            userDetails.UserId,
 		}
 
 		results = append(results, result)
