@@ -1921,6 +1921,7 @@ func ItemLocationTransferRouter(
 	// Detail
 	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransfer)
 	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
+	router.Delete("/detail/{multi_id}", itemLocationTransferController.DeleteItemLocationTransferDetail)
 
 	return router
 }

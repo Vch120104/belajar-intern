@@ -12,6 +12,7 @@ import (
 	"after-sales/api/validation"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -30,6 +31,7 @@ type ItemLocationTransferController interface {
 
 	InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemLocationTransferController(
@@ -228,4 +230,37 @@ func (c *ItemLocationTransferControllerImpl) UpdateItemLocationTransferDetail(wr
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) DeleteItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, convertErr := strconv.Atoi(strings.TrimSpace(element))
+		if convertErr != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	response, err := c.ItemLocationTransferService.DeleteItemLocationTransferDetail(intIds)
+	if err != nil {
+		if err.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, err)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Delete Data Successfully", http.StatusOK)
 }

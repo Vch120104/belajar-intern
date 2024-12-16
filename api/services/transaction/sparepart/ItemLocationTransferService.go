@@ -17,4 +17,5 @@ type ItemLocationTransferService interface {
 
 	InsertItemLocationTransferDetail(request transactionsparepartpayloads.InsertItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse)
 	UpdateItemLocationTransferDetail(id int, request transactionsparepartpayloads.UpdateItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse)
+	DeleteItemLocationTransferDetail(ids []int) (bool, *exceptions.BaseErrorResponse)
 }

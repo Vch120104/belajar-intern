@@ -567,3 +567,17 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx
 
 	return responses, nil
 }
+
+// uspg_atTrfReq1_Delete
+// IF @Option = 0
+func (r *ItemLocationTransferRepositoryImpl) DeleteItemLocationTransferDetail(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {
+	errDeleteDetail := tx.Delete(&transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, ids).Error
+	if errDeleteDetail != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errDeleteDetail,
+		}
+	}
+
+	return true, nil
+}
