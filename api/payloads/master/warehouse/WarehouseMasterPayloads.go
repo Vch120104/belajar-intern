@@ -241,14 +241,13 @@ type AuthorizedUserDetailsResponse struct {
 
 type AuthorizedUserResponse struct {
 	WarehouseAuthorizedId int    `json:"warehouse_authorize_id" gorm:"column:warehouse_authorize_id"`
-	EmployeeId            int    `json:"user_employee_id" gorm:"column:employee_id"`
+	EmployeeId            int    `json:"user_id" gorm:"column:user_id"`
 	EmployeeName          string `json:"employee_name" gorm:"column:employee_name"`
-	UserId                int    `json:"user_id" gorm:"column:user_id"`
 }
 
 type WarehouseAuthorize struct {
 	WarehouseAuthorizedId int `json:"warehouse_authorized_id" parent_entity:"mtr_warehouse_authorized" main_table:"mtr_warehouse_authorized"`
-	EmployeeId            int `json:"employee_id" parent_entity:"mtr_warehouse_authorized"`
+	EmployeeId            int `json:"user_id" parent_entity:"mtr_warehouse_authorized"`
 	CompanyId             int `json:"company_id" parent_entity:"mtr_warehouse_authorized"`
 	WarehouseId           int `json:"warehouse_id" parent_entity:"mtr_warehouse_authorized"`
 }
