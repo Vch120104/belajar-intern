@@ -52,7 +52,7 @@ func (s *LocationStockServiceImpl) UpdateLocationStock(payloads masterwarehousep
 	return results, nil
 }
 
-func (l *LocationStockServiceImpl) GetAllLocationStock(conditions []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (l *LocationStockServiceImpl) GetViewLocationStock(conditions []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := l.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -76,7 +76,7 @@ func (l *LocationStockServiceImpl) GetAllLocationStock(conditions []utils.Filter
 			}
 		}
 	}()
-	results, err := l.LocationStockRepo.GetAllStock(tx, conditions, pagination)
+	results, err := l.LocationStockRepo.GetViewLocationStock(tx, conditions, pagination)
 	if err != nil {
 		return results, err
 	}

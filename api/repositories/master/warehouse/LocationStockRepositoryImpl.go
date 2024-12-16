@@ -25,7 +25,8 @@ func NewLocationStockRepositoryImpl() masterrepository.LocationStockRepository {
 	return &LocationStockRepositoryImpl{}
 }
 
-func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+// viewlocationstock table view
+func (repo *LocationStockRepositoryImpl) GetViewLocationStock(db *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//var
 	var response []masterwarehousepayloads.LocationStockDBResponse
 	Jointable := db.Table("mtr_location_stock a").Select(`a.company_id,

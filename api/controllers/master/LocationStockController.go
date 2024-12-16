@@ -14,7 +14,7 @@ import (
 )
 
 type LocationStockController interface {
-	GetAllLocationStock(writer http.ResponseWriter, request *http.Request)
+	GetViewLocationStock(writer http.ResponseWriter, request *http.Request)
 	UpdateLocationStock(writer http.ResponseWriter, request *http.Request)
 	GetAvailableQuantity(writer http.ResponseWriter, request *http.Request)
 }
@@ -26,7 +26,7 @@ func NewLocationStockController(LocationStockService masterservice.LocationStock
 	return &LocationStockControlerImpl{LocationStockService: LocationStockService}
 }
 
-// GetAllLocationStock
+// GetViewLocationStock
 //
 //	@Summary		Get All Location Stock
 //	@Description	REST API Location Stock
@@ -48,7 +48,7 @@ func NewLocationStockController(LocationStockService masterservice.LocationStock
 //	@Success		200									{object}	[]masterwarehousepayloads.LocationStockDBResponse
 //	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/location-stock/ [get]
-func (l *LocationStockControlerImpl) GetAllLocationStock(writer http.ResponseWriter, request *http.Request) {
+func (l *LocationStockControlerImpl) GetViewLocationStock(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"company_id":      queryValues.Get("company_id"),
@@ -67,7 +67,7 @@ func (l *LocationStockControlerImpl) GetAllLocationStock(writer http.ResponseWri
 		SortBy: queryValues.Get("sort_by"),
 	}
 	fiter := utils.BuildFilterCondition(queryParams)
-	result, err := l.LocationStockService.GetAllLocationStock(fiter, pageninateparam)
+	result, err := l.LocationStockService.GetViewLocationStock(fiter, pageninateparam)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
