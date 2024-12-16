@@ -98,3 +98,10 @@ type InsertItemLocationTransferDetailRequest struct {
 	LocationIdFrom              *int `json:"location_id_from" validate:"required"`
 	LocationIdTo                *int `json:"location_id_to" validate:"required"`
 }
+
+type UpdateItemLocationTransferDetailRequest struct {
+	ItemId          *int `json:"item_id" validate:"required"`
+	RequestQuantity *int `json:"request_quantity" validate:"required"`
+	LocationIdFrom  *int `json:"location_id_from" validate:"required"`
+	LocationIdTo    *int `json:"location_id_to" validate:"required"`
+}

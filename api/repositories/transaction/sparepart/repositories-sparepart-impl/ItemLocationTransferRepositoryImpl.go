@@ -243,7 +243,6 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransfer(tx *gorm
 			Err:        errGetTransferRequest,
 		}
 	}
-
 	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
 		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -280,7 +279,6 @@ func (r *ItemLocationTransferRepositoryImpl) AcceptItemLocationTransfer(tx *gorm
 			Err:        errGetTransferRequest,
 		}
 	}
-
 	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
 		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -329,7 +327,6 @@ func (r *ItemLocationTransferRepositoryImpl) RejectItemLocationTransfer(tx *gorm
 			Err:        errGetTransferRequest,
 		}
 	}
-
 	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
 		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -380,7 +377,6 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 			Err:        errGetTransferRequest,
 		}
 	}
-
 	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
 		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -458,6 +454,114 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+		}
+	}
+
+	return responses, nil
+}
+
+// uspg_atTrfReq1_Update
+// IF @Option = 0
+func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx *gorm.DB, id int, request transactionsparepartpayloads.UpdateItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {
+	var itemLocationTransferDetailEntity transactionsparepartentities.ItemWarehouseTransferRequestDetail
+	errGetTransferRequestDetail := tx.Limit(1).Find(&itemLocationTransferDetailEntity, id).Error
+	if errGetTransferRequestDetail != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetTransferRequestDetail,
+		}
+	}
+	if itemLocationTransferDetailEntity.TransferRequestDetailSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request detail data not found"),
+		}
+	}
+
+	var itemLocationTransferEntity transactionsparepartentities.ItemWarehouseTransferRequest
+	errGetTransferRequest := tx.Limit(1).Find(&itemLocationTransferEntity, itemLocationTransferDetailEntity.TransferRequestSystemNumberId).Error
+	if errGetTransferRequest != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetTransferRequest,
+		}
+	}
+	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request data not found"),
+		}
+	}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(itemLocationTransferEntity.CompanyId, "SP")
+	if periodError != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching company current period",
+			Err:        periodError.Err,
+		}
+	}
+
+	var quantityAvailable int
+	errGetQuantityAvailable := tx.
+		Model(&masterentities.LocationStock{}).
+		Select(
+			`SUM(ISNULL(
+			(
+				ISNULL(quantity_begin, 0) 
+				+ ISNULL(quantity_purchase, 0) 
+				- ISNULL(quantity_purchase_return, 0) 
+				+ ISNULL(quantity_transfer_in, 0)
+				+ ISNULL(quantity_robbing_in, 0) 
+				+ ISNULL(quantity_adjustment, 0) 
+				+ ISNULL(quantity_sales_return, 0)
+				+ ISNULL(quantity_assembly_in,0) 
+			) 
+			- 
+			(
+				ISNULL(quantity_sales, 0) 
+				+ ISNULL(quantity_transfer_out, 0)
+				+ ISNULL(quantity_robbing_out, 0) 
+				+ ISNULL(quantity_assembly_out,0) 
+				+ ISNULL(quantity_allocated, 0)
+			)
+		,0)) as quantity_available`,
+		).
+		Joins("LEFT JOIN mtr_warehouse_master AS B ON mtr_location_stock.company_id = B.COMPANY_CODE AND mtr_location_stock.warehouse_id = B.warehouse_id").
+		Where("mtr_location_stock.company_id = ?", itemLocationTransferEntity.CompanyId).
+		Where("mtr_location_stock.period_month = ?", periodResponse.PeriodMonth).
+		Where("mtr_location_stock.period_year = ?", periodResponse.PeriodYear).
+		Where("mtr_location_stock.warehouse_id = ?", itemLocationTransferEntity.RequestFromWarehouseId).
+		Where("mtr_location_stock.warehouse_group_id = ?", itemLocationTransferEntity.RequestFromWarehouse.WarehouseGroupId).
+		Where("mtr_location_stock.item_id = ?", request.ItemId).
+		Scan(&quantityAvailable).Error
+	if errGetQuantityAvailable != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetQuantityAvailable,
+		}
+	}
+
+	if *request.RequestQuantity > quantityAvailable {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("quantity for transfer request is not available"),
+		}
+	}
+
+	var responses transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse
+	errUpdateItemLocationTransferDetail := tx.Model(&itemLocationTransferDetailEntity).
+		Updates(map[string]interface{}{
+			"item_id":          request.ItemId,
+			"request_quantity": request.RequestQuantity,
+			"location_id_from": request.LocationIdFrom,
+			"location_id_to":   request.LocationIdTo,
+		}).
+		Scan(&responses).Error
+	if errUpdateItemLocationTransferDetail != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUpdateItemLocationTransferDetail,
 		}
 	}
 

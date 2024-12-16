@@ -29,6 +29,7 @@ type ItemLocationTransferController interface {
 	RejectItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 
 	InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemLocationTransferController(
@@ -203,4 +204,28 @@ func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransferDetail(wr
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Create Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) UpdateItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {
+	transferRequesDetailtSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_detail_system_number"))
+
+	formRequest := transactionsparepartpayloads.UpdateItemLocationTransferDetailRequest{}
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	response, err := c.ItemLocationTransferService.UpdateItemLocationTransferDetail(transferRequesDetailtSystemNumber, formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
 }

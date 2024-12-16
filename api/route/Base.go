@@ -1920,6 +1920,7 @@ func ItemLocationTransferRouter(
 
 	// Detail
 	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransfer)
+	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
 
 	return router
 }
