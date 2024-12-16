@@ -333,11 +333,6 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
 	WorkOrderController := transactionworkshopcontroller.NewWorkOrderController(WorkOrderService)
 
-	//Sales Order
-	SalesOrderRepository := transactionsparepartrepositoryimpl.StartSalesOrderRepositoryImpl()
-	SalesOrderService := transactionsparepartserviceimpl.StartSalesOrderService(SalesOrderRepository, db, rdb)
-	SalesOrderController := transactionsparepartcontroller.NewSalesOrderController(SalesOrderService)
-
 	//Service Request
 	ServiceRequestRepository := transactionworkshoprepositoryimpl.OpenServiceRequestRepositoryImpl()
 	ServiceRequestService := transactionworkshopserviceimpl.OpenServiceRequestServiceImpl(ServiceRequestRepository, db, rdb)
@@ -370,6 +365,12 @@ func StartRouting(db *gorm.DB) {
 	BinningListRepository := transactionsparepartrepositoryimpl.NewbinningListRepositoryImpl()
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
 	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
+
+	//sparepart sales flow
+	//sales order
+	SalesOrderRepository := transactionsparepartrepositoryimpl.StartSalesOrderRepositoryImpl()
+	SalesOrderService := transactionsparepartserviceimpl.StartSalesOrderService(SalesOrderRepository, db, rdb)
+	SalesOrderController := transactionsparepartcontroller.StartSalesOrderControllerImpl(SalesOrderService)
 
 	//claim supplier
 	ClaimSupplierRepository := transactionsparepartrepositoryimpl.NewClaimSupplierRepositoryImpl()
