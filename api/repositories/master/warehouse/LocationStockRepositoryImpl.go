@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -327,7 +328,6 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 		}
 	}
 	var NegativeStock bool = false
-
 	err = db.Model(&WarehouseMasterEntity).
 		Where(masterwarehouseentities.WarehouseMaster{CompanyId: payloads.ItemId, WarehouseId: payloads.WarehouseId}).
 		Select("warehouse_negative_stock").Scan(&NegativeStock).Error
@@ -460,4 +460,119 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 		//}
 	}
 	return true, nil
+}
+
+// [uspg_amLocationStockItem_Select] option 1
+func (repo *LocationStockRepositoryImpl) GetAvailableQuantity(db *gorm.DB, payload masterwarehousepayloads.GetAvailableQuantityPayload) (masterwarehousepayloads.GetQuantityAvailablePayload, *exceptions.BaseErrorResponse) {
+	var qtyResult float64
+	var qtyTemp float64
+	var periodYear, periodMonth string
+	quantityAvail := masterwarehousepayloads.GetQuantityAvailablePayload{}
+	moduleCode := "SP"
+	//periodStatusClose := 3
+
+	// Validate Item Code
+	var itemCount int64
+	if err := db.Table("mtr_item").
+		Where("item_id = ?", payload.ItemId).
+		Count(&itemCount).Error; err != nil {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count item",
+			Err:        err,
+		}
+	}
+
+	if itemCount == 0 {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Item not found",
+			Err:        errors.New("item not found"),
+		}
+	}
+
+	// Handle period date if not provided
+	if payload.PeriodDate.IsZero() {
+		payload.PeriodDate = time.Now()
+	}
+
+	// Get current period year and month
+	periodYear = payload.PeriodDate.Format("2006")
+	periodMonth = payload.PeriodDate.Format("01")
+
+	// Check if the period is closed
+	openPeriodResponse, openPeriodErr := financeserviceapiutils.GetOpenPeriodByCompany(payload.CompanyId, moduleCode)
+	if openPeriodErr != nil {
+		return quantityAvail, openPeriodErr
+	}
+	if openPeriodResponse.PeriodMonth != periodMonth && openPeriodResponse.PeriodYear != periodYear {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Period is closed",
+			Err:        errors.New("period is closed"),
+		}
+	}
+	//var periodStatusId int
+	//if err := db.Table("dms_microservices_finance_dev.dbo.mtr_period_audit").
+	//	Select("period_status_id").
+	//	Where("company_id = ? AND period_year = ? AND period_month = ?", companyId, periodYear, periodMonth).
+	//	Scan(&periodStatusId).Error; err != nil {
+	//
+	//}
+
+	//if periodStatusId == periodStatusClose {
+	//	return quantityAvail, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusConflict,
+	//		Message:    "Period is closed",
+	//		Err:        errors.New("period is closed"),
+	//	}
+	//}
+
+	// Build the query based on the option: ON HAND QTY & AVAILABLE QTY
+	query := db.Model(&masterentities.LocationStock{}).
+		Where(masterentities.LocationStock{CompanyId: payload.CompanyId,
+			PeriodYear:       periodYear,
+			PeriodMonth:      periodMonth,
+			WarehouseId:      payload.WarehouseId,
+			LocationId:       payload.LocationId,
+			ItemId:           payload.ItemId,
+			WarehouseGroupId: payload.WarehouseGroupId})
+	//Where("company_id = ? AND period_year = ? AND period_month = ? AND warehouse_id = ? AND location_id = ? AND item_id = ? AND warehouse_group = ?",
+	//	companyId, periodYear, periodMonth, warehouseId, locationId, itemId, warehouseId)
+	//
+	//switch option {
+	//case 1:
+	//	if err := query.Select	va("SUM(quantity_ending)").Scan(&qtyTemp).Error; err != nil {
+	//		return 0, &exceptions.BaseErrorResponse{
+	//			StatusCode: http.StatusInternalServerError,
+	//			Message:    "Failed to get on hand quantity for item",
+	//			Err:        err,
+	//		}
+	//	}
+	//case 2:
+	if err := query.
+		//Where("module_code = ?", moduleCode).
+		Select(`
+		(ISNULL(quantity_begin, 0) + ISNULL(quantity_purchase, 0) - ISNULL(quantity_purchase_return, 0) +
+		ISNULL(quantity_transfer_in, 0) + ISNULL(quantity_robbing_in, 0) + ISNULL(quantity_adjustment, 0)
+		 + ISNULL(quantity_sales_return, 0) + ISNULL(quantity_assembly_in, 0)) - (ISNULL(quantity_sales, 0) 
+		 + ISNULL(quantity_transfer_out, 0) + ISNULL(quantity_robbing_out, 0) + ISNULL(quantity_assembly_out, 0) +
+		ISNULL(quantity_allocated, 0))
+		AS quantity_available`).Scan(&qtyTemp).Error; err != nil {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get available quantity for item",
+			Err:        err,
+		}
+	}
+	//default:
+	//	return 0, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusBadRequest,
+	//		Message:    "Invalid option provided",
+	//		Err:        errors.New("invalid option"),
+	//	}
+	//}
+	qtyResult = qtyTemp
+	quantityAvail.QuantityAvailable = qtyResult
+	return quantityAvail, nil
 }

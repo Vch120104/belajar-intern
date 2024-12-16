@@ -2,7 +2,6 @@ package masterserviceimpl
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -55,16 +54,65 @@ func (s *LocationStockServiceImpl) UpdateLocationStock(payloads masterwarehousep
 
 func (l *LocationStockServiceImpl) GetAllLocationStock(conditions []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := l.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
+	var err *exceptions.BaseErrorResponse
 
-	results, repoErr := l.LocationStockRepo.GetAllStock(tx, conditions, pagination)
-	if repoErr != nil {
-		return results, repoErr
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := l.LocationStockRepo.GetAllStock(tx, conditions, pagination)
+	if err != nil {
+		return results, err
 	}
 
 	return results, nil
 }
+func (s *LocationStockServiceImpl) GetAvailableQuantity(payload masterwarehousepayloads.GetAvailableQuantityPayload) (masterwarehousepayloads.GetQuantityAvailablePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := s.LocationStockRepo.GetAvailableQuantity(tx, payload)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
 func NewLocationStockServiceImpl(LocationStockService masterrepository.LocationStockRepository, db *gorm.DB, redis *redis.Client) masterservice.LocationStockService {
 	return &LocationStockServiceImpl{
 		LocationStockRepo: LocationStockService,

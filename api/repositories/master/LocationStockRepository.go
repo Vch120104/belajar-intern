@@ -11,4 +11,5 @@ import (
 type LocationStockRepository interface {
 	GetAllStock(db *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	UpdateLocationStock(db *gorm.DB, payloads masterwarehousepayloads.LocationStockUpdatePayloads) (bool, *exceptions.BaseErrorResponse)
+	GetAvailableQuantity(db *gorm.DB, payload masterwarehousepayloads.GetAvailableQuantityPayload) (masterwarehousepayloads.GetQuantityAvailablePayload, *exceptions.BaseErrorResponse)
 }

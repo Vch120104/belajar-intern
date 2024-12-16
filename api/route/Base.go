@@ -604,6 +604,7 @@ func LocationStockRouter(
 
 	router.Get("/", LocationStock.GetAllLocationStock)
 	router.Put("/", LocationStock.UpdateLocationStock)
+	router.Get("/available_quantity", LocationStock.GetAvailableQuantity)
 	return router
 }
 
