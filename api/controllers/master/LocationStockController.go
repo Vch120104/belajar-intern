@@ -96,19 +96,29 @@ func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, res, "success to update location stock", http.StatusOK)
 }
 func (l *LocationStockControlerImpl) GetAvailableQuantity(writer http.ResponseWriter, request *http.Request) {
+
 	filter := masterwarehousepayloads.GetAvailableQuantityPayload{}
 	queryValues := request.URL.Query()
+
 	periodDate := queryValues.Get("period_date")
+	if periodDate == "" {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "period_date is required",
+		})
+		return
+	}
+
 	periodDateParse, errParseDate := time.Parse("2006-01-02T15:04:05.000Z", periodDate)
 	if errParseDate != nil {
 		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to parse date",
-			//Data:       errParseDate,
-			Err: errParseDate,
+			Err:        errParseDate,
 		})
 		return
 	}
+
 	filter = masterwarehousepayloads.GetAvailableQuantityPayload{
 		CompanyId:        utils.NewGetQueryInt(queryValues, "company_id"),
 		PeriodDate:       periodDateParse,
@@ -118,10 +128,20 @@ func (l *LocationStockControlerImpl) GetAvailableQuantity(writer http.ResponseWr
 		WarehouseGroupId: utils.NewGetQueryInt(queryValues, "warehouse_group_id"),
 		UomTypeId:        utils.NewGetQueryInt(queryValues, "uom_id"),
 	}
+
+	if filter.CompanyId == 0 || filter.PeriodDate.IsZero() || filter.WarehouseId == 0 {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Required parameters are missing",
+		})
+		return
+	}
+
 	res, err := l.LocationStockService.GetAvailableQuantity(filter)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
+
 	payloads.NewHandleSuccess(writer, res, "success to get available quantity", http.StatusOK)
 }
