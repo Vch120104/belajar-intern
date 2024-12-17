@@ -17,7 +17,7 @@ type ServiceRequest struct {
 	BookingSystemNumber          int                    `gorm:"column:booking_system_number;size:30;" json:"booking_system_number"`
 	EstimationSystemNumber       int                    `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`
 	WorkOrderSystemNumber        int                    `gorm:"column:work_order_system_number;size:30;" json:"work_order_system_number"`
-	ReferenceDocSystemNumber     int                    `gorm:"column:reference_doc_system_number;size:30;" json:"reference_doc_system_number"`
+	ReferenceSystemNumber        int                    `gorm:"column:reference_system_number;size:30;" json:"reference_system_number"`
 	ProfitCenterId               int                    `gorm:"column:profit_center_id;size:30;" json:"profit_center_id"`
 	CompanyId                    int                    `gorm:"column:company_id;size:30;" json:"company_id"`
 	DealerRepresentativeId       int                    `gorm:"column:dealer_representative_id;size:30;" json:"dealer_representative_id"`

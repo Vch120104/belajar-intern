@@ -41,6 +41,7 @@ type LookupController interface {
 	LocationAvailable(writer http.ResponseWriter, request *http.Request)
 	ItemDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
+	GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -63,9 +64,15 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"opr_item_code": queryValues.Get("opr_item_code"),
-		"opr_item_name": queryValues.Get("opr_item_name"),
+		"package_id":         queryValues.Get("package_id"),
+		"package_code":       queryValues.Get("package_code"),
+		"package_name":       queryValues.Get("package_name"),
+		"profit_center_name": queryValues.Get("profit_center_name"),
+		"model_code":         queryValues.Get("model_code"),
+		"model_description":  queryValues.Get("model_description"),
+		"package_price":      queryValues.Get("package_price"),
 	}
+
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -73,7 +80,8 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCode(linetypeId, paginate, criteria)
+
+	lookup, baseErr := r.LookupService.ItemOprCode(linetypeId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -83,7 +91,16 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		lookup.Limit,
+		lookup.Page,
+		int64(lookup.TotalRows),
+		lookup.TotalPages,
+	)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
@@ -106,7 +123,6 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("itemCode", itemCode)
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{}
@@ -118,7 +134,7 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
+	lookup, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -128,7 +144,12 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccess(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+	)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, request *http.Request) {
@@ -155,7 +176,7 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByID(linetypeId, itemId, paginate, criteria)
+	lookup, baseErr := r.LookupService.ItemOprCodeByID(linetypeId, itemId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -165,7 +186,12 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccess(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+	)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request) {
@@ -918,6 +944,39 @@ func (r *LookupControllerImpl) ItemSubstituteDetailForItemInquiry(writer http.Re
 	}
 
 	item, baseErr := r.LookupService.ItemSubstituteDetailForItemInquiry(criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	internalFilterCondition := map[string]string{
+		"mtr_item.item_code": queryValues.Get("item_code"),
+		"mtr_item.item_name": queryValues.Get("item_name"),
+	}
+	externalFilterCondition := map[string]string{
+		"supplier_code": queryValues.Get("supplier_code"),
+		"supplier_name": queryValues.Get("supplier_name"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	item, baseErr := r.LookupService.GetPartNumberItemImport(internalCriteria, externalCriteria, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)

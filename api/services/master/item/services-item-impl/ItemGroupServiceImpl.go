@@ -263,6 +263,36 @@ func (i *ItemGroupServiceImpl) NewItemGroup(payload masteritempayloads.NewItemGr
 	return results, nil
 }
 
+func (i *ItemGroupServiceImpl) GetItemGroupByCode(code string) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := i.repository.GetItemGroupByCode(tx, code)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func NewItemGroupServiceImpl(repo masteritemrepository.ItemGroupRepository, DB *gorm.DB, rdb *redis.Client) masteritemservice.ItemGroupService {
 	return &ItemGroupServiceImpl{
 		repository: repo,

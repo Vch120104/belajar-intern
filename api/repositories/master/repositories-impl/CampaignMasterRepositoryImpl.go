@@ -4,6 +4,7 @@ import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -15,6 +16,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -305,7 +307,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 	jobTypeCampaignId := jobType.JobTypeId
 
 	// Fetch Work Order Transaction Type
-	transactionType, err := generalserviceapiutils.GetTransactionTypeByCode("Campaign")
+	transactionType, err := generalserviceapiutils.GetWoTransactionTypeByCode("G")
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -339,9 +341,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 
 		// Fetch Warehouse Group
 		var warehouseGroup string
-		if err := tx.Model(&masterentities.WarehouseGroupMappingEntities{}).
-			Select("warehouse_group_mapping_description").
-			Where("warehouse_group_type_code = ?", "WHS_GRP_CAMPAIGN").
+		if err := tx.Model(&masterwarehouseentities.WarehouseGroup{}).
+			Select("warehouse_group_type_code").
+			Where("warehouse_group_mapping_id = ?", 1). //Warehouse Group For Campaign
 			First(&warehouseGroup).Error; err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -533,8 +535,8 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 		return nil, modelErr
 	}
 
-	// Construct the final response with payload and related brand/model information
 	result := map[string]interface{}{
+		"is_active":            payloads.IsActive,
 		"campaign_id":          payloads.CampaignId,
 		"campaign_code":        payloads.CampaignCode,
 		"campaign_name":        payloads.CampaignName,
@@ -653,8 +655,8 @@ func (r *CampaignMasterRepositoryImpl) GetByCodeCampaignMaster(tx *gorm.DB, code
 		return nil, modelErr
 	}
 
-	// Construct the final response with payload and related brand/model information
 	result := map[string]interface{}{
+		"is_active":            payloads.IsActive,
 		"campaign_id":          payloads.CampaignId,
 		"campaign_code":        payloads.CampaignCode,
 		"campaign_name":        payloads.CampaignName,
@@ -703,89 +705,45 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(tx *gorm.
 }
 
 func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var model []masterpayloads.GetModelResponse
 	var entities masterentities.CampaignMaster
-	var payloads []masterpayloads.CampaignMasterResponse
+	var responses []masterpayloads.CampaignMasterResponse
 	var mapResponses []map[string]interface{}
 
-	var modelDescription string
-	var modelCode string
-	var campaignPeriodFrom string
-	var campaignPeriodTo string
-	var newFilterCondition []utils.FilterCondition
-
+	var modelDescription, modelCode, campaignPeriodFrom, campaignPeriodTo string
 	for _, filter := range filterCondition {
-		if filter.ColumnField == "model_description" && filter.ColumnValue != "" {
+		switch filter.ColumnField {
+		case "model_description":
 			modelDescription = filter.ColumnValue
-			continue
-		}
-		if filter.ColumnField == "model_code" && filter.ColumnValue != "" {
+		case "model_code":
 			modelCode = filter.ColumnValue
-			continue
-		}
-		if filter.ColumnField == "campaign_period_from" && filter.ColumnValue != "" {
+		case "campaign_period_from":
 			campaignPeriodFrom = filter.ColumnValue
-			continue
-		}
-		if filter.ColumnField == "campaign_period_to" && filter.ColumnValue != "" {
+		case "campaign_period_to":
 			campaignPeriodTo = filter.ColumnValue
-			continue
 		}
-		newFilterCondition = append(newFilterCondition, filter)
 	}
 
-	baseModelQuery := tx.Model(&entities)
+	query := tx.Model(&entities).
+		Select("mtr_campaign.*, model.model_code, model.model_description").
+		Joins("JOIN dms_microservices_sales_dev.dbo.mtr_unit_model model ON mtr_campaign.model_id = model.model_id")
 
 	if modelDescription != "" {
-		modelIds := []int{}
-		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_description=" + modelDescription
-		modelPayloads := []masterpayloads.GetModelResponse{}
-		if err := utils.Get(modelUrl, &modelPayloads, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		for _, model := range modelPayloads {
-			modelIds = append(modelIds, model.ModelId)
-		}
-		if len(modelIds) == 0 {
-			modelIds = append(modelIds, -1)
-		}
-		baseModelQuery = baseModelQuery.Where("model_id IN ?", modelIds)
+		query = query.Where("model.model_description LIKE ?", fmt.Sprintf("%%%s%%", modelDescription))
 	}
-
 	if modelCode != "" {
-		modelIds := []int{}
-		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_code=" + modelCode
-		modelPayloads := []masterpayloads.GetModelResponse{}
-		if err := utils.Get(modelUrl, &modelPayloads, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		for _, model := range modelPayloads {
-			modelIds = append(modelIds, model.ModelId)
-		}
-		if len(modelIds) == 0 {
-			modelIds = append(modelIds, -1)
-		}
-		baseModelQuery = baseModelQuery.Where("model_id IN ?", modelIds)
+		query = query.Where("model.model_code LIKE ?", fmt.Sprintf("%%%s%%", modelCode))
 	}
-
 	if campaignPeriodFrom != "" {
-		baseModelQuery = baseModelQuery.Where("FORMAT(campaign_period_from, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodFrom+"%")
+		query = query.Where("mtr_campaign.campaign_period_from >= ?", campaignPeriodFrom)
 	}
-
 	if campaignPeriodTo != "" {
-		baseModelQuery = baseModelQuery.Where("FORMAT(campaign_period_to, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodTo+"%")
+		query = query.Where("mtr_campaign.campaign_period_to <= ?", campaignPeriodTo)
 	}
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, newFilterCondition)
+	whereQuery := utils.ApplyFilter(query, filterCondition)
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
-
+	var totalRows int64
+	err := whereQuery.Model(&entities).Count(&totalRows).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -793,54 +751,42 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 		}
 	}
 
-	if len(payloads) == 0 {
-		pages.Rows = []masterpayloads.CampaignMasterResponse{}
-		return pages, nil
-	}
+	offset := pages.GetOffset()
+	limit := pages.GetLimit()
 
-	// Get model data
-	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model?page=0&limit=1000000", &model, nil)
-	if errUrlModel != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlModel,
-		}
-	}
-
-	joinedData, errdf := utils.DataFrameInnerJoin(payloads, model, "ModelId")
-	if errdf != nil {
+	err = whereQuery.Offset(offset).Limit(limit).Order("mtr_campaign.campaign_id").Find(&responses).Error
+	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+			Err:        err,
 		}
 	}
 
-	for _, response := range joinedData {
-		responseMap := map[string]interface{}{
-			"appointment_only":     response["AppointmentOnly"],
-			"brand_id":             response["BrandID"],
-			"campaign_code":        response["CampaignCode"],
-			"campaign_id":          response["CampaignId"],
-			"campaign_name":        response["CampaignName"],
-			"campaign_period_from": response["CampaignPeriodFrom"],
-			"campaign_period_to":   response["CampaignPeriodTo"],
-			"is_active":            response["IsActive"],
-			"model_code":           response["ModelCode"],
-			"model_description":    response["ModelDescription"],
-			"model_id":             response["ModelId"],
-			"remark":               response["Remark"],
-			"total":                response["Total"],
-			"total_after_vat":      response["TotalAfterVat"],
-			"total_vat":            response["TotalVat"],
+	for _, response := range responses {
+		result := map[string]interface{}{
+			"campaign_id":          response.CampaignId,
+			"campaign_name":        response.CampaignName,
+			"campaign_period_from": response.CampaignPeriodFrom,
+			"campaign_period_to":   response.CampaignPeriodTo,
+			"model_code":           response.ModelCode,
+			"model_description":    response.ModelDescription,
+			"remark":               response.Remark,
+			"appointment_only":     response.AppointmentOnly,
+			"total":                response.Total,
+			"total_vat":            response.TotalVat,
+			"total_after_vat":      response.TotalAfterVat,
+			"is_active":            response.IsActive,
+			"company_id":           response.CompanyId,
 		}
-		mapResponses = append(mapResponses, responseMap)
+
+		mapResponses = append(mapResponses, result)
 	}
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	pages.Rows = dataPaginate
+	totalPages := int(math.Ceil(float64(totalRows) / float64(limit)))
+	pages.TotalRows = totalRows
 	pages.TotalPages = totalPages
-	pages.TotalRows = int64(totalRows)
 
+	pages.Rows = mapResponses
 	return pages, nil
 }
 

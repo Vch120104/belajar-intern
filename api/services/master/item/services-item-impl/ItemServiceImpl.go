@@ -343,6 +343,16 @@ func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (masterit
 	if err != nil {
 		return result, err
 	}
+	response, errGet := s.itemRepo.GetItemLatestId(tx)
+	if errGet != nil {
+		return result, errGet
+	}
+
+	_, errSave := s.itemRepo.SaveItemToMappingItemOperation(tx, response)
+	if errSave != nil {
+		return result, errSave
+	}
+
 	return results, nil
 }
 

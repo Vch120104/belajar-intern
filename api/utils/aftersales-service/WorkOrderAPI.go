@@ -59,7 +59,7 @@ type UpdateWorkOrderRequest struct {
 	WorkOrderStatusId int `json:"work_order_status_id"`
 }
 
-func GetWorkOrderByID(id int) (WorkOrderResponse, *exceptions.BaseErrorResponse) {
+func GetWorkOrderById(id int) (WorkOrderResponse, *exceptions.BaseErrorResponse) {
 	var workOrderReq WorkOrderResponse
 	url := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &workOrderReq)

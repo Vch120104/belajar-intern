@@ -9,7 +9,7 @@ import (
 )
 
 type AgreementService interface {
-	GetAgreementById(int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
+	GetAgreementById(int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	GetAgreementByCode(string) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	SaveAgreement(masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	UpdateAgreement(int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
@@ -30,4 +30,10 @@ type AgreementService interface {
 	GetDiscountGroupAgreementById(int, int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse)
 	GetDiscountItemAgreementById(int, int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse)
 	GetDiscountValueAgreementById(int, int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse)
+	GetDiscountGroupAgreementByHeaderId(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetDiscountItemAgreementByHeaderId(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetDiscountValueAgreementByHeaderId(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	DeleteMultiIdDiscountGroup(agreementID int, intIds []int) (bool, *exceptions.BaseErrorResponse)
+	DeleteMultiIdItemDiscount(agreementID int, intIds []int) (bool, *exceptions.BaseErrorResponse)
+	DeleteMultiIdDiscountValue(agreementID int, intIds []int) (bool, *exceptions.BaseErrorResponse)
 }

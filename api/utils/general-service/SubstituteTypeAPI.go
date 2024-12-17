@@ -39,7 +39,7 @@ func GetAllSubstituteType() ([]SubstituteTypeResponse, *exceptions.BaseErrorResp
 	return getSubstituteType, nil
 }
 
-func GetSubstituteTypeByID(id int) (SubstituteTypeResponse, *exceptions.BaseErrorResponse) {
+func GetSubstituteTypeById(id int) (SubstituteTypeResponse, *exceptions.BaseErrorResponse) {
 	var getSubstituteType SubstituteTypeResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "substitute-type/" + strconv.Itoa(id)
 
@@ -57,6 +57,30 @@ func GetSubstituteTypeByID(id int) (SubstituteTypeResponse, *exceptions.BaseErro
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting substitute type by ID"),
+		}
+	}
+
+	return getSubstituteType, nil
+}
+
+func GetSubstituteTypeByCode(code string) (SubstituteTypeResponse, *exceptions.BaseErrorResponse) {
+	var getSubstituteType SubstituteTypeResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "substitute-type/code/" + code
+
+	err := utils.CallAPI("GET", url, nil, &getSubstituteType)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve substitute type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "substitute type service is temporarily unavailable"
+		}
+
+		return getSubstituteType, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting substitute type by code"),
 		}
 	}
 

@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -288,6 +289,7 @@ func ItemGroupRouter(
 	router.Get("/list", ItemGroupController.GetAllItemGroupWithPagination)
 	router.Get("/dropdown", ItemGroupController.GetAllItemGroup)
 	router.Get("/{item_group_id}", ItemGroupController.GetItemGroupById)
+	router.Get("/code/{item_group_code}", ItemGroupController.GetItemGroupByCode)
 	router.Put("/{item_group_id}", ItemGroupController.UpdateItemGroupById)
 	router.Patch("/{item_group_id}", ItemGroupController.UpdateStatusItemGroupById)
 	router.Get("/multi-id/{item_group_id}", ItemGroupController.GetItemGroupByMultiId)
@@ -600,7 +602,7 @@ func LocationStockRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", LocationStock.GetAllLocationStock)
+	router.Get("/", LocationStock.GetViewLocationStock)
 	router.Put("/", LocationStock.UpdateLocationStock)
 	router.Get("/available_quantity", LocationStock.GetAvailableQuantity)
 	return router
@@ -689,6 +691,24 @@ func ItemInquiryRouter(
 
 	router.Get("/", ItemInquiryController.GetAllItemInquiry)
 	router.Get("/by-id", ItemInquiryController.GetByIdItemInquiry)
+
+	return router
+}
+
+func ItemTypeRouter(
+	ItemTypeController masteritemcontroller.ItemTypeController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemTypeController.GetAllItemType)
+	router.Get("/{item_type_id}", ItemTypeController.GetItemTypeById)
+	router.Post("/", ItemTypeController.SaveItemType)
+	router.Patch("/{item_type_id}", ItemTypeController.ChangeStatusItemType)
+	router.Get("/code/{item_type_code}", ItemTypeController.GetItemTypeByCode)
+	router.Get("/drop-down", ItemTypeController.GetItemTypeDropDown)
 
 	return router
 }
@@ -1062,28 +1082,34 @@ func AgreementRouter(
 
 	router.Get("/", AgreementController.GetAllAgreement)
 	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
-	router.Get("/by-code/{agreement_code}", AgreementController.GetAgreementByCode)
+	router.Get("/by-code/*", AgreementController.GetAgreementByCode)
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Put("/{agreement_id}", AgreementController.UpdateAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
-	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/{agreement_id}/discount/group", AgreementController.GetDiscountGroupAgreementByHeaderId)
 	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
 	router.Put("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.UpdateDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+	router.Delete("/{agreement_id}/discount/group/{multi_id}", AgreementController.DeleteMultiIdDiscountGroup)
 
-	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/{agreement_id}/discount/item", AgreementController.GetDiscountItemAgreementByHeaderId)
 	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
 	router.Put("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.UpdateItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+	router.Delete("/{agreement_id}/discount/item/{multi_id}", AgreementController.DeleteMultiIdItemDiscount)
 
-	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/{agreement_id}/discount/value", AgreementController.GetDiscountValueAgreementByHeaderId)
 	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
 	router.Put("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.UpdateDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
+	router.Delete("/{agreement_id}/discount/value/{multi_id}", AgreementController.DeleteMultiIdDiscountValue)
 
 	return router
 }
@@ -1461,6 +1487,7 @@ func WorkOrderRouter(
 
 	// generate document
 	router.Post("/normal/document-number/{work_order_system_number}", WorkOrderController.GenerateDocumentNumber)
+	router.Get("/normal/calculate-total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
 
 	//add trx normal
 	router.Get("/", WorkOrderController.GetAll)
@@ -1515,16 +1542,6 @@ func WorkOrderRouter(
 	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
 	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)
 	router.Delete("/delete-campaign/{work_order_system_number}", WorkOrderController.DeleteCampaign)
-
-	// add req api mas hengwie
-	router.Get("/request-service/{work_order_system_number}", WorkOrderController.GetServiceRequestByWO)
-	router.Get("/claim-service/{work_order_system_number}", WorkOrderController.GetClaimByWO)
-	router.Get("/claim-item-service/{work_order_system_number}", WorkOrderController.GetClaimItemByWO)
-	router.Get("/transactiontype-service/{work_order_system_number}", WorkOrderController.GetWOByBillCode)
-	router.Get("/claim-detail-service/{work_order_system_number}/{transaction_type_id}/{atpm_claim_number}", WorkOrderController.GetDetailWOByClaimBillCode)
-	router.Get("/claim-bill-service/{work_order_system_number}/{transaction_type_id}", WorkOrderController.GetDetailWOByBillCode)
-	router.Get("/atpm-bill-service/{work_order_system_number}/{transaction_type_id}/{atpm_claim_number}", WorkOrderController.GetDetailWOByATPMBillCode)
-	router.Get("/supply-service/{work_order_system_number}", WorkOrderController.GetSupplyByWO)
 
 	return router
 }
@@ -1924,6 +1941,7 @@ func LookupRouter(
 	router.Get("/location-available", LookupController.LocationAvailable)
 	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
+	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
 
 	return router
 }

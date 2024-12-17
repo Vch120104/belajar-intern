@@ -15,7 +15,7 @@ type SalesOrderTransactionType struct {
 	SoTransactionTypeName string `json:"sales_order_transaction_type_name"`
 }
 
-func GetSoTransactionTypeByID(id int) (SalesOrderTransactionType, *exceptions.BaseErrorResponse) {
+func GetSoTransactionTypeById(id int) (SalesOrderTransactionType, *exceptions.BaseErrorResponse) {
 	var sotransactionType SalesOrderTransactionType
 	url := config.EnvConfigs.GeneralServiceUrl + "sales-order-transaction-type/" + strconv.Itoa(id)
 

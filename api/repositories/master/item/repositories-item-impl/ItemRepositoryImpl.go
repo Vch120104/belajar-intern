@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -149,7 +150,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 	var mapResponses []map[string]interface{}
 	for _, response := range responses {
 
-		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(response.SupplierId)
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(response.SupplierId)
 		if supplierErr != nil || getSupplierResponse.SupplierId == 0 {
 			getSupplierResponse = generalserviceapiutils.SupplierMasterResponse{
 				SupplierName: "",
@@ -241,7 +242,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	}
 
 	if response.SupplierId != nil {
-		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterByID(*response.SupplierId)
+		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterById(*response.SupplierId)
 		if supplierError != nil {
 			response.SupplierCode = nil
 			response.SupplierName = nil
@@ -333,7 +334,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 	}
 
 	if response.SupplierId != nil {
-		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterByID(*response.SupplierId)
+		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterById(*response.SupplierId)
 		if supplierError != nil {
 			response.SupplierCode = nil
 			response.SupplierName = nil
@@ -354,6 +355,60 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 	return response, nil
 
+}
+
+func (r *ItemRepositoryImpl) GetItemLatestId(tx *gorm.DB) (masteritempayloads.LatestItemAndLineTypeResponse, *exceptions.BaseErrorResponse) {
+	var latestID int
+	lineResponse := masteritempayloads.LatestItemAndLineTypeResponse{}
+
+	err := tx.Table("mtr_item").
+		Select("item_id").
+		Order("item_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if err != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	errLine := tx.Table("mtr_item mi").
+		Select("DISTINCT mi.item_id, mic.item_class_id, mic.line_type_id").
+		Joins("JOIN mtr_item_class mic ON mi.item_class_id = mic.item_class_id").
+		Where("mi.item_id = ?", latestID).
+		Scan(&lineResponse).Error
+
+	if errLine != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return lineResponse, nil
+}
+
+func (r *ItemRepositoryImpl) SaveItemToMappingItemOperation(tx *gorm.DB, response masteritempayloads.LatestItemAndLineTypeResponse) (bool, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: 0,
+		LineTypeId:      response.LineTypeId,
+		ItemId:          response.ItemId,
+		OperationId:     0,
+		PackageId:       0,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
@@ -440,7 +495,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	//CHECK SUPPLIER
 	if req.SupplierId != nil {
 		fmt.Println("call supplier api")
-		supplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(*req.SupplierId)
+		supplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(*req.SupplierId)
 		if supplierErr != nil || supplierResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -476,7 +531,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK ATPM SUPPLIER EXISTENCE
 	if req.AtpmSupplierId != nil {
-		atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterByID(*req.AtpmSupplierId)
+		atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterById(*req.AtpmSupplierId)
 		if atpmSupplierError != nil || atpmSupplierResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -512,7 +567,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK ATPM SUPPLIER CODE ORDER EXISTENCE
 	if req.AtpmSupplierCodeOrderId != nil {
-		atpmSupplierCodeOrderResponse, atpmSupplierCodeOrderError := generalserviceapiutils.GetSupplierMasterByID(*req.AtpmSupplierCodeOrderId)
+		atpmSupplierCodeOrderResponse, atpmSupplierCodeOrderError := generalserviceapiutils.GetSupplierMasterById(*req.AtpmSupplierCodeOrderId)
 		if atpmSupplierCodeOrderError != nil || atpmSupplierCodeOrderResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -524,7 +579,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK PERSON IN CHARGE EXISTENCE
 	if req.PersonInChargeId != nil {
-		picResponse, picError := generalserviceapiutils.GetEmployeeByID(*req.PersonInChargeId)
+		picResponse, picError := generalserviceapiutils.GetEmployeeById(*req.PersonInChargeId)
 		if picError != nil || picResponse.UserEmployeeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,

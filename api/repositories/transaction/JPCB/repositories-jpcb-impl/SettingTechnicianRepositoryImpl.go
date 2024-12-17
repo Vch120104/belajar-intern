@@ -1,7 +1,6 @@
 package transactionjpcbrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
@@ -11,7 +10,6 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -225,15 +223,15 @@ func (r *SettingTechnicianRepositoryImpl) SaveSettingTechnicianDetail(tx *gorm.D
 	}
 	responses := transactionjpcbpayloads.SettingTechnicianDetailGetByIdResponse{}
 
-	employeeURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entities.TechnicianEmployeeNumberId)
-	employeePayloads := transactionjpcbpayloads.SettingTechnicianEmployeeResponse{}
-	if err := utils.Get(employeeURL, &employeePayloads, nil); err != nil {
+	employeeResponse, employeeError := generalserviceapiutils.GetUserDetailsByID(entities.TechnicianEmployeeNumberId)
+	if employeeError != nil {
 		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Message:    "Error fetching user detail data",
+			Err:        employeeError,
 		}
 	}
-	if employeePayloads.UserEmployeeId == 0 {
+	if employeeResponse.UserEmployeeId == 0 {
 		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("employee data not found"),
@@ -250,6 +248,7 @@ func (r *SettingTechnicianRepositoryImpl) SaveSettingTechnicianDetail(tx *gorm.D
 	}
 
 	responses.SettingTechnicianDetailSystemNumber = entities.SettingTechnicianDetailSystemNumber
+	responses.TechnicianEmployeeNumberId = entities.TechnicianEmployeeNumberId
 	responses.ShiftGroupId = entities.ShiftGroupId
 	responses.TechnicianNumber = entities.TechnicianNumber
 	responses.IsBooking = entities.IsBooking

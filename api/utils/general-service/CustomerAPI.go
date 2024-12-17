@@ -50,6 +50,7 @@ type CustomerMasterResponse struct {
 	CustomerId     int    `json:"customer_id"`
 	CustomerCode   string `json:"customer_code"`
 	CustomerName   string `json:"customer_name"`
+	ClientTypeId   int    `json:"client_type_id"`
 	IdType         int    `json:"id_type"`
 	IdNumber       string `json:"id_number"`
 	IdAddressId    int    `json:"id_address_id"`
@@ -78,6 +79,7 @@ type CustomerMasterParams struct {
 	CustomerId     int    `json:"customer_id"`
 	CustomerCode   string `json:"customer_code"`
 	CustomerName   string `json:"customer_name"`
+	ClientTypeId   int    `json:"client_type_id"`
 	IdType         int    `json:"id_type"`
 	IdNumber       string `json:"id_number"`
 	IdAddressId    int    `json:"id_address_id"`
@@ -160,7 +162,7 @@ func GetCustomerMasterDetailById(id int) (CustomerMasterDetailResponse, *excepti
 	return getCustomerMaster, nil
 }
 
-func GetCustomerMasterByID(id int) (CustomerMasterResponse, *exceptions.BaseErrorResponse) {
+func GetCustomerMasterById(id int) (CustomerMasterResponse, *exceptions.BaseErrorResponse) {
 	var getCustomerMaster CustomerMasterResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
