@@ -19,7 +19,7 @@ type OpenPeriodPayloadResponse struct {
 func GetOpenPeriodByCompany(companyId int, moduleCode string) (OpenPeriodPayloadResponse, *exceptions.BaseErrorResponse) {
 	var PeriodResponse OpenPeriodPayloadResponse
 	PeriodUrl := fmt.Sprintf("%sclosing-period-company/current-period?company_id=%s&closing_module_detail_code=%s", config.EnvConfigs.FinanceServiceUrl, strconv.Itoa(companyId), moduleCode)
-	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+	if err := utils.CallAPI("GET", PeriodUrl, nil, &PeriodResponse); err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve closing period due to an external service error"
 
