@@ -31,6 +31,7 @@ type ItemLocationTransferController interface {
 	DeleteItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 
 	GetAllItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
+	GetItemLocationTransferDetailById(writer http.ResponseWriter, request *http.Request)
 	InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
@@ -233,6 +234,18 @@ func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransferDetail(wr
 		int64(response.TotalRows),
 		response.TotalPages,
 	)
+}
+
+func (c *ItemLocationTransferControllerImpl) GetItemLocationTransferDetailById(writer http.ResponseWriter, request *http.Request) {
+	transferRequestDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_detail_system_number"))
+
+	response, err := c.ItemLocationTransferService.GetItemLocationTransferDetailById(transferRequestDetailSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
 }
 
 func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request) {

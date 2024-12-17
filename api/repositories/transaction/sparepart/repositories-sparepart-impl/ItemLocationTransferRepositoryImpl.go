@@ -429,6 +429,52 @@ func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransferDetail(tx
 	return pages, nil
 }
 
+// uspg_atTrfReq1_Select
+// IF @Option = 0
+func (r *ItemLocationTransferRepositoryImpl) GetItemLocationTransferDetailById(tx *gorm.DB, id int) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {
+	var entities transactionsparepartentities.ItemWarehouseTransferRequestDetail
+	var response transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse
+
+	err := tx.Model(&entities).
+		Select(
+			"trx_item_warehouse_transfer_request_detail.transfer_request_detail_system_number",
+			"trx_item_warehouse_transfer_request_detail.transfer_request_system_number",
+			"trx_item_warehouse_transfer_request_detail.item_id",
+			"Item.item_code",
+			"Item.item_name",
+			"Item.unit_of_measurement_stock_id",
+			"UnitOfMeasurementStock.uom_code as unit_of_measurement_stock_code",
+			"UnitOfMeasurementStock.uom_description as unit_of_measurement_stock_description",
+			"trx_item_warehouse_transfer_request_detail.request_quantity",
+			"trx_item_warehouse_transfer_request_detail.location_id_from",
+			"LocationFrom.warehouse_location_code as location_code_from",
+			"trx_item_warehouse_transfer_request_detail.location_id_to",
+			"LocationTo.warehouse_location_code as location_code_to",
+		).
+		Joins("LEFT JOIN mtr_item Item ON Item.item_id = trx_item_warehouse_transfer_request_detail.item_id").
+		Joins("LEFT JOIN mtr_uom UnitOfMeasurementStock ON UnitOfMeasurementStock.uom_id = Item.unit_of_measurement_stock_id").
+		Joins("LEFT JOIN mtr_warehouse_location LocationFrom ON LocationFrom.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_from").
+		Joins("LEFT JOIN mtr_warehouse_location LocationTo ON LocationTo.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_to").
+		Where("trx_item_warehouse_transfer_request_detail.transfer_request_detail_system_number = ?", id).
+		Scan(&response).Error
+
+	if err != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if response.TransferRequestDetailSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request detail data not found"),
+		}
+	}
+
+	return response, nil
+}
+
 // uspg_atTrfReq1_Insert
 // IF @Option = 0
 func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx *gorm.DB, request transactionsparepartpayloads.InsertItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {

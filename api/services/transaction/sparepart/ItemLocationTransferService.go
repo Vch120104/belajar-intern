@@ -17,6 +17,7 @@ type ItemLocationTransferService interface {
 	DeleteItemLocationTransfer(id int) (bool, *exceptions.BaseErrorResponse)
 
 	GetAllItemLocationTransferDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetItemLocationTransferDetailById(id int) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse)
 	InsertItemLocationTransferDetail(request transactionsparepartpayloads.InsertItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse)
 	UpdateItemLocationTransferDetail(id int, request transactionsparepartpayloads.UpdateItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse)
 	DeleteItemLocationTransferDetail(ids []int) (bool, *exceptions.BaseErrorResponse)

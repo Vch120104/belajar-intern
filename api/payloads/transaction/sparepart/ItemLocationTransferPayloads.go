@@ -99,12 +99,19 @@ type GetAllItemLocationTransferDetailResponse struct {
 }
 
 type GetItemLocationTransferDetailByIdResponse struct {
-	TransferRequestDetailSystemNumber int  `json:"transfer_request_detail_system_number"`
-	TransferRequestSystemNumber       int  `json:"transfer_request_system_number"`
-	ItemId                            *int `json:"item_id"`
-	RequestQuantity                   *int `json:"request_quantity"`
-	LocationIdFrom                    *int `json:"location_id_from"`
-	LocationIdTo                      *int `json:"location_id_to"`
+	TransferRequestDetailSystemNumber int    `json:"transfer_request_detail_system_number"`
+	TransferRequestSystemNumber       int    `json:"transfer_request_system_number"`
+	ItemId                            *int   `json:"item_id"`
+	ItemCode                          string `json:"item_code"`
+	ItemName                          string `json:"item_name"`
+	UnitOfMeasurementStockId          int    `json:"unit_of_measurement_stock_id"`
+	UnitOfMeasurementStockCode        string `json:"unit_of_measurement_stock_code"`
+	UnitOfMeasurementStockDescription string `json:"unit_of_measurement_stock_description"`
+	RequestQuantity                   *int   `json:"request_quantity"`
+	LocationIdFrom                    *int   `json:"location_id_from"`
+	LocationCodeFrom                  string `json:"location_code_from"`
+	LocationIdTo                      *int   `json:"location_id_to"`
+	LocationCodeTo                    string `json:"location_code_to"`
 }
 
 type InsertItemLocationTransferDetailRequest struct {
