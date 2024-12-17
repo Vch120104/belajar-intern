@@ -228,8 +228,11 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 
 	queryParams := map[string]string{
 		"is_active":            queryValues.Get("is_active"),
+		"brand_id":             queryValues.Get("brand_id"),
+		"campaign_id":          queryValues.Get("campaign_id"),
 		"campaign_code":        queryValues.Get("campaign_code"),
 		"campaign_name":        queryValues.Get("campaign_name"),
+		"model_id":             queryValues.Get("model_id"),
 		"model_code":           queryValues.Get("model_code"),
 		"model_description":    queryValues.Get("model_description"),
 		"campaign_period_from": queryValues.Get("campaign_period_from"),

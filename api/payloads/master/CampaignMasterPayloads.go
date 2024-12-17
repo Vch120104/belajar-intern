@@ -24,6 +24,8 @@ type CampaignMasterResponse struct {
 	CampaignId         int     `json:"campaign_id"`
 	BrandId            int     `json:"brand_id"`
 	ModelId            int     `json:"model_id"`
+	ModelCode          string  `json:"model_code"`
+	ModelDescription   string  `json:"model_description"`
 	CampaignPeriodFrom string  `json:"campaign_period_from"`
 	CampaignPeriodTo   string  `json:"campaign_period_to"`
 	Remark             string  `json:"remark"`
