@@ -23,6 +23,8 @@ type CampaignMasterResponse struct {
 	CampaignName       string  `json:"campaign_name"`
 	CampaignId         int     `json:"campaign_id"`
 	BrandId            int     `json:"brand_id"`
+	BrandCode          string  `json:"brand_code"`
+	BrandName          string  `json:"brand_name"`
 	ModelId            int     `json:"model_id"`
 	ModelCode          string  `json:"model_code"`
 	ModelDescription   string  `json:"model_description"`
@@ -34,6 +36,8 @@ type CampaignMasterResponse struct {
 	TotalVat           float64 `json:"total_vat"`
 	TotalAfterVat      float64 `json:"total_after_vat"`
 	CompanyId          int     `json:"company_id"`
+	CompanyCode        string  `json:"company_code"`
+	CompanyName        string  `json:"company_name"`
 }
 
 type CampaignMasterListReponse struct {
