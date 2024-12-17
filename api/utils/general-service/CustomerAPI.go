@@ -50,6 +50,7 @@ type CustomerMasterResponse struct {
 	CustomerId     int    `json:"customer_id"`
 	CustomerCode   string `json:"customer_code"`
 	CustomerName   string `json:"customer_name"`
+	ClientTypeId   int    `json:"client_type_id"`
 	IdType         int    `json:"id_type"`
 	IdNumber       string `json:"id_number"`
 	IdAddressId    int    `json:"id_address_id"`
@@ -78,6 +79,7 @@ type CustomerMasterParams struct {
 	CustomerId     int    `json:"customer_id"`
 	CustomerCode   string `json:"customer_code"`
 	CustomerName   string `json:"customer_name"`
+	ClientTypeId   int    `json:"client_type_id"`
 	IdType         int    `json:"id_type"`
 	IdNumber       string `json:"id_number"`
 	IdAddressId    int    `json:"id_address_id"`

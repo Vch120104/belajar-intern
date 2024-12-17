@@ -10,11 +10,13 @@ import (
 	"after-sales/api/utils"
 	"after-sales/api/validation"
 	"net/http"
+	"time"
 )
 
 type LocationStockController interface {
-	GetAllLocationStock(writer http.ResponseWriter, request *http.Request)
+	GetViewLocationStock(writer http.ResponseWriter, request *http.Request)
 	UpdateLocationStock(writer http.ResponseWriter, request *http.Request)
+	GetAvailableQuantity(writer http.ResponseWriter, request *http.Request)
 }
 type LocationStockControlerImpl struct {
 	LocationStockService masterservice.LocationStockService
@@ -24,7 +26,7 @@ func NewLocationStockController(LocationStockService masterservice.LocationStock
 	return &LocationStockControlerImpl{LocationStockService: LocationStockService}
 }
 
-// GetAllLocationStock
+// GetViewLocationStock
 //
 //	@Summary		Get All Location Stock
 //	@Description	REST API Location Stock
@@ -46,7 +48,7 @@ func NewLocationStockController(LocationStockService masterservice.LocationStock
 //	@Success		200									{object}	[]masterwarehousepayloads.LocationStockDBResponse
 //	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/location-stock/ [get]
-func (l *LocationStockControlerImpl) GetAllLocationStock(writer http.ResponseWriter, request *http.Request) {
+func (l *LocationStockControlerImpl) GetViewLocationStock(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"company_id":      queryValues.Get("company_id"),
@@ -65,7 +67,7 @@ func (l *LocationStockControlerImpl) GetAllLocationStock(writer http.ResponseWri
 		SortBy: queryValues.Get("sort_by"),
 	}
 	fiter := utils.BuildFilterCondition(queryParams)
-	result, err := l.LocationStockService.GetAllLocationStock(fiter, pageninateparam)
+	result, err := l.LocationStockService.GetViewLocationStock(fiter, pageninateparam)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -92,4 +94,54 @@ func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWri
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "success to update location stock", http.StatusOK)
+}
+func (l *LocationStockControlerImpl) GetAvailableQuantity(writer http.ResponseWriter, request *http.Request) {
+
+	filter := masterwarehousepayloads.GetAvailableQuantityPayload{}
+	queryValues := request.URL.Query()
+
+	periodDate := queryValues.Get("period_date")
+	if periodDate == "" {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "period_date is required",
+		})
+		return
+	}
+
+	periodDateParse, errParseDate := time.Parse("2006-01-02T15:04:05.000Z", periodDate)
+	if errParseDate != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to parse date",
+			Err:        errParseDate,
+		})
+		return
+	}
+
+	filter = masterwarehousepayloads.GetAvailableQuantityPayload{
+		CompanyId:        utils.NewGetQueryInt(queryValues, "company_id"),
+		PeriodDate:       periodDateParse,
+		WarehouseId:      utils.NewGetQueryInt(queryValues, "warehouse_id"),
+		LocationId:       utils.NewGetQueryInt(queryValues, "location_id"),
+		ItemId:           utils.NewGetQueryInt(queryValues, "item_id"),
+		WarehouseGroupId: utils.NewGetQueryInt(queryValues, "warehouse_group_id"),
+		UomTypeId:        utils.NewGetQueryInt(queryValues, "uom_id"),
+	}
+
+	if filter.CompanyId == 0 || filter.PeriodDate.IsZero() || filter.WarehouseId == 0 {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Required parameters are missing",
+		})
+		return
+	}
+
+	res, err := l.LocationStockService.GetAvailableQuantity(filter)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, res, "success to get available quantity", http.StatusOK)
 }

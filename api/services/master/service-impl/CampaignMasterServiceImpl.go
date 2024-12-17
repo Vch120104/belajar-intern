@@ -250,7 +250,7 @@ func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string) (
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (masterpayloads.CampaignMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -314,7 +314,7 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[str
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (masterpayloads.CampaignMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 

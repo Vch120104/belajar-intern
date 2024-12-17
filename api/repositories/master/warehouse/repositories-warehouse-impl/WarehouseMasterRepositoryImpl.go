@@ -9,6 +9,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
+	"math"
 	"net/http"
 	"strings"
 
@@ -215,11 +216,23 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	err = tx.Model(&CostingTypeEntities).
 		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
 		First(&CostingTypeEntities).Error
+
+	var costingTypeCode string
 	if err != nil {
-		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Warehouse costing type not found",
-			Err:        errors.New("warehouse costing type is not found"),
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			costingTypeCode = ""
+		} else {
+			return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching warehouse costing type",
+				Err:        err,
+			}
+		}
+	} else {
+		if CostingTypeEntities.WarehouseCostingTypeCode == "" {
+			costingTypeCode = ""
+		} else {
+			costingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
 		}
 	}
 
@@ -305,7 +318,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// User
-	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserCompanyAccessById(entities.UserId)
+	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserDetailsByID(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
 		userDetails = masterwarehousepayloads.UserResponse{
@@ -336,11 +349,11 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 		}
 	}
 
-	// Now assign the warehouse response fields
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterResponse{
 		IsActive:                      *entities.IsActive,
 		WarehouseId:                   entities.WarehouseId,
 		WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
+		WarehouseCostingTypeCode:      costingTypeCode,
 		WarehouseKaroseri:             *entities.WarehouseKaroseri,
 		WarehouseNegativeStock:        *entities.WarehouseNegativeStock,
 		WarehouseReplishmentIndicator: *entities.WarehouseReplishmentIndicator,
@@ -359,7 +372,6 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 		WarehouseGroupId:              entities.WarehouseGroupId,
 		WarehousePhoneNumber:          entities.WarehousePhoneNumber,
 		WarehouseFaxNumber:            entities.WarehouseFaxNumber,
-		WarehouseCostingTypeCode:      CostingTypeEntities.WarehouseCostingTypeCode,
 
 		AddressDetails:     addressDetails,
 		BrandDetails:       brandDetails,
@@ -387,7 +399,6 @@ func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []in
 			return nil, err
 		}
 
-		// Map the fields from GetById response to the GetAllWarehouseMasterCodeResponse structure
 		warehouseCodeResponse := masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
 			IsActive:                      warehouseResponse.IsActive,
 			WarehouseId:                   warehouseResponse.WarehouseId,
@@ -506,11 +517,23 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 	err = tx.Model(&CostingTypeEntities).
 		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
 		First(&CostingTypeEntities).Error
+
+	var costingTypeCode string
 	if err != nil {
-		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Warehouse costing type not found",
-			Err:        errors.New("warehouse costing type is not found"),
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			costingTypeCode = ""
+		} else {
+			return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching warehouse costing type",
+				Err:        err,
+			}
+		}
+	} else {
+		if CostingTypeEntities.WarehouseCostingTypeCode == "" {
+			costingTypeCode = ""
+		} else {
+			costingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
 		}
 	}
 
@@ -600,14 +623,32 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 
 	// Populate Warehouse Response
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
-		WarehouseId:              entities.WarehouseId,
-		WarehouseCode:            entities.WarehouseCode,
-		WarehouseCostingTypeId:   entities.WarehouseCostingTypeId,
-		WarehouseCostingTypeCode: CostingTypeEntities.WarehouseCostingTypeCode,
-		WarehouseKaroseri:        *entities.WarehouseKaroseri,
-		AddressDetails:           addressDetails,
-		BrandDetails:             brandDetails,
-		VillageDetails:           villageDetails,
+		IsActive:                      *entities.IsActive,
+		WarehouseId:                   entities.WarehouseId,
+		WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
+		WarehouseCostingTypeCode:      costingTypeCode,
+		WarehouseKaroseri:             *entities.WarehouseKaroseri,
+		WarehouseNegativeStock:        *entities.WarehouseNegativeStock,
+		WarehouseReplishmentIndicator: *entities.WarehouseReplishmentIndicator,
+		WarehouseContact:              entities.WarehouseContact,
+		WarehouseCode:                 entities.WarehouseCode,
+		AddressId:                     entities.AddressId,
+		BrandId:                       entities.BrandId,
+		SupplierId:                    entities.SupplierId,
+		UserId:                        entities.UserId,
+		WarehouseSalesAllow:           *entities.WarehouseSalesAllow,
+		WarehouseInTransit:            *entities.WarehouseInTransit,
+		WarehouseName:                 entities.WarehouseName,
+		WarehouseDetailName:           entities.WarehouseDetailName,
+		WarehouseTransitDefault:       entities.WarehouseTransitDefault,
+		WarehouseGroupId:              entities.WarehouseGroupId,
+		WarehousePhoneNumber:          entities.WarehousePhoneNumber,
+		WarehouseFaxNumber:            entities.WarehouseFaxNumber,
+
+		AddressDetails:     addressDetails,
+		BrandDetails:       brandDetails,
+		VillageDetails:     villageDetails,
+		JobPositionDetails: jobPositionDetails,
 	}
 
 	if warehouseMasterResponse.WarehouseKaroseri {
@@ -626,7 +667,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 
 	err := tx.Model(&entities).
 		Where("warehouse_code = ? AND company_id = ?", warehouseCode, companyId).
-		First(&warehouseMasterResponse).Error
+		First(&entities).Error
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -639,11 +680,23 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 	err = tx.Model(&CostingTypeEntities).
 		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
 		First(&CostingTypeEntities).Error
+
+	var costingTypeCode string
 	if err != nil {
-		return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Warehouse costing type not found",
-			Err:        errors.New("warehouse costing type is not found"),
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			costingTypeCode = ""
+		} else {
+			return masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching warehouse costing type",
+				Err:        err,
+			}
+		}
+	} else {
+		if CostingTypeEntities.WarehouseCostingTypeCode == "" {
+			costingTypeCode = ""
+		} else {
+			costingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
 		}
 	}
 
@@ -707,7 +760,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 	}
 
 	// Fetch User Details
-	getUserResponse, userErr := generalserviceapiutils.GetUserCompanyAccessById(entities.UserId)
+	getUserResponse, userErr := generalserviceapiutils.GetUserDetailsByID(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
 		userDetails = masterwarehousepayloads.UserResponse{}
@@ -731,23 +784,34 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCodeCompany(tx *gorm.DB, wareh
 		}
 	}
 
-	// Populate Warehouse Response
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterCodeResponse{
-		WarehouseId:              entities.WarehouseId,
-		WarehouseCode:            entities.WarehouseCode,
-		WarehouseCostingTypeId:   entities.WarehouseCostingTypeId,
-		WarehouseCostingTypeCode: CostingTypeEntities.WarehouseCostingTypeCode,
-		WarehouseKaroseri:        *entities.WarehouseKaroseri,
-		AddressDetails:           addressDetails,
-		BrandDetails:             brandDetails,
-		VillageDetails:           villageDetails,
-	}
-
-	if warehouseMasterResponse.WarehouseKaroseri {
-		warehouseMasterResponse.SupplierDetails = supplierDetails
-	} else {
-		warehouseMasterResponse.UserDetails = userDetails
-		warehouseMasterResponse.JobPositionDetails = jobPositionDetails
+		IsActive:                      *entities.IsActive,
+		WarehouseId:                   entities.WarehouseId,
+		WarehouseCode:                 entities.WarehouseCode,
+		WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
+		WarehouseCostingTypeCode:      costingTypeCode,
+		WarehouseKaroseri:             *entities.WarehouseKaroseri,
+		WarehouseNegativeStock:        *entities.WarehouseNegativeStock,
+		WarehouseReplishmentIndicator: *entities.WarehouseReplishmentIndicator,
+		WarehouseContact:              entities.WarehouseContact,
+		AddressId:                     entities.AddressId,
+		BrandId:                       entities.BrandId,
+		SupplierId:                    entities.SupplierId,
+		UserId:                        entities.UserId,
+		WarehouseSalesAllow:           *entities.WarehouseSalesAllow,
+		WarehouseInTransit:            *entities.WarehouseInTransit,
+		WarehouseName:                 entities.WarehouseName,
+		WarehouseDetailName:           entities.WarehouseDetailName,
+		WarehouseTransitDefault:       entities.WarehouseTransitDefault,
+		WarehouseGroupId:              entities.WarehouseGroupId,
+		WarehousePhoneNumber:          entities.WarehousePhoneNumber,
+		WarehouseFaxNumber:            entities.WarehouseFaxNumber,
+		AddressDetails:                addressDetails,
+		BrandDetails:                  brandDetails,
+		SupplierDetails:               supplierDetails,
+		UserDetails:                   userDetails,
+		JobPositionDetails:            jobPositionDetails,
+		VillageDetails:                villageDetails,
 	}
 
 	return warehouseMasterResponse, nil
@@ -798,13 +862,14 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 	var entities []masterwarehouseentities.WarehouseAuthorize
 
 	baseModelQuery := tx.Model(&masterwarehouseentities.WarehouseAuthorize{}).
-		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.user_id").
-		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id")
+		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.user_id, mtr_warehouse_authorize.warehouse_id, mtr_user_company_access.username, mtr_user_company_access.user_id, mtr_user_company_access.company_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_company_access ON mtr_warehouse_authorize.user_id = mtr_user_company_access.user_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_user_company_access.user_id = mtr_user_details.user_id")
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	queryWithFilters := utils.ApplyFilter(baseModelQuery, filterCondition)
 
 	var totalRows int64
-	if err := whereQuery.Count(&totalRows).Error; err != nil {
+	if err := queryWithFilters.Count(&totalRows).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count authorized user records",
@@ -814,10 +879,12 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 
 	if totalRows == 0 {
 		pages.Rows = []map[string]interface{}{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
 		return pages, nil
 	}
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	err := queryWithFilters.Scopes(pagination.Paginate(&pages, queryWithFilters)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -828,7 +895,6 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 
 	var results []map[string]interface{}
 	for _, entity := range entities {
-
 		userDetails, err := generalserviceapiutils.GetUserDetailsByID(entity.EmployeeId)
 		if err != nil {
 			return pages, err
@@ -836,26 +902,31 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 
 		result := map[string]interface{}{
 			"warehouse_authorize_id": entity.WarehouseAuthorizedId,
-			"employee_id":            entity.EmployeeId,
+			"username":               userDetails.Username,
 			"employee_name":          userDetails.EmployeeName,
 			"user_id":                userDetails.UserId,
+			"warehouse_id":           entity.WarehouseId,
+			"company_id":             entity.CompanyId,
 		}
 
 		results = append(results, result)
 	}
 
 	pages.Rows = results
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+
 	return pages, nil
 }
 
 func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB, req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {
 	var existingEntity masterwarehouseentities.WarehouseAuthorize
-	err := tx.Where("company_id = ? AND warehouse_id = ? AND employee_id = ?", req.CompanyId, req.WarehouseId, req.EmployeeId).First(&existingEntity).Error
+	err := tx.Where("company_id = ? AND warehouse_id = ? AND user_id = ?", req.CompanyId, req.WarehouseId, req.EmployeeId).First(&existingEntity).Error
 	if err == nil {
 		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
-			Message:    "Duplicate entry: combination of company_id, warehouse_id, and employee_id must be unique",
-			Err:        errors.New("duplicate entry : combination of company_id, warehouse_id, and employee_id must be unique"),
+			Message:    "Duplicate entry: combination of company , warehouse , and user  must be unique",
+			Err:        errors.New("duplicate entry : combination of company , warehouse , and user  must be unique"),
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
