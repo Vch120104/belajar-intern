@@ -225,7 +225,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
 		if brandErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: brandErr.StatusCode,
 				Err:        brandErr.Err,
 			}
 		}
@@ -234,18 +234,24 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeById(response.JobTypeId)
 		if jobTypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: jobTypeErr.StatusCode,
 				Err:        jobTypeErr.Err,
 			}
 		}
 
 		// Fetch BillTo (Supplier) data
-		billToResponse, billToErr := generalserviceapiutils.GetSupplierMasterById(response.BillToId)
-		if billToErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        billToErr.Err,
+		var billToName string
+		if response.BillToId == 0 {
+			billToName = ""
+		} else {
+			billToResponse, billToErr := generalserviceapiutils.GetSupplierMasterById(response.BillToId)
+			if billToErr != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: billToErr.StatusCode,
+					Err:        billToErr.Err,
+				}
 			}
+			billToName = billToResponse.SupplierName
 		}
 
 		result := map[string]interface{}{
@@ -257,7 +263,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 			"job_type_name":           jobTypeResponse.JobTypeName,
 			"effective_date":          response.EffectiveDate,
 			"bill_to_id":              response.BillToId,
-			"bill_to_name":            billToResponse.SupplierName,
+			"bill_to_name":            billToName,
 			"description":             response.Description,
 			"is_active":               response.IsActive,
 		}

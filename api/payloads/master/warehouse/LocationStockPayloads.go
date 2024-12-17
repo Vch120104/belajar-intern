@@ -71,3 +71,17 @@ type ViewLocationStockPayload struct {
 	WarehouseGroupId       int
 	WarehouseCostingTypeId int
 }
+
+type GetAvailableQuantityPayload struct {
+	CompanyId        int
+	PeriodDate       time.Time
+	WarehouseId      int
+	LocationId       int
+	ItemId           int
+	WarehouseGroupId int
+	UomTypeId        int
+}
+
+type GetQuantityAvailablePayload struct {
+	QuantityAvailable float64 `json:"quantity_available"`
+}

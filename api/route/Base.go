@@ -602,8 +602,9 @@ func LocationStockRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", LocationStock.GetAllLocationStock)
+	router.Get("/", LocationStock.GetViewLocationStock)
 	router.Put("/", LocationStock.UpdateLocationStock)
+	router.Get("/available_quantity", LocationStock.GetAvailableQuantity)
 	return router
 }
 

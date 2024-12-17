@@ -58,6 +58,9 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 			// Handle boolean values
 			boolMap := map[string]string{"true": "1", "false": "0"}
 			condition = column + " = " + boolMap[strings.ToLower(value)]
+		} else if strings.HasSuffix(column, "_id") {
+			// Handle exact match for _id suffix
+			condition = column + " = '" + value + "'"
 		} else if strings.HasSuffix(column, "_from") {
 			// Handle range filter (>=)
 			key := strings.TrimSuffix(column, "_from")

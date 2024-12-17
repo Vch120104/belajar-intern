@@ -64,9 +64,13 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"package_id":   queryValues.Get("package_id"),
-		"operation_id": queryValues.Get("operation_id"),
-		"item_id":      queryValues.Get("item_id"),
+		"package_id":         queryValues.Get("package_id"),
+		"package_code":       queryValues.Get("package_code"),
+		"package_name":       queryValues.Get("package_name"),
+		"profit_center_name": queryValues.Get("profit_center_name"),
+		"model_code":         queryValues.Get("model_code"),
+		"model_description":  queryValues.Get("model_description"),
+		"package_price":      queryValues.Get("package_price"),
 	}
 
 	paginate := pagination.Pagination{
@@ -140,15 +144,11 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
+	payloads.NewHandleSuccess(
 		writer,
 		lookup.Rows,
 		"Get Data Successfully!",
 		http.StatusOK,
-		lookup.Limit,
-		lookup.Page,
-		int64(lookup.TotalRows),
-		lookup.TotalPages,
 	)
 }
 
@@ -186,15 +186,11 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
+	payloads.NewHandleSuccess(
 		writer,
 		lookup.Rows,
 		"Get Data Successfully!",
 		http.StatusOK,
-		lookup.Limit,
-		lookup.Page,
-		int64(lookup.TotalRows),
-		lookup.TotalPages,
 	)
 }
 
