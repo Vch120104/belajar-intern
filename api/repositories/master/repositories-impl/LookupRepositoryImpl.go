@@ -1436,8 +1436,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	}
 
 	if len(results) == 0 {
-		paginate.Rows = map[string]interface{}{}
-		return paginate, nil
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        errors.New("data not found"),
+		}
 	}
 
 	paginate.Rows = results
@@ -1900,8 +1903,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	}
 
 	if len(results) == 0 {
-		paginate.Rows = map[string]interface{}{}
-		return paginate, nil
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        errors.New("data not found"),
+		}
 	}
 
 	paginate.Rows = results
