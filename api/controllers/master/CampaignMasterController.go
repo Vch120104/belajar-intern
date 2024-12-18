@@ -246,6 +246,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 		"model_description":    queryValues.Get("model_description"),
 		"campaign_period_from": queryValues.Get("campaign_period_from"),
 		"campaign_period_to":   queryValues.Get("campaign_period_to"),
+		"company_id":           queryValues.Get("company_id"),
 	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),

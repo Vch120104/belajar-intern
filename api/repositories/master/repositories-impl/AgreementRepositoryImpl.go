@@ -514,13 +514,16 @@ func (r *AgreementRepositoryImpl) DeleteDiscountGroup(tx *gorm.DB, AgreementId i
 }
 
 func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, req masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse) {
+
 	entities := masterentities.AgreementItemDetail{
-		AgreementId:              AgreementId,
-		LineTypeId:               req.LineTypeId,
-		AgreementItemOperationId: req.AgreementItemOperationId,
-		DiscountPercent:          req.DiscountPercent,
-		MinValue:                 req.MinValue,
-		AgreementRemark:          req.AgreementRemark,
+		AgreementId:                       AgreementId,
+		LineTypeId:                        req.LineTypeId,
+		AgreementItemOperationId:          req.AgreementItemOperationId,
+		AgreementItemOperationCode:        req.AgreementItemOperationCode,
+		AgreementItemOperationDescription: req.AgreementItemOperationDescription,
+		DiscountPercent:                   req.DiscountPercent,
+		MinValue:                          req.MinValue,
+		AgreementRemark:                   req.AgreementRemark,
 	}
 
 	err := tx.Save(&entities).Error
