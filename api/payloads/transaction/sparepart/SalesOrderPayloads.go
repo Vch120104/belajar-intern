@@ -201,27 +201,28 @@ type GetAllSalesOrderResponse struct {
 	VehicleSalesOrderSystemNumber int       `gorm:"column:vehicle_sales_order_system_number" json:"vehicle_sales_order_system_number"`
 }
 
+// validate:"required"`
 type SalesOrderDetailInsertPayload struct {
-	SalesOrderSystemNumber              int        `gorm:"column:sales_order_system_number;size:30;not null" json:"sales_order_system_number"`
-	SalesOrderLineStatusId              *int       `gorm:"column:sales_order_line_status_id;size:30" json:"sales_order_line_status_id"` // FK to mtr_approval_status in general-service
-	SalesOrderDetailSystemNumber        int        `gorm:"column:sales_order_detail_system_number;size:30;primaryKey" json:"sales_order_detail_system_number"`
-	ItemSubstituteId                    *int       `gorm:"column:item_substitute_id;size:30" json:"item_substitute_id"`
-	ItemId                              int        `gorm:"column:item_id;size:30;not null" json:"item_id"`
-	QuantityDemand                      float64    `gorm:"column:quantity_demand;not null" json:"quantity_demand"`
-	IsAvailable                         bool       `gorm:"column:is_available;not null" json:"is_available"`
-	QuantitySupply                      float64    `gorm:"column:quantity_supply;not null" json:"quantity_supply"`
-	QuantityPick                        float64    `gorm:"column:quantity_pick;not null" json:"quantity_pick"`
-	UomId                               *int       `gorm:"column:uom_id;size:30;not null" json:"uom_id"`
-	Price                               float64    `gorm:"column:price;not null" json:"price"`
-	PriceEffectiveDate                  *time.Time `gorm:"column:price_effective_date;type:datetime" json:"price_effective_date"`
-	DiscountPercent                     float64    `gorm:"column:discount_percent;not null" json:"discount_percent"`
-	DiscountAmount                      float64    `gorm:"column:discount_amount;not null" json:"discount_amount"`
-	DiscountRequestPercent              float64    `gorm:"column:discount_request_percent;not null" json:"discount_request_percent"`
-	DiscountRequestAmount               float64    `gorm:"column:discount_request_amount;not null" json:"discount_request_amount"`
-	Remark                              string     `gorm:"column:remark;size:256;not null" json:"remark"`
-	ApprovalRequestNumber               *int       `gorm:"column:approval_reqeust_number;size:30" json:"approval_request_number"` // FK to trx_approval_request_source in ?
-	ApprovalRemark                      string     `gorm:"column:approval_remark;size:256;not null" json:"approval_remark"`
-	VehicleSalesOrderSystemNumber       *int       `gorm:"column:vehicle_sales_order_system_number;size:30" json:"vehicle_sales_order_system_number"`               // FK to trx_vehicle_sales_order in sales-service
-	VehicleSalesOrderDetailSystemNumber *int       `gorm:"column:vehicle_sales_order_detail_system_number;size:30" json:"vehicle_sales_order_detail_system_number"` // FK to trx_vehicle_sales_order_detail in sales-service
-	PriceListId                         *int       `gorm:"column:price_list_id;size:30;not null" json:"price_list_id"`
+	SalesOrderSystemNumber              int        `json:"sales_order_system_number" validate:"required"`
+	SalesOrderLineStatusId              *int       `json:"sales_order_line_status_id"` // FK to mtr_approval_status in general-service
+	SalesOrderDetailSystemNumber        int        `json:"sales_order_detail_system_number"`
+	ItemSubstituteId                    *int       `json:"item_substitute_id"`
+	ItemId                              int        `json:"item_id"`
+	QuantityDemand                      float64    `json:"quantity_demand" validate:"required"`
+	IsAvailable                         bool       `json:"is_available" validate:"required"`
+	QuantitySupply                      float64    `json:"quantity_supply" validate:"required"`
+	QuantityPick                        float64    `json:"quantity_pick" validate:"required"`
+	UomId                               *int       `json:"uom_id"`
+	Price                               float64    `json:"price" validate:"required"`
+	PriceEffectiveDate                  *time.Time `json:"price_effective_date"`
+	DiscountPercent                     float64    `json:"discount_percent"`
+	DiscountRequestPercent              float64    `json:"discount_request_percent"`
+	Remark                              string     `json:"remark"`
+	ApprovalRequestNumber               *int       `json:"approval_request_number"` // FK to trx_approval_request_source in ?
+	ApprovalRemark                      string     `json:"approval_remark"`
+	VehicleSalesOrderSystemNumber       *int       `json:"vehicle_sales_order_system_number"`        // FK to trx_vehicle_sales_order in sales-service
+	VehicleSalesOrderDetailSystemNumber *int       `json:"vehicle_sales_order_detail_system_number"` // FK to trx_vehicle_sales_order_detail in sales-service
+	PriceListId                         *int       `json:"price_list_id"`
+	AdditionalDiscountPercentage        float64    `json:"additional_discount_percentage"`
+	HeaderRemark                        string     `json:"header_remark"`
 }

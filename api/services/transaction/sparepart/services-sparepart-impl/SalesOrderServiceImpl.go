@@ -48,6 +48,7 @@ func (s *SalesOrderServiceImpl) InsertSalesOrderHeader(payload transactionsparep
 			//logrus.Info("Transaction committed successfully")
 		}
 	}()
+	//ini repo kedua
 	result, err := s.salesOrderRepo.InsertSalesOrderHeader(tx, payload)
 	if err != nil {
 		return result, err
@@ -126,6 +127,31 @@ func (s *SalesOrderServiceImpl) VoidSalesOrder(salesOrderId int) (bool, *excepti
 		}
 	}()
 	result, err := s.salesOrderRepo.VoidSalesOrder(tx, salesOrderId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (s *SalesOrderServiceImpl) InsertSalesOrderDetail(payload transactionsparepartpayloads.SalesOrderDetailInsertPayload) (transactionsparepartentities.SalesOrderDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+	result, err := s.salesOrderRepo.InsertSalesOrderDetail(tx, payload)
 	if err != nil {
 		return result, err
 	}

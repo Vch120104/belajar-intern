@@ -20,6 +20,7 @@ type SalesOrderController interface {
 	GetSalesOrderByID(writer http.ResponseWriter, request *http.Request)
 	GetAllSalesOrder(writer http.ResponseWriter, request *http.Request)
 	VoidSalesOrder(writer http.ResponseWriter, request *http.Request)
+	InsertSalesOrderDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type SalesOrderControllerImpl struct {
@@ -117,4 +118,19 @@ func (s *SalesOrderControllerImpl) VoidSalesOrder(writer http.ResponseWriter, re
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "success to void sales order", http.StatusOK)
+}
+func (s *SalesOrderControllerImpl) InsertSalesOrderDetail(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionsparepartpayloads.SalesOrderDetailInsertPayload
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+	res, err := s.SalesOrderService.InsertSalesOrderDetail(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "succesfull insert sales order detail", http.StatusCreated)
+	return
 }

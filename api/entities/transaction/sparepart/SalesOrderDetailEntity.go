@@ -8,11 +8,13 @@ import (
 const TableNameSalesOrderDetail = "trx_sales_order_detail"
 
 type SalesOrderDetail struct {
-	SalesOrderDetailSystemNumber                       int                                `gorm:"column:sales_order_detail_system_number;size:30;primaryKey" json:"sales_order_detail_system_number"`
-	SalesOrderSystemNumber                             int                                `gorm:"column:sales_order_system_number;size:30;not null" json:"sales_order_system_number"`
-	SalesOrder                                         SalesOrder                         `gorm:"foreignKey:SalesOrderSystemNumber;references:SalesOrderSystemNumber"`
-	SalesOrderLineNumber                               int                                `gorm:"column:sales_order_line_number;size:30;not null" json:"sales_order_line_number"`
-	SalesOrderLineStatusId                             *int                               `gorm:"column:sales_order_line_status_id;size:30" json:"sales_order_line_status_id"` // FK to mtr_approval_status in general-service
+	SalesOrderDetailSystemNumber                       int        `gorm:"column:sales_order_detail_system_number;size:30;primaryKey" json:"sales_order_detail_system_number"`
+	SalesOrderSystemNumber                             int        `gorm:"column:sales_order_system_number;size:30;not null" json:"sales_order_system_number"`
+	SalesOrder                                         SalesOrder `gorm:"foreignKey:SalesOrderSystemNumber;references:SalesOrderSystemNumber"`
+	SalesOrderLineNumber                               int        `gorm:"column:sales_order_line_number;size:30;not null" json:"sales_order_line_number"`
+	SalesOrderLineStatusId                             *int       `gorm:"column:sales_order_line_status_id;size:30" json:"sales_order_line_status_id"` // FK to mtr_approval_status in general-service
+	ItemSubstituteTypeId                               int        `gorm:"column:item_substitute_type_id;size:30" json:"item_substitute_type_id"`
+	ItemSubstituteType                                 masteritementities.ItemSubstituteType
 	ItemSubstituteId                                   *int                               `gorm:"column:item_substitute_id;size:30" json:"item_substitute_id"`
 	SubstituteItem                                     *masteritementities.ItemSubstitute `gorm:"foreignKey:ItemSubstituteId;references:ItemSubstituteId"`
 	ItemId                                             int                                `gorm:"column:item_id;size:30;not null" json:"item_id"`
@@ -35,7 +37,7 @@ type SalesOrderDetail struct {
 	VehicleSalesOrderSystemNumber                      *int                               `gorm:"column:vehicle_sales_order_system_number;size:30" json:"vehicle_sales_order_system_number"`                                               // FK to trx_vehicle_sales_order in sales-service
 	VehicleSalesOrderDetailSystemNumber                *int                               `gorm:"column:vehicle_sales_order_detail_system_number;size:30" json:"vehicle_sales_order_detail_system_number"`                                 // FK to trx_vehicle_sales_order_detail in sales-service
 	VehicleSalesOrderAdditionalAccessoriesSystemNumber *int                               `gorm:"column:vehicle_sales_order_additional_accessories_system_number;size:30" json:"vehicle_sales_order_additional_accessories_system_number"` // FK to trx_vehicle_sales_order_additional_accessories in sales-service
-	ItemPackageId                                      *int                               `gorm:"column:item_package_id;size:30;unique" json:"item_package_id"`
+	ItemPackageId                                      *int                               `gorm:"column:item_package_id;size:30" json:"item_package_id"`
 	ItemPackage                                        *masteritementities.ItemPackage    `gorm:"foreignKey:ItemPackageId;references:ItemPackageId"`
 	PurchaseOrderSystemNumber                          int                                `gorm:"column:purchase_order_system_number;size:30;not null" json:"purchase_order_system_number"` // FK to trx_unit_purchase_order in sales-service
 	ReferenceItemId                                    *int                               `gorm:"column:reference_item_id;size:30" json:"reference_item_id"`
