@@ -838,7 +838,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	var entities masterentities.CampaignMaster
 	var responses []masterpayloads.CampaignMasterResponse
 	var mapResponses []map[string]interface{}
-
+	var companyId int
 	var modelDescription, modelCode, campaignPeriodFrom, campaignPeriodTo string
 	for _, filter := range filterCondition {
 		switch filter.ColumnField {
@@ -850,6 +850,8 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			campaignPeriodFrom = filter.ColumnValue
 		case "campaign_period_to":
 			campaignPeriodTo = filter.ColumnValue
+		case "company_id":
+			companyId, _ = strconv.Atoi(filter.ColumnValue)
 		}
 	}
 
@@ -868,6 +870,10 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	}
 	if campaignPeriodTo != "" {
 		query = query.Where("mtr_campaign.campaign_period_to <= ?", campaignPeriodTo)
+	}
+
+	if companyId != 0 {
+		query = query.Where("mtr_campaign.company_id = ? OR mtr_campaign.company_id = 0", companyId)
 	}
 
 	whereQuery := utils.ApplyFilter(query, filterCondition)
