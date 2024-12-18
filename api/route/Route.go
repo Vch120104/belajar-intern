@@ -621,7 +621,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
 		r.Mount("/location-stock", LocationStockRouter)
-		r.Mount("/item-operation", ItemOperationRouter)
+		r.Mount("/mapping-item-operation", ItemOperationRouter)
 		r.Mount("/item-cycle", ItemCycleRouter)
 		r.Mount("/stock-transaction-type", StockTransactionTypeRouter)
 		r.Mount("/stock-transaction-reason", StockTransactionReasonRouter)
