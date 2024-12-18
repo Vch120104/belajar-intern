@@ -52,7 +52,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 		Dateparams["purchase_request_date_to"] = "99991212"
 	}
 	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date <= '" + Dateparams["purchase_request_date_to"] + "'"
-	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Where(strDateFilter).Scan(&responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Where(strDateFilter).Order("purchase_request_document_date DESC").Scan(&responses).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -413,7 +413,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 
 		//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 		//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-		UomRate = UomItemResponse.SourceConvertion
+		UomRate = UomItemResponse.TargetConvertion
 
 		result := transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
 			PurchaseRequestDetailSystemNumber: res.PurchaseRequestDetailSystemNumber,
@@ -498,7 +498,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 
 	//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	UomRate = UomItemResponse.SourceConvertion
+	UomRate = UomItemResponse.TargetConvertion
 	result = transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
 		PurchaseRequestDetailSystemNumber: response.PurchaseRequestDetailSystemNumber,
 		PurchaseRequestSystemNumber:       response.PurchaseRequestSystemNumber,
@@ -1115,7 +1115,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 
 		//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 		//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-		UomRate = UomItemResponse.SourceConvertion
+		UomRate = UomItemResponse.TargetConvertion
 		//uomentities := masteritementities.UomItem{}
 		res.UnitOfMeasurementCode = ""
 		err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
@@ -1253,7 +1253,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	var UomRate float64
 	//UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	UomRate = UomItemResponse.SourceConvertion
+	UomRate = UomItemResponse.TargetConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
 		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&response.UnitOfMeasurementCode).Error
@@ -1363,7 +1363,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	//}
 	//UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	UomRate = UomItemResponse.SourceConvertion
+	UomRate = UomItemResponse.TargetConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
 		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", response.ItemId, "P").Scan(&response.UnitOfMeasurementCode).Error
