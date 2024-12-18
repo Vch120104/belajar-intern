@@ -840,6 +840,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	var mapResponses []map[string]interface{}
 	var companyId int
 	var modelDescription, modelCode, campaignPeriodFrom, campaignPeriodTo string
+	manualFilters := []utils.FilterCondition{}
 	for _, filter := range filterCondition {
 		switch filter.ColumnField {
 		case "model_description":
@@ -852,6 +853,8 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			campaignPeriodTo = filter.ColumnValue
 		case "company_id":
 			companyId, _ = strconv.Atoi(filter.ColumnValue)
+		default:
+			manualFilters = append(manualFilters, filter)
 		}
 	}
 
@@ -873,13 +876,13 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	}
 
 	if companyId != 0 {
-		query = query.Where("mtr_campaign.company_id = ? OR mtr_campaign.company_id = 0", companyId)
+		query = query.Where("(mtr_campaign.company_id = ? OR mtr_campaign.company_id = 0)", companyId)
 	}
 
-	whereQuery := utils.ApplyFilter(query, filterCondition)
+	query = utils.ApplyFilter(query, manualFilters)
 
 	var totalRows int64
-	err := whereQuery.Model(&entities).Count(&totalRows).Error
+	err := query.Model(&entities).Count(&totalRows).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -890,7 +893,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	offset := pages.GetOffset()
 	limit := pages.GetLimit()
 
-	err = whereQuery.Offset(offset).Limit(limit).Order("mtr_campaign.campaign_id").Find(&responses).Error
+	err = query.Offset(offset).Limit(limit).Order("mtr_campaign.campaign_id").Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

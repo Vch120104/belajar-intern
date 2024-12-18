@@ -1706,7 +1706,7 @@ func (r *WorkOrderControllerImpl) AddFieldAction(writer http.ResponseWriter, req
 // @Param work_order_system_number path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/normal/calculate-total/{work_order_system_number} [get]
+// @Router /v1/work-order/normal/calculate-total/{work_order_system_number} [Put]
 func (r *WorkOrderControllerImpl) CalculateWorkOrderTotal(writer http.ResponseWriter, request *http.Request) {
 	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	if err != nil {

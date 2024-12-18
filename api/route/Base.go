@@ -1487,7 +1487,7 @@ func WorkOrderRouter(
 
 	// generate document
 	router.Post("/normal/document-number/{work_order_system_number}", WorkOrderController.GenerateDocumentNumber)
-	router.Get("/normal/calculate-total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
+	router.Put("/normal/calculate-total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
 
 	//add trx normal
 	router.Get("/", WorkOrderController.GetAll)
@@ -1901,36 +1901,6 @@ func SalesOrderRouter(
 	return router
 }
 
-func ItemLocationTransferRouter(
-	itemLocationTransferController transactionsparepartcontroller.ItemLocationTransferController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	// Header
-	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
-	router.Get("/{transfer_request_system_number}", itemLocationTransferController.GetItemLocationTransferById)
-	router.Post("/", itemLocationTransferController.InsertItemLocationTransfer)
-	router.Put("/{transfer_request_system_number}", itemLocationTransferController.UpdateItemLocationTransfer)
-	router.Put("/accept/{transfer_request_system_number}", itemLocationTransferController.AcceptItemLocationTransfer)
-	router.Put("/reject/{transfer_request_system_number}", itemLocationTransferController.RejectItemLocationTransfer)
-	router.Put("/submit/{transfer_request_system_number}", itemLocationTransferController.SubmitItemLocationTransfer)
-	router.Delete("/{transfer_request_system_number}", itemLocationTransferController.DeleteItemLocationTransfer)
-
-	// Detail
-	router.Get("/detail", itemLocationTransferController.GetAllItemLocationTransferDetail)
-	router.Get("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.GetItemLocationTransferDetailById)
-	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransferDetail)
-	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
-	router.Delete("/detail/{multi_id}", itemLocationTransferController.DeleteItemLocationTransferDetail)
-
-	return router
-}
-
 func LookupRouter(
 	LookupController mastercontroller.LookupController,
 ) chi.Router {
@@ -1967,6 +1937,36 @@ func LookupRouter(
 	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
+
+	return router
+}
+
+func ItemLocationTransferRouter(
+	itemLocationTransferController transactionsparepartcontroller.ItemLocationTransferController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	// Header
+	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
+	router.Get("/{transfer_request_system_number}", itemLocationTransferController.GetItemLocationTransferById)
+	router.Post("/", itemLocationTransferController.InsertItemLocationTransfer)
+	router.Put("/{transfer_request_system_number}", itemLocationTransferController.UpdateItemLocationTransfer)
+	router.Put("/accept/{transfer_request_system_number}", itemLocationTransferController.AcceptItemLocationTransfer)
+	router.Put("/reject/{transfer_request_system_number}", itemLocationTransferController.RejectItemLocationTransfer)
+	router.Put("/submit/{transfer_request_system_number}", itemLocationTransferController.SubmitItemLocationTransfer)
+	router.Delete("/{transfer_request_system_number}", itemLocationTransferController.DeleteItemLocationTransfer)
+
+	// Detail
+	router.Get("/detail", itemLocationTransferController.GetAllItemLocationTransferDetail)
+	router.Get("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.GetItemLocationTransferDetailById)
+	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransferDetail)
+	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
+	router.Delete("/detail/{multi_id}", itemLocationTransferController.DeleteItemLocationTransferDetail)
 
 	return router
 }
