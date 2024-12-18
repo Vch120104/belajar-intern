@@ -1376,7 +1376,7 @@ func CampaignMasterRouter(
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
-	router.Get("/by-code/{campaign_code}", campaignmastercontroller.GetByCodeCampaignMaster)
+	router.Get("/by-code/*", campaignmastercontroller.GetByCodeCampaignMaster)
 	router.Get("/history", campaignmastercontroller.GetAllCampaignMasterCodeAndName)
 	router.Post("/", campaignmastercontroller.SaveCampaignMaster)
 	router.Patch("/{campaign_id}", campaignmastercontroller.ChangeStatusCampaignMaster)
@@ -1942,7 +1942,7 @@ func LookupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
-	router.Get("/item-opr-code/{linetype_id}/by-code/{item_code}", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_id}/by-code/*", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/by-id/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)

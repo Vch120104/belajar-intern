@@ -112,15 +112,26 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	}
 	fmt.Println("linetypeId", linetypeId)
 
-	itemCode := chi.URLParam(request, "item_code")
-	itemCodeUnescaped, err := url.PathUnescape(itemCode)
+	encodedCampaignCode := chi.URLParam(request, "*")
+	if len(encodedCampaignCode) > 0 && encodedCampaignCode[0] == '/' {
+		encodedCampaignCode = encodedCampaignCode[1:]
+	}
+
+	itemCodeUnescaped, err := url.PathUnescape(encodedCampaignCode)
 	if err != nil {
-		payloads.NewHandleError(writer, "Failed to decode Item Code", http.StatusBadRequest)
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid Campaign Code",
+		})
 		return
 	}
 
-	if itemCodeUnescaped == "" {
-		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
+	itemCodeUnescaped, err = url.PathUnescape(itemCodeUnescaped)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid Campaign Code after second decoding",
+		})
 		return
 	}
 
@@ -134,6 +145,7 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
+
 	lookup, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {

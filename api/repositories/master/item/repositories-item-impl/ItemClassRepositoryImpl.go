@@ -28,19 +28,13 @@ func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
 func (r *ItemClassRepositoryImpl) GetItemClassDropDownbyGroupId(tx *gorm.DB, groupId int) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
 	response := []masteritempayloads.ItemClassDropdownResponse{}
-	if err := tx.Model(entities).Where(masteritementities.ItemClass{ItemGroupID: groupId}).Scan(&response).Error; err != nil {
+	if err := tx.Model(&entities).Where(masteritementities.ItemClass{ItemGroupID: groupId}).Scan(&response).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
-		}
-	}
 	return response, nil
 }
 
@@ -101,19 +95,13 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
 	response := []masteritempayloads.ItemClassDropdownResponse{}
-	if err := tx.Model(entities).Scan(&response).Error; err != nil {
+	if err := tx.Model(&entities).Scan(&response).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
-		}
-	}
 	return response, nil
 }
 
