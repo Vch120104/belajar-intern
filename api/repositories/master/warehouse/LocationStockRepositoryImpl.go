@@ -469,6 +469,7 @@ func (repo *LocationStockRepositoryImpl) GetAvailableQuantity(db *gorm.DB, paylo
 	var qtyTemp float64
 	var periodYear, periodMonth string
 	quantityAvail := masterwarehousepayloads.GetQuantityAvailablePayload{}
+	quantityAvail.QuantityAvailable = 0
 	moduleCode := "SP"
 	//periodStatusClose := 3
 
@@ -513,44 +514,26 @@ func (repo *LocationStockRepositoryImpl) GetAvailableQuantity(db *gorm.DB, paylo
 			Err:        errors.New("period is closed"),
 		}
 	}
-	//var periodStatusId int
-	//if err := db.Table("dms_microservices_finance_dev.dbo.mtr_period_audit").
-	//	Select("period_status_id").
-	//	Where("company_id = ? AND period_year = ? AND period_month = ?", companyId, periodYear, periodMonth).
-	//	Scan(&periodStatusId).Error; err != nil {
-	//
-	//}
 
-	//if periodStatusId == periodStatusClose {
-	//	return quantityAvail, &exceptions.BaseErrorResponse{
-	//		StatusCode: http.StatusConflict,
-	//		Message:    "Period is closed",
-	//		Err:        errors.New("period is closed"),
-	//	}
-	//}
-
-	// Build the query based on the option: ON HAND QTY & AVAILABLE QTY
-	query := db.Model(&masterentities.LocationStock{}).
-		Where(masterentities.LocationStock{CompanyId: payload.CompanyId,
-			PeriodYear:       periodYear,
-			PeriodMonth:      periodMonth,
-			WarehouseId:      payload.WarehouseId,
-			LocationId:       payload.LocationId,
-			ItemId:           payload.ItemId,
-			WarehouseGroupId: payload.WarehouseGroupId})
-	//Where("company_id = ? AND period_year = ? AND period_month = ? AND warehouse_id = ? AND location_id = ? AND item_id = ? AND warehouse_group = ?",
-	//	companyId, periodYear, periodMonth, warehouseId, locationId, itemId, warehouseId)
-	//
-	//switch option {
-	//case 1:
-	//	if err := query.Select	va("SUM(quantity_ending)").Scan(&qtyTemp).Error; err != nil {
-	//		return 0, &exceptions.BaseErrorResponse{
-	//			StatusCode: http.StatusInternalServerError,
-	//			Message:    "Failed to get on hand quantity for item",
-	//			Err:        err,
-	//		}
-	//	}
-	//case 2:
+	query := db.Model(&masterentities.LocationStock{})
+	if periodYear != "" {
+		query = query.Where(masterentities.LocationStock{PeriodYear: periodYear})
+	}
+	if periodMonth != "" {
+		query = query.Where(masterentities.LocationStock{PeriodMonth: periodMonth})
+	}
+	if payload.WarehouseId != 0 {
+		query = query.Where(masterentities.LocationStock{WarehouseId: payload.WarehouseId})
+	}
+	if payload.LocationId != 0 {
+		query = query.Where(masterentities.LocationStock{LocationId: payload.LocationId})
+	}
+	if payload.ItemId != 0 {
+		query = query.Where(masterentities.LocationStock{ItemId: payload.ItemId})
+	}
+	if payload.WarehouseGroupId != 0 {
+		query = query.Where(masterentities.LocationStock{WarehouseGroupId: payload.WarehouseGroupId})
+	}
 	if err := query.
 		//Where("module_code = ?", moduleCode).
 		Select(`
@@ -566,13 +549,6 @@ func (repo *LocationStockRepositoryImpl) GetAvailableQuantity(db *gorm.DB, paylo
 			Err:        err,
 		}
 	}
-	//default:
-	//	return 0, &exceptions.BaseErrorResponse{
-	//		StatusCode: http.StatusBadRequest,
-	//		Message:    "Invalid option provided",
-	//		Err:        errors.New("invalid option"),
-	//	}
-	//}
 	qtyResult = qtyTemp
 	quantityAvail.QuantityAvailable = qtyResult
 	return quantityAvail, nil
