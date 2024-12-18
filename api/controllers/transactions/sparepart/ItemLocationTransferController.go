@@ -28,6 +28,7 @@ type ItemLocationTransferController interface {
 	UpdateItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	AcceptItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	RejectItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
+	SubmitItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLocationTransfer(writer http.ResponseWriter, request *http.Request)
 
 	GetAllItemLocationTransferDetail(writer http.ResponseWriter, request *http.Request)
@@ -163,7 +164,7 @@ func (c *ItemLocationTransferControllerImpl) AcceptItemLocationTransfer(writer h
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Accept Data Successfully", http.StatusOK)
 }
 
 func (c *ItemLocationTransferControllerImpl) RejectItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
@@ -187,7 +188,31 @@ func (c *ItemLocationTransferControllerImpl) RejectItemLocationTransfer(writer h
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Reject Data Successfully", http.StatusOK)
+}
+
+func (c *ItemLocationTransferControllerImpl) SubmitItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "transfer_request_system_number"))
+
+	formRequest := transactionsparepartpayloads.SubmitItemLocationTransferRequest{}
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	response, err := c.ItemLocationTransferService.SubmitItemLocationTransfer(transferRequestSystemNumber, formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Submit Data Successfully", http.StatusOK)
 }
 
 func (c *ItemLocationTransferControllerImpl) DeleteItemLocationTransfer(writer http.ResponseWriter, request *http.Request) {

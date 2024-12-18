@@ -13,6 +13,7 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -364,6 +365,208 @@ func (r *ItemLocationTransferRepositoryImpl) RejectItemLocationTransfer(tx *gorm
 	return responses, nil
 }
 
+// uspg_atTrfReq0_Update
+// IF @Option = 7
+func (r *ItemLocationTransferRepositoryImpl) SubmitItemLocationTransfer(tx *gorm.DB, id int, request transactionsparepartpayloads.SubmitItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
+	var itemLocationTransferEntity transactionsparepartentities.ItemWarehouseTransferRequest
+	errGetTransferRequest := tx.
+		Joins("RequestFromWarehouse").
+		Joins("RequestToWarehouse").
+		Limit(1).Find(&itemLocationTransferEntity, id).Error
+	if errGetTransferRequest != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetTransferRequest,
+		}
+	}
+	if itemLocationTransferEntity.TransferRequestSystemNumber == 0 {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request data not found"),
+		}
+	}
+
+	var itemTransferStatusDraft masteritementities.ItemTransferStatus
+	errItemTransferStatusDraft := tx.Where("item_transfer_status_code = ?", "10").First(&itemTransferStatusDraft).Error
+	if errItemTransferStatusDraft != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errItemTransferStatusDraft,
+		}
+	}
+
+	if itemLocationTransferEntity.TransferRequestStatusId != itemTransferStatusDraft.ItemTransferStatusId {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("transfer request status not draft"),
+		}
+	}
+
+	if itemLocationTransferEntity.RequestFromWarehouse.WarehouseCostingTypeId != itemLocationTransferEntity.RequestToWarehouse.WarehouseCostingTypeId {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("costing type for source warehouse is different than destination warehouse"),
+		}
+	}
+
+	if itemLocationTransferEntity.RequestFromWarehouseId != itemLocationTransferEntity.RequestToWarehouseId {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("warehouse code from and warehouse code to must be same"),
+		}
+	}
+
+	var itemLocationTransferDetailList []transactionsparepartentities.ItemWarehouseTransferRequestDetail
+	errGetTransferRequestDetail := tx.
+		Where("transfer_request_system_number = ?", id).
+		Find(&itemLocationTransferDetailList).Error
+	if errGetTransferRequestDetail != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetTransferRequestDetail,
+		}
+	}
+
+	for _, itemLocationTransferDetail := range itemLocationTransferDetailList {
+		// BEGIN TRY
+		// 	EXEC dbo.uspg_amLocationStockItem_Select
+		// 	@Option = 1,
+		// 	@Company_Code = @Company_Code,
+		// 	@Period_Date = @Change_Datetime ,
+		// 	@Whs_Code = @Req_From_Whs_Code ,
+		// 	@Loc_Code = @TempLocCode ,
+		// 	@Item_Code = @TempItemCode ,
+		// 	@Whs_Group = @Req_From_Whs_Group ,
+		// 	@UoM_Type = '' ,
+		// 	@QtyResult = @QtyResult OUTPUT
+		// END TRY
+		// BEGIN CATCH
+		// 	SELECT @ErrorMsg = ERROR_MESSAGE()
+		// 	RAISERROR(@ErrorMsg, 16, 1)
+		// 	RETURN 0
+		// END CATCH
+
+		// IF ISNULL(@QtyResult, 0) < @TempReqQty
+		// BEGIN
+		// 	RAISERROR('Request quantity cannot greater than available quantity.', 16, 1)
+		// 	RETURN 0
+		// END
+
+		if itemLocationTransferDetail.LocationIdFrom == nil || itemLocationTransferDetail.LocationIdTo == nil {
+			return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("please insert location code"),
+			}
+		}
+	}
+
+	var itemTransferStatusAccept masteritementities.ItemTransferStatus
+	errItemTransferStatusAccept := tx.Where("item_transfer_status_code = ?", "20").First(&itemTransferStatusAccept).Error
+	if errItemTransferStatusAccept != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errItemTransferStatusAccept,
+		}
+	}
+
+	// EXEC uspg_gmSrcDoc1_Update
+	// @Option = 0 ,
+	// @COMPANY_CODE = @Company_Code ,
+	// @SOURCE_CODE = @Src_Code1 ,
+	// @VEHICLE_BRAND = '' ,
+	// @PROFIT_CENTER_CODE = '' ,
+	// @TRANSACTION_CODE = '' ,
+	// @BANK_ACC_CODE = '' ,
+	// @TRANSACTION_DATE = @Trfreq_Date ,
+	// @Last_Doc_No = @Trfreq_Doc_No OUTPUT
+
+	currentTime := time.Now().Truncate(24 * time.Hour)
+
+	var responses transactionsparepartpayloads.GetItemLocationTransferByIdResponse
+	errUpdateItemLocationTransfer := tx.Model(&itemLocationTransferEntity).
+		Updates(map[string]interface{}{
+			"transfer_request_status_id": itemTransferStatusAccept.ItemTransferStatusId,
+			// "transfer_request_document_number":,
+			"approval_by_id":  request.ApprovalById,
+			"approval_date":   currentTime,
+			"approval_remark": request.ApprovalRemark,
+		}).
+		Scan(&responses).Error
+	if errUpdateItemLocationTransfer != nil {
+		return transactionsparepartpayloads.GetItemLocationTransferByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUpdateItemLocationTransfer,
+		}
+	}
+
+	// ---Process Insert
+	// EXEC uspg_atTrfOut0_Insert
+	// 	@Option = 1,
+	// 	@Company_Code = @Company_Code,
+	// 	@Trfout_Sys_No  = @Trfout_Sys_No OUTPUT,
+	// 	@Trfout_Doc_No  = @Trfout_Doc_No ,
+	// 	@Trfout_Status = @Trfout_Status ,
+	// 	@Trfout_Date = @Trfreq_Date ,
+	// 	@Trfreq_Sys_No = @Trfreq_Sys_No ,
+	// 	@Trfreq_Doc_No = @Trfreq_Doc_No ,
+	// 	@Change_No = 0 ,
+	// 	@Creation_User_Id = @Change_User_Id ,
+	// 	@Creation_Datetime = @Change_Datetime ,
+	// 	@Change_User_Id = @Change_User_Id ,
+	// 	@Change_Datetime = @Change_Datetime
+
+	// ---Process Submit
+	// EXEC uspg_atTrfOut0_Update
+	// 	@Option = 2,
+	// 	@Company_Code = @Company_Code ,
+	// 	@Trfout_Sys_No = @Trfout_Sys_No ,
+	// 	@Trfout_Date = @Trfreq_Date ,
+	// 	@Trfreq_Sys_No = @Trfreq_Sys_No ,
+	// 	@Trfreq_Doc_No = @Trfreq_Doc_No ,
+	// 	@Creation_User_Id = @Change_User_Id ,
+	// 	@Creation_Datetime = @Change_Datetime ,
+	// 	@Change_User_Id = @Change_User_Id ,
+	// 	@Change_Datetime = @Change_Datetime
+
+	// SELECT @Trfout_Doc_No = TRFOUT_DOC_NO
+	// FROM atTrfOut0
+	// WHERE TRFOUT_SYS_NO = @Trfout_Sys_No
+	// ----End Insert into atTrfOut0 and atTrfOut1
+
+	// ----Insert into atTrfIn0 and atTrfIn1
+
+	// ---Process Insert
+	// EXEC uspg_atTrfIn0_Insert
+	// 	@Option = 2 ,
+	// 	@Company_Code = @Company_Code ,
+	// 	@Trfin_Sys_No = @Trfin_Sys_No OUTPUT,
+	// 	@Trfin_Doc_No = @Trfin_Doc_No ,
+	// 	@Trfin_Date = @Trfreq_Date ,
+	// 	@Trfout_Sys_No = @Trfout_Sys_No ,
+	// 	@Trfout_Doc_No  = @Trfout_Doc_No ,
+	// 	@Change_No = 0 ,
+	// 	@Creation_User_Id = @Change_User_Id ,
+	// 	@Creation_Datetime  = @Change_Datetime ,
+	// 	@Change_User_Id = @Change_User_Id ,
+	// 	@Change_Datetime = @Change_Datetime
+
+	// ---Process Submit
+	// EXEC uspg_atTrfIn0_Update
+	// 	@Option = 1,
+	// 	@Company_Code = @Company_Code ,
+	// 	@Trfin_Sys_No = @Trfin_Sys_No ,
+	// 	@Trfin_Doc_No = @Trfin_Doc_No output,
+	// 	@Trfin_Date = @Trfreq_Date ,
+	// 	@Trfout_Sys_No = @Trfout_Sys_No ,
+	// 	@Trfout_Doc_No = @Trfout_Doc_No ,
+	// 	@Change_User_Id = @Change_User_Id ,
+	// 	@Change_Datetime = @Change_Datetime
+
+	// ----End Insert into atTrfIn0 and atTrfIn1
+
+	return responses, nil
+}
+
 // uspg_atTrfReq0_Delete
 // IF @Option = 1
 func (r *ItemLocationTransferRepositoryImpl) DeleteItemLocationTransfer(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
@@ -391,10 +594,24 @@ func (r *ItemLocationTransferRepositoryImpl) DeleteItemLocationTransfer(tx *gorm
 // uspg_atTrfReq1_Select
 // IF @Option = 4
 func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransferDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var transferRequestSystemNumber int
+	for _, data := range filterCondition {
+		if data.ColumnField == "trx_item_warehouse_transfer_request_detail.transfer_request_system_number" {
+			tempTransferRequestSystemNumber, errConvert := strconv.Atoi(data.ColumnValue)
+			if errConvert != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        errConvert,
+				}
+			}
+			transferRequestSystemNumber = tempTransferRequestSystemNumber
+		}
+	}
+
 	var entities transactionsparepartentities.ItemWarehouseTransferRequestDetail
 	var responses []transactionsparepartpayloads.GetAllItemLocationTransferDetailResponse
 
-	baseModelQuery := tx.Model(&entities).
+	whereQuery := tx.Model(&entities).
 		Select(
 			"trx_item_warehouse_transfer_request_detail.transfer_request_detail_system_number",
 			"trx_item_warehouse_transfer_request_detail.transfer_request_system_number",
@@ -413,8 +630,8 @@ func (r *ItemLocationTransferRepositoryImpl) GetAllItemLocationTransferDetail(tx
 		Joins("LEFT JOIN mtr_item Item ON Item.item_id = trx_item_warehouse_transfer_request_detail.item_id").
 		Joins("LEFT JOIN mtr_uom UnitOfMeasurementStock ON UnitOfMeasurementStock.uom_id = Item.unit_of_measurement_stock_id").
 		Joins("LEFT JOIN mtr_warehouse_location LocationFrom ON LocationFrom.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_from").
-		Joins("LEFT JOIN mtr_warehouse_location LocationTo ON LocationTo.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_to")
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+		Joins("LEFT JOIN mtr_warehouse_location LocationTo ON LocationTo.warehouse_location_id = trx_item_warehouse_transfer_request_detail.location_id_to").
+		Where("trx_item_warehouse_transfer_request_detail.transfer_request_system_number = ?", transferRequestSystemNumber)
 
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
@@ -480,7 +697,7 @@ func (r *ItemLocationTransferRepositoryImpl) GetItemLocationTransferDetailById(t
 func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx *gorm.DB, request transactionsparepartpayloads.InsertItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {
 	var itemLocationTransferEntity transactionsparepartentities.ItemWarehouseTransferRequest
 	errGetTransferRequest := tx.
-		Joins("LEFT JOIN mtr_warehouse_master RequestFromWarehouse ON RequestFromWarehouse.warehouse_id = trx_item_warehouse_transfer_request.request_from_warehouse_id").
+		Joins("RequestFromWarehouse").
 		Limit(1).Find(&itemLocationTransferEntity, request.TransferRequestSystemNumber).Error
 	if errGetTransferRequest != nil {
 		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
@@ -508,7 +725,7 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 	errGetQuantityAvailable := tx.
 		Model(&masterentities.LocationStock{}).
 		Select(
-			`SUM(ISNULL(
+			`ISNULL(SUM(
 			(
 				ISNULL(quantity_begin, 0) 
 				+ ISNULL(quantity_purchase, 0) 
@@ -527,7 +744,7 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 				+ ISNULL(quantity_assembly_out,0) 
 				+ ISNULL(quantity_allocated, 0)
 			)
-		,0)) as quantity_available`,
+		) ,0) as quantity_available`,
 		).
 		Joins("LEFT JOIN mtr_warehouse_master AS B ON mtr_location_stock.company_id = B.company_id AND mtr_location_stock.warehouse_id = B.warehouse_id").
 		Where("mtr_location_stock.company_id = ?", itemLocationTransferEntity.CompanyId).
@@ -590,7 +807,9 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx
 	}
 
 	var itemLocationTransferEntity transactionsparepartentities.ItemWarehouseTransferRequest
-	errGetTransferRequest := tx.Limit(1).Find(&itemLocationTransferEntity, itemLocationTransferDetailEntity.TransferRequestSystemNumberId).Error
+	errGetTransferRequest := tx.
+		Joins("RequestFromWarehouse").
+		Limit(1).Find(&itemLocationTransferEntity, itemLocationTransferDetailEntity.TransferRequestSystemNumberId).Error
 	if errGetTransferRequest != nil {
 		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -617,7 +836,7 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx
 	errGetQuantityAvailable := tx.
 		Model(&masterentities.LocationStock{}).
 		Select(
-			`SUM(ISNULL(
+			`ISNULL(SUM(
 			(
 				ISNULL(quantity_begin, 0) 
 				+ ISNULL(quantity_purchase, 0) 
@@ -636,9 +855,9 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx
 				+ ISNULL(quantity_assembly_out,0) 
 				+ ISNULL(quantity_allocated, 0)
 			)
-		,0)) as quantity_available`,
+		), 0) as quantity_available`,
 		).
-		Joins("LEFT JOIN mtr_warehouse_master AS B ON mtr_location_stock.company_id = B.COMPANY_CODE AND mtr_location_stock.warehouse_id = B.warehouse_id").
+		Joins("LEFT JOIN mtr_warehouse_master AS B ON mtr_location_stock.company_id = B.company_id AND mtr_location_stock.warehouse_id = B.warehouse_id").
 		Where("mtr_location_stock.company_id = ?", itemLocationTransferEntity.CompanyId).
 		Where("mtr_location_stock.period_month = ?", periodResponse.PeriodMonth).
 		Where("mtr_location_stock.period_year = ?", periodResponse.PeriodYear).

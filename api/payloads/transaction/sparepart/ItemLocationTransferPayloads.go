@@ -82,6 +82,11 @@ type RejectItemLocationTransferRequest struct {
 	ApprovalRemark *string `json:"approval_remark"`
 }
 
+type SubmitItemLocationTransferRequest struct {
+	ApprovalById   *int    `json:"approval_by_id"`
+	ApprovalRemark *string `json:"approval_remark"`
+}
+
 type GetAllItemLocationTransferDetailResponse struct {
 	TransferRequestDetailSystemNumber int    `json:"transfer_request_detail_system_number"`
 	TransferRequestSystemNumber       int    `json:"transfer_request_system_number"`

@@ -1918,12 +1918,13 @@ func ItemLocationTransferRouter(
 	router.Put("/{transfer_request_system_number}", itemLocationTransferController.UpdateItemLocationTransfer)
 	router.Put("/accept/{transfer_request_system_number}", itemLocationTransferController.AcceptItemLocationTransfer)
 	router.Put("/reject/{transfer_request_system_number}", itemLocationTransferController.RejectItemLocationTransfer)
+	router.Put("/submit/{transfer_request_system_number}", itemLocationTransferController.SubmitItemLocationTransfer)
 	router.Delete("/{transfer_request_system_number}", itemLocationTransferController.DeleteItemLocationTransfer)
 
 	// Detail
 	router.Get("/detail", itemLocationTransferController.GetAllItemLocationTransferDetail)
 	router.Get("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.GetItemLocationTransferDetailById)
-	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransfer)
+	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransferDetail)
 	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
 	router.Delete("/detail/{multi_id}", itemLocationTransferController.DeleteItemLocationTransferDetail)
 
