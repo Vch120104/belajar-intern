@@ -98,6 +98,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 	filter := map[string]string{
 		"mtr_warehouse_master.warehouse_name":      queryValues.Get("warehouse_name"),
 		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
+		"mtr_warehouse_master.warehouse_group_id":  queryValues.Get("warehouse_group_id"),
 		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
 		"mtr_warehouse_master.is_active":           queryValues.Get("is_active"),
 		"mtr_warehouse_master.company_id":          queryValues.Get("company_id"),
