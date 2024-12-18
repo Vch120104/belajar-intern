@@ -1911,9 +1911,9 @@ func LookupRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
-	router.Get("/item-opr-code/{linetype_id}/by-code/*", LookupController.ItemOprCodeByCode)
-	router.Get("/item-opr-code/{linetype_id}/by-id/{item_id}", LookupController.ItemOprCodeByID)
+	router.Get("/item-opr-code/{linetype_code}", LookupController.ItemOprCode)
+	router.Get("/item-opr-code/{linetype_code}/by-code/*", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_code}/by-id/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
