@@ -66,34 +66,36 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 			}
 		}
 
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(response.VehicleId)
-		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
-		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
-		if errFetchVehicle != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        errFetchVehicle,
-			}
-		}
+		// VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(response.VehicleId)
+		// var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		// errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		// if errFetchVehicle != nil {
+		// 	return pages, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        errFetchVehicle,
+		// 	}
+		// }
 
-		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
-		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
-		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
-		if errFetchColour != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch colour data from external service",
-				Err:        errFetchColour,
-			}
-		}
+		// ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		// var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		// errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		// if errFetchColour != nil {
+		// 	return pages, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch colour data from external service",
+		// 		Err:        errFetchColour,
+		// 	}
+		// }
 
 		result := map[string]interface{}{
-			"work_order_system_number":      response.WorkOrderSystemNumber,
-			"work_order_document_number":    response.WorkOrderDocumentNumber,
-			"model":                         getModelResponse.ModelName,
-			"color":                         getColourResponse.VariantColourName,
-			"tnkb":                          getVehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
+			"work_order_system_number":   response.WorkOrderSystemNumber,
+			"work_order_document_number": response.WorkOrderDocumentNumber,
+			"model":                      getModelResponse.ModelName,
+			// "color":                         getColourResponse.VariantColourName,
+			"color": "",
+			// "tnkb":                          getVehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
+			"tnkb":                          "",
 			"promise_time":                  response.PromiseTime,
 			"promise_date":                  response.PromiseDate,
 			"car_wash_bay_id":               response.CarWashBayId,
@@ -488,26 +490,26 @@ func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transacti
 		}
 
 		//Fetch data Color from vehicle master then unit color
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(vehicleId)
-		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
-		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
-		if errFetchVehicle != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        err,
-			}
-		}
+		// VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(vehicleId)
+		// var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		// errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		// if errFetchVehicle != nil {
+		// 	return nil, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        err,
+		// 	}
+		// }
 
-		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
-		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
-		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
-		if errFetchColour != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch colour data from external service",
-			}
-		}
+		// ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		// var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		// errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		// if errFetchColour != nil {
+		// 	return nil, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch colour data from external service",
+		// 	}
+		// }
 
 		carWashScreen := transactionjpcbpayloads.CarWashScreenGetAllResponse{
 			WorkOrderSystemNumber:    workOrderSystemNumber,
@@ -518,7 +520,8 @@ func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transacti
 			ModelId:                  modelId,
 			ModelDescription:         getModelResponse.ModelName,
 			VehicleId:                vehicleId,
-			ColourCommercialName:     getColourResponse.VariantColourName,
+			// ColourCommercialName:     getColourResponse.VariantColourName,
+			ColourCommercialName: "",
 		}
 
 		fmt.Print(carWashScreen)
@@ -673,26 +676,26 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 		}
 
 		//Fetch data Color from vehicle master then unit color
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
-		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
-		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
-		if errFetchVehicle != nil {
-			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        err,
-			}
-		}
+		// VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
+		// var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		// errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		// if errFetchVehicle != nil {
+		// 	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        err,
+		// 	}
+		// }
 
-		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
-		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
-		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
-		if errFetchColour != nil {
-			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch colour data from external service",
-			}
-		}
+		// ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		// var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		// errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		// if errFetchColour != nil {
+		// 	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch colour data from external service",
+		// 	}
+		// }
 
 		// TODO Exec uspg_wtWorkOrderLog_Insert
 
@@ -705,7 +708,8 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 			ModelId:                  result.ModelId,
 			ModelDescription:         getModelResponse.ModelName,
 			VehicleId:                result.VehicleId,
-			ColourCommercialName:     getColourResponse.VariantColourName,
+			// ColourCommercialName:     getColourResponse.VariantColourName,
+			ColourCommercialName: "",
 		}, nil
 	}
 	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
@@ -772,26 +776,26 @@ func (r *CarWashImpl) StopCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		}
 
 		//Fetch data Color from vehicle master then unit color
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
-		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
-		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
-		if errFetchVehicle != nil {
-			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        err,
-			}
-		}
+		// VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
+		// var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		// errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		// if errFetchVehicle != nil {
+		// 	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        err,
+		// 	}
+		// }
 
-		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
-		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
-		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
-		if errFetchColour != nil {
-			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch colour data from external service",
-			}
-		}
+		// ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		// var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		// errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		// if errFetchColour != nil {
+		// 	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch colour data from external service",
+		// 	}
+		// }
 
 		//TODO uspg_wtWorkOrderLog_Insert
 
@@ -804,7 +808,8 @@ func (r *CarWashImpl) StopCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 			ModelId:                  result.ModelId,
 			ModelDescription:         getModelResponse.ModelName,
 			VehicleId:                result.VehicleId,
-			ColourCommercialName:     getColourResponse.VariantColourName,
+			// ColourCommercialName:     getColourResponse.VariantColourName,
+			ColourCommercialName: "",
 		}, nil
 	}
 
@@ -914,33 +919,34 @@ func (*CarWashImpl) GetCarWashByWorkOrderSystemNumber(tx *gorm.DB, workOrderSyst
 		}
 	}
 
-	//Fetch data Color from vehicle master then unit color
-	VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
-	var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
-	errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
-	if errFetchVehicle != nil {
-		return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch vehicle data from external service",
-			Err:        errFetchVehicle,
-		}
-	}
+	// //Fetch data Color from vehicle master then unit color
+	// VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
+	// var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+	// errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+	// if errFetchVehicle != nil {
+	// 	return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to fetch vehicle data from external service",
+	// 		Err:        errFetchVehicle,
+	// 	}
+	// }
 
-	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
-	var getColourResponse transactionjpcbpayloads.CarWashColourResponse
-	errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
-	if errFetchColour != nil {
-		return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch colour data from external service",
-		}
-	}
+	// ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+	// var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+	// errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+	// if errFetchColour != nil {
+	// 	return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to fetch colour data from external service",
+	// 	}
+	// }
 
 	carWashPayload = transactionjpcbpayloads.CarWashGetAllResponse{
-		WorkOrderSystemNumber:      result.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber:    result.WorkOrderDocumentNumber,
-		Model:                      getModelResponse.ModelName,
-		Color:                      getColourResponse.VariantColourName,
+		WorkOrderSystemNumber:   result.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber: result.WorkOrderDocumentNumber,
+		Model:                   getModelResponse.ModelName,
+		// Color:                      getColourResponse.VariantColourName,
+		Color:                      "",
 		Tnkb:                       "",
 		PromiseTime:                &result.PromiseTime,
 		PromiseDate:                &result.PromiseDate,
