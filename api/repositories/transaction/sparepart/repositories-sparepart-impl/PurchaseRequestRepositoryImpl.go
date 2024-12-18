@@ -52,7 +52,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 		Dateparams["purchase_request_date_to"] = "99991212"
 	}
 	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date <= '" + Dateparams["purchase_request_date_to"] + "'"
-	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Where(strDateFilter).Scan(&responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Where(strDateFilter).Order("purchase_request_document_date DESC").Scan(&responses).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
