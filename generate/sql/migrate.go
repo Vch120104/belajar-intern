@@ -230,6 +230,10 @@ func Migrate() {
 	//&transactionsparepartentities.StockTransaction{},
 	//&transactionsparepartentities.GoodsReceiveDetail{},
 	// &transactionsparepartentities.GoodsReceive{},
+
+	// &masteritementities.ItemTransferStatus{},
+	// &transactionsparepartentities.ItemWarehouseTransferRequest{},
+	// &transactionsparepartentities.ItemWarehouseTransferRequestDetail{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)
