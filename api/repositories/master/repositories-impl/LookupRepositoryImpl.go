@@ -18,7 +18,6 @@ import (
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -597,25 +596,25 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		} // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT
-				A.item_id AS item_id, 
-				A.item_code AS item_code, 
-				A.item_name AS item_name, 
-				ISNULL((SELECT SUM(V.quantity_allocated) 
-				        FROM mtr_location_stock V 
-				        WHERE A.item_id = V.item_id 
-				        AND V.PERIOD_YEAR = ? 
-				        AND V.PERIOD_MONTH = ? 
-				        AND V.company_id = ?), 0) AS available_qty, 
-					A.item_level_1_id AS item_level_1,
-					mil1.item_level_1_code AS item_level_1_code, 
-					A.item_level_2_id AS item_level_2,
-					mil2.item_level_2_code AS item_level_2_code, 
-					A.item_level_3_id AS item_level_3,
-					mil3.item_level_3_code AS item_level_3_code, 
-					A.item_level_4_id AS item_level_4,
-					mil4.item_level_4_code AS item_level_4_code
-			`, year, month, companyCode).
+					DISTINCT
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name, 
+					ISNULL((SELECT SUM(V.quantity_allocated) 
+							FROM mtr_location_stock V 
+							WHERE A.item_id = V.item_id 
+							AND V.PERIOD_YEAR = ? 
+							AND V.PERIOD_MONTH = ? 
+							AND V.company_id = ?), 0) AS available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+				`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -641,24 +640,24 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		} // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`DISTINCT
-					A.item_id AS item_id, 
-					A.item_code AS item_code, 
-					A.item_name AS item_name, 
-					ISNULL((SELECT SUM(V.quantity_allocated) 
-							FROM mtr_location_stock V 
-							WHERE A.item_id = V.item_id 
-							AND V.PERIOD_YEAR = ? 
-							AND V.PERIOD_MONTH = ? 
-							AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-				`, year, month, companyCode).
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name, 
+						ISNULL((SELECT SUM(V.quantity_allocated) 
+								FROM mtr_location_stock V 
+								WHERE A.item_id = V.item_id 
+								AND V.PERIOD_YEAR = ? 
+								AND V.PERIOD_MONTH = ? 
+								AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+					`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -693,21 +692,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-						A.item_id AS item_id, 
-						A.item_code AS item_code, 
-						A.item_name AS item_name, 
-						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-								WHERE A.item_id = V.item_id 
-								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-					`, year, month, companyCode).
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name, 
+							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+									WHERE A.item_id = V.item_id 
+									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+						`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -739,21 +738,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-						A.item_id AS item_id, 
-						A.item_code AS item_code, 
-						A.item_name AS item_name, 
-						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-								WHERE A.item_id = V.item_id 
-								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-					`, year, month, companyCode).
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name, 
+							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+									WHERE A.item_id = V.item_id 
+									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+						`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -779,21 +778,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-						A.item_id AS item_id, 
-						A.item_code AS item_code, 
-						A.item_name AS item_name, 
-						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-								WHERE A.item_id = V.item_id 
-								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-					`, year, month, companyCode).
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name, 
+							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+									WHERE A.item_id = V.item_id 
+									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+						`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -819,21 +818,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-							A.item_id AS item_id, 
-							A.item_code AS item_code, 
-							A.item_name AS item_name, 
-							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-									WHERE A.item_id = V.item_id 
-									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-							A.item_level_1_id AS item_level_1,
-							mil1.item_level_1_code AS item_level_1_code, 
-							A.item_level_2_id AS item_level_2,
-							mil2.item_level_2_code AS item_level_2_code, 
-							A.item_level_3_id AS item_level_3,
-							mil3.item_level_3_code AS item_level_3_code, 
-							A.item_level_4_id AS item_level_4,
-							mil4.item_level_4_code AS item_level_4_code
-						`, year, month, companyCode).
+								A.item_id AS item_id, 
+								A.item_code AS item_code, 
+								A.item_name AS item_name, 
+								ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+										WHERE A.item_id = V.item_id 
+										AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+								A.item_level_1_id AS item_level_1,
+								mil1.item_level_1_code AS item_level_1_code, 
+								A.item_level_2_id AS item_level_2,
+								mil2.item_level_2_code AS item_level_2_code, 
+								A.item_level_3_id AS item_level_3,
+								mil3.item_level_3_code AS item_level_3_code, 
+								A.item_level_4_id AS item_level_4,
+								mil4.item_level_4_code AS item_level_4_code
+							`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -859,21 +858,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`		DISTINCT
-							A.item_id AS item_id, 
-							A.item_code AS item_code, 
-							A.item_name AS item_name, 
-							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-									WHERE A.item_id = V.item_id 
-									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-							A.item_level_1_id AS item_level_1,
-							mil1.item_level_1_code AS item_level_1_code, 
-							A.item_level_2_id AS item_level_2,
-							mil2.item_level_2_code AS item_level_2_code, 
-							A.item_level_3_id AS item_level_3,
-							mil3.item_level_3_code AS item_level_3_code, 
-							A.item_level_4_id AS item_level_4,
-							mil4.item_level_4_code AS item_level_4_code
-						`, year, month, companyCode).
+								A.item_id AS item_id, 
+								A.item_code AS item_code, 
+								A.item_name AS item_name, 
+								ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+										WHERE A.item_id = V.item_id 
+										AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+								A.item_level_1_id AS item_level_1,
+								mil1.item_level_1_code AS item_level_1_code, 
+								A.item_level_2_id AS item_level_2,
+								mil2.item_level_2_code AS item_level_2_code, 
+								A.item_level_3_id AS item_level_3,
+								mil3.item_level_3_code AS item_level_3_code, 
+								A.item_level_4_id AS item_level_4,
+								mil4.item_level_4_code AS item_level_4_code
+							`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -890,9 +889,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
-	// apply filter manual baseon linetype
+	// Apply manual filters based on linetype
 	for _, filter := range filters {
-
 		if linetypeStr == "0" {
 			switch filter.ColumnField {
 			case "package_id":
@@ -951,12 +949,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
-	paginateFunc := pagination.Paginate(&paginate, baseQuery)
-	baseQuery = baseQuery.Scopes(paginateFunc)
-
+	// Calculate total rows
 	var totalRows int64
 	if err := baseQuery.Count(&totalRows).Error; err != nil {
-		log.Printf("Error counting rows: %v", err)
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count total rows",
@@ -964,6 +959,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
+
+	// Apply pagination
+	paginateFunc := pagination.Paginate(&paginate, baseQuery)
+	baseQuery = baseQuery.Scopes(paginateFunc)
+
+	// Fetch results
 	results := []map[string]interface{}{}
 	if err := baseQuery.Find(&results).Error; err != nil {
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
@@ -973,8 +976,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
-	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
-
+	// Set pagination details
 	paginate.TotalRows = totalRows
 	paginate.TotalPages = totalPages
 	paginate.Rows = results
