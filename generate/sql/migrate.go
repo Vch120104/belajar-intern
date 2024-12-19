@@ -234,6 +234,10 @@ func Migrate() {
 		//&transactionsparepartentities.StockTransaction{},
 		//&transactionsparepartentities.GoodsReceiveDetail{},
 		// &transactionsparepartentities.GoodsReceive{},
+
+	// &masteritementities.ItemTransferStatus{},
+	// &transactionsparepartentities.ItemWarehouseTransferRequest{},
+	// &transactionsparepartentities.ItemWarehouseTransferRequestDetail{},
 		//&transactionsparepartentities.SalesOrder{},
 		&transactionsparepartentities.SalesOrderDetail{},
 	)

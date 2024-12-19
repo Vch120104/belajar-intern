@@ -366,6 +366,7 @@ func StartRouting(db *gorm.DB) {
 	GoodsReceiveRepository := transactionsparepartrepositoryimpl.NewGoodsReceiveRepositoryImpl()
 	GoodsReceiveService := transactionsparepartserviceimpl.NewGoodsReceiveServiceImpl(GoodsReceiveRepository, db, rdb)
 	GoodsReceiveController := transactionsparepartcontroller.NewGoodsReceiveController(GoodsReceiveService)
+
 	//binning list
 	BinningListRepository := transactionsparepartrepositoryimpl.NewbinningListRepositoryImpl()
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
@@ -382,6 +383,11 @@ func StartRouting(db *gorm.DB) {
 	ClaimSupplierService := transactionsparepartserviceimpl.NewClaimSupplierServiceImpl(ClaimSupplierRepository, db, rdb)
 	ClaimSupplierController := transactionsparepartcontroller.NewClaimSupplierControllerImpl(ClaimSupplierService)
 
+	//Item Location Transfer
+	ItemLocationTransferRepository := transactionsparepartrepositoryimpl.NewItemLocationTransferRepositoryImpl()
+	ItemLocationTransferService := transactionsparepartserviceimpl.NewItemLocationTransferServiceImpl(ItemLocationTransferRepository, db)
+	ItemLocationTransferController := transactionsparepartcontroller.NewItemLocationTransferController(ItemLocationTransferService)
+
 	//Item Inquiry
 	ItemInquiryRepository := transactionsparepartrepositoryimpl.StartItemInquiryRepositoryImpl()
 	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
@@ -391,6 +397,7 @@ func StartRouting(db *gorm.DB) {
 	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
 	StockTransactionController := transactionsparepartcontroller.StartStockTransactionControllerImpl(StockTransactionService)
+
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -544,6 +551,7 @@ func StartRouting(db *gorm.DB) {
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	GoodsReceiveRouter := GoodsReceiveRouter(GoodsReceiveController)
 	BinningListRouter := BinningListRouter(BinningListController)
+	ItemLocationTransferRouter := ItemLocationTransferRouter(ItemLocationTransferController)
 	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
@@ -614,7 +622,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
 		r.Mount("/location-stock", LocationStockRouter)
-		r.Mount("/item-operation", ItemOperationRouter)
+		r.Mount("/mapping-item-operation", ItemOperationRouter)
 		r.Mount("/item-cycle", ItemCycleRouter)
 		r.Mount("/stock-transaction-type", StockTransactionTypeRouter)
 		r.Mount("/stock-transaction-reason", StockTransactionReasonRouter)
@@ -656,6 +664,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
 
 		r.Mount("/binning-list", BinningListRouter)
+		r.Mount("/item-location-transfer", ItemLocationTransferRouter)
 		r.Mount("/item-inquiry", ItemInquiryRouter)
 
 		/* Support Func Afs */

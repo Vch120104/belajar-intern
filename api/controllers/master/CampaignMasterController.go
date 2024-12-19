@@ -11,6 +11,7 @@ import (
 	"after-sales/api/validation"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -208,16 +209,24 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 }
 
 func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.ResponseWriter, request *http.Request) {
-	campaignCode := chi.URLParam(request, "campaign_code")
-	if campaignCode == "" {
-		payloads.NewHandleError(writer, "campaign_code cannot be empty", http.StatusNotFound)
+
+	encodedcampaignCode := chi.URLParam(request, "*")
+
+	if len(encodedcampaignCode) > 0 && encodedcampaignCode[0] == '/' {
+		encodedcampaignCode = encodedcampaignCode[1:]
+	}
+
+	campaignCode, err := url.PathUnescape(encodedcampaignCode)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed to decode campaign code")})
 		return
 	}
 
-	result, err := r.CampaignMasterService.GetByCodeCampaignMaster(campaignCode)
-
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	result, baseErr := r.CampaignMasterService.GetByCodeCampaignMaster(campaignCode)
+	if baseErr != nil {
+		helper.ReturnError(writer, request, baseErr)
 		return
 	}
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
@@ -237,6 +246,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 		"model_description":    queryValues.Get("model_description"),
 		"campaign_period_from": queryValues.Get("campaign_period_from"),
 		"campaign_period_to":   queryValues.Get("campaign_period_to"),
+		"company_id":           queryValues.Get("company_id"),
 	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),

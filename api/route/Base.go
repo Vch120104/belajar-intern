@@ -1376,7 +1376,7 @@ func CampaignMasterRouter(
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
-	router.Get("/by-code/{campaign_code}", campaignmastercontroller.GetByCodeCampaignMaster)
+	router.Get("/by-code/*", campaignmastercontroller.GetByCodeCampaignMaster)
 	router.Get("/history", campaignmastercontroller.GetAllCampaignMasterCodeAndName)
 	router.Post("/", campaignmastercontroller.SaveCampaignMaster)
 	router.Patch("/{campaign_id}", campaignmastercontroller.ChangeStatusCampaignMaster)
@@ -1487,7 +1487,7 @@ func WorkOrderRouter(
 
 	// generate document
 	router.Post("/normal/document-number/{work_order_system_number}", WorkOrderController.GenerateDocumentNumber)
-	router.Get("/normal/calculate-total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
+	router.Put("/normal/calculate-total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
 
 	//add trx normal
 	router.Get("/", WorkOrderController.GetAll)
@@ -1917,9 +1917,9 @@ func LookupRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
-	router.Get("/item-opr-code/{linetype_id}/by-code/{item_code}", LookupController.ItemOprCodeByCode)
-	router.Get("/item-opr-code/{linetype_id}/by-id/{item_id}", LookupController.ItemOprCodeByID)
+	router.Get("/item-opr-code/{linetype_code}", LookupController.ItemOprCode)
+	router.Get("/item-opr-code/{linetype_code}/by-code/*", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_code}/by-id/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
@@ -1943,6 +1943,36 @@ func LookupRouter(
 	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
+
+	return router
+}
+
+func ItemLocationTransferRouter(
+	itemLocationTransferController transactionsparepartcontroller.ItemLocationTransferController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	// Header
+	router.Get("/", itemLocationTransferController.GetAllItemLocationTransfer)
+	router.Get("/{transfer_request_system_number}", itemLocationTransferController.GetItemLocationTransferById)
+	router.Post("/", itemLocationTransferController.InsertItemLocationTransfer)
+	router.Put("/{transfer_request_system_number}", itemLocationTransferController.UpdateItemLocationTransfer)
+	router.Put("/accept/{transfer_request_system_number}", itemLocationTransferController.AcceptItemLocationTransfer)
+	router.Put("/reject/{transfer_request_system_number}", itemLocationTransferController.RejectItemLocationTransfer)
+	router.Put("/submit/{transfer_request_system_number}", itemLocationTransferController.SubmitItemLocationTransfer)
+	router.Delete("/{transfer_request_system_number}", itemLocationTransferController.DeleteItemLocationTransfer)
+
+	// Detail
+	router.Get("/detail", itemLocationTransferController.GetAllItemLocationTransferDetail)
+	router.Get("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.GetItemLocationTransferDetailById)
+	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransferDetail)
+	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
+	router.Delete("/detail/{multi_id}", itemLocationTransferController.DeleteItemLocationTransferDetail)
 
 	return router
 }

@@ -1,12 +1,11 @@
-package masterserviceimpl
+package transactionsparepartserviceimpl
 
 import (
-	masterentities "after-sales/api/entities/master"
-	exceptions "after-sales/api/exceptions"
-	masterpayloads "after-sales/api/payloads/master"
+	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
-	masterrepository "after-sales/api/repositories/master"
-	masterservice "after-sales/api/services/master"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
+	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
+	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"fmt"
 	"net/http"
@@ -15,19 +14,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type CampaignMasterServiceImpl struct {
-	CampaignMasterRepo masterrepository.CampaignMasterRepository
-	DB                 *gorm.DB
+type ItemLocationTransferServiceImpl struct {
+	ItemLocationTransferRepository transactionsparepartrepository.ItemLocationTransferRepository
+	DB                             *gorm.DB
 }
 
-func StartCampaignMasterService(CampaignMasterRepo masterrepository.CampaignMasterRepository, db *gorm.DB) masterservice.CampaignMasterService {
-	return &CampaignMasterServiceImpl{
-		CampaignMasterRepo: CampaignMasterRepo,
-		DB:                 db,
+func NewItemLocationTransferServiceImpl(
+	itemLocationTransferRepo transactionsparepartrepository.ItemLocationTransferRepository,
+	db *gorm.DB,
+) transactionsparepartservice.ItemLocationTransferService {
+	return &ItemLocationTransferServiceImpl{
+		ItemLocationTransferRepository: itemLocationTransferRepo,
+		DB:                             db,
 	}
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) GetAllItemLocationTransfer(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -51,14 +53,16 @@ func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.Campai
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.PostCampaignMaster(tx, req)
-	if err != nil {
-		return result, err
+
+	response, responseErr := s.ItemLocationTransferRepository.GetAllItemLocationTransfer(tx, filterCondition, pages)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads, id int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) GetItemLocationTransferById(id int) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -82,15 +86,16 @@ func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req, id)
 
-	if err != nil {
-		return masterentities.CampaignMasterDetail{}, err
+	response, responseErr := s.ItemLocationTransferRepository.GetItemLocationTransferById(tx, id)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromHistory(id int, idhead int) (int, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) InsertItemLocationTransfer(request transactionsparepartpayloads.InsertItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -114,15 +119,16 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromHistory(id int, 
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.PostCampaignMasterDetailFromHistory(tx, id, idhead)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.InsertItemLocationTransfer(tx, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromPackage(req masterpayloads.CampaignMasterDetailPostFromPackageRequest) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) UpdateItemLocationTransfer(id int, request transactionsparepartpayloads.UpdateItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -146,15 +152,16 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromPackage(req mast
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.PostCampaignMasterDetailFromPackage(tx, req)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.UpdateItemLocationTransfer(tx, id, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) AcceptItemLocationTransfer(id int, request transactionsparepartpayloads.AcceptItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -178,15 +185,16 @@ func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int) (bool, *e
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.ChangeStatusCampaignMaster(tx, id)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.AcceptItemLocationTransfer(tx, id, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) ActivateCampaignMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) RejectItemLocationTransfer(id int, request transactionsparepartpayloads.RejectItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -210,15 +218,16 @@ func (s *CampaignMasterServiceImpl) ActivateCampaignMasterDetail(ids string) (bo
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.ActivateCampaignMasterDetail(tx, ids)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.RejectItemLocationTransfer(tx, id, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, err
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) SubmitItemLocationTransfer(id int, request transactionsparepartpayloads.SubmitItemLocationTransferRequest) (transactionsparepartpayloads.GetItemLocationTransferByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -242,15 +251,16 @@ func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string) (
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.DeactivateCampaignMasterDetail(tx, ids)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.SubmitItemLocationTransfer(tx, id, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (masterpayloads.CampaignMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) DeleteItemLocationTransfer(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -274,15 +284,16 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (masterpayload
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.GetByIdCampaignMaster(tx, id)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.DeleteItemLocationTransfer(tx, id)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) GetAllItemLocationTransferDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -306,15 +317,16 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[str
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.GetByIdCampaignMasterDetail(tx, id)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.GetAllItemLocationTransferDetail(tx, filterCondition, pages)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (masterpayloads.CampaignMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) GetItemLocationTransferDetailById(id int) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -338,15 +350,16 @@ func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (master
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.GetByCodeCampaignMaster(tx, code)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.GetItemLocationTransferDetailById(tx, id)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) InsertItemLocationTransferDetail(request transactionsparepartpayloads.InsertItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -370,15 +383,16 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagina
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.GetAllCampaignMasterCodeAndName(tx, pages)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.InsertItemLocationTransferDetail(tx, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) UpdateItemLocationTransferDetail(id int, request transactionsparepartpayloads.UpdateItemLocationTransferDetailRequest) (transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -402,15 +416,16 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.GetAllCampaignMaster(tx, filtercondition, pages)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.UpdateItemLocationTransferDetail(tx, id, request)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
+
+	return response, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationTransferServiceImpl) DeleteItemLocationTransferDetail(ids []int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -434,106 +449,11 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.
 			}
 		}
 	}()
-	result, err := s.CampaignMasterRepo.GetAllCampaignMasterDetail(tx, pages, id)
 
-	if err != nil {
-		return result, err
+	response, responseErr := s.ItemLocationTransferRepository.DeleteItemLocationTransferDetail(tx, ids)
+	if responseErr != nil {
+		return response, responseErr
 	}
-	return result, nil
-}
 
-func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	result, err := s.CampaignMasterRepo.UpdateCampaignMasterDetail(tx, id, req)
-
-	if err != nil {
-		return 0, err
-	}
-	return result, nil
-}
-
-func (s *CampaignMasterServiceImpl) GetAllPackageMasterToCopy(pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	result, err := s.CampaignMasterRepo.GetAllPackageMasterToCopy(tx, pages)
-
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-
-func (s *CampaignMasterServiceImpl) SelectFromPackageMaster(id int, idhead int) (int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	result, err := s.CampaignMasterRepo.SelectFromPackageMaster(tx, id, idhead)
-
-	if err != nil {
-		return 0, err
-	}
-	return result, nil
+	return response, nil
 }

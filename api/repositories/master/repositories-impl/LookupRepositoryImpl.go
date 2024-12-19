@@ -18,7 +18,6 @@ import (
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -530,7 +529,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -551,8 +550,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeId {
-	case utils.LinetypePackage:
+	switch linetypeStr {
+	case "0":
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
@@ -564,7 +563,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
-	case utils.LinetypeOperation:
+	case "1":
 		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
 			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
 				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
@@ -580,7 +579,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("oc.operation_id")
 
-	case utils.LinetypeSparepart:
+	case "2":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -597,50 +596,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		} // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT
-				A.item_id AS item_id, 
-				A.item_code AS item_code, 
-				A.item_name AS item_name, 
-				ISNULL((SELECT SUM(V.quantity_allocated) 
-				        FROM mtr_location_stock V 
-				        WHERE A.item_id = V.item_id 
-				        AND V.PERIOD_YEAR = ? 
-				        AND V.PERIOD_MONTH = ? 
-				        AND V.company_id = ?), 0) AS available_qty, 
-					A.item_level_1_id AS item_level_1,
-					mil1.item_level_1_code AS item_level_1_code, 
-					A.item_level_2_id AS item_level_2,
-					mil2.item_level_2_code AS item_level_2_code, 
-					A.item_level_3_id AS item_level_3,
-					mil3.item_level_3_code AS item_level_3_code, 
-					A.item_level_4_id AS item_level_4,
-					mil4.item_level_4_code AS item_level_4_code
-			`, year, month, companyCode).
-			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
-			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
-			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
-			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
-			Order("A.item_id")
-
-	case utils.LinetypeOil:
-		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
-		if itmClsErr != nil {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
-			}
-		} // "OL"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`DISTINCT
+					DISTINCT
 					A.item_id AS item_id, 
 					A.item_code AS item_code, 
 					A.item_name AS item_name, 
@@ -663,11 +619,54 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Order("A.item_id")
+
+	case "3":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "OL"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`DISTINCT
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name, 
+						ISNULL((SELECT SUM(V.quantity_allocated) 
+								FROM mtr_location_stock V 
+								WHERE A.item_id = V.item_id 
+								AND V.PERIOD_YEAR = ? 
+								AND V.PERIOD_MONTH = ? 
+								AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+					`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeMaterial:
+	case "4":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -693,21 +692,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-						A.item_id AS item_id, 
-						A.item_code AS item_code, 
-						A.item_name AS item_name, 
-						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-								WHERE A.item_id = V.item_id 
-								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-					`, year, month, companyCode).
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name, 
+							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+									WHERE A.item_id = V.item_id 
+									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+						`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -716,7 +715,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeFee:
+	case "5":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -739,21 +738,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-						A.item_id AS item_id, 
-						A.item_code AS item_code, 
-						A.item_name AS item_name, 
-						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-								WHERE A.item_id = V.item_id 
-								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-					`, year, month, companyCode).
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name, 
+							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+									WHERE A.item_id = V.item_id 
+									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+						`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -762,7 +761,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeAccesories:
+	case "6":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -779,21 +778,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-						A.item_id AS item_id, 
-						A.item_code AS item_code, 
-						A.item_name AS item_name, 
-						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-								WHERE A.item_id = V.item_id 
-								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-						A.item_level_1_id AS item_level_1,
-						mil1.item_level_1_code AS item_level_1_code, 
-						A.item_level_2_id AS item_level_2,
-						mil2.item_level_2_code AS item_level_2_code, 
-						A.item_level_3_id AS item_level_3,
-						mil3.item_level_3_code AS item_level_3_code, 
-						A.item_level_4_id AS item_level_4,
-						mil4.item_level_4_code AS item_level_4_code
-					`, year, month, companyCode).
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name, 
+							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+									WHERE A.item_id = V.item_id 
+									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+						`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -802,7 +801,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeConsumableMaterial:
+	case "7":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -819,21 +818,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`	DISTINCT
-							A.item_id AS item_id, 
-							A.item_code AS item_code, 
-							A.item_name AS item_name, 
-							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-									WHERE A.item_id = V.item_id 
-									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-							A.item_level_1_id AS item_level_1,
-							mil1.item_level_1_code AS item_level_1_code, 
-							A.item_level_2_id AS item_level_2,
-							mil2.item_level_2_code AS item_level_2_code, 
-							A.item_level_3_id AS item_level_3,
-							mil3.item_level_3_code AS item_level_3_code, 
-							A.item_level_4_id AS item_level_4,
-							mil4.item_level_4_code AS item_level_4_code
-						`, year, month, companyCode).
+								A.item_id AS item_id, 
+								A.item_code AS item_code, 
+								A.item_name AS item_name, 
+								ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+										WHERE A.item_id = V.item_id 
+										AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+								A.item_level_1_id AS item_level_1,
+								mil1.item_level_1_code AS item_level_1_code, 
+								A.item_level_2_id AS item_level_2,
+								mil2.item_level_2_code AS item_level_2_code, 
+								A.item_level_3_id AS item_level_3,
+								mil3.item_level_3_code AS item_level_3_code, 
+								A.item_level_4_id AS item_level_4,
+								mil4.item_level_4_code AS item_level_4_code
+							`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -842,7 +841,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeSouvenir:
+	case "9":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -859,21 +858,21 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`		DISTINCT
-							A.item_id AS item_id, 
-							A.item_code AS item_code, 
-							A.item_name AS item_name, 
-							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-									WHERE A.item_id = V.item_id 
-									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-							A.item_level_1_id AS item_level_1,
-							mil1.item_level_1_code AS item_level_1_code, 
-							A.item_level_2_id AS item_level_2,
-							mil2.item_level_2_code AS item_level_2_code, 
-							A.item_level_3_id AS item_level_3,
-							mil3.item_level_3_code AS item_level_3_code, 
-							A.item_level_4_id AS item_level_4,
-							mil4.item_level_4_code AS item_level_4_code
-						`, year, month, companyCode).
+								A.item_id AS item_id, 
+								A.item_code AS item_code, 
+								A.item_name AS item_name, 
+								ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+										WHERE A.item_id = V.item_id 
+										AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
+								A.item_level_1_id AS item_level_1,
+								mil1.item_level_1_code AS item_level_1_code, 
+								A.item_level_2_id AS item_level_2,
+								mil2.item_level_2_code AS item_level_2_code, 
+								A.item_level_3_id AS item_level_3,
+								mil3.item_level_3_code AS item_level_3_code, 
+								A.item_level_4_id AS item_level_4,
+								mil4.item_level_4_code AS item_level_4_code
+							`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -890,10 +889,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		}
 	}
 
-	// apply filter manual baseon linetype
+	// Apply manual filters based on linetype
 	for _, filter := range filters {
-
-		if linetypeId == utils.LinetypePackage {
+		if linetypeStr == "0" {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -910,7 +908,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeId == utils.LinetypeOperation {
+		} else if linetypeStr == "1" {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -929,7 +927,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeId == utils.LinetypeSparepart || linetypeId == utils.LinetypeOil || linetypeId == utils.LinetypeMaterial || linetypeId == utils.LinetypeFee || linetypeId == utils.LinetypeAccesories || linetypeId == utils.LinetypeConsumableMaterial || linetypeId == utils.LinetypeSouvenir {
+		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -951,12 +949,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		}
 	}
 
-	paginateFunc := pagination.Paginate(&paginate, baseQuery)
-	baseQuery = baseQuery.Scopes(paginateFunc)
-
+	// Calculate total rows
 	var totalRows int64
 	if err := baseQuery.Count(&totalRows).Error; err != nil {
-		log.Printf("Error counting rows: %v", err)
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count total rows",
@@ -964,6 +959,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		}
 	}
 
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
+
+	// Apply pagination
+	paginateFunc := pagination.Paginate(&paginate, baseQuery)
+	baseQuery = baseQuery.Scopes(paginateFunc)
+
+	// Fetch results
 	results := []map[string]interface{}{}
 	if err := baseQuery.Find(&results).Error; err != nil {
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
@@ -973,8 +976,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		}
 	}
 
-	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
-
+	// Set pagination details
 	paginate.TotalRows = totalRows
 	paginate.TotalPages = totalPages
 	paginate.Rows = results
@@ -984,7 +986,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -1005,8 +1007,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeId {
-	case utils.LinetypePackage:
+	switch linetypeStr {
+	case "0":
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
@@ -1019,7 +1021,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
-	case utils.LinetypeOperation:
+	case "1":
 		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
 			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
 				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
@@ -1035,7 +1037,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				"oe.operation_entries_code, oe.operation_entries_description, " +
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("oc.operation_id")
-	case utils.LinetypeSparepart:
+	case "2":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1080,7 +1082,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeOil:
+	case "3":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1124,7 +1126,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeMaterial:
+	case "4":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1174,7 +1176,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeFee:
+	case "5":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1221,7 +1223,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeAccesories:
+	case "6":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1262,7 +1264,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeConsumableMaterial:
+	case "7":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1303,7 +1305,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeSouvenir:
+	case "9":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1355,7 +1357,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	// apply filter manual baseon linetype
 	for _, filter := range filters {
 
-		if linetypeId == utils.LinetypePackage {
+		if linetypeStr == "0" {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -1372,7 +1374,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeId == utils.LinetypeOperation {
+		} else if linetypeStr == "1" {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -1391,7 +1393,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeId == utils.LinetypeSparepart || linetypeId == utils.LinetypeOil || linetypeId == utils.LinetypeMaterial || linetypeId == utils.LinetypeFee || linetypeId == utils.LinetypeAccesories || linetypeId == utils.LinetypeConsumableMaterial || linetypeId == utils.LinetypeSouvenir {
+		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -1436,8 +1438,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	}
 
 	if len(results) == 0 {
-		paginate.Rows = map[string]interface{}{}
-		return paginate, nil
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        errors.New("data not found"),
+		}
 	}
 
 	paginate.Rows = results
@@ -1447,7 +1452,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -1468,8 +1473,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeId {
-	case utils.LinetypePackage:
+	switch linetypeStr {
+	case "0":
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
@@ -1482,7 +1487,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
 			Order("A.package_id")
 
-	case utils.LinetypeOperation:
+	case "1":
 		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
 			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
 				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
@@ -1499,7 +1504,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("oc.operation_id")
 
-	case utils.LinetypeSparepart:
+	case "2":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1544,7 +1549,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeOil:
+	case "3":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1588,7 +1593,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeMaterial:
+	case "4":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1638,7 +1643,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeFee:
+	case "5":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1685,7 +1690,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeAccesories:
+	case "6":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1726,7 +1731,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeConsumableMaterial:
+	case "7":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1767,7 +1772,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
 			Order("A.item_id")
 
-	case utils.LinetypeSouvenir:
+	case "9":
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -1819,7 +1824,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	// apply filter manual baseon linetype
 	for _, filter := range filters {
 
-		if linetypeId == utils.LinetypePackage {
+		if linetypeStr == "0" {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -1836,7 +1841,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeId == utils.LinetypeOperation {
+		} else if linetypeStr == "1" {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -1855,7 +1860,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeId == utils.LinetypeSparepart || linetypeId == utils.LinetypeOil || linetypeId == utils.LinetypeMaterial || linetypeId == utils.LinetypeFee || linetypeId == utils.LinetypeAccesories || linetypeId == utils.LinetypeConsumableMaterial || linetypeId == utils.LinetypeSouvenir {
+		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -1900,8 +1905,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	}
 
 	if len(results) == 0 {
-		paginate.Rows = map[string]interface{}{}
-		return paginate, nil
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        errors.New("data not found"),
+		}
 	}
 
 	paginate.Rows = results

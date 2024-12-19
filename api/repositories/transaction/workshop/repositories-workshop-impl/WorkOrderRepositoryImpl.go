@@ -18,6 +18,7 @@ import (
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -1179,7 +1180,7 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 			if err != nil {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
-					Message:    "Failed to update status work order",
+					Message:    "Failed to update status work order, status service work order must be closed",
 					Err:        err,
 				}
 			}
@@ -1839,13 +1840,31 @@ func (r *WorkOrderRepositoryImpl) AddRequest(tx *gorm.DB, workorderID int, reque
 		}
 	}
 
-	nextLine := lastService.WorkOrderServiceRequestLine + 1
+	var maxWonextLine int
+	err = tx.Model(&transactionworkshopentities.WorkOrderService{}).
+		Select("COALESCE(MAX(work_order_service_request_line), 0)").
+		Where("work_order_system_number = ?", request.WorkOrderSystemNumber).
+		Scan(&maxWonextLine).Error
+
+	if err != nil {
+		return transactionworkshopentities.WorkOrderService{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve maximum work order service item line",
+			Err:        err,
+		}
+	}
+
+	if maxWonextLine == 0 {
+		maxWonextLine = 1
+	} else {
+		maxWonextLine++
+	}
 
 	entities := transactionworkshopentities.WorkOrderService{
 		WorkOrderSystemNumber:       request.WorkOrderSystemNumber,
 		WorkOrderServiceRemark:      request.WorkOrderServiceRemark,
 		WorkOrderServiceDate:        time.Now(),
-		WorkOrderServiceRequestLine: nextLine,
+		WorkOrderServiceRequestLine: maxWonextLine,
 	}
 
 	err = tx.Create(&entities).Error
@@ -1885,13 +1904,31 @@ func (r *WorkOrderRepositoryImpl) AddRequestMultiId(tx *gorm.DB, workorderID int
 			}
 		}
 
-		nextLine := lastService.WorkOrderServiceRequestLine + 1
+		var maxWonextLine int
+		err = tx.Model(&transactionworkshopentities.WorkOrderService{}).
+			Select("COALESCE(MAX(work_order_service_request_line), 0)").
+			Where("work_order_system_number = ?", request.WorkOrderSystemNumber).
+			Scan(&maxWonextLine).Error
+
+		if err != nil {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve maximum work order service item line",
+				Err:        err,
+			}
+		}
+
+		if maxWonextLine == 0 {
+			maxWonextLine = 1
+		} else {
+			maxWonextLine++
+		}
 
 		entity := transactionworkshopentities.WorkOrderService{
 			WorkOrderSystemNumber:       request.WorkOrderSystemNumber,
 			WorkOrderServiceRemark:      request.WorkOrderServiceRemark,
 			WorkOrderServiceDate:        time.Now(),
-			WorkOrderServiceRequestLine: nextLine,
+			WorkOrderServiceRequestLine: maxWonextLine,
 		}
 
 		err = tx.Create(&entity).Error
@@ -2602,6 +2639,147 @@ func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrder
 	return workOrderDetailResponses, nil
 }
 
+func (r *WorkOrderRepositoryImpl) validateOperationItemId(lineTypeId, operationItemId int) (*http.Response, *exceptions.BaseErrorResponse) {
+	url := config.EnvConfigs.AfterSalesServiceUrl + "lookup/item-opr-code/" + strconv.Itoa(lineTypeId) + "/by-id/" + strconv.Itoa(operationItemId)
+	fmt.Println("Requesting URL:", url)
+	// Perform HTTP GET request
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    fmt.Sprintf("Error calling external service: %v", err),
+			Err:        err,
+		}
+	}
+	defer resp.Body.Close()
+
+	// Log response status
+	fmt.Println("Response Status Code:", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Invalid combination linetype & OperationItemId from external service",
+			Err:        errors.New("invalid combination linetype & OperationItemId from external service"),
+		}
+	}
+
+	// Decode response based on lineTypeId
+	switch lineTypeId {
+	case 0:
+		var responseData struct {
+			StatusCode int    `json:"status_code"`
+			Message    string `json:"message"`
+			Data       struct {
+				Description      string  `json:"description"`
+				FRT              float64 `json:"frt"`
+				ModelCode        string  `json:"model_code"`
+				PackageCode      string  `json:"package_code"`
+				PackageID        int     `json:"package_id"`
+				PackageName      string  `json:"package_name"`
+				Price            int     `json:"price"`
+				ProfitCenter     int     `json:"profit_center"`
+				ProfitCenterName string  `json:"profit_center_name"`
+			} `json:"data"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    fmt.Sprintf("Error decoding response: %v", err),
+				Err:        err,
+			}
+		}
+
+		// Validate PackageID
+		if responseData.Data.PackageID != operationItemId {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "OperationItemId is invalid for linetype 0",
+				Err:        errors.New("OperationItemId is invalid for linetype 0"),
+			}
+		}
+
+	case 1:
+		var responseData struct {
+			StatusCode int    `json:"status_code"`
+			Message    string `json:"message"`
+			Data       struct {
+				FrtHour                     int     `json:"frt_hour"`
+				OperationCode               string  `json:"operation_code"`
+				OperationEntriesCode        *string `json:"operation_entries_code"`
+				OperationEntriesDescription *string `json:"operation_entries_description"`
+				OperationID                 int     `json:"operation_id"`
+				OperationKeyCode            *string `json:"operation_key_code"`
+				OperationKeyDescription     *string `json:"operation_key_description"`
+				OperationName               string  `json:"operation_name"`
+			} `json:"data"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    fmt.Sprintf("Error decoding response: %v", err),
+				Err:        err,
+			}
+		}
+
+		// Validate OperationID
+		if responseData.Data.OperationID != operationItemId {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "OperationItemId is invalid for linetype 1",
+				Err:        errors.New("OperationItemId is invalid for linetype 1"),
+			}
+		}
+
+	case 2, 3, 4, 5, 6, 7, 8, 9:
+		var responseData struct {
+			StatusCode int    `json:"status_code"`
+			Message    string `json:"message"`
+			Data       struct {
+				AvailableQty   int     `json:"available_qty"`
+				ItemCode       string  `json:"item_code"`
+				ItemID         int     `json:"item_id"`
+				ItemLevel1     int     `json:"item_level_1"`
+				ItemLevel1Code string  `json:"item_level_1_code"`
+				ItemLevel2     *int    `json:"item_level_2"`
+				ItemLevel2Code *string `json:"item_level_2_code"`
+				ItemLevel3     *int    `json:"item_level_3"`
+				ItemLevel3Code *string `json:"item_level_3_code"`
+				ItemLevel4     *int    `json:"item_level_4"`
+				ItemLevel4Code *string `json:"item_level_4_code"`
+				ItemName       string  `json:"item_name"`
+			} `json:"data"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    fmt.Sprintf("Error decoding response: %v", err),
+				Err:        err,
+			}
+		}
+
+		// Validate ItemID
+		if responseData.Data.ItemID != operationItemId {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "OperationItemId is invalid for linetype 2-9",
+				Err:        errors.New("OperationItemId is invalid for linetype 2-9"),
+			}
+		}
+
+	default:
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid linetype provided",
+			Err:        errors.New("invalid linetype provided"),
+		}
+	}
+
+	return resp, nil
+}
+
 // uspg_wtWorkOrder2_Insert
 // IF @Option = 0
 // --USE FOR : * INSERT NEW DATA DETAIL
@@ -2652,6 +2830,12 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				}
 			}
 
+			if maxWoOprItemLine == 0 {
+				maxWoOprItemLine = 1
+			} else {
+				maxWoOprItemLine++
+			}
+
 			// var bookingEstim21 []transactionworkshopentities.BookingEstimation
 			// err := tx.Model(&bookingEstim21).
 			// 	Select("BE.ESTIM_LINE, BE.LINE_TYPE, BE.OPR_ITEM_CODE, BE.DESCRIPTION, I.SELLING_UOM, BE.FRT_QTY, BE.OPR_ITEM_PRICE, BE.OPR_ITEM_DISC_AMOUNT, BE.OPR_ITEM_DISC_REQ_AMOUNT, BE.OPR_ITEM_DISC_PERCENT, BE.OPR_ITEM_DISC_REQ_PERCENT, BE.PPH_AMOUNT, BE.PPH_TAX_CODE, BE.PPH_TAX_RATE").
@@ -2678,19 +2862,15 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				FrtQuantity:                         0,  //BE.FrtQuantity,
 				SupplyQuantity:                      0,  //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
 				WorkorderStatusId:                   utils.WoStatDraft,
-				OperationItemDiscountAmount:         0,                    //BE.OPR_ITEM_DISC_AMOUNT,
-				OperationItemDiscountRequestAmount:  0,                    //BE.OPR_ITEM_DISC_REQ_AMOUNT,
-				OperationItemDiscountPercent:        0,                    //BE.OPR_ITEM_DISC_PERCENT,
-				OperationItemDiscountRequestPercent: 0,                    //BE.OPR_ITEM_DISC_REQ_PERCENT,
-				OperationItemPrice:                  0,                    //BE.OPR_ITEM_PRICE,
-				PphAmount:                           0,                    //BE.PPH_AMOUNT,
-				PphTaxRate:                          0,                    //BE.PPH_TAX_RATE,
-				AtpmWCFTypeId:                       0,                    //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
-				WorkOrderOperationItemLine:          maxWoOprItemLine + 1, //BE.ESTIM_LINE,
-			}
-
-			if request.LineTypeId == 1 {
-				workOrderDetail.OperationItemId = request.OperationItemId
+				OperationItemDiscountAmount:         0,                //BE.OPR_ITEM_DISC_AMOUNT,
+				OperationItemDiscountRequestAmount:  0,                //BE.OPR_ITEM_DISC_REQ_AMOUNT,
+				OperationItemDiscountPercent:        0,                //BE.OPR_ITEM_DISC_PERCENT,
+				OperationItemDiscountRequestPercent: 0,                //BE.OPR_ITEM_DISC_REQ_PERCENT,
+				OperationItemPrice:                  0,                //BE.OPR_ITEM_PRICE,
+				PphAmount:                           0,                //BE.PPH_AMOUNT,
+				PphTaxRate:                          0,                //BE.PPH_TAX_RATE,
+				AtpmWCFTypeId:                       0,                //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
+				WorkOrderOperationItemLine:          maxWoOprItemLine, //BE.ESTIM_LINE,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -2719,32 +2899,91 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				}
 			}
 
-			workOrderDetail = transactionworkshopentities.WorkOrderDetail{
+			if maxWoOprItemLine == 0 {
+				maxWoOprItemLine = 1
+			} else {
+				maxWoOprItemLine++
+			}
+
+			// Panggil validateOperationItemId untuk validasi dan mengambil resp
+			resp, err := r.validateOperationItemId(request.LineTypeId, request.OperationItemId)
+			if err != nil {
+				return transactionworkshopentities.WorkOrderDetail{}, err
+			}
+
+			// Proses resp untuk mendapatkan OperationItemCode
+			var operationItemCode string
+			switch request.LineTypeId {
+			case 0: // LineType Package
+				var responseData struct {
+					Data struct {
+						PackageCode string `json:"package_code"`
+					} `json:"data"`
+				}
+				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    fmt.Sprintf("Error decoding response: %v", err),
+						Err:        err,
+					}
+				}
+				operationItemCode = responseData.Data.PackageCode
+
+			case 1: // LineType Operation
+				var responseData struct {
+					Data struct {
+						OperationCode string `json:"operation_code"`
+					} `json:"data"`
+				}
+				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    fmt.Sprintf("Error decoding response: %v", err),
+						Err:        err,
+					}
+				}
+				operationItemCode = responseData.Data.OperationCode
+
+			default: // LineType lainnya
+				var responseData struct {
+					Data struct {
+						ItemCode string `json:"item_code"`
+					} `json:"data"`
+				}
+				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    fmt.Sprintf("Error decoding response: %v", err),
+						Err:        err,
+					}
+				}
+				operationItemCode = responseData.Data.ItemCode
+			}
+
+			// Buat WorkOrderDetail
+			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:               id,
-				LineTypeId:                          request.LineTypeId,        // BE0.LineTypeId,
-				TransactionTypeId:                   request.TransactionTypeId, // utils.TrxTypeWoExternal,
-				JobTypeId:                           request.JobTypeId,         // CASE WHEN BE0.CPC_CODE = @Profit_Center_BR THEN @JobTypeBR ELSE @JobTypePM END,
+				LineTypeId:                          request.LineTypeId,
+				TransactionTypeId:                   request.TransactionTypeId,
+				JobTypeId:                           request.JobTypeId,
 				OperationItemId:                     request.OperationItemId,
-				OperationItemCode:                   request.OperationItemCode, // BE.OPR_ITEM_CODE,
-				WarehouseGroupId:                    request.WarehouseGroupId,  // Whs_Group_Sp
-				FrtQuantity:                         request.FrtQuantity,       // BE.FrtQuantity,
-				SupplyQuantity:                      request.SupplyQuantity,    // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
+				OperationItemCode:                   operationItemCode,
+				WarehouseGroupId:                    request.WarehouseGroupId,
+				FrtQuantity:                         request.FrtQuantity,
+				SupplyQuantity:                      request.SupplyQuantity,
 				WorkorderStatusId:                   utils.WoStatDraft,
-				OperationItemDiscountAmount:         0,                          // BE.OPR_ITEM_DISC_AMOUNT,
-				OperationItemDiscountRequestAmount:  0,                          // BE.OPR_ITEM_DISC_REQ_AMOUNT,
-				OperationItemDiscountPercent:        0,                          // BE.OPR_ITEM_DISC_PERCENT,
-				OperationItemDiscountRequestPercent: 0,                          // BE.OPR_ITEM_DISC_REQ_PERCENT,
-				OperationItemPrice:                  request.OperationItemPrice, // BE.OPR_ITEM_PRICE,
-				PphAmount:                           0,                          // BE.PPH_AMOUNT,
-				PphTaxRate:                          0,                          // BE.PPH_TAX_RATE,
-				AtpmWCFTypeId:                       0,                          // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
-				WorkOrderOperationItemLine:          maxWoOprItemLine + 1,
+				OperationItemDiscountAmount:         0,
+				OperationItemDiscountRequestAmount:  0,
+				OperationItemDiscountPercent:        0,
+				OperationItemDiscountRequestPercent: 0,
+				OperationItemPrice:                  request.OperationItemPrice,
+				PphAmount:                           0,
+				PphTaxRate:                          0,
+				AtpmWCFTypeId:                       0,
+				WorkOrderOperationItemLine:          maxWoOprItemLine,
 			}
 
-			if request.LineTypeId == 1 {
-				workOrderDetail.OperationItemId = request.OperationItemId
-			}
-
+			// Buat Work Order Detail dalam database
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -2804,6 +3043,12 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				}
 			}
 
+			if maxWoOprItemLine == 0 {
+				maxWoOprItemLine = 1
+			} else {
+				maxWoOprItemLine++
+			}
+
 			var campaignItems []masterentities.CampaignMasterDetail
 			err := tx.Model(&campaignItems).
 				Select("line_type_id, item_operation_id, quantity, price, discount_percent").
@@ -2839,7 +3084,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					PphAmount:                           0,                                                                           // 0,
 					PphTaxRate:                          0,                                                                           // CASE WHEN C1.LINE_TYPE = @LINETYPE_OPR THEN OPR.TAX_CODE	ELSE ''	END,
 					AtpmWCFTypeId:                       0,
-					WorkOrderOperationItemLine:          maxWoOprItemLine + 1, // 0
+					WorkOrderOperationItemLine:          maxWoOprItemLine, // 0
 				}
 			} else {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
@@ -2895,6 +3140,12 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					Message:    "Failed to retrieve maximum work order operation item line",
 					Err:        err,
 				}
+			}
+
+			if maxWoOprItemLine == 0 {
+				maxWoOprItemLine = 1
+			} else {
+				maxWoOprItemLine++
 			}
 
 			// Insert into wtWorkOrder2
@@ -2956,11 +3207,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphAmount:                           0,                       // 0,
 				PphTaxRate:                          0,                       // OP.TAX_CODE,
 				AtpmWCFTypeId:                       0,                       // 0
-				WorkOrderOperationItemLine:          maxWoOprItemLine + 1,
-			}
-
-			if request.LineTypeId == 1 {
-				workOrderDetail.OperationItemId = request.OperationItemId
+				WorkOrderOperationItemLine:          maxWoOprItemLine,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -2989,6 +3236,12 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					Message:    "Failed to retrieve maximum work order operation item line",
 					Err:        err,
 				}
+			}
+
+			if maxWoOprItemLine == 0 {
+				maxWoOprItemLine = 1
+			} else {
+				maxWoOprItemLine++
 			}
 
 			// Insert into wtWorkOrder2
@@ -3037,8 +3290,6 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 			// 		"LINE_STATUS":                request.PDIStatusWO,
 			// })
 
-			workOrderDetail.WorkOrderOperationItemLine = maxWoOprItemLine + 1
-
 			workOrderDetail = transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:               id,
 				LineTypeId:                          0,  // SR1.LINE_TYPE,
@@ -3057,11 +3308,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphAmount:                           0, // 0,
 				PphTaxRate:                          0, // CASE WHEN SR1.LINE_TYPE = @LINETYPE_OPR THEN OPR.TAX_CODE WHEN SR1.LINE_TYPE = @LINETYPE_PACKAGE	THEN PCK.PPH_TAX_CODE ELSE '' END,
 				AtpmWCFTypeId:                       0, // 0
-				WorkOrderOperationItemLine:          maxWoOprItemLine + 1,
-			}
-
-			if request.LineTypeId == 1 {
-				workOrderDetail.OperationItemId = request.OperationItemId
+				WorkOrderOperationItemLine:          maxWoOprItemLine,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3103,6 +3350,12 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				}
 			}
 
+			if maxWoOprItemLine == 0 {
+				maxWoOprItemLine = 1
+			} else {
+				maxWoOprItemLine++
+			}
+
 			// Insert into wtWorkOrder2
 			// tx.Exec(`
 			// 	INSERT INTO wtWorkOrder2 (
@@ -3142,7 +3395,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphAmount:                           0, // 0,
 				PphTaxRate:                          0, // 0
 				AtpmWCFTypeId:                       0, // 0
-				WorkOrderOperationItemLine:          maxWoOprItemLine + 1,
+				WorkOrderOperationItemLine:          maxWoOprItemLine,
 			}
 
 			if request.LineTypeId == 1 {
