@@ -16,6 +16,7 @@ type ItemClassResponse struct {
 	ItemGroupName string `json:"item_group_name"`
 	LineTypeId    int    `json:"line_type_id"` //FK with mtr_line_type common-general service
 	LineTypeName  string `json:"line_type_name"`
+	LineTypeCode  string `json:"line_type_code"`
 	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
 }
 
