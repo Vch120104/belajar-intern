@@ -312,7 +312,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		priceCodeId         int
 	)
 
-	priceListCodeUrl := config.EnvConfigs.GeneralServiceUrl + "price-list-code-by-code/A"
+	priceListCodeUrl := config.EnvConfigs.AfterSalesServiceUrl + "price-list/by-code/A"
 	preiceListCodePayloads := masterpayloads.GetPriceListCodeResponse{}
 	if err := utils.Get(priceListCodeUrl, &preiceListCodePayloads, nil); err != nil || preiceListCodePayloads.PriceListCodeId == 0 {
 		return 0, &exceptions.BaseErrorResponse{

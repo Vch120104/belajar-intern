@@ -32,6 +32,7 @@ type PriceListController interface {
 	ActivatePriceList(writer http.ResponseWriter, request *http.Request)
 	DeactivatePriceList(writer http.ResponseWriter, request *http.Request)
 	GetPriceListById(writer http.ResponseWriter, request *http.Request)
+	GetPriceListByCodeId(writer http.ResponseWriter, request *http.Request)
 	GenerateDownloadTemplateFile(writer http.ResponseWriter, request *http.Request)
 	UploadFile(writer http.ResponseWriter, request *http.Request)
 	CheckPriceListItem(writer http.ResponseWriter, request *http.Request)
@@ -485,4 +486,22 @@ func (r *PriceListControllerImpl) DeletePriceList(writer http.ResponseWriter, re
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Delete data successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) GetPriceListByCodeId(writer http.ResponseWriter, request *http.Request) {
+	priceListCodeId := chi.URLParam(request, "price_list_code_id")
+	if priceListCodeId == "" {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("price_list_code_id parameter is required"),
+		})
+		return
+	}
+
+	response, err := r.pricelistservice.GetPriceListByCodeId(priceListCodeId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Get data successfully!", http.StatusOK)
 }

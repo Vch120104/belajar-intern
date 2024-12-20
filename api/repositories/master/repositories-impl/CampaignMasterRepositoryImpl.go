@@ -416,6 +416,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		Count(&totalRows).Error; err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "error checking existing campaign detail",
 			Err:        err,
 		}
 	}
@@ -427,6 +428,19 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 			Find(&packageDetails).Error; err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching package details",
+				Err:        err,
+			}
+		}
+
+		// Fetch Warehouse Group
+		var warehouseGroupId int
+		if err := tx.Model(&masterentities.WarehouseGroupMappingEntities{}).
+			Select("warehouse_group_id").
+			Where("warehouse_group_type_code = ?", "WHS_GRP_CAMPAIGN"). //Warehouse Group For Campaign
+			First(&warehouseGroupId).Error; err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
@@ -434,8 +448,8 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		// Fetch Warehouse Group
 		var warehouseGroup string
 		if err := tx.Model(&masterwarehouseentities.WarehouseGroup{}).
-			Select("warehouse_group_type_code").
-			Where("warehouse_group_mapping_id = ?", 1). //Warehouse Group For Campaign
+			Select("warehouse_group_code").
+			Where("warehouse_group_id = ?", warehouseGroupId).
 			First(&warehouseGroup).Error; err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -449,13 +463,15 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 			if err != nil {
 				return response, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
+					Message:    "error fetching item price code",
 					Err:        err.Err,
 				}
 			}
 			if itemPriceCode == 0 {
 				return response, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
-					Err:        errors.New("operation item price not found, please set the price first"),
+					Message:    "item price code not found",
+					Err:        err,
 				}
 			}
 		}
@@ -467,6 +483,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 			First(&packageDetail).Error; err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching package detail",
 				Err:        err,
 			}
 		}
@@ -476,6 +493,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		if err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching item price code",
 				Err:        err.Err,
 			}
 		}
@@ -493,9 +511,12 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 			Price:           itemPriceCode,
 		}
 
+		fmt.Println("Campaign Detail:", campaignDetail)
+
 		if err := tx.Save(&campaignDetail).Error; err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    "error saving campaign detail",
 				Err:        err,
 			}
 		}

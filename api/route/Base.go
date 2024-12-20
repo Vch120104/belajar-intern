@@ -507,6 +507,7 @@ func PriceListRouter(
 	router.Get("/", priceListController.GetAllPriceListNew)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
 	router.Get("/{price_list_id}", priceListController.GetPriceListById)
+	router.Get("/by-code/{price_list_code_id}", priceListController.GetPriceListByCodeId)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
 	router.Patch("/activate/{price_list_id}", priceListController.ActivatePriceList)
