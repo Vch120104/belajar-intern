@@ -65,7 +65,8 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 			mtr_item_package.item_package_name,
 			mtr_item_group.item_group_id AS item_group_id,
 			mtr_item_group.item_group_code AS item_group_code,
-			mtr_item_group.item_group_name AS item_group_name
+			mtr_item_group.item_group_name AS item_group_name,
+			mtr_item_package.item_package_set
 		`).
 		Joins("LEFT JOIN mtr_item_group ON mtr_item_group.item_group_id = mtr_item_package.item_group_id")
 	queryFilter := utils.ApplyFilter(query, internalFilterCondition)
