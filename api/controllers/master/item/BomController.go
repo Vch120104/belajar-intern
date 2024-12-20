@@ -19,12 +19,15 @@ import (
 )
 
 type BomController interface {
-	GetBomMasterById(writer http.ResponseWriter, request *http.Request)
+	// Parent
 	GetBomMasterList(writer http.ResponseWriter, request *http.Request)
+
+	GetBomMasterById(writer http.ResponseWriter, request *http.Request)
 	SaveBomMaster(writer http.ResponseWriter, request *http.Request)
 	UpdateBomMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request)
 
+	// Detail
 	GetBomDetailList(writer http.ResponseWriter, request *http.Request)
 	GetBomDetailById(writer http.ResponseWriter, request *http.Request)
 	SaveBomDetail(writer http.ResponseWriter, request *http.Request)
@@ -55,7 +58,7 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param bom_master_id query string false "bom_master_id"
 // @Param item_name query string false "item_name"
-// @Param bom_master_effective_date query string false "bom_master_effective_date"
+// @Param effective_date query string false "effective_date"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
@@ -65,11 +68,12 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"bom_master_id":             queryValues.Get("bom_master_id"), // Ambil nilai bom_master_id tanpa mtr_bom_master.
-		"item_id":                   queryValues.Get("item_id"),
-		"bom_master_effective_date": queryValues.Get("bom_master_effective_date"),
-		"is_active":                 queryValues.Get("is_active"),
-		"bom_master_qty":            queryValues.Get("bom_master_qty"),
+		"item_code":      queryValues.Get("item_code"),
+		"item_name":      queryValues.Get("item_name"),
+		"effective_date": queryValues.Get("effective_date"),
+		"qty":            queryValues.Get("qty"),
+		"uom_code":       queryValues.Get("uom_code"),
+		"is_active":      queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
@@ -235,8 +239,8 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 	}
 
 	responseData := map[string]interface{}{
-		"is_active":     entity.IsActive,
-		"bom_master_id": entity.BomMasterId,
+		"is_active": entity.IsActive,
+		"bom_id":    entity.BomId,
 	}
 
 	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)

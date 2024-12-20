@@ -533,6 +533,7 @@ func BomRouter(
 
 	//bom master
 	router.Get("/", BomController.GetBomMasterList)
+
 	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
 	router.Post("/", BomController.SaveBomMaster)
 	router.Put("/{bom_master_id}", BomController.UpdateBomMaster)

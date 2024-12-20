@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -27,28 +26,17 @@ func StartBomRepositoryImpl() masteritemrepository.BomRepository {
 }
 
 func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
-	type BomResponse struct {
-		IsActive               bool      `json:"is_active"`
-		BomMasterId            int       `json:"bom_master_id"`
-		BomMasterQty           int       `json:"bom_master_qty"`
-		BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
-		ItemCode               string    `json:"item_code"`
-		ItemName               string    `json:"item_name"`
-		UomDescription         string    `json:"uom_description"`
-	}
-
-	var responses []BomResponse
+	var responses []masteritempayloads.BomMasterListResponseNew
 
 	baseQuery := tx.Table("mtr_bom AS bom").
 		Select(`
-			bom.is_active,
-			bom.bom_master_id,
-			bom.bom_master_qty,
-			bom.bom_master_effective_date,
+			bom_id,
 			item.item_code,
 			item.item_name,
-			uom.uom_description`).
+			effective_date,
+			qty,
+			uom.uom_code,
+			bom.is_active`).
 		Joins("LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id").
 		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id")
 
@@ -63,7 +51,7 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filterConditions []uti
 		}
 	}
 
-	// Jika data kosong, kembalikan response sukses dengan list kosong
+	// If empty, return empty list
 	if len(responses) == 0 {
 		pages.Rows = []masteritementities.MarkupMaster{}
 		pages.TotalRows = 0
@@ -164,11 +152,10 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 
 	// Construct the payload
 	payload := masteritempayloads.BomMasterResponseDetail{
-		BomMasterId:            bomMaster.BomMasterId,
+		BomMasterId:            bomMaster.BomId,
 		IsActive:               bomMaster.IsActive,
-		BomMasterQty:           bomMaster.BomMasterQty,
-		BomMasterEffectiveDate: bomMaster.BomMasterEffectiveDate,
-		BomMasterChangeNumber:  bomMaster.BomMasterChangeNumber,
+		BomMasterQty:           bomMaster.Qty,
+		BomMasterEffectiveDate: bomMaster.EffectiveDate,
 		ItemId:                 bomMaster.ItemId,
 		ItemCode:               itemResponse.ItemCode,
 		ItemName:               itemResponse.ItemName,
@@ -188,9 +175,8 @@ func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.
 	var entities masteritementities.Bom
 
 	entities.IsActive = request.IsActive
-	entities.BomMasterQty = request.BomMasterQty
-	entities.BomMasterEffectiveDate = request.BomMasterEffectiveDate
-	entities.BomMasterChangeNumber = request.BomMasterChangeNumber
+	entities.Qty = request.BomMasterQty
+	entities.EffectiveDate = request.BomMasterEffectiveDate
 	entities.ItemId = request.ItemId
 
 	err := tx.Create(&entities).Error
@@ -227,9 +213,8 @@ func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, request masterite
 	}
 
 	entities.IsActive = request.IsActive
-	entities.BomMasterQty = request.BomMasterQty
-	entities.BomMasterEffectiveDate = request.BomMasterEffectiveDate
-	entities.BomMasterChangeNumber = request.BomMasterChangeNumber
+	entities.Qty = request.BomMasterQty
+	entities.EffectiveDate = request.BomMasterEffectiveDate
 	entities.ItemId = request.ItemId
 
 	result = tx.Save(&entities)
@@ -417,13 +402,12 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 
 	// Buat entitas BomDetail
 	newBomDetail := masteritementities.BomDetail{
-		BomMasterId:             request.BomMasterId,
-		BomDetailSeq:            newBomDetailSeq,
-		BomDetailQty:            request.BomDetailQty,
-		BomDetailCostingPercent: request.BomDetailCostingPercent,
-		BomDetailRemark:         request.BomDetailRemark,
-		BomDetailTypeId:         request.BomDetailTypeId,
-		BomDetailMaterialId:     request.BomDetailMaterialId,
+		BomId:             request.BomMasterId,
+		Seq:               newBomDetailSeq,
+		Qty:               request.BomDetailQty,
+		CostingPercentage: request.BomDetailCostingPercent,
+		Remark:            request.BomDetailRemark,
+		ItemId:            request.BomDetailTypeId, // TypeId -> ItemId
 	}
 
 	// Simpan entitas BomDetail
@@ -458,9 +442,9 @@ func (r *BomRepositoryImpl) UpdateBomDetail(tx *gorm.DB, id int, request masteri
 		}
 	}
 
-	entities.BomDetailQty = request.BomDetailQty
-	entities.BomDetailCostingPercent = request.BomDetailCostingPercent
-	entities.BomDetailRemark = request.BomDetailRemark
+	entities.Qty = request.BomDetailQty
+	entities.CostingPercentage = request.BomDetailCostingPercent
+	entities.Remark = request.BomDetailRemark
 
 	result = tx.Save(&entities)
 

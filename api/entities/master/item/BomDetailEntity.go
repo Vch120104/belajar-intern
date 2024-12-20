@@ -3,24 +3,18 @@ package masteritementities
 var CreateBomDetailTable = "mtr_bom_detail"
 
 type BomDetail struct {
-	BomDetailId             int    `gorm:"column:bom_detail_id;size:30;not null;primaryKey" json:"bom_detail_id"`
-	BomMasterId             int    `gorm:"column:bom_master_id;size:30;not null" json:"bom_master_id"`
-	BomDetailSeq            int    `gorm:"column:bom_detail_seq;size:30;not null" json:"bom_detail_seq"`
-	BomDetailQty            int    `gorm:"column:bom_detail_qty;size:30;not null" json:"bom_detail_qty"`
-	BomDetailUom            string `gorm:"column:bom_detail_uom;size:30;not null" json:"bom_detail_uom"`
-	BomDetailRemark         string `gorm:"column:bom_detail_remark;size:30;not null" json:"bom_detail_remark"`
-	BomDetailCostingPercent int    `gorm:"column:bom_detail_costing_percent;size:30;not null" json:"bom_detail_costing_percent"`
-	BomDetailType           string `gorm:"column:bom_detail_type;size:30;not null" json:"bom_detail_type"`
-	BomDetailMaterialCode   string `gorm:"column:bom_detail_material_code;size:30;not null" json:"bom_detail_material_code"`
-	BomDetailMaterialName   string `gorm:"column:bom_detail_material_name;size:30;not null" json:"bom_detail_material_name"`
-	BomDetailMaterialId     int    `gorm:"column:bom_detail_material_id;size:30;not null" json:"bom_detail_material_id"`
-	BomDetailTypeId         int    `gorm:"column:bom_detail_type_id;size:30;not null" json:"bom_detail_type_id"`
-	// Material                Material  `gorm:"foreignKey:MaterialId" json:"material"` //foreign key to mtr_item table
-	// MaterialId              int       `gorm:"column:material_id;size:30;not null" json:"material_id"`
+	IsActive          bool    `gorm:"column:is_active;size:1;not null" json:"is_active"`
+	BomDetailId       int     `gorm:"column:bom_detail_id;size:30;not null;primaryKey" json:"bom_detail_id"`
+	BomId             int     `gorm:"column:bom_id;size:30;not null" json:"bom_id"`
+	Seq               int     `gorm:"column:seq;size:30;not null" json:"seq"`
+	ItemId            int     `gorm:"column:item_id;size:30;not null" json:"item_id"`
+	Qty               float64 `gorm:"column:qty;size:30;not null" json:"qty"`
+	Remark            string  `gorm:"column:remark;size:512" json:"remark"`
+	CostingPercentage float64 `gorm:"column:costing_percentage;size:30;not null" json:"costing_percentage"`
+	Bom               Bom     `gorm:"foreignKey:BomId;references:BomId" json:"bom"`
+	Item              Item    `gorm:"foreignKey:ItemId;references:ItemId" json:"item"`
 }
 
 func (*BomDetail) TableName() string {
-
 	return CreateBomDetailTable
-
 }

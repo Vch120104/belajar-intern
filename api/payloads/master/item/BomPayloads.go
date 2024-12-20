@@ -2,12 +2,22 @@ package masteritempayloads
 
 import "time"
 
+type BomMasterListResponseNew struct {
+	BomId         int       `gorm:"column:bom_id;size:30;not null;primaryKey" json:"bom_id"`
+	ItemCode      string    `json:"item_code" parent_entity:"mtr_item"`
+	ItemName      string    `json:"item_name" parent_entity:"mtr_item"`
+	EffectiveDate time.Time `gorm:"column:effective_date;not null;type:datetime" json:"effective_date"`
+	Qty           float64   `gorm:"column:qty;size:30;not null" json:"qty"`
+	UomCode       string    `json:"uom_code" parent_entity:"mtr_uom"`
+	IsActive      bool      `gorm:"column:is_active;size:1;not null" json:"is_active"`
+}
+
 type BomMasterResponse struct {
 	BomMasterId            int       `json:"bom_master_id"`
 	IsActive               bool      `json:"is_active"`
 	BomMasterCode          string    `json:"bom_master_code"`
 	BomMasterSeq           int       `json:"bom_master_seq"`
-	BomMasterQty           int       `json:"bom_master_qty"`
+	BomMasterQty           float64   `json:"bom_master_qty"`
 	BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
 	BomMasterChangeNumber  int       `json:"bom_master_change_number"`
 	ItemId                 int       `json:"item_id"`
@@ -20,7 +30,7 @@ type BomMasterListResponse struct {
 	IsActive               bool      `json:"is_active" parent_entity:"mtr_bom"`
 	BomMasterId            int       `json:"bom_master_id" parent_entity:"mtr_bom" main_table:"mtr_bom"`
 	BomMasterSeq           int       `json:"bom_master_seq" parent_entity:"mtr_bom"`
-	BomMasterQty           int       `json:"bom_master_qty" parent_entity:"mtr_bom"`
+	BomMasterQty           float64   `json:"bom_master_qty" parent_entity:"mtr_bom"`
 	BomMasterEffectiveDate time.Time `json:"bom_master_effective_date" parent_entity:"mtr_bom"`
 	BomMasterChangeNumber  int       `json:"bom_master_change_number" parent_entity:"mtr_bom"`
 	ItemCode               string    `json:"item_code" parent_entity:"mtr_item"`
@@ -33,7 +43,7 @@ type BomMasterListResponse struct {
 type BomMasterRequest struct {
 	BomMasterId            int       `json:"bom_master_id"`
 	IsActive               bool      `json:"is_active"`
-	BomMasterQty           int       `json:"bom_master_qty"`
+	BomMasterQty           float64   `json:"bom_master_qty"`
 	BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
 	BomMasterChangeNumber  int       `json:"bom_master_change_number"`
 	ItemId                 int       `json:"item_id"`
@@ -50,7 +60,7 @@ type BomDetailsResponse struct {
 type BomMasterResponseDetail struct {
 	BomMasterId            int                `json:"bom_master_id"`
 	IsActive               bool               `json:"is_active"`
-	BomMasterQty           int                `json:"bom_master_qty"`
+	BomMasterQty           float64            `json:"bom_master_qty"`
 	BomMasterEffectiveDate time.Time          `json:"bom_master_effective_date"`
 	BomMasterChangeNumber  int                `json:"bom_master_change_number"`
 	ItemId                 int                `json:"item_id"`
@@ -66,45 +76,45 @@ type BomItemNameResponse struct {
 }
 
 type BomDetail struct {
-	BomDetailId             int    `json:"bom_detail_id"`
-	BomDetailSeq            int    `json:"bom_detail_seq"`
-	BomDetailQty            int    `json:"bom_detail_qty"`
-	BomDetailUom            string `json:"bom_detail_uom"`
-	BomDetailRemark         string `json:"bom_detail_remark"`
-	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
+	BomDetailId             int     `json:"bom_detail_id"`
+	BomDetailSeq            int     `json:"bom_detail_seq"`
+	BomDetailQty            float64 `json:"bom_detail_qty"`
+	BomDetailUom            string  `json:"bom_detail_uom"`
+	BomDetailRemark         string  `json:"bom_detail_remark"`
+	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent"`
 }
 
 type BomDetailResponse struct {
-	BomDetailId             int    `json:"bom_detail_id"`
-	BomDetailSeq            int    `json:"bom_detail_seq"`
-	BomDetailQty            int    `json:"bom_detail_qty"`
-	BomDetailUom            string `json:"bom_detail_uom"`
-	BomDetailRemark         string `json:"bom_detail_remark"`
-	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
+	BomDetailId             int     `json:"bom_detail_id"`
+	BomDetailSeq            int     `json:"bom_detail_seq"`
+	BomDetailQty            float64 `json:"bom_detail_qty"`
+	BomDetailUom            string  `json:"bom_detail_uom"`
+	BomDetailRemark         string  `json:"bom_detail_remark"`
+	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent"`
 }
 
 type BomDetailRequest struct {
-	BomDetailId             int    `json:"bom_detail_id"`
-	BomMasterId             int    `json:"bom_master_id"`
-	BomDetailQty            int    `json:"bom_detail_qty"`
-	BomDetailRemark         string `json:"bom_detail_remark"`
-	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
-	BomDetailTypeId         int    `json:"bom_detail_type_id"`
-	BomDetailMaterialId     int    `json:"bom_detail_material_id"`
+	BomDetailId             int     `json:"bom_detail_id"`
+	BomMasterId             int     `json:"bom_master_id"`
+	BomDetailQty            float64 `json:"bom_detail_qty"`
+	BomDetailRemark         string  `json:"bom_detail_remark"`
+	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent"`
+	BomDetailTypeId         int     `json:"bom_detail_type_id"`
+	BomDetailMaterialId     int     `json:"bom_detail_material_id"`
 }
 
 type BomDetailListResponse struct {
-	BomMasterId             int    `json:"bom_master_id" parent_entity:"mtr_bom_detail"`
-	ItemCode                string `json:"item_code"`
-	ItemName                string `json:"item_name"`
-	LineTypeName            string `json:"line_type_name"`
-	BomDetailTypeId         int    `json:"bom_detail_type_id" parent_entity:"mtr_bom_detail"`
-	BomDetailId             int    `json:"bom_detail_id" parent_entity:"mtr_bom_detail"`
-	BomDetailSeq            int    `json:"bom_detail_seq" parent_entity:"mtr_bom_detail"`
-	BomDetailQty            int    `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
-	BomDetailRemark         string `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
-	BomDetailCostingPercent int    `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
-	UomDescription          string `json:"uom_description" parent_entity:"mtr_uom"`
+	BomMasterId             int     `json:"bom_master_id" parent_entity:"mtr_bom_detail"`
+	ItemCode                string  `json:"item_code"`
+	ItemName                string  `json:"item_name"`
+	LineTypeName            string  `json:"line_type_name"`
+	BomDetailTypeId         int     `json:"bom_detail_type_id" parent_entity:"mtr_bom_detail"`
+	BomDetailId             int     `json:"bom_detail_id" parent_entity:"mtr_bom_detail"`
+	BomDetailSeq            int     `json:"bom_detail_seq" parent_entity:"mtr_bom_detail"`
+	BomDetailQty            float64 `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
+	BomDetailRemark         string  `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
+	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
+	UomDescription          string  `json:"uom_description" parent_entity:"mtr_uom"`
 }
 
 type BomItemLookup struct {
