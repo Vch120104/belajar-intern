@@ -76,6 +76,7 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 		"mtr_item_package.item_package_set":  queryValues.Get("item_package_set"),
 		"mtr_item_package.description":       queryValues.Get("description"),
 		"mtr_item_package.is_active":         queryValues.Get("is_active"),
+		"mtr_item_group.item_group_code":     queryValues.Get("item_group_code"),
 	}
 	externalFilterCondition := map[string]string{
 
