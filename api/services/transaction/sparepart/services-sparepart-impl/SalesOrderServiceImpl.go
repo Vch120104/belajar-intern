@@ -157,3 +157,52 @@ func (s *SalesOrderServiceImpl) InsertSalesOrderDetail(payload transactionsparep
 	}
 	return result, nil
 }
+func (s *SalesOrderServiceImpl) DeleteSalesOrderDetail(salesOrderDetailId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+	result, err := s.salesOrderRepo.DeleteSalesOrderDetail(tx, salesOrderDetailId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (s *SalesOrderServiceImpl) SalesOrderProposedDiscountMultiId(db *gorm.DB, multiId string, proposedDiscountPercentage float64) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+		}
+	}()
+	result, err := s.salesOrderRepo.SalesOrderProposedDiscountMultiId(tx, multiId, proposedDiscountPercentage)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

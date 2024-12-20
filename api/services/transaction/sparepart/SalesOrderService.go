@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	"after-sales/api/utils"
+	"gorm.io/gorm"
 )
 
 // service sales order service
@@ -15,4 +16,6 @@ type SalesOrderServiceInterface interface {
 	GetAllSalesOrder(pages pagination.Pagination, condition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	VoidSalesOrder(salesOrderId int) (bool, *exceptions.BaseErrorResponse)
 	InsertSalesOrderDetail(payload transactionsparepartpayloads.SalesOrderDetailInsertPayload) (transactionsparepartentities.SalesOrderDetail, *exceptions.BaseErrorResponse)
+	DeleteSalesOrderDetail(salesOrderDetailId int) (bool, *exceptions.BaseErrorResponse)
+	SalesOrderProposedDiscountMultiId(db *gorm.DB, multiId string, proposedDiscountPercentage float64) (bool, *exceptions.BaseErrorResponse)
 }

@@ -20,6 +20,8 @@ import (
 	"gorm.io/gorm"
 	"math"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -792,6 +794,16 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 	if approvalDraftErr != nil {
 		return entities, approvalDraftErr
 	}
+	itemSubstituteType := masteritementities.ItemSubstituteType{}
+	err = db.Model(&itemSubstituteType).Where(masteritementities.ItemSubstituteType{ItemSubstituteTypeCode: "S"}).
+		Scan(&itemSubstituteType).Error
+	if err != nil {
+		return entities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get item substitute type",
+		}
+	}
 	if availableQuantity > 0 {
 
 		//insert
@@ -817,7 +829,7 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 			VehicleSalesOrderSystemNumber:       payload.VehicleSalesOrderSystemNumber,
 			VehicleSalesOrderDetailSystemNumber: payload.VehicleSalesOrderDetailSystemNumber,
 			PriceListId:                         payload.PriceListId,
-			ItemSubstituteTypeId:                1, //question item substitute type
+			ItemSubstituteTypeId:                itemSubstituteType.ItemSubstituteTypeId, //question item substitute type
 
 		}
 		err = db.Create(&entities).First(&entities).Error
@@ -867,16 +879,6 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 	//process recalculate header
 	//get first subsitute type SUBTITUTE_ITEM [S]
 
-	itemSubstituteType := masteritementities.ItemSubstituteType{}
-	err = db.Model(&itemSubstituteType).Where(masteritementities.ItemSubstituteType{ItemSubstituteTypeCode: "S"}).
-		Scan(&itemSubstituteType).Error
-	if err != nil {
-		return entities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-			Message:    "failed to get item substitute type",
-		}
-	}
 	//caclculate subtotal
 	err = db.Model(&entities).
 		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: payload.SalesOrderSystemNumber}).
@@ -945,4 +947,330 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 	}
 	//fmt.Println(availableQuantity)
 	return entities, nil
+}
+
+// type option 1  interface{}
+func (r *SalesOrderRepositoryImpl) DeleteSalesOrderDetail(db *gorm.DB, salesOrderDetailId int) (bool, *exceptions.BaseErrorResponse) {
+	//get and check entities first
+	var SalesOrderSubTotal float64
+	var SalesOrderTotalDiscount float64
+	var SalesOrderTotal float64
+	var SalesOrderAdditionalDiscountAmount float64
+	var SalesOrderTotalVat float64
+	var SalesOrderTotalAfterVat float64
+
+	detailEntities := transactionsparepartentities.SalesOrderDetail{}
+	err := db.Model(&detailEntities).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderDetailSystemNumber: salesOrderDetailId}).
+		First(&detailEntities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "sales order detail to deleted is not found please check input",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sales order detail to deleted please check input",
+			Err:        err,
+		}
+	}
+
+	//get sales order header
+	soEntities := transactionsparepartentities.SalesOrder{}
+	err = db.Model(&soEntities).
+		Where(transactionsparepartentities.SalesOrder{SalesOrderSystemNumber: detailEntities.SalesOrderSystemNumber}).
+		First(&soEntities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "sales order header is not found",
+			}
+		}
+	}
+	//validasi if already have pick
+	if detailEntities.QuantityPick > 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item already picked"),
+			Message:    "item alread picked",
+		}
+	}
+	if detailEntities.QuantitySupply > 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item already supplied"),
+			Message:    "item already supplied",
+		}
+	}
+	//cek approved closed id
+	approvalClosed, approvalClosedErr := generalserviceapiutils.GetApprovalStatusByCode(utils.ApprovalClosedCode)
+	if approvalClosedErr != nil {
+		return false, approvalClosedErr
+	}
+	if soEntities.SalesOrderStatusID == approvalClosed.ApprovalStatusId {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("sales order is already closed"),
+			Message:    "sales order is already closed",
+		}
+	}
+	if soEntities.PurchaseOrderSystemNumber != 0 || soEntities.VehicleSalesOrderSystemNumber != 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("item cannot be deleted there is purchase order and vehicle sales order number binding"),
+			Message:    "item cannot be deleted",
+		}
+	}
+
+	//delete sales order detail
+	err = db.Delete(&detailEntities, transactionsparepartentities.SalesOrderDetail{SalesOrderDetailSystemNumber: salesOrderDetailId}).
+		Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to delete sales order entity",
+		}
+	}
+	//get item substiute type
+	itemSubstituteType := masteritementities.ItemSubstituteType{}
+	err = db.Model(&itemSubstituteType).Where(masteritementities.ItemSubstituteType{ItemSubstituteTypeCode: "S"}).
+		Scan(&itemSubstituteType).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get item substitute type",
+		}
+	}
+
+	//////////////////////////////
+	//recalculated for header data
+	err = db.Model(&detailEntities).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: detailEntities.SalesOrderSystemNumber}).
+		Select(`
+				COALESCE(SUM(CASE WHEN item_substitute_type_id = ? THEN 0 ELSE COALESCE(price, 0) * COALESCE(quantity_demand, 0) END), 0)
+				`, itemSubstituteType.ItemSubstituteTypeId).
+		Scan(&SalesOrderSubTotal).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sub total from sales order detail",
+			Err:        err,
+		}
+	}
+
+	//round to nearest integer
+	SalesOrderSubTotal = math.Round(SalesOrderSubTotal)
+
+	//calculate total discount
+	err = db.Model(&detailEntities).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: detailEntities.SalesOrderSystemNumber}).
+		Select(`
+				COALESCE(SUM(CASE WHEN COALESCE(discount_request_amount,0) > 0 THEN 
+				COALESCE(discount_request_amount, 0) * COALESCE(quantity_demand, 0) 
+				ELSE 
+				COALESCE(discount_amount,0) * COALESCE(quantity_demand,0)
+				END), 0)
+				`).
+		Scan(&SalesOrderTotalDiscount).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sub total from sales order detail",
+			Err:        err,
+		}
+	}
+	//rounding
+	SalesOrderTotalDiscount = math.Round(SalesOrderTotalDiscount)
+	//SET @Total = @Sub_Total - @Total_Disc
+	SalesOrderTotal = SalesOrderSubTotal - SalesOrderTotalDiscount
+	//SET @Add_Disc_Amount = (@Total * ISNULL(@Add_Disc_Percent,0)) / 100
+
+	SalesOrderAdditionalDiscountAmount = SalesOrderTotal * (soEntities.AdditionalDiscountPercentage / 100)
+	//rounding
+	SalesOrderAdditionalDiscountAmount = math.Round(SalesOrderAdditionalDiscountAmount)
+	//notes  math.Round(value/10) * 10 -> sama dengan round(...,-1)
+	SalesOrderTotalVat = (SalesOrderTotal - SalesOrderAdditionalDiscountAmount) * (math.Round(SalesOrderTotalVat))
+
+	SalesOrderTotalAfterVat = (SalesOrderTotal - SalesOrderAdditionalDiscountAmount) + SalesOrderTotalVat
+
+	//update header data
+	soEntities.Total = SalesOrderTotal
+	soEntities.TotalDiscount = SalesOrderTotalDiscount
+	soEntities.AdditionalDiscountAmount = SalesOrderAdditionalDiscountAmount
+	soEntities.TotalVAT = SalesOrderTotalVat
+	soEntities.TotalAfterVAT = SalesOrderTotalAfterVat
+	//soEntities.Remark =
+
+	err = db.Save(&soEntities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to save sales order header",
+		}
+	}
+	return true, nil
+
+}
+
+// propose disc USPG_ATSALESORDER1_UPDATE option 7
+func (r *SalesOrderRepositoryImpl) SalesOrderProposedDiscountMultiId(db *gorm.DB, multiId string, proposedDiscountPercentage float64) (bool, *exceptions.BaseErrorResponse) {
+	var SalesOrderSubTotal float64
+	var SalesOrderTotalDiscount float64
+	var SalesOrderTotal float64
+	var SalesOrderAdditionalDiscountAmount float64
+	var SalesOrderTotalVat float64
+	var SalesOrderTotalAfterVat float64
+	var soEntities transactionsparepartentities.SalesOrder
+
+	multiIds := strings.Split(multiId, ",")
+	for _, Id := range multiIds {
+		SoDetailId, errConvert := strconv.Atoi(Id)
+		if errConvert != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errConvert,
+				Message:    "failed to read sales order id",
+			}
+		}
+
+		//select the sales order Detail entities
+
+		salesOrderDetailEntities := transactionsparepartentities.SalesOrderDetail{}
+		err := db.Model(&salesOrderDetailEntities).
+			Where(transactionsparepartentities.SalesOrderDetail{SalesOrderDetailSystemNumber: SoDetailId}).
+			First(&salesOrderDetailEntities).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Err:        errors.New(fmt.Sprintf("sales order detail with id : %d is not exist", SoDetailId)),
+					Message:    fmt.Sprintf("sales order detail with id : %d is not exist", SoDetailId),
+				}
+			}
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "there is an error when getting sales order detail",
+			}
+		}
+		//check if sales order header is exist
+		err = db.Model(&soEntities).
+			Where(transactionsparepartentities.SalesOrderDetail{
+				SalesOrderSystemNumber: salesOrderDetailEntities.SalesOrderSystemNumber,
+			}).
+			First(&soEntities).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Err:        errors.New(fmt.Sprintf("sales order  with id : %d is not exist", salesOrderDetailEntities.SalesOrderSystemNumber)),
+					Message:    fmt.Sprintf("sales order  with id : %d is not exist", salesOrderDetailEntities.SalesOrderSystemNumber),
+				}
+			}
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to get sales order header",
+			}
+		}
+		//update the sales order detail
+		salesOrderDetailEntities.DiscountRequestPercent = proposedDiscountPercentage
+		salesOrderDetailEntities.DiscountRequestAmount = math.Round(salesOrderDetailEntities.Price * (proposedDiscountPercentage / 100))
+		//save sales order
+
+		err = db.Save(&salesOrderDetailEntities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to save sales order detail please contact your administrator",
+			}
+		}
+	}
+	//updating header
+	itemSubstituteType := masteritementities.ItemSubstituteType{}
+	err := db.Model(&itemSubstituteType).Where(masteritementities.ItemSubstituteType{ItemSubstituteTypeCode: "S"}).
+		Scan(&itemSubstituteType).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get item substitute type",
+		}
+	}
+
+	detailEntities := transactionsparepartentities.SalesOrderDetail{}
+	err = db.Model(&detailEntities).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: detailEntities.SalesOrderSystemNumber}).
+		Select(`
+				COALESCE(SUM(CASE WHEN item_substitute_type_id = ? THEN 0 ELSE COALESCE(price, 0) * COALESCE(quantity_demand, 0) END), 0)
+				`, itemSubstituteType.ItemSubstituteTypeId).
+		Scan(&SalesOrderSubTotal).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sub total from sales order detail",
+			Err:        err,
+		}
+	}
+
+	//round to nearest integer
+	SalesOrderSubTotal = math.Round(SalesOrderSubTotal)
+
+	//calculate total discount
+	err = db.Model(&detailEntities).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: detailEntities.SalesOrderSystemNumber}).
+		Select(`
+				COALESCE(SUM(CASE WHEN COALESCE(discount_request_amount,0) > 0 THEN 
+				COALESCE(discount_request_amount, 0) * COALESCE(quantity_demand, 0) 
+				ELSE 
+				COALESCE(discount_amount,0) * COALESCE(quantity_demand,0)
+				END), 0)
+				`).
+		Scan(&SalesOrderTotalDiscount).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sub total from sales order detail",
+			Err:        err,
+		}
+	}
+	//rounding
+	SalesOrderTotalDiscount = math.Round(SalesOrderTotalDiscount)
+	//SET @Total = @Sub_Total - @Total_Disc
+	SalesOrderTotal = SalesOrderSubTotal - SalesOrderTotalDiscount
+	//SET @Add_Disc_Amount = (@Total * ISNULL(@Add_Disc_Percent,0)) / 100
+
+	SalesOrderAdditionalDiscountAmount = SalesOrderTotal * (soEntities.AdditionalDiscountPercentage / 100)
+	//rounding
+	SalesOrderAdditionalDiscountAmount = math.Round(SalesOrderAdditionalDiscountAmount)
+	//notes  math.Round(value/10) * 10 -> sama dengan round(...,-1)
+	SalesOrderTotalVat = (SalesOrderTotal - SalesOrderAdditionalDiscountAmount) * (math.Round(SalesOrderTotalVat))
+
+	SalesOrderTotalAfterVat = (SalesOrderTotal - SalesOrderAdditionalDiscountAmount) + SalesOrderTotalVat
+
+	//process update header
+	soEntities.TotalDiscount = SalesOrderTotal
+	soEntities.TotalDiscount = SalesOrderTotalDiscount
+	soEntities.AdditionalDiscountPercentage = SalesOrderAdditionalDiscountAmount
+	soEntities.AdditionalDiscountAmount = SalesOrderAdditionalDiscountAmount
+	soEntities.TotalVAT = SalesOrderTotalVat
+	soEntities.TotalAfterVAT = SalesOrderTotalAfterVat
+	err = db.Save(&soEntities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to save sales order entities with error : " + err.Error(),
+		}
+	}
+	return true, nil
 }

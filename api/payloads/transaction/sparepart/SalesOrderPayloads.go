@@ -1,6 +1,8 @@
 package transactionsparepartpayloads
 
-import "time"
+import (
+	"time"
+)
 
 type SupplyTypeResponse struct {
 	SupplyTypeId          int    `json:"supply_type_id"`
@@ -226,3 +228,13 @@ type SalesOrderDetailInsertPayload struct {
 	AdditionalDiscountPercentage        float64    `json:"additional_discount_percentage"`
 	HeaderRemark                        string     `json:"header_remark"`
 }
+
+type SalesOrderDeleteDetailResponse struct {
+	DeleteMessage string `json:"delete_message"`
+	DeleteStatus  bool   `json:"delete_status"`
+}
+
+//
+//type SalesOrderProposedDiscountResponse struct {
+//	ProposedDiscount float64 `json:"proposed_discount" validate:"required"`
+//}

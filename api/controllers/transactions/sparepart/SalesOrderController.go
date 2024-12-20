@@ -21,6 +21,7 @@ type SalesOrderController interface {
 	GetAllSalesOrder(writer http.ResponseWriter, request *http.Request)
 	VoidSalesOrder(writer http.ResponseWriter, request *http.Request)
 	InsertSalesOrderDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteSalesOrderDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type SalesOrderControllerImpl struct {
@@ -133,4 +134,29 @@ func (s *SalesOrderControllerImpl) InsertSalesOrderDetail(writer http.ResponseWr
 	}
 	payloads.NewHandleSuccess(writer, res, "succesfull insert sales order detail", http.StatusCreated)
 	return
+}
+func (s *SalesOrderControllerImpl) DeleteSalesOrderDetail(writer http.ResponseWriter, request *http.Request) {
+	salesOrderDetailId, errConvert := strconv.Atoi(chi.URLParam(request, "sales_order_detail_system_number"))
+	if errConvert != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errConvert,
+			Message:    "failed to convert id parameters",
+		})
+	}
+	res, err := s.SalesOrderService.DeleteSalesOrderDetail(salesOrderDetailId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	var ResponseDeleteSalesOrder transactionsparepartpayloads.SalesOrderDeleteDetailResponse
+	if res == true {
+		ResponseDeleteSalesOrder = transactionsparepartpayloads.SalesOrderDeleteDetailResponse{
+			DeleteMessage: "success to delete sales order detail",
+			DeleteStatus:  true,
+		}
+	} else {
+		helper.ReturnError(writer, request, err)
+	}
+	payloads.NewHandleSuccess(writer, ResponseDeleteSalesOrder, "success to delete sales order detail", http.StatusOK)
 }

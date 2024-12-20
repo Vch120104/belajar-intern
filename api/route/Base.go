@@ -1904,6 +1904,8 @@ func SalesOrderRouter(
 	router.Get("/", SalesOrderController.GetAllSalesOrder)
 	router.Delete("/{sales_order_system_number}", SalesOrderController.VoidSalesOrder)
 	router.Post("/detail", SalesOrderController.InsertSalesOrderDetail)
+	router.Delete("/detail/{sales_order_detail_system_number}", SalesOrderController.DeleteSalesOrderDetail)
+
 	return router
 }
 
