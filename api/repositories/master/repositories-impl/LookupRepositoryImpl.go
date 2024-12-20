@@ -9,6 +9,7 @@ import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
+	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
@@ -538,14 +539,46 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 	)
 
 	// Fetch item type from external service
-	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	// itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
+	// if itemTypeErr != nil {
+	// 	return pagination.Pagination{}, itemTypeErr
+	// }
+
+	var entities masteritementities.ItemType
+	var entitiesService masteritementities.ItemType
+	// var itemTypeFetchGoods masteritempayloads.ItemTypeResponse
+
+	if err := tx.Where("item_type_code = 'G'").First(&entities).Error; err != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
-	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchGoods = masteritempayloads.ItemTypeResponse{
+		ItemTypeId:   entities.ItemTypeId,
+		ItemTypeCode: entities.ItemTypeCode,
+		ItemTypeName: entities.ItemTypeName,
+		IsActive:     entities.IsActive,
+	}
+
+	// itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
+	// if itemTypeErr != nil {
+	// 	return pagination.Pagination{}, itemTypeErr
+	// }
+
+	if err := tx.Where("item_type_code = 'S'").First(&entitiesService).Error; err != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	var itemTypeFetchServices = masteritempayloads.ItemTypeResponse{
+		ItemTypeId:   entities.ItemTypeId,
+		ItemTypeCode: entities.ItemTypeCode,
+		ItemTypeName: entities.ItemTypeName,
+		IsActive:     entities.IsActive,
 	}
 
 	// Base Query
@@ -569,7 +602,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
 				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
 				"oe.operation_entries_description AS operation_entries_description, ok.operation_key_code AS operation_key_code, "+
-				"ok.operation_key_description AS operation_key_description").
+				"ok.operation_key_description AS operation_key_description, omm.brand_id AS brand_id, omm.model_id AS model_id, ofrt.variant_id AS variant_id").
 			Joins("LEFT JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
 			Joins("LEFT JOIN mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
@@ -577,7 +610,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Where("oc.is_active = ?", true).
 			Group("oc.operation_id, oc.operation_code, oc.operation_name, " +
 				"oe.operation_entries_code, oe.operation_entries_description, " +
-				"ok.operation_key_code, ok.operation_key_description").
+				"ok.operation_key_code, ok.operation_key_description,omm.brand_id, omm.model_id, ofrt.variant_id").
 			Order("oc.operation_id")
 
 	case "2":
@@ -909,6 +942,12 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				baseQuery = baseQuery.Where("C.model_description LIKE ?", "%"+filter.ColumnValue+"%")
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
+			case "model_id":
+				baseQuery = baseQuery.Where("ok.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+			case "brand_id":
+				baseQuery = baseQuery.Where("ok.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+			case "variant_id":
+				baseQuery = baseQuery.Where("ok.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
 			}
 		} else if linetypeStr == "1" {
 			switch filter.ColumnField {
@@ -928,7 +967,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				baseQuery = baseQuery.Where("ok.operation_key_code LIKE ?", "%"+filter.ColumnValue+"%")
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("ok.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+			case "brand_id":
+				baseQuery = baseQuery.Where("ok.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+			case "variant_id":
+				baseQuery = baseQuery.Where("ok.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
 			}
+
 		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
 			switch filter.ColumnField {
 			case "item_id":
@@ -947,6 +993,12 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				baseQuery = baseQuery.Where("mil3.item_level_3_code LIKE ?", "%"+filter.ColumnValue+"%")
 			case "item_level_4_code":
 				baseQuery = baseQuery.Where("mil4.item_level_4_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("ok.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+			case "brand_id":
+				baseQuery = baseQuery.Where("ok.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+			case "variant_id":
+				baseQuery = baseQuery.Where("ok.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
 			}
 		}
 	}
