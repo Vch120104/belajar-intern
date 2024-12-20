@@ -18,7 +18,6 @@ import (
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -259,6 +258,16 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	// 	}
 	// }
 
+	// fetch approval
+	approvalStatus, approvalErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if approvalErr != nil {
+		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalErr.StatusCode,
+			Message:    "Failed to fetch approval status data from external service",
+			Err:        approvalErr.Err,
+		}
+	}
+
 	// Create WorkOrder entity
 	entitieswo := transactionworkshopentities.WorkOrder{
 		// page 1
@@ -309,17 +318,18 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
 
 		// page 2
-		EstTime:         request.EstimationDuration,
-		CustomerExpress: request.CustomerExpress,
-		LeaveCar:        request.LeaveCar,
-		CarWash:         request.CarWash,
-		PromiseDate:     request.PromiseDate,
-		PromiseTime:     request.PromiseTime,
-		FSCouponNo:      request.FSCouponNo,
-		Notes:           request.Notes,
-		Suggestion:      request.Suggestion,
-		DPAmount:        request.DownpaymentAmount,
-		CurrencyId:      getCurrencyId.CurrencyId,
+		AdditionalDiscountStatusApprovalId: approvalStatus.ApprovalStatusId,
+		EstTime:                            request.EstimationDuration,
+		CustomerExpress:                    request.CustomerExpress,
+		LeaveCar:                           request.LeaveCar,
+		CarWash:                            request.CarWash,
+		PromiseDate:                        request.PromiseDate,
+		PromiseTime:                        request.PromiseTime,
+		FSCouponNo:                         request.FSCouponNo,
+		Notes:                              request.Notes,
+		Suggestion:                         request.Suggestion,
+		DPAmount:                           request.DownpaymentAmount,
+		CurrencyId:                         getCurrencyId.CurrencyId,
 	}
 
 	if err := tx.Create(&entitieswo).Error; err != nil {
@@ -760,72 +770,96 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		}
 	}
 
+	// fetch approval status
+	getApprovalStatusResponses, approvalStatusErr := generalserviceapiutils.GetApprovalStatusById(entity.AdditionalDiscountStatusApprovalId)
+	if approvalStatusErr != nil {
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch approval status data from external service",
+			Err:        approvalStatusErr.Err,
+		}
+	}
+
+	// fecth data currency
+	getCurrencyResponses, currencyErr := financeserviceapiutils.GetCurrencyId(entity.CurrencyId)
+	if currencyErr != nil {
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch currency data from external service",
+			Err:        currencyErr.Err,
+		}
+	}
+
 	payload := transactionworkshoppayloads.WorkOrderResponseDetail{
-		WorkOrderSystemNumber:         entity.WorkOrderSystemNumber,
-		WorkOrderDate:                 entity.WorkOrderDate,
-		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
-		WorkOrderTypeId:               entity.WorkOrderTypeId,
-		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
-		WorkOrderStatusId:             entity.WorkOrderStatusId,
-		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
-		ServiceAdvisorId:              entity.ServiceAdvisor,
-		BrandId:                       entity.BrandId,
-		BrandName:                     brandResponse.BrandName,
-		ModelId:                       entity.ModelId,
-		ModelName:                     modelResponse.ModelName,
-		VariantId:                     entity.VariantId,
-		VariantName:                   variantResponse.VariantName,
-		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   "", //vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:                   "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
-		CustomerId:                    entity.CustomerId,
-		ServiceSite:                   entity.ServiceSite,
-		BilltoCustomerId:              entity.BillableToId,
-		CampaignId:                    entity.CampaignId,
-		FromEra:                       entity.FromEra,
-		WorkOrderEraNo:                entity.EraNumber,
-		Storing:                       entity.Storing,
-		WorkOrderCurrentMileage:       entity.ServiceMileage,
-		WorkOrderProfitCenterId:       entity.ProfitCenterId,
-		AgreementId:                   entity.AgreementBodyRepairId,
-		BoookingId:                    entity.BookingSystemNumber,
-		EstimationId:                  entity.EstimationSystemNumber,
-		ContractSystemNumber:          entity.ContractServiceSystemNumber,
-		QueueSystemNumber:             entity.QueueNumber,
-		WorkOrderArrivalTime:          entity.ArrivalTime,
-		WorkOrderRemark:               entity.Remark,
-		DealerRepresentativeId:        entity.CostCenterId,
-		CompanyId:                     entity.CompanyId,
-		Titleprefix:                   entity.CPTitlePrefix,
-		NameCust:                      entity.ContactPersonName,
-		PhoneCust:                     entity.ContactPersonPhone,
-		MobileCust:                    entity.ContactPersonMobile,
-		MobileCustAlternative:         entity.ContactPersonMobileAlternative,
-		MobileCustDriver:              entity.ContactPersonMobileDriver,
-		ContactVia:                    entity.ContactPersonContactVia,
-		WorkOrderInsurancePolicyNo:    entity.InsurancePolicyNumber,
-		WorkOrderInsuranceClaimNo:     entity.InsuranceClaimNumber,
-		WorkOrderInsuranceExpiredDate: entity.InsuranceExpiredDate,
-		WorkOrderEraExpiredDate:       entity.EraExpiredDate,
-		PromiseDate:                   entity.PromiseDate,
-		PromiseTime:                   entity.PromiseTime,
-		EstimationDuration:            entity.EstTime,
-		WorkOrderInsuranceOwnRisk:     entity.InsuranceOwnRisk,
-		WorkOrderInsurancePic:         entity.InsurancePersonInCharge,
-		WorkOrderInsuranceWONumber:    entity.InsuranceWorkOrderNumber,
-		CustomerExpress:               entity.CustomerExpress,
-		LeaveCar:                      entity.LeaveCar,
-		CarWash:                       entity.CarWash,
-		FSCouponNo:                    entity.FSCouponNo,
-		Notes:                         entity.Notes,
-		Suggestion:                    entity.Suggestion,
-		DPAmount:                      entity.DPAmount,
-		DPPayment:                     entity.DPPayment,
-		DPPaymentAllocated:            entity.DPPaymentAllocated,
-		DPPaymentVAT:                  entity.DPPaymentVAT,
-		DPAllocToInv:                  entity.DPAllocToInv,
-		InvoiceSystemNumber:           entity.InvoiceSystemNumber,
-		CurrencyId:                    entity.CurrencyId,
+		WorkOrderSystemNumber:              entity.WorkOrderSystemNumber,
+		WorkOrderDate:                      entity.WorkOrderDate,
+		WorkOrderDocumentNumber:            entity.WorkOrderDocumentNumber,
+		WorkOrderTypeId:                    entity.WorkOrderTypeId,
+		WorkOrderTypeName:                  getWorkOrderTypeResponses.WorkOrderTypeName,
+		WorkOrderStatusId:                  entity.WorkOrderStatusId,
+		WorkOrderStatusName:                getWorkOrderStatusResponses.WorkOrderStatusName,
+		ServiceAdvisorId:                   entity.ServiceAdvisor,
+		BrandId:                            entity.BrandId,
+		BrandName:                          brandResponse.BrandName,
+		ModelId:                            entity.ModelId,
+		ModelName:                          modelResponse.ModelName,
+		VariantId:                          entity.VariantId,
+		VariantName:                        variantResponse.VariantName,
+		VehicleId:                          entity.VehicleId,
+		VehicleCode:                        "", //vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:                        "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
+		CustomerId:                         entity.CustomerId,
+		ServiceSite:                        entity.ServiceSite,
+		BilltoCustomerId:                   entity.BillableToId,
+		CampaignId:                         entity.CampaignId,
+		FromEra:                            entity.FromEra,
+		WorkOrderEraNo:                     entity.EraNumber,
+		Storing:                            entity.Storing,
+		WorkOrderCurrentMileage:            entity.ServiceMileage,
+		WorkOrderProfitCenterId:            entity.ProfitCenterId,
+		AgreementId:                        entity.AgreementBodyRepairId,
+		BoookingId:                         entity.BookingSystemNumber,
+		EstimationId:                       entity.EstimationSystemNumber,
+		ContractSystemNumber:               entity.ContractServiceSystemNumber,
+		QueueSystemNumber:                  entity.QueueNumber,
+		WorkOrderArrivalTime:               entity.ArrivalTime,
+		WorkOrderRemark:                    entity.Remark,
+		DealerRepresentativeId:             entity.CostCenterId,
+		CompanyId:                          entity.CompanyId,
+		Titleprefix:                        entity.CPTitlePrefix,
+		NameCust:                           entity.ContactPersonName,
+		PhoneCust:                          entity.ContactPersonPhone,
+		MobileCust:                         entity.ContactPersonMobile,
+		MobileCustAlternative:              entity.ContactPersonMobileAlternative,
+		MobileCustDriver:                   entity.ContactPersonMobileDriver,
+		ContactVia:                         entity.ContactPersonContactVia,
+		WorkOrderInsurancePolicyNo:         entity.InsurancePolicyNumber,
+		WorkOrderInsuranceClaimNo:          entity.InsuranceClaimNumber,
+		WorkOrderInsuranceExpiredDate:      entity.InsuranceExpiredDate,
+		WorkOrderEraExpiredDate:            entity.EraExpiredDate,
+		PromiseDate:                        entity.PromiseDate,
+		PromiseTime:                        entity.PromiseTime,
+		EstimationDuration:                 entity.EstTime,
+		WorkOrderInsuranceOwnRisk:          entity.InsuranceOwnRisk,
+		WorkOrderInsurancePic:              entity.InsurancePersonInCharge,
+		WorkOrderInsuranceWONumber:         entity.InsuranceWorkOrderNumber,
+		WorkOrderInsuranceCheck:            entity.InsuranceCheck,
+		AdditionalDiscountStatusApprovalId: entity.AdditionalDiscountStatusApprovalId,
+		AdditionalDiscountStatusApproval:   getApprovalStatusResponses.ApprovalStatusDescription,
+		CustomerExpress:                    entity.CustomerExpress,
+		LeaveCar:                           entity.LeaveCar,
+		CarWash:                            entity.CarWash,
+		FSCouponNo:                         entity.FSCouponNo,
+		Notes:                              entity.Notes,
+		Suggestion:                         entity.Suggestion,
+		DPAmount:                           entity.DPAmount,
+		DPPayment:                          entity.DPPayment,
+		DPPaymentAllocated:                 entity.DPPaymentAllocated,
+		DPPaymentVAT:                       entity.DPPaymentVAT,
+		DPAllocToInv:                       entity.DPAllocToInv,
+		InvoiceSystemNumber:                entity.InvoiceSystemNumber,
+		CurrencyId:                         entity.CurrencyId,
+		CurrencyCode:                       getCurrencyResponses.CurrencyCode,
 
 		WorkOrderCampaign: transactionworkshoppayloads.WorkOrderCampaignDetail{
 			DataCampaign: workorderCampaigns,
@@ -2639,147 +2673,6 @@ func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrder
 	return workOrderDetailResponses, nil
 }
 
-func (r *WorkOrderRepositoryImpl) validateOperationItemId(lineTypeId, operationItemId int) (*http.Response, *exceptions.BaseErrorResponse) {
-	url := config.EnvConfigs.AfterSalesServiceUrl + "lookup/item-opr-code/" + strconv.Itoa(lineTypeId) + "/by-id/" + strconv.Itoa(operationItemId)
-	fmt.Println("Requesting URL:", url)
-	// Perform HTTP GET request
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    fmt.Sprintf("Error calling external service: %v", err),
-			Err:        err,
-		}
-	}
-	defer resp.Body.Close()
-
-	// Log response status
-	fmt.Println("Response Status Code:", resp.StatusCode)
-	if resp.StatusCode != http.StatusOK {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Invalid combination linetype & OperationItemId from external service",
-			Err:        errors.New("invalid combination linetype & OperationItemId from external service"),
-		}
-	}
-
-	// Decode response based on lineTypeId
-	switch lineTypeId {
-	case 0:
-		var responseData struct {
-			StatusCode int    `json:"status_code"`
-			Message    string `json:"message"`
-			Data       struct {
-				Description      string  `json:"description"`
-				FRT              float64 `json:"frt"`
-				ModelCode        string  `json:"model_code"`
-				PackageCode      string  `json:"package_code"`
-				PackageID        int     `json:"package_id"`
-				PackageName      string  `json:"package_name"`
-				Price            int     `json:"price"`
-				ProfitCenter     int     `json:"profit_center"`
-				ProfitCenterName string  `json:"profit_center_name"`
-			} `json:"data"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-
-		// Validate PackageID
-		if responseData.Data.PackageID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for linetype 0",
-				Err:        errors.New("OperationItemId is invalid for linetype 0"),
-			}
-		}
-
-	case 1:
-		var responseData struct {
-			StatusCode int    `json:"status_code"`
-			Message    string `json:"message"`
-			Data       struct {
-				FrtHour                     int     `json:"frt_hour"`
-				OperationCode               string  `json:"operation_code"`
-				OperationEntriesCode        *string `json:"operation_entries_code"`
-				OperationEntriesDescription *string `json:"operation_entries_description"`
-				OperationID                 int     `json:"operation_id"`
-				OperationKeyCode            *string `json:"operation_key_code"`
-				OperationKeyDescription     *string `json:"operation_key_description"`
-				OperationName               string  `json:"operation_name"`
-			} `json:"data"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-
-		// Validate OperationID
-		if responseData.Data.OperationID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for linetype 1",
-				Err:        errors.New("OperationItemId is invalid for linetype 1"),
-			}
-		}
-
-	case 2, 3, 4, 5, 6, 7, 8, 9:
-		var responseData struct {
-			StatusCode int    `json:"status_code"`
-			Message    string `json:"message"`
-			Data       struct {
-				AvailableQty   int     `json:"available_qty"`
-				ItemCode       string  `json:"item_code"`
-				ItemID         int     `json:"item_id"`
-				ItemLevel1     int     `json:"item_level_1"`
-				ItemLevel1Code string  `json:"item_level_1_code"`
-				ItemLevel2     *int    `json:"item_level_2"`
-				ItemLevel2Code *string `json:"item_level_2_code"`
-				ItemLevel3     *int    `json:"item_level_3"`
-				ItemLevel3Code *string `json:"item_level_3_code"`
-				ItemLevel4     *int    `json:"item_level_4"`
-				ItemLevel4Code *string `json:"item_level_4_code"`
-				ItemName       string  `json:"item_name"`
-			} `json:"data"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-
-		// Validate ItemID
-		if responseData.Data.ItemID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for linetype 2-9",
-				Err:        errors.New("OperationItemId is invalid for linetype 2-9"),
-			}
-		}
-
-	default:
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid linetype provided",
-			Err:        errors.New("invalid linetype provided"),
-		}
-	}
-
-	return resp, nil
-}
-
 // uspg_wtWorkOrder2_Insert
 // IF @Option = 0
 // --USE FOR : * INSERT NEW DATA DETAIL
@@ -2802,7 +2695,6 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Insert detil work order (WO2) berdasarkan tipe work order (Normal, Campaign, Affiliated, Repeat Job):
-
 	switch workOrderTypeId {
 	case 1: // Normal Work Order
 		var estimSystemNo int
@@ -2871,6 +2763,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0,                //BE.PPH_TAX_RATE,
 				AtpmWCFTypeId:                       0,                //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine, //BE.ESTIM_LINE,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -2889,7 +2782,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 
 			var maxWoOprItemLine int
 			if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-				Select("ISNULL(MAX(work_order_operation_item_line), 0)").
+				Select("COALESCE(MAX(work_order_operation_item_line), 0)").
 				Where("work_order_system_number = ?", id).
 				Scan(&maxWoOprItemLine).Error; err != nil {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
@@ -2905,85 +2798,28 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				maxWoOprItemLine++
 			}
 
-			// Panggil validateOperationItemId untuk validasi dan mengambil resp
-			resp, err := r.validateOperationItemId(request.LineTypeId, request.OperationItemId)
-			if err != nil {
-				return transactionworkshopentities.WorkOrderDetail{}, err
-			}
-
-			// Proses resp untuk mendapatkan OperationItemCode
-			var operationItemCode string
-			switch request.LineTypeId {
-			case 0: // LineType Package
-				var responseData struct {
-					Data struct {
-						PackageCode string `json:"package_code"`
-					} `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("Error decoding response: %v", err),
-						Err:        err,
-					}
-				}
-				operationItemCode = responseData.Data.PackageCode
-
-			case 1: // LineType Operation
-				var responseData struct {
-					Data struct {
-						OperationCode string `json:"operation_code"`
-					} `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("Error decoding response: %v", err),
-						Err:        err,
-					}
-				}
-				operationItemCode = responseData.Data.OperationCode
-
-			default: // LineType lainnya
-				var responseData struct {
-					Data struct {
-						ItemCode string `json:"item_code"`
-					} `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("Error decoding response: %v", err),
-						Err:        err,
-					}
-				}
-				operationItemCode = responseData.Data.ItemCode
-			}
-
-			// Buat WorkOrderDetail
-			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
+			workOrderDetail = transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:               id,
 				LineTypeId:                          request.LineTypeId,
 				TransactionTypeId:                   request.TransactionTypeId,
 				JobTypeId:                           request.JobTypeId,
 				OperationItemId:                     request.OperationItemId,
-				OperationItemCode:                   operationItemCode,
-				WarehouseGroupId:                    request.WarehouseGroupId,
-				FrtQuantity:                         request.FrtQuantity,
-				SupplyQuantity:                      request.SupplyQuantity,
+				WarehouseGroupId:                    request.WarehouseGroupId, // Whs_Group_Sp
+				FrtQuantity:                         request.FrtQuantity,      // BE.FrtQuantity,
+				SupplyQuantity:                      request.SupplyQuantity,   // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
 				WorkorderStatusId:                   utils.WoStatDraft,
-				OperationItemDiscountAmount:         0,
-				OperationItemDiscountRequestAmount:  0,
-				OperationItemDiscountPercent:        0,
-				OperationItemDiscountRequestPercent: 0,
-				OperationItemPrice:                  request.OperationItemPrice,
-				PphAmount:                           0,
-				PphTaxRate:                          0,
-				AtpmWCFTypeId:                       0,
+				OperationItemDiscountAmount:         0,                          // BE.OPR_ITEM_DISC_AMOUNT,
+				OperationItemDiscountRequestAmount:  0,                          // BE.OPR_ITEM_DISC_REQ_AMOUNT,
+				OperationItemDiscountPercent:        0,                          // BE.OPR_ITEM_DISC_PERCENT,
+				OperationItemDiscountRequestPercent: 0,                          // BE.OPR_ITEM_DISC_REQ_PERCENT,
+				OperationItemPrice:                  request.OperationItemPrice, // BE.OPR_ITEM_PRICE,
+				PphAmount:                           0,                          // BE.PPH_AMOUNT,
+				PphTaxRate:                          0,                          // BE.PPH_TAX_RATE,
+				AtpmWCFTypeId:                       0,                          // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
-			// Buat Work Order Detail dalam database
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -3085,6 +2921,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					PphTaxRate:                          0,                                                                           // CASE WHEN C1.LINE_TYPE = @LINETYPE_OPR THEN OPR.TAX_CODE	ELSE ''	END,
 					AtpmWCFTypeId:                       0,
 					WorkOrderOperationItemLine:          maxWoOprItemLine, // 0
+					ServiceStatusId:                     utils.SrvStatDraft,
 				}
 			} else {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
@@ -3208,6 +3045,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0,                       // OP.TAX_CODE,
 				AtpmWCFTypeId:                       0,                       // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3309,6 +3147,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0, // CASE WHEN SR1.LINE_TYPE = @LINETYPE_OPR THEN OPR.TAX_CODE WHEN SR1.LINE_TYPE = @LINETYPE_PACKAGE	THEN PCK.PPH_TAX_CODE ELSE '' END,
 				AtpmWCFTypeId:                       0, // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3396,10 +3235,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0, // 0
 				AtpmWCFTypeId:                       0, // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
-			}
-
-			if request.LineTypeId == 1 {
-				workOrderDetail.OperationItemId = request.OperationItemId
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
