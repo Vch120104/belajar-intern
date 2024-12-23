@@ -18,7 +18,6 @@ import (
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -918,9 +917,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
-	// apply filter manual baseon linetype
+	// Apply manual filters based on linetype
 	for _, filter := range filters {
-
 		if linetypeStr == "0" {
 			switch filter.ColumnField {
 			case "package_id":
@@ -998,12 +996,9 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
-	paginateFunc := pagination.Paginate(&paginate, baseQuery)
-	baseQuery = baseQuery.Scopes(paginateFunc)
-
+	// Calculate total rows
 	var totalRows int64
 	if err := baseQuery.Count(&totalRows).Error; err != nil {
-		log.Printf("Error counting rows: %v", err)
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count total rows",
@@ -1011,6 +1006,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
+
+	// Apply pagination
+	paginateFunc := pagination.Paginate(&paginate, baseQuery)
+	baseQuery = baseQuery.Scopes(paginateFunc)
+
+	// Fetch results
 	results := []map[string]interface{}{}
 	if err := baseQuery.Find(&results).Error; err != nil {
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
@@ -1020,8 +1023,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		}
 	}
 
-	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
-
+	// Set pagination details
 	paginate.TotalRows = totalRows
 	paginate.TotalPages = totalPages
 	paginate.Rows = results

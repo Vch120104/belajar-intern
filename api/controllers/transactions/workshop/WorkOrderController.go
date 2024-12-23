@@ -9,6 +9,7 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	utils "after-sales/api/utils"
 	"after-sales/api/validation"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -244,21 +245,23 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/requestservicemulti [post]
 func (r *WorkOrderControllerImpl) AddRequestMultiId(writer http.ResponseWriter, request *http.Request) {
-	// Add request to work order
+
 	workorderID, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	if err != nil {
+
 		payloads.NewHandleError(writer, "Invalid work order system number", http.StatusBadRequest)
 		return
 	}
 
 	var groupRequests []transactionworkshoppayloads.WorkOrderServiceRequest
-	helper.ReadFromRequestBody(request, &groupRequests)
-	if validationErr := validation.ValidationForm(writer, request, &groupRequests); validationErr != nil {
-		exceptions.NewBadRequestException(writer, request, validationErr)
+
+	err = json.NewDecoder(request.Body).Decode(&groupRequests)
+	if err != nil {
+		payloads.NewHandleError(writer, "Failed to decode JSON request", http.StatusBadRequest)
 		return
 	}
 
-	entities, baseErr := r.WorkOrderService.AddRequestMultiId(workorderID, groupRequests) // Call the modified service method
+	entities, baseErr := r.WorkOrderService.AddRequestMultiId(workorderID, groupRequests)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
@@ -617,24 +620,22 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"trx_work_order.work_order_document_number":  queryValues.Get("work_order_document_number"),
-		"trx_work_order.work_order_system_number":    queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_date_from":        queryValues.Get("work_order_date_from"),
-		"trx_work_order.work_order_date_to":          queryValues.Get("work_order_date_to"),
-		"trx_work_order.work_order_type_id":          queryValues.Get("work_order_type_id"),
-		"trx_work_order.work_order_type_description": queryValues.Get("work_order_type_description"),
-		"trx_work_order.brand_id":                    queryValues.Get("brand_id"),
-		"trx_work_order.model_id":                    queryValues.Get("model_id"),
-		"trx_work_order.vehicle_id":                  queryValues.Get("vehicle_id"),
-		"trx_work_order.vehicle_chassis_number":      queryValues.Get("vehicle_chassis_number"),
-		"trx_work_order.vehicle_tnkb":                queryValues.Get("vehicle_tnkb"),
-		"trx_work_order.work_order_status_id":        queryValues.Get("work_order_status_id"),
-		"trx_work_order.variant_id":                  queryValues.Get("variant_id"),
-		"trx_work_order.foreman_id":                  queryValues.Get("foreman_id"),
-		"trx_work_order.service_advisor_id":          queryValues.Get("service_advisor_id"),
-		"trx_work_order.company_id":                  queryValues.Get("company_id"),
-		"trx_work_order.name_customer":               queryValues.Get("name_customer"),
-		"trx_work_order.dealer_representative_id":    queryValues.Get("dealer_representative_id"),
+		"trx_work_order.work_order_document_number": queryValues.Get("work_order_document_number"),
+		"trx_work_order.work_order_system_number":   queryValues.Get("work_order_system_number"),
+		"trx_work_order.work_order_date_from":       queryValues.Get("work_order_date_from"),
+		"trx_work_order.work_order_date_to":         queryValues.Get("work_order_date_to"),
+		"trx_work_order.work_order_type_id":         queryValues.Get("work_order_type_id"),
+		"trx_work_order.brand_id":                   queryValues.Get("brand_id"),
+		"trx_work_order.model_id":                   queryValues.Get("model_id"),
+		"trx_work_order.vehicle_chassis_number":     queryValues.Get("vehicle_chassis_number"),
+		"trx_work_order.vehicle_tnkb":               queryValues.Get("vehicle_tnkb"),
+		"trx_work_order.work_order_status_id":       queryValues.Get("work_order_status_id"),
+		"trx_work_order.variant_id":                 queryValues.Get("variant_id"),
+		"trx_work_order.foreman_id":                 queryValues.Get("foreman_id"),
+		"trx_work_order.service_advisor_id":         queryValues.Get("service_advisor_id"),
+		"trx_work_order.company_id":                 queryValues.Get("company_id"),
+		"trx_work_order.name_customer":              queryValues.Get("name_customer"),
+		"trx_work_order.dealer_representative_id":   queryValues.Get("dealer_representative_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -1706,7 +1707,7 @@ func (r *WorkOrderControllerImpl) AddFieldAction(writer http.ResponseWriter, req
 // @Param work_order_system_number path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/normal/calculate-total/{work_order_system_number} [get]
+// @Router /v1/work-order/normal/calculate-total/{work_order_system_number} [Put]
 func (r *WorkOrderControllerImpl) CalculateWorkOrderTotal(writer http.ResponseWriter, request *http.Request) {
 	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	if err != nil {
