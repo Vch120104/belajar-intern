@@ -87,7 +87,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(writer http.ResponseWriter, request *http.Request) {
