@@ -13,6 +13,7 @@ type PriceListRepository interface {
 	GetPriceList(*gorm.DB, masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse)
 	SavePriceList(tx *gorm.DB, request masteritempayloads.SavePriceListMultiple) (int, *exceptions.BaseErrorResponse)
 	GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse)
+	GetPriceListByCodeId(tx *gorm.DB, CodeId string) (masteritempayloads.PriceListGetbyCode, *exceptions.BaseErrorResponse)
 	ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 	DeactivatePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
 	ActivatePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)

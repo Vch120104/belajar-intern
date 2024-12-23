@@ -393,6 +393,11 @@ func StartRouting(db *gorm.DB) {
 	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
 	ItemInquiryController := transactionsparepartcontroller.NewItemInquiryController(ItemInquiryService)
 
+	//Item Query All Company
+	ItemQueryAllCompanyRepository := transactionsparepartrepositoryimpl.NewItemQueryAllCompanyRepositoryImpl()
+	ItemQueryAllCompanyService := transactionsparepartserviceimpl.NewItemQueryAllCompanyServiceImpl(ItemQueryAllCompanyRepository, db)
+	ItemQueryAllCompanyController := transactionsparepartcontroller.NewItemQueryAllCompanyController(ItemQueryAllCompanyService)
+
 	//stock transaction
 	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
@@ -553,6 +558,7 @@ func StartRouting(db *gorm.DB) {
 	BinningListRouter := BinningListRouter(BinningListController)
 	ItemLocationTransferRouter := ItemLocationTransferRouter(ItemLocationTransferController)
 	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
+	ItemQueryAllCompanyRouter := ItemQueryAllCompanyRouter(ItemQueryAllCompanyController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
@@ -666,6 +672,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/binning-list", BinningListRouter)
 		r.Mount("/item-location-transfer", ItemLocationTransferRouter)
 		r.Mount("/item-inquiry", ItemInquiryRouter)
+		r.Mount("/item-query-all-company", ItemQueryAllCompanyRouter)
 
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)

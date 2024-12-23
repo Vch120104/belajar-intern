@@ -18,7 +18,6 @@ import (
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -259,6 +258,16 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	// 	}
 	// }
 
+	// fetch approval
+	approvalStatus, approvalErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if approvalErr != nil {
+		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalErr.StatusCode,
+			Message:    "Failed to fetch approval status data from external service",
+			Err:        approvalErr.Err,
+		}
+	}
+
 	// Create WorkOrder entity
 	entitieswo := transactionworkshopentities.WorkOrder{
 		// page 1
@@ -309,17 +318,18 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
 
 		// page 2
-		EstTime:         request.EstimationDuration,
-		CustomerExpress: request.CustomerExpress,
-		LeaveCar:        request.LeaveCar,
-		CarWash:         request.CarWash,
-		PromiseDate:     request.PromiseDate,
-		PromiseTime:     request.PromiseTime,
-		FSCouponNo:      request.FSCouponNo,
-		Notes:           request.Notes,
-		Suggestion:      request.Suggestion,
-		DPAmount:        request.DownpaymentAmount,
-		CurrencyId:      getCurrencyId.CurrencyId,
+		AdditionalDiscountStatusApprovalId: approvalStatus.ApprovalStatusId,
+		EstTime:                            request.EstimationDuration,
+		CustomerExpress:                    request.CustomerExpress,
+		LeaveCar:                           request.LeaveCar,
+		CarWash:                            request.CarWash,
+		PromiseDate:                        request.PromiseDate,
+		PromiseTime:                        request.PromiseTime,
+		FSCouponNo:                         request.FSCouponNo,
+		Notes:                              request.Notes,
+		Suggestion:                         request.Suggestion,
+		DPAmount:                           request.DownpaymentAmount,
+		CurrencyId:                         getCurrencyId.CurrencyId,
 	}
 
 	if err := tx.Create(&entitieswo).Error; err != nil {
@@ -498,7 +508,7 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	var workorderDetails []transactionworkshoppayloads.WorkOrderDetailResponse
 	errWorkOrderDetails := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("trx_work_order_detail.work_order_detail_id, trx_work_order_detail.work_order_system_number, trx_work_order_detail.line_type_id, lt.line_type_code, trx_work_order_detail.transaction_type_id, tt.transaction_type_code AS transaction_type_code, trx_work_order_detail.job_type_id, tc.job_type_code AS job_type_code, trx_work_order_detail.warehouse_group_id, trx_work_order_detail.frt_quantity, trx_work_order_detail.supply_quantity, trx_work_order_detail.operation_item_price, trx_work_order_detail.operation_item_discount_amount, trx_work_order_detail.operation_item_discount_request_amount").
-		Joins("INNER JOIN mtr_work_order_line_type AS lt ON lt.line_type_code = trx_work_order_detail.line_type_id").
+		Joins("INNER JOIN mtr_work_order_line_type AS lt ON lt.line_type_id = trx_work_order_detail.line_type_id").
 		Joins("INNER JOIN mtr_work_order_transaction_type AS tt ON tt.transaction_type_id = trx_work_order_detail.transaction_type_id").
 		Joins("INNER JOIN mtr_work_order_job_type AS tc ON tc.job_type_id = trx_work_order_detail.job_type_id").
 		Where("work_order_system_number = ?", Id).
@@ -760,72 +770,96 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		}
 	}
 
+	// fetch approval status
+	getApprovalStatusResponses, approvalStatusErr := generalserviceapiutils.GetApprovalStatusById(entity.AdditionalDiscountStatusApprovalId)
+	if approvalStatusErr != nil {
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch approval status data from external service",
+			Err:        approvalStatusErr.Err,
+		}
+	}
+
+	// fecth data currency
+	getCurrencyResponses, currencyErr := financeserviceapiutils.GetCurrencyId(entity.CurrencyId)
+	if currencyErr != nil {
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch currency data from external service",
+			Err:        currencyErr.Err,
+		}
+	}
+
 	payload := transactionworkshoppayloads.WorkOrderResponseDetail{
-		WorkOrderSystemNumber:         entity.WorkOrderSystemNumber,
-		WorkOrderDate:                 entity.WorkOrderDate,
-		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
-		WorkOrderTypeId:               entity.WorkOrderTypeId,
-		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
-		WorkOrderStatusId:             entity.WorkOrderStatusId,
-		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
-		ServiceAdvisorId:              entity.ServiceAdvisor,
-		BrandId:                       entity.BrandId,
-		BrandName:                     brandResponse.BrandName,
-		ModelId:                       entity.ModelId,
-		ModelName:                     modelResponse.ModelName,
-		VariantId:                     entity.VariantId,
-		VariantName:                   variantResponse.VariantName,
-		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   "", //vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:                   "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
-		CustomerId:                    entity.CustomerId,
-		ServiceSite:                   entity.ServiceSite,
-		BilltoCustomerId:              entity.BillableToId,
-		CampaignId:                    entity.CampaignId,
-		FromEra:                       entity.FromEra,
-		WorkOrderEraNo:                entity.EraNumber,
-		Storing:                       entity.Storing,
-		WorkOrderCurrentMileage:       entity.ServiceMileage,
-		WorkOrderProfitCenterId:       entity.ProfitCenterId,
-		AgreementId:                   entity.AgreementBodyRepairId,
-		BoookingId:                    entity.BookingSystemNumber,
-		EstimationId:                  entity.EstimationSystemNumber,
-		ContractSystemNumber:          entity.ContractServiceSystemNumber,
-		QueueSystemNumber:             entity.QueueNumber,
-		WorkOrderArrivalTime:          entity.ArrivalTime,
-		WorkOrderRemark:               entity.Remark,
-		DealerRepresentativeId:        entity.CostCenterId,
-		CompanyId:                     entity.CompanyId,
-		Titleprefix:                   entity.CPTitlePrefix,
-		NameCust:                      entity.ContactPersonName,
-		PhoneCust:                     entity.ContactPersonPhone,
-		MobileCust:                    entity.ContactPersonMobile,
-		MobileCustAlternative:         entity.ContactPersonMobileAlternative,
-		MobileCustDriver:              entity.ContactPersonMobileDriver,
-		ContactVia:                    entity.ContactPersonContactVia,
-		WorkOrderInsurancePolicyNo:    entity.InsurancePolicyNumber,
-		WorkOrderInsuranceClaimNo:     entity.InsuranceClaimNumber,
-		WorkOrderInsuranceExpiredDate: entity.InsuranceExpiredDate,
-		WorkOrderEraExpiredDate:       entity.EraExpiredDate,
-		PromiseDate:                   entity.PromiseDate,
-		PromiseTime:                   entity.PromiseTime,
-		EstimationDuration:            entity.EstTime,
-		WorkOrderInsuranceOwnRisk:     entity.InsuranceOwnRisk,
-		WorkOrderInsurancePic:         entity.InsurancePersonInCharge,
-		WorkOrderInsuranceWONumber:    entity.InsuranceWorkOrderNumber,
-		CustomerExpress:               entity.CustomerExpress,
-		LeaveCar:                      entity.LeaveCar,
-		CarWash:                       entity.CarWash,
-		FSCouponNo:                    entity.FSCouponNo,
-		Notes:                         entity.Notes,
-		Suggestion:                    entity.Suggestion,
-		DPAmount:                      entity.DPAmount,
-		DPPayment:                     entity.DPPayment,
-		DPPaymentAllocated:            entity.DPPaymentAllocated,
-		DPPaymentVAT:                  entity.DPPaymentVAT,
-		DPAllocToInv:                  entity.DPAllocToInv,
-		InvoiceSystemNumber:           entity.InvoiceSystemNumber,
-		CurrencyId:                    entity.CurrencyId,
+		WorkOrderSystemNumber:              entity.WorkOrderSystemNumber,
+		WorkOrderDate:                      entity.WorkOrderDate,
+		WorkOrderDocumentNumber:            entity.WorkOrderDocumentNumber,
+		WorkOrderTypeId:                    entity.WorkOrderTypeId,
+		WorkOrderTypeName:                  getWorkOrderTypeResponses.WorkOrderTypeName,
+		WorkOrderStatusId:                  entity.WorkOrderStatusId,
+		WorkOrderStatusName:                getWorkOrderStatusResponses.WorkOrderStatusName,
+		ServiceAdvisorId:                   entity.ServiceAdvisor,
+		BrandId:                            entity.BrandId,
+		BrandName:                          brandResponse.BrandName,
+		ModelId:                            entity.ModelId,
+		ModelName:                          modelResponse.ModelName,
+		VariantId:                          entity.VariantId,
+		VariantName:                        variantResponse.VariantName,
+		VehicleId:                          entity.VehicleId,
+		VehicleCode:                        "", //vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:                        "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
+		CustomerId:                         entity.CustomerId,
+		ServiceSite:                        entity.ServiceSite,
+		BilltoCustomerId:                   entity.BillableToId,
+		CampaignId:                         entity.CampaignId,
+		FromEra:                            entity.FromEra,
+		WorkOrderEraNo:                     entity.EraNumber,
+		Storing:                            entity.Storing,
+		WorkOrderCurrentMileage:            entity.ServiceMileage,
+		WorkOrderProfitCenterId:            entity.ProfitCenterId,
+		AgreementId:                        entity.AgreementBodyRepairId,
+		BoookingId:                         entity.BookingSystemNumber,
+		EstimationId:                       entity.EstimationSystemNumber,
+		ContractSystemNumber:               entity.ContractServiceSystemNumber,
+		QueueSystemNumber:                  entity.QueueNumber,
+		WorkOrderArrivalTime:               entity.ArrivalTime,
+		WorkOrderRemark:                    entity.Remark,
+		DealerRepresentativeId:             entity.CostCenterId,
+		CompanyId:                          entity.CompanyId,
+		Titleprefix:                        entity.CPTitlePrefix,
+		NameCust:                           entity.ContactPersonName,
+		PhoneCust:                          entity.ContactPersonPhone,
+		MobileCust:                         entity.ContactPersonMobile,
+		MobileCustAlternative:              entity.ContactPersonMobileAlternative,
+		MobileCustDriver:                   entity.ContactPersonMobileDriver,
+		ContactVia:                         entity.ContactPersonContactVia,
+		WorkOrderInsurancePolicyNo:         entity.InsurancePolicyNumber,
+		WorkOrderInsuranceClaimNo:          entity.InsuranceClaimNumber,
+		WorkOrderInsuranceExpiredDate:      entity.InsuranceExpiredDate,
+		WorkOrderEraExpiredDate:            entity.EraExpiredDate,
+		PromiseDate:                        entity.PromiseDate,
+		PromiseTime:                        entity.PromiseTime,
+		EstimationDuration:                 entity.EstTime,
+		WorkOrderInsuranceOwnRisk:          entity.InsuranceOwnRisk,
+		WorkOrderInsurancePic:              entity.InsurancePersonInCharge,
+		WorkOrderInsuranceWONumber:         entity.InsuranceWorkOrderNumber,
+		WorkOrderInsuranceCheck:            entity.InsuranceCheck,
+		AdditionalDiscountStatusApprovalId: entity.AdditionalDiscountStatusApprovalId,
+		AdditionalDiscountStatusApproval:   getApprovalStatusResponses.ApprovalStatusDescription,
+		CustomerExpress:                    entity.CustomerExpress,
+		LeaveCar:                           entity.LeaveCar,
+		CarWash:                            entity.CarWash,
+		FSCouponNo:                         entity.FSCouponNo,
+		Notes:                              entity.Notes,
+		Suggestion:                         entity.Suggestion,
+		DPAmount:                           entity.DPAmount,
+		DPPayment:                          entity.DPPayment,
+		DPPaymentAllocated:                 entity.DPPaymentAllocated,
+		DPPaymentVAT:                       entity.DPPaymentVAT,
+		DPAllocToInv:                       entity.DPAllocToInv,
+		InvoiceSystemNumber:                entity.InvoiceSystemNumber,
+		CurrencyId:                         entity.CurrencyId,
+		CurrencyCode:                       getCurrencyResponses.CurrencyCode,
 
 		WorkOrderCampaign: transactionworkshoppayloads.WorkOrderCampaignDetail{
 			DataCampaign: workorderCampaigns,
@@ -2234,13 +2268,13 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 	var convertedResponses []transactionworkshoppayloads.WorkOrderDetailResponse
 
 	for _, workOrderReq := range tableStruct {
-		// Fetch external data
-		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(workOrderReq.LineTypeId)
-		if lineErr != nil {
+
+		lineTypeResponse, linetypeErr := generalserviceapiutils.GetLineTypeById(workOrderReq.LineTypeId)
+		if linetypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve line type from the external API",
-				Err:        lineErr.Err,
+				Err:        linetypeErr.Err,
 			}
 		}
 
@@ -2443,6 +2477,7 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	}
 
 	// Fetch external data
+
 	lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(entity.LineTypeId)
 	if lineErr != nil {
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
@@ -2639,147 +2674,6 @@ func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrder
 	return workOrderDetailResponses, nil
 }
 
-func (r *WorkOrderRepositoryImpl) validateOperationItemId(lineTypeId, operationItemId int) (*http.Response, *exceptions.BaseErrorResponse) {
-	url := config.EnvConfigs.AfterSalesServiceUrl + "lookup/item-opr-code/" + strconv.Itoa(lineTypeId) + "/by-id/" + strconv.Itoa(operationItemId)
-	fmt.Println("Requesting URL:", url)
-	// Perform HTTP GET request
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    fmt.Sprintf("Error calling external service: %v", err),
-			Err:        err,
-		}
-	}
-	defer resp.Body.Close()
-
-	// Log response status
-	fmt.Println("Response Status Code:", resp.StatusCode)
-	if resp.StatusCode != http.StatusOK {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Invalid combination linetype & OperationItemId from external service",
-			Err:        errors.New("invalid combination linetype & OperationItemId from external service"),
-		}
-	}
-
-	// Decode response based on lineTypeId
-	switch lineTypeId {
-	case 0:
-		var responseData struct {
-			StatusCode int    `json:"status_code"`
-			Message    string `json:"message"`
-			Data       struct {
-				Description      string  `json:"description"`
-				FRT              float64 `json:"frt"`
-				ModelCode        string  `json:"model_code"`
-				PackageCode      string  `json:"package_code"`
-				PackageID        int     `json:"package_id"`
-				PackageName      string  `json:"package_name"`
-				Price            int     `json:"price"`
-				ProfitCenter     int     `json:"profit_center"`
-				ProfitCenterName string  `json:"profit_center_name"`
-			} `json:"data"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-
-		// Validate PackageID
-		if responseData.Data.PackageID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for linetype 0",
-				Err:        errors.New("OperationItemId is invalid for linetype 0"),
-			}
-		}
-
-	case 1:
-		var responseData struct {
-			StatusCode int    `json:"status_code"`
-			Message    string `json:"message"`
-			Data       struct {
-				FrtHour                     int     `json:"frt_hour"`
-				OperationCode               string  `json:"operation_code"`
-				OperationEntriesCode        *string `json:"operation_entries_code"`
-				OperationEntriesDescription *string `json:"operation_entries_description"`
-				OperationID                 int     `json:"operation_id"`
-				OperationKeyCode            *string `json:"operation_key_code"`
-				OperationKeyDescription     *string `json:"operation_key_description"`
-				OperationName               string  `json:"operation_name"`
-			} `json:"data"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-
-		// Validate OperationID
-		if responseData.Data.OperationID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for linetype 1",
-				Err:        errors.New("OperationItemId is invalid for linetype 1"),
-			}
-		}
-
-	case 2, 3, 4, 5, 6, 7, 8, 9:
-		var responseData struct {
-			StatusCode int    `json:"status_code"`
-			Message    string `json:"message"`
-			Data       struct {
-				AvailableQty   int     `json:"available_qty"`
-				ItemCode       string  `json:"item_code"`
-				ItemID         int     `json:"item_id"`
-				ItemLevel1     int     `json:"item_level_1"`
-				ItemLevel1Code string  `json:"item_level_1_code"`
-				ItemLevel2     *int    `json:"item_level_2"`
-				ItemLevel2Code *string `json:"item_level_2_code"`
-				ItemLevel3     *int    `json:"item_level_3"`
-				ItemLevel3Code *string `json:"item_level_3_code"`
-				ItemLevel4     *int    `json:"item_level_4"`
-				ItemLevel4Code *string `json:"item_level_4_code"`
-				ItemName       string  `json:"item_name"`
-			} `json:"data"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-
-		// Validate ItemID
-		if responseData.Data.ItemID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for linetype 2-9",
-				Err:        errors.New("OperationItemId is invalid for linetype 2-9"),
-			}
-		}
-
-	default:
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid linetype provided",
-			Err:        errors.New("invalid linetype provided"),
-		}
-	}
-
-	return resp, nil
-}
-
 // uspg_wtWorkOrder2_Insert
 // IF @Option = 0
 // --USE FOR : * INSERT NEW DATA DETAIL
@@ -2802,7 +2696,6 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Insert detil work order (WO2) berdasarkan tipe work order (Normal, Campaign, Affiliated, Repeat Job):
-
 	switch workOrderTypeId {
 	case 1: // Normal Work Order
 		var estimSystemNo int
@@ -2871,6 +2764,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0,                //BE.PPH_TAX_RATE,
 				AtpmWCFTypeId:                       0,                //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine, //BE.ESTIM_LINE,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -2889,7 +2783,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 
 			var maxWoOprItemLine int
 			if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-				Select("ISNULL(MAX(work_order_operation_item_line), 0)").
+				Select("COALESCE(MAX(work_order_operation_item_line), 0)").
 				Where("work_order_system_number = ?", id).
 				Scan(&maxWoOprItemLine).Error; err != nil {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
@@ -2905,85 +2799,28 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				maxWoOprItemLine++
 			}
 
-			// Panggil validateOperationItemId untuk validasi dan mengambil resp
-			resp, err := r.validateOperationItemId(request.LineTypeId, request.OperationItemId)
-			if err != nil {
-				return transactionworkshopentities.WorkOrderDetail{}, err
-			}
-
-			// Proses resp untuk mendapatkan OperationItemCode
-			var operationItemCode string
-			switch request.LineTypeId {
-			case 0: // LineType Package
-				var responseData struct {
-					Data struct {
-						PackageCode string `json:"package_code"`
-					} `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("Error decoding response: %v", err),
-						Err:        err,
-					}
-				}
-				operationItemCode = responseData.Data.PackageCode
-
-			case 1: // LineType Operation
-				var responseData struct {
-					Data struct {
-						OperationCode string `json:"operation_code"`
-					} `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("Error decoding response: %v", err),
-						Err:        err,
-					}
-				}
-				operationItemCode = responseData.Data.OperationCode
-
-			default: // LineType lainnya
-				var responseData struct {
-					Data struct {
-						ItemCode string `json:"item_code"`
-					} `json:"data"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("Error decoding response: %v", err),
-						Err:        err,
-					}
-				}
-				operationItemCode = responseData.Data.ItemCode
-			}
-
-			// Buat WorkOrderDetail
-			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
+			workOrderDetail = transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:               id,
 				LineTypeId:                          request.LineTypeId,
 				TransactionTypeId:                   request.TransactionTypeId,
 				JobTypeId:                           request.JobTypeId,
 				OperationItemId:                     request.OperationItemId,
-				OperationItemCode:                   operationItemCode,
-				WarehouseGroupId:                    request.WarehouseGroupId,
-				FrtQuantity:                         request.FrtQuantity,
-				SupplyQuantity:                      request.SupplyQuantity,
+				WarehouseGroupId:                    request.WarehouseGroupId, // Whs_Group_Sp
+				FrtQuantity:                         request.FrtQuantity,      // BE.FrtQuantity,
+				SupplyQuantity:                      request.SupplyQuantity,   // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
 				WorkorderStatusId:                   utils.WoStatDraft,
-				OperationItemDiscountAmount:         0,
-				OperationItemDiscountRequestAmount:  0,
-				OperationItemDiscountPercent:        0,
-				OperationItemDiscountRequestPercent: 0,
-				OperationItemPrice:                  request.OperationItemPrice,
-				PphAmount:                           0,
-				PphTaxRate:                          0,
-				AtpmWCFTypeId:                       0,
+				OperationItemDiscountAmount:         0,                          // BE.OPR_ITEM_DISC_AMOUNT,
+				OperationItemDiscountRequestAmount:  0,                          // BE.OPR_ITEM_DISC_REQ_AMOUNT,
+				OperationItemDiscountPercent:        0,                          // BE.OPR_ITEM_DISC_PERCENT,
+				OperationItemDiscountRequestPercent: 0,                          // BE.OPR_ITEM_DISC_REQ_PERCENT,
+				OperationItemPrice:                  request.OperationItemPrice, // BE.OPR_ITEM_PRICE,
+				PphAmount:                           0,                          // BE.PPH_AMOUNT,
+				PphTaxRate:                          0,                          // BE.PPH_TAX_RATE,
+				AtpmWCFTypeId:                       0,                          // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
-			// Buat Work Order Detail dalam database
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -3065,10 +2902,20 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				}
 			}
 
+			// fetch linetype from campaign items
+			linetypeCheck, LinetypeErr := generalserviceapiutils.GetLineTypeByCode(campaignItems[0].LineTypeCode)
+			if LinetypeErr != nil {
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
+					StatusCode: LinetypeErr.StatusCode,
+					Message:    "Failed to retrieve line type from the external API",
+					Err:        LinetypeErr.Err,
+				}
+			}
+
 			if len(campaignItems) > 0 {
 				workOrderDetail = transactionworkshopentities.WorkOrderDetail{
 					WorkOrderSystemNumber:               id,
-					LineTypeId:                          campaignItems[0].LineTypeId,                    // C1.LINE_TYPE,
+					LineTypeId:                          linetypeCheck.LineTypeId,                       // C1.LINE_TYPE,
 					TransactionTypeId:                   3,                                              // utils.TrxTypeWoExternal,
 					JobTypeId:                           2,                                              // JobTypeCampaign,
 					OperationItemCode:                   strconv.Itoa(campaignItems[0].ItemOperationId), // C1.OPR_ITEM_CODE,
@@ -3085,6 +2932,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					PphTaxRate:                          0,                                                                           // CASE WHEN C1.LINE_TYPE = @LINETYPE_OPR THEN OPR.TAX_CODE	ELSE ''	END,
 					AtpmWCFTypeId:                       0,
 					WorkOrderOperationItemLine:          maxWoOprItemLine, // 0
+					ServiceStatusId:                     utils.SrvStatDraft,
 				}
 			} else {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
@@ -3189,25 +3037,36 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 			// 		"LINE_STATUS": request.PDIStatusWO,
 			// 	})
 
+			// fetch linetype
+			linetypeCheck, LinetypeErr := generalserviceapiutils.GetLineTypeByCode(utils.LinetypeOperation)
+			if LinetypeErr != nil {
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
+					StatusCode: LinetypeErr.StatusCode,
+					Message:    "Failed to retrieve line type from the external API",
+					Err:        LinetypeErr.Err,
+				}
+			}
+
 			workOrderDetail = transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:               id,
-				LineTypeId:                          utils.LinetypeOperation, // LINETYPE_OPR,
-				TransactionTypeId:                   0,                       // dbo.FCT_getBillCode(@COMPANY_CODE ,CAST(P1.COMPANY_CODE AS VARCHAR(10)),'W'),
-				JobTypeId:                           8,                       // dbo.getVariableValue('JOBTYPE_PDI'),
-				OperationItemCode:                   "",                      // P1.OPERATION_NO,
-				WarehouseGroupId:                    38,                      // Whs_Group_Sp
-				FrtQuantity:                         0,                       // P1.FRT,
-				SupplyQuantity:                      0,                       // P1.FRT
-				WorkorderStatusId:                   0,                       // ""
-				OperationItemDiscountAmount:         0,                       // 0,
-				OperationItemDiscountRequestAmount:  0,                       // 0,
-				OperationItemDiscountPercent:        0,                       // 0,
-				OperationItemDiscountRequestPercent: 0,                       // 0,
-				OperationItemPrice:                  0,                       // LSP1.SELLING_PRICE,
-				PphAmount:                           0,                       // 0,
-				PphTaxRate:                          0,                       // OP.TAX_CODE,
-				AtpmWCFTypeId:                       0,                       // 0
+				LineTypeId:                          linetypeCheck.LineTypeId, // LINETYPE_OPR,
+				TransactionTypeId:                   0,                        // dbo.FCT_getBillCode(@COMPANY_CODE ,CAST(P1.COMPANY_CODE AS VARCHAR(10)),'W'),
+				JobTypeId:                           8,                        // dbo.getVariableValue('JOBTYPE_PDI'),
+				OperationItemCode:                   "",                       // P1.OPERATION_NO,
+				WarehouseGroupId:                    38,                       // Whs_Group_Sp
+				FrtQuantity:                         0,                        // P1.FRT,
+				SupplyQuantity:                      0,                        // P1.FRT
+				WorkorderStatusId:                   0,                        // ""
+				OperationItemDiscountAmount:         0,                        // 0,
+				OperationItemDiscountRequestAmount:  0,                        // 0,
+				OperationItemDiscountPercent:        0,                        // 0,
+				OperationItemDiscountRequestPercent: 0,                        // 0,
+				OperationItemPrice:                  0,                        // LSP1.SELLING_PRICE,
+				PphAmount:                           0,                        // 0,
+				PphTaxRate:                          0,                        // OP.TAX_CODE,
+				AtpmWCFTypeId:                       0,                        // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3309,6 +3168,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0, // CASE WHEN SR1.LINE_TYPE = @LINETYPE_OPR THEN OPR.TAX_CODE WHEN SR1.LINE_TYPE = @LINETYPE_PACKAGE	THEN PCK.PPH_TAX_CODE ELSE '' END,
 				AtpmWCFTypeId:                       0, // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3396,10 +3256,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				PphTaxRate:                          0, // 0
 				AtpmWCFTypeId:                       0, // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
-			}
-
-			if request.LineTypeId == 1 {
-				workOrderDetail.OperationItemId = request.OperationItemId
+				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -5277,8 +5134,19 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 	if detailentity.TransactionTypeId != wotransactionType.WoTransactionTypeId {
 		if detailentity.InvoiceSystemNumber == 0 {
 
+			// fetch linetype operation or package
+			linetypeOperation, LinetypeErr := generalserviceapiutils.GetLineTypeByCode(utils.LinetypeOperation)
+			if LinetypeErr != nil {
+				return false, LinetypeErr
+			}
+
+			linetypePackage, LinetypeErr := generalserviceapiutils.GetLineTypeByCode(utils.LinetypePackage)
+			if LinetypeErr != nil {
+				return false, LinetypeErr
+			}
+
 			// Check if the line type is an operation or package
-			if detailentity.LineTypeId == utils.LinetypeOperation || detailentity.LineTypeId == utils.LinetypePackage {
+			if detailentity.LineTypeId == linetypeOperation.LineTypeId || detailentity.LineTypeId == linetypePackage.LineTypeId {
 				var supplyQty float64
 				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 					Select("ISNULL(supply_quantity, 0) AS supply_quantity").
@@ -5472,8 +5340,14 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									// Get operation item price from the lookup repository
 									var oprItemPrice float64
 
+									// fetch linetype
+									linetypechecks, LinetypeErr := generalserviceapiutils.GetLineTypeById(detailentity.LineTypeId)
+									if LinetypeErr != nil {
+										return false, LinetypeErr
+									}
+
 									// Fetch Opr_Item_Price
-									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, linetypechecks.LineTypeCode, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 									// Apply markup to the item price
 									oprItemPrice = oprItemPrice + 10.00 + (oprItemPrice * (5.00 / 100))
@@ -5515,10 +5389,15 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 			var markupAmount, markupPercentage float64
 			var warrantyClaimType string
 
-			if detailentity.LineTypeId == utils.LinetypeSublet {
+			if detailentity.LineTypeId == 6 { //utils.LinetypeSublet
+				// fetch linetype
+				linetypechecks, LinetypeErr := generalserviceapiutils.GetLineTypeById(detailentity.LineTypeId)
+				if LinetypeErr != nil {
+					return false, LinetypeErr
+				}
 
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, linetypechecks.LineTypeCode, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -5529,11 +5408,18 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 				// Fetch Opr_Item_Disc_Percent
-				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
+				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, linetypechecks.LineTypeCode, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
 
 			} else {
+
+				// fetch linetype
+				linetypechecks, LinetypeErr := generalserviceapiutils.GetLineTypeById(detailentity.LineTypeId)
+				if LinetypeErr != nil {
+					return false, LinetypeErr
+				}
+
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, linetypechecks.LineTypeCode, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -5544,7 +5430,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 				// Fetch Opr_Item_Disc_Percent
-				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
+				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, linetypechecks.LineTypeCode, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
 
 			}
 
@@ -5560,7 +5446,13 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 			}
 
-			if detailentity.LineTypeId != utils.LinetypeOperation && detailentity.LineTypeId != utils.LinetypePackage {
+			// fetch linetype
+			linetypechecks, LinetypeErr := generalserviceapiutils.GetLineTypeById(detailentity.LineTypeId)
+			if LinetypeErr != nil {
+				return false, LinetypeErr
+			}
+
+			if linetypechecks.LineTypeCode != utils.LinetypeOperation && linetypechecks.LineTypeCode != utils.LinetypePackage {
 				warrantyClaimType = entity.ATPMWCFDocNo
 			} else {
 				warrantyClaimType = ""
@@ -6136,7 +6028,7 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 	var (
 		csrDescription, pphTaxCode                                                                     string
 		csrFrtQty, csrPrice, csrDiscPercent, addDiscReqAmount, newFrtQty, supplyQty, oprItemDiscAmount float64
-		csrOprItemCode, wcfTypeMoney, woOprItemLine, csrLineType, atpmWcfType, addDiscStat, itemTypeId int
+		csrOprItemCode, wcfTypeMoney, csrLineType, woOprItemLine, atpmWcfType, addDiscStat, itemTypeId int
 	)
 
 	// Set default WCF type Money
@@ -6230,11 +6122,11 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 		}
 
 		switch csrLineType {
-		case utils.LinetypePackage:
+		case 1: //utils.LinetypePackage
 			csrFrtQty = 1
 			supplyQty = 1
 			atpmWcfType = 0
-		case utils.LinetypeOperation:
+		case 2: //utils.LinetypeOperation
 			if err := tx.Model(&masteroperationentities.OperationModelMapping{}).
 				Select("tax_code").
 				Where("operation_id = ?", csrOprItemCode).
@@ -6301,7 +6193,9 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 		}
 
 		// Update new freight quantity if LineType is "Operation" or "Package"
-		if csrLineType == utils.LinetypeOperation || csrLineType == utils.LinetypePackage {
+		// utils.LinetypeOperation
+		// utils.LinetypePackage
+		if csrLineType == 2 || csrLineType == 1 {
 			newFrtQty += csrFrtQty
 		}
 	}
@@ -6669,12 +6563,12 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 
 	// Step 5: Fetch package details from the database
 	var packages []struct {
-		LineTypeId  int
-		OprItemId   int
-		OprItemCode string
-		FrtQty      float64
-		JobTypeId   int
-		TrxTypeId   int
+		LineTypeCode int
+		OprItemId    int
+		OprItemCode  string
+		FrtQty       float64
+		JobTypeId    int
+		TrxTypeId    int
 	}
 
 	if err := tx.Table("mtr_package AS ap").
@@ -6718,7 +6612,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 
 	// Step 6: Process each package and apply business logic
 	for _, pkg := range packages {
-		csrLineTypeId := pkg.LineTypeId
+		csrLineTypeId := pkg.LineTypeCode
 		csrOprItemId := pkg.OprItemId
 		csrOprItemCode := pkg.OprItemCode
 		csrFrtQty := pkg.FrtQty
@@ -6726,7 +6620,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 		csrTrxTypeId := pkg.TrxTypeId
 
 		// Update FRT_QTY if LineType is a package
-		if csrLineTypeId == utils.LinetypePackage {
+		if csrLineTypeId == 1 { //utils.LinetypePackage
 			csrFrtQty = 1
 		}
 
@@ -6782,8 +6676,18 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 			result.BillCodeExt = utils.TrxTypeWoCampaign.ID // utils.TrxTypeWoCampaign
 		}
 
+		// fetch line type
+		linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
+		if linetypeErr != nil {
+			return entity, &exceptions.BaseErrorResponse{
+				StatusCode: linetypeErr.StatusCode,
+				Message:    "Failed to fetch line type",
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		// Fetch operation item price and discount percent
-		oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrLineTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+		oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, linetypecheck.LineTypeCode, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
 		if err != nil {
 			return entity, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -6796,7 +6700,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 		oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 		// Fetch item discount percent (You need to define or fix GetOprItemDiscPercent method)
-		oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, result.LinetypeId, result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*csrFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+		oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*csrFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
 		if err != nil {
 			return entity, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -6834,7 +6738,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 		}
 
 		// Handle different line types (Operation or Package)
-		if csrLineTypeId == utils.LinetypeOperation || csrLineTypeId == utils.LinetypePackage {
+		if csrLineTypeId == 2 || csrLineTypeId == 1 {
 			// Check if this operation item already exists
 			var workOrder2 transactionworkshopentities.WorkOrderDetail
 
@@ -6941,8 +6845,18 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 				}
 			}
 
+			// fetch line type
+			linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeByCode(getLineTypeByItemCode)
+			if linetypeErr != nil {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: linetypeErr.StatusCode,
+					Message:    "Failed to fetch line type",
+					Err:        linetypeErr.Err,
+				}
+			}
+
 			// Check if the line type matches the one retrieved by item code
-			if csrLineTypeId != getLineTypeByItemCode {
+			if csrLineTypeId != linetypecheck.LineTypeId {
 				return entity, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusBadRequest,
 					Message:    "Item code does not belong to the provided line type",
@@ -6978,7 +6892,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 			}
 
 			// Check if the item is available or the line type is Sublet
-			if qtyAvailable > 0 || csrLineTypeId == utils.LinetypeSublet {
+			if qtyAvailable > 0 || csrLineTypeId == 6 { //utils.LinetypeSublet
 				// Fetch the next work order operation item line
 				var woOprItemLine int
 				if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -7064,8 +6978,18 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 					markupAmount := 0.0
 					markupPercentage := 0.0
 
+					// fetch linetype
+					linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
+					if linetypeErr != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: linetypeErr.StatusCode,
+							Message:    "Failed to fetch line type",
+							Err:        linetypeErr.Err,
+						}
+					}
+
 					// Fetch operation item price and discount percent
-					oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrLineTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
+					oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, linetypecheck.LineTypeCode, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
 					if err != nil {
 						return entity, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -7078,7 +7002,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 					oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 					// Fetch item discount percent (You need to define or fix GetOprItemDiscPercent method)
-					oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, result.LinetypeId, result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*newFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+					oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*newFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
 					if err != nil {
 						return entity, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -7223,8 +7147,18 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 						// Step 6: Fetch markup based on Company and Vehicle Brand
 						var markupAmount, markupPercentage float64
 
+						// fetch linetype
+						linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
+						if linetypeErr != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: linetypeErr.StatusCode,
+								Message:    "Failed to fetch line type",
+								Err:        linetypeErr.Err,
+							}
+						}
+
 						// Fetch operation item price and discount percent
-						oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrLineTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+						oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, linetypecheck.LineTypeCode, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
 						if err != nil {
 							return entity, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -7237,7 +7171,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 						oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 						// Fetch item discount percent
-						oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, result.LinetypeId, result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*substitute.SupplyQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+						oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*substitute.SupplyQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
 						if err != nil {
 							return entity, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -7553,15 +7487,21 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 			}
 
 			var agreementNo int
-			if recallRecord.LineTypeId == utils.LinetypeOperation {
+			if recallRecord.LineTypeId == 2 { //utils.LinetypeOperation
 				agreementNo = agreementNoBR
 			} else {
 				agreementNo = agreementNoGR
 			}
 
+			// fetch linetype
+			linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(recallRecord.LineTypeId)
+			if linetypeErr != nil {
+				return entity, linetypeErr
+			}
+
 			oprItemPrice, err := s.lookupRepo.GetOprItemPrice(
-				tx, companyCode, vehicleBrand, recallRecord.OprItemId, agreementNo,
-				entity.JobTypeId, recallRecord.LineTypeId, utils.TrxTypeWoWarranty.ID,
+				tx, linetypecheck.LineTypeCode, companyCode, vehicleBrand, recallRecord.OprItemId, agreementNo,
+				entity.JobTypeId, utils.TrxTypeWoWarranty.ID,
 				int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(variantCode),
 			)
 			if err != nil {
@@ -7591,7 +7531,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 			}
 
 			switch recallRecord.LineTypeId {
-			case utils.LinetypeOperation:
+			case 2: //utils.LinetypeOperation
 				var operationExists bool
 				if err := tx.Table("mtr_operation_code").
 					Select("1").
@@ -7620,7 +7560,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 				}
 				entity.FrtQuantity = frtQty
 
-			case utils.LinetypePackage:
+			case 1: //utils.LinetypePackage
 				entity.FrtQuantity = 1
 				entity.SupplyQuantity = 1
 				entity.WarehouseGroupId = 0
@@ -7663,12 +7603,17 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 					}
 				}
 
-				lineTypeId, err := s.lookupRepo.GetLineTypeByItemCode(tx, recallRecord.OprItemCode)
+				lineTypeStr, err := s.lookupRepo.GetLineTypeByItemCode(tx, recallRecord.OprItemCode)
 				if err != nil {
 					return entity, err
 				}
 
-				if lineTypeId != recallRecord.LineTypeId {
+				linetypeCheck, linetypeErr := generalserviceapiutils.GetLineTypeByCode(lineTypeStr)
+				if linetypeErr != nil {
+					return entity, linetypeErr
+				}
+
+				if linetypeCheck.LineTypeId != recallRecord.LineTypeId {
 					return entity, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
 						Message:    "Line Type does not match for Item",
@@ -7743,7 +7688,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 				}
 			}
 
-			if recallRecord.LineTypeId == utils.LinetypePackage {
+			if recallRecord.LineTypeId == 1 { //utils.LinetypePackage
 				if err := tx.Model(&masterentities.PackageMasterDetail{}).
 					Select("SUM(frt_quantity)").
 					Where("package_id = ?", recallRecord.OprItemId).
@@ -7788,8 +7733,9 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 
 			var woOprItemLine int
 			var totalPackage, totalOpr, estTime, totalFrtPackage, totalFrt float64
-
-			if recallRecord.LineTypeId == utils.LinetypeOperation || recallRecord.LineTypeId == utils.LinetypePackage {
+			//utils.LinetypeOperation
+			//utils.LinetypePackage
+			if recallRecord.LineTypeId == 2 || recallRecord.LineTypeId == 1 {
 
 				var exists int64
 				if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -7902,7 +7848,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 
 						estTime += totalFrt + totalFrtPackage
 					} else {
-						if recallRecord.LineTypeId == utils.LinetypePackage {
+						if recallRecord.LineTypeId == 1 { //utils.LinetypePackage
 							estTime = currentEstTime + frtPackage
 						} else {
 							estTime = currentEstTime + recallRecord.FrtQty
@@ -8000,7 +7946,17 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 					return entity, err
 				}
 
-				if recallRecord.LineTypeId != linetypecode {
+				// fetch line type from external service
+				linetypeCheck, LinetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypecode)
+				if LinetypeErr != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get line type by code",
+						Err:        LinetypeErr,
+					}
+				}
+
+				if recallRecord.LineTypeId != linetypeCheck.LineTypeId {
 					return entity, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
 						Message:    "Item Code belong to Line Type",
@@ -8021,7 +7977,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 				}
 
 				// Assuming necessary imports and definitions are in place
-				if qtyAvail > 0 || recallRecord.LineTypeId == utils.LinetypeSublet {
+				if qtyAvail > 0 || recallRecord.LineTypeId == 6 { //utils.LinetypeSublet
 					// Get the next available WO_OPR_ITEM_LINE
 					var woOprItemLine int
 					if err := tx.Table("trx_work_order_detail").
@@ -8083,7 +8039,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 								WorkOrderSystemNumber:               workOrderId,
 								WorkOrderOperationItemLine:          woOprItemLine,
 								WorkorderStatusId:                   utils.WoStatNew,
-								LineTypeId:                          utils.LinetypeSublet,
+								LineTypeId:                          6, //utils.LinetypeSublet
 								ServiceStatusId:                     0,
 								OperationItemCode:                   recallRecord.OprItemCode,
 								Description:                         recallRecord.Description,
@@ -8121,7 +8077,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 
 							totals := []struct {
 								total      *float64
-								lineTypeId int
+								lineTypeId string
 							}{
 								{&totalPart, utils.LinetypeSparepart},
 								{&totalOil, utils.LinetypeOil},
@@ -8272,7 +8228,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 								workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 									WorkOrderSystemNumber:        workOrderId,
 									WorkOrderOperationItemLine:   woOprItemLinesub,
-									LineTypeId:                   utils.LinetypeSublet,
+									LineTypeId:                   6, //utils.LinetypeSublet
 									FrtQuantity:                  substitute.SupplyQty,
 									OperationItemPrice:           0,
 									OperationItemDiscountAmount:  0,
@@ -8295,7 +8251,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							var markupAmount, markupPercentage float64
 
 							// Fetch operation item price and discount percent
-							oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyId, result.BrandId, recallRecord.OprItemId, agreementNo, utils.TrxTypeWoFreeService.ID, utils.LinetypeSublet, utils.TrxTypeWoFreeService.ID, int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(result.VariantId))
+							oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, utils.LinetypeSublet, result.CompanyId, result.BrandId, recallRecord.OprItemId, agreementNo, utils.TrxTypeWoFreeService.ID, utils.TrxTypeWoFreeService.ID, int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(result.VariantId))
 							if err != nil {
 								return entity, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,
@@ -8391,7 +8347,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							finalWorkOrderDetail := transactionworkshopentities.WorkOrderDetail{
 								WorkOrderSystemNumber:        workOrderId,
 								WorkOrderOperationItemLine:   woOprItemLinesub,
-								LineTypeId:                   utils.LinetypeSublet,
+								LineTypeId:                   6, //utils.LinetypeSublet
 								FrtQuantity:                  supplyQty,
 								OperationItemPrice:           oprItemPrice,
 								OperationItemDiscountAmount:  oprItemDiscAmount,

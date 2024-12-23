@@ -52,6 +52,7 @@ func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer h
 	queryParams := map[string]string{
 		"trx_item_warehouse_transfer_request.company_id":                       queryValues.Get("company_id"),
 		"trx_item_warehouse_transfer_request.transfer_request_document_number": queryValues.Get("transfer_request_document_number"),
+		"trx_item_warehouse_transfer_request.transfer_request_status_id":       queryValues.Get("transfer_request_status_id"),
 		"trx_item_warehouse_transfer_request.transfer_request_date_from":       queryValues.Get("transfer_request_date_from"),
 		"trx_item_warehouse_transfer_request.transfer_request_date_to":         queryValues.Get("transfer_request_date_to"),
 		"RequestFromWarehouse.warehouse_group_id":                              queryValues.Get("request_from_warehouse_group_id"),

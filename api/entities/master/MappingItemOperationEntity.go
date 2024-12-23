@@ -8,8 +8,8 @@ import (
 const MappingItemOperationTableName = "mtr_mapping_item_operation"
 
 type MappingItemOperation struct {
-	ItemOperationId int                                    `gorm:"column:item_operation_id;not null;primaryKey" json:"item_operation_id"`
-	LineTypeId      int                                    `gorm:"column:line_type_id;not null;" json:"line_type_id"`
+	ItemOperationId int                                    `gorm:"column:item_operation_id;size:30;not null;primaryKey" json:"item_operation_id"`
+	LineTypeId      int                                    `gorm:"column:line_type_id;size:30;not null;" json:"line_type_id"`
 	ItemId          int                                    `gorm:"column:item_id;size:30;" json:"item_id"`
 	OperationId     int                                    `gorm:"column:operation_id;size:30;"  json:"operation_id"`
 	PackageId       int                                    `gorm:"column:package_id;size:30;" json:"package_id"`

@@ -507,6 +507,7 @@ func PriceListRouter(
 	router.Get("/", priceListController.GetAllPriceListNew)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
 	router.Get("/{price_list_id}", priceListController.GetPriceListById)
+	router.Get("/by-code/{price_list_code_id}", priceListController.GetPriceListByCodeId)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
 	router.Patch("/activate/{price_list_id}", priceListController.ActivatePriceList)
@@ -1977,6 +1978,21 @@ func ItemLocationTransferRouter(
 	router.Post("/detail", itemLocationTransferController.InsertItemLocationTransferDetail)
 	router.Put("/detail/{transfer_request_detail_system_number}", itemLocationTransferController.UpdateItemLocationTransferDetail)
 	router.Delete("/detail/{multi_id}", itemLocationTransferController.DeleteItemLocationTransferDetail)
+
+	return router
+}
+
+func ItemQueryAllCompanyRouter(
+	itemQueryAllCompanyController transactionsparepartcontroller.ItemQueryAllCompanyController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemQueryAllCompanyController.GetAllItemQueryAllCompany)
 
 	return router
 }

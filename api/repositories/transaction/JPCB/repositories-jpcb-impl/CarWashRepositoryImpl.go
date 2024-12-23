@@ -1,7 +1,6 @@
 package transactionjpcbrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
@@ -9,9 +8,9 @@ import (
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"fmt"
-	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -270,11 +269,7 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		errorHelperInternalServerError(err)
 	}
 
-	//Fetch data Model from external services
-	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(workOrderResponse.CompanyId)
-	var getCompanyResponse transactionjpcbpayloads.CarWashCompanyResponse
-	test := true
-	errFetchCompany := utils.Get(CompanyURL, &getCompanyResponse, nil)
+	getCompanyResponse, errFetchCompany := generalserviceapiutils.GetCompanyReferenceById(workOrderResponse.CompanyId)
 	if errFetchCompany != nil {
 		return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -283,12 +278,7 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		}
 	}
 
-	getCompanyResponse.CompanyReference.UseJPCB = &test
-	if getCompanyResponse.CompanyReference.UseJPCB == nil {
-		return errorHelperBadRequest()
-	}
-
-	if *getCompanyResponse.CompanyReference.UseJPCB {
+	if getCompanyResponse.UseJpcb {
 		if workOrderResponse.WorkOrderStatusId == utils.WoStatQC {
 			if workOrderResponse.CarWash {
 				var workOrder int
@@ -569,7 +559,7 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        fmt.Errorf("bad request"),
-			Message:    "please check if bay is correct",
+			Message:    "please check if bay is correct" + strconv.Itoa(carWashStatusId),
 		}
 	}
 
@@ -601,16 +591,12 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 			}
 		}
 
-		//Fetch data Color from vehicle master then unit color
-		CompanyReferenceURL := config.EnvConfigs.GeneralServiceUrl + "company-reference/" + strconv.Itoa(carWash.CompanyId) + " "
-		fmt.Print(CompanyReferenceURL)
-		var getCompanyReferenceResponse transactionjpcbpayloads.CarWashCompanyReference
-		errFetchCompanyReference := utils.Get(CompanyReferenceURL, &getCompanyReferenceResponse, nil)
+		getCompanyReferenceResponse, errFetchCompanyReference := generalserviceapiutils.GetCompanyReferenceById(carWash.CompanyId)
 		if errFetchCompanyReference != nil {
 			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
-				Message:    "Failed to fetch company reference data from external service",
+				Message:    "Failed to fetch company reference data from extternal service",
 			}
 		}
 
@@ -891,15 +877,17 @@ func (*CarWashImpl) GetCarWashByWorkOrderSystemNumber(tx *gorm.DB, workOrderSyst
 }
 
 func createCurrentTime(timeDiff float32) float32 {
-	hours := math.Floor(float64(timeDiff))
-	minutes := (float64(timeDiff) - hours) * 100
+	// Split the float into whole hours and fractional minutes
+	wholeHours := int(timeDiff)
+	fractionalMinutes := int((timeDiff - float32(wholeHours)) * 100)
+	// Get the current time
+	now := time.Now()
 
-	duration := time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute
-	currentTime := time.Now()
-
-	newTime := currentTime.Add(duration)
-
-	return float32(newTime.Hour()) + float32(newTime.Minute())/60
+	// Add the whole hours and fractional minutes
+	result := now.Add(time.Duration(wholeHours)*time.Hour + time.Duration(fractionalMinutes)*time.Minute)
+	fmt.Println(float32(result.Minute()) / 100)
+	fmt.Println(result.Hour())
+	return float32(result.Hour()) + (float32(result.Minute()) / 100)
 }
 
 func errorHelperDataAlreadyExist() (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
