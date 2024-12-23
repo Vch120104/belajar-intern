@@ -11,8 +11,8 @@ type BomDetail struct {
 	Qty               float64 `gorm:"column:qty;size:30;not null" json:"qty"`
 	Remark            string  `gorm:"column:remark;size:512" json:"remark"`
 	CostingPercentage float64 `gorm:"column:costing_percentage;size:30;not null" json:"costing_percentage"`
-	Bom               Bom     `gorm:"foreignKey:BomId;references:BomId" json:"bom"`
-	Item              Item    `gorm:"foreignKey:ItemId;references:ItemId" json:"item"`
+	//Bom               Bom     `gorm:"foreignKey:BomId;references:BomId" json:"bom"` // not needed
+	//Item              Item    `gorm:"foreignKey:ItemId;references:ItemId" json:"item"` // not needed
 }
 
 func (*BomDetail) TableName() string {

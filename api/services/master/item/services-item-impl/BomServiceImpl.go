@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/gommon/log"
 	"github.com/redis/go-redis/v9"
@@ -35,7 +36,7 @@ func StartBomService(BomRepository masteritemrepository.BomRepository, db *gorm.
 	}
 }
 
-func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -60,7 +61,7 @@ func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterConditio
 		}
 	}()
 
-	results, err := s.BomRepository.GetBomMasterList(tx, filterCondition, pages)
+	results, err := s.BomRepository.GetBomList(tx, filterCondition, pages)
 	if err != nil {
 		return results, err
 	}
@@ -68,7 +69,7 @@ func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterConditio
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomMasterById(id int, pages pagination.Pagination) (masteritempayloads.BomMasterResponseDetail, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomById(id int) (masteritempayloads.BomResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -92,11 +93,108 @@ func (s *BomServiceImpl) GetBomMasterById(id int, pages pagination.Pagination) (
 			}
 		}
 	}()
-	results, err := s.BomRepository.GetBomMasterById(tx, id, pages)
+	results, err := s.BomRepository.GetBomById(tx, id)
 	if err != nil {
 		return results, err
 	}
 
+	return results, nil
+}
+
+func (s *BomServiceImpl) GetBomDetailByMasterId(bomId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	results, err := s.BomRepository.GetBomDetailByMasterId(tx, bomId, pages)
+	if err != nil {
+		return results, err
+	}
+
+	return results, nil
+}
+
+func (s *BomServiceImpl) GetBomDetailByMasterUn(itemId int, effective_date time.Time, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	results, err := s.BomRepository.GetBomDetailByMasterUn(tx, itemId, effective_date, pages)
+	if err != nil {
+		return results, err
+	}
+
+	return results, nil
+}
+
+func (s *BomServiceImpl) GetBomDetailById(id int) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := s.BomRepository.GetBomDetailById(tx, id)
+	if err != nil {
+		return results, err
+	}
 	return results, nil
 }
 
@@ -227,37 +325,6 @@ func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterConditio
 	}
 
 	return results, nil
-}
-
-func (s *BomServiceImpl) GetBomDetailById(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	results, totalPages, totalRows, err := s.BomRepository.GetBomDetailById(tx, id, filterCondition, pages)
-	if err != nil {
-		return results, 0, 0, err
-	}
-	return results, totalPages, totalRows, nil
 }
 
 func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {

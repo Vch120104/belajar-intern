@@ -531,17 +531,20 @@ func BomRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	//bom master
-	router.Get("/", BomController.GetBomMasterList)
-
-	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
+	// BOM master
+	router.Get("/", BomController.GetBomList)
+	router.Get("/{bom_id}", BomController.GetBomById)
+	// BOM master (unfinished)
 	router.Post("/", BomController.SaveBomMaster)
 	router.Put("/{bom_master_id}", BomController.UpdateBomMaster)
 	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
-	//bom detail
-	router.Get("/detail", BomController.GetBomDetailList)
+	// BOM detail
+	router.Get("/detail/master/{bom_id}", BomController.GetBomDetailByMasterId)
+	router.Get("/detail/master/{item_id}/{effective_date}", BomController.GetBomDetailByMasterUn)
 	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
+	// BOM detail (unfinished)
+	router.Get("/detail", BomController.GetBomDetailList)
 	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
 	router.Post("/detail", BomController.SaveBomDetail)
 	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
