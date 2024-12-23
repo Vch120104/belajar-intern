@@ -1972,6 +1972,21 @@ func ItemLocationTransferRouter(
 	return router
 }
 
+func ItemQueryAllCompanyRouter(
+	itemQueryAllCompanyController transactionsparepartcontroller.ItemQueryAllCompanyController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemQueryAllCompanyController.GetAllItemQueryAllCompany)
+
+	return router
+}
+
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 

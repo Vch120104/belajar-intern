@@ -69,6 +69,9 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 		"model_code":         queryValues.Get("model_code"),
 		"model_description":  queryValues.Get("model_description"),
 		"package_price":      queryValues.Get("package_price"),
+		"brand_id":           queryValues.Get("brand_id"),
+		"model_id":           queryValues.Get("model_id"),
+		"variant_id":         queryValues.Get("variant_id"),
 	}
 
 	paginate := pagination.Pagination{
