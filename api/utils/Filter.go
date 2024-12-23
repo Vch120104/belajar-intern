@@ -121,3 +121,17 @@ func DefineInternalExternalFilter(filterCondition []FilterCondition, tableStruct
 	}
 	return internalFilter, externalFilter
 }
+
+// func ApplyBrandModelVehicleFilters(db *gorm.DB, filters []FilterCondition) *gorm.DB {
+// 	for _, filter := range filters {
+// 		switch filter.ColumnField {
+// 		case "brand_id":
+// 			db = db.Where("omm.brand_id = ?", filter.ColumnValue)
+// 		case "model_id":
+// 			db = db.Where("omm.model_id = ?", filter.ColumnValue)
+// 		case "variant_id":
+// 			db = db.Where("ofrt.variant_id = ?", filter.ColumnValue)
+// 		}
+// 	}
+// 	return db
+// }

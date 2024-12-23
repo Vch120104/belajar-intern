@@ -38,6 +38,25 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 	return pages, nil
 }
 
+func (r *ItemOperationRepositoryImpl) GetAllItemOperationLineType(tx *gorm.DB, lineTypeId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []masterpayloads.ItemOperationPost
+	var entities masterentities.MappingItemOperation
+
+	query := tx.Model(&entities).Select("mtr_item_operation.*").Table("mtr_item_operation")
+	WhereQuery := utils.ApplyFilter(query, filterCondition)
+
+	err := WhereQuery.Scopes(pagination.Paginate(&pages, query)).Scan(&responses).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	pages.Rows = responses
+	return pages, nil
+}
+
 func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) (masterpayloads.ItemOperationPost, *exceptions.BaseErrorResponse) {
 	var responses masterpayloads.ItemOperationPost
 	err := tx.Select("mtr_item_operation.*").Table("mtr_item_operation").
