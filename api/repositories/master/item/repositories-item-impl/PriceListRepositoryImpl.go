@@ -560,3 +560,58 @@ func (r *PriceListRepositoryImpl) DeactivatePriceList(tx *gorm.DB, id string) (b
 	}
 	return true, nil
 }
+
+func (r *PriceListRepositoryImpl) GetPriceListByCodeId(tx *gorm.DB, CodeId string) (masteritempayloads.PriceListGetbyCode, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemPriceList{}
+	response := masteritempayloads.PriceListGetbyCode{}
+
+	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Where("mtr_item_price_list.price_list_code_id = ?", CodeId).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on get price list by code id",
+			Err:        err,
+		}
+	}
+
+	// Fetch Brand
+	brandResponse, errBrand := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	if errBrand != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: errBrand.StatusCode,
+			Err:        errBrand.Err,
+		}
+	}
+	response.BrandId = brandResponse.BrandId
+	response.BrandName = brandResponse.BrandName
+	response.BrandCode = brandResponse.BrandCode
+
+	// Fetch Item Group
+	itemGroupResponse, errItemGroup := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if errItemGroup != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: errItemGroup.StatusCode,
+			Err:        errItemGroup.Err,
+		}
+	}
+	response.ItemGroupId = itemGroupResponse.ItemGroupId
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
+
+	// Fetch Currency
+	currencyResponse, errCurrency := financeserviceapiutils.GetCurrencyId(response.CurrencyId)
+	if errCurrency != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: errCurrency.StatusCode,
+			Err:        errCurrency.Err,
+		}
+	}
+	response.CurrencyId = currencyResponse.CurrencyId
+	response.CurrencyCode = currencyResponse.CurrencyCode
+
+	return response, nil
+}

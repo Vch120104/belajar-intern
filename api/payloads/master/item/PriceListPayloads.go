@@ -147,3 +147,28 @@ type PriceListGetbyId struct {
 	AtpmSyncronize      string  `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
 	AtpmSyncronizeTime  string  `json:"atpm_syncronize_time" parent_entity:"mtr_item_price_list"`
 }
+
+type PriceListGetbyCode struct {
+	IsActive            string  `json:"is_active" parent_entity:"mtr_item_price_list"`
+	PriceListId         int     `json:"price_list_id" parent_entity:"mtr_item_price_list" main_table:"mtr_item_price_list"`
+	PriceListCode       string  `json:"price_list_code" parent_entity:"mtr_item_price_list"`
+	PriceListCodeId     int     `json:"price_list_code_id"`
+	CompanyId           int     `json:"company_id" parent_entity:"mtr_item_price_list"`
+	BrandId             int     `json:"brand_id" parent_entity:"mtr_item_price_list"`
+	BrandName           string  `json:"brand_name"`
+	BrandCode           string  `json:"brand_code"`
+	CurrencyId          int     `json:"currency_id" parent_entity:"mtr_item_price_list"`
+	CurrencyCode        string  `json:"currency_code"`
+	EffectiveDate       string  `json:"effective_date" parent_entity:"mtr_item_price_list"`
+	ItemId              int     `json:"item_id" parent_entity:"mtr_item"`
+	ItemName            string  `json:"item_name"  parent_entity:"mtr_item"`
+	ItemCode            string  `json:"item_code"  parent_entity:"mtr_item"`
+	ItemGroupId         int     `json:"item_group_id" parent_entity:"mtr_item_group"`
+	ItemGroupName       string  `json:"item_group_name"`
+	ItemClassId         int     `json:"item_class_id" parent_entity:"mtr_item_class"`
+	ItemClassName       string  `json:"item_class_name" parent_entity:"mtr_item_class"`
+	PriceListAmount     float64 `json:"price_list_amount" parent_entity:"mtr_item_price_list"`
+	PriceListModifiable string  `json:"price_list_modifiable" parent_entity:"mtr_item_price_list"`
+	AtpmSyncronize      string  `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
+	AtpmSyncronizeTime  string  `json:"atpm_syncronize_time" parent_entity:"mtr_item_price_list"`
+}
