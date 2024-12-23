@@ -1274,3 +1274,39 @@ func (r *SalesOrderRepositoryImpl) SalesOrderProposedDiscountMultiId(db *gorm.DB
 	}
 	return true, nil
 }
+func (r *SalesOrderRepositoryImpl) UpdateSalesOrderHeader(db *gorm.DB, payload transactionsparepartpayloads.SalesOrderUpdatePayload, SalesOrderId int) (transactionsparepartentities.SalesOrder, *exceptions.BaseErrorResponse) {
+	//cek first if id is exist
+	soEntity := transactionsparepartentities.SalesOrder{}
+	err := db.Model(&soEntity).Where(transactionsparepartentities.SalesOrder{SalesOrderSystemNumber: SalesOrderId}).
+		First(&soEntity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return soEntity, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+				Message:    "sales order with that id is not found",
+			}
+		}
+		return soEntity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get sales order entity",
+		}
+	}
+	if payload.SalesOrderRemark != "" {
+		soEntity.Remark = payload.SalesOrderRemark
+	}
+	if payload.DownPaymentAmount != 0 {
+		soEntity.DownPaymentAmount = payload.DownPaymentAmount
+	}
+	//save header
+	err = db.Save(&soEntity).Error
+	if err != nil {
+		return soEntity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to update sales order",
+		}
+	}
+	return soEntity, nil
+}

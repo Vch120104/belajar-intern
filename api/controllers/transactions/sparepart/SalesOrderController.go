@@ -22,6 +22,8 @@ type SalesOrderController interface {
 	VoidSalesOrder(writer http.ResponseWriter, request *http.Request)
 	InsertSalesOrderDetail(writer http.ResponseWriter, request *http.Request)
 	DeleteSalesOrderDetail(writer http.ResponseWriter, request *http.Request)
+	SalesOrderProposedDiscountMultiId(writer http.ResponseWriter, request *http.Request)
+	UpdateSalesOrderHeader(writer http.ResponseWriter, request *http.Request)
 }
 
 type SalesOrderControllerImpl struct {
@@ -159,4 +161,44 @@ func (s *SalesOrderControllerImpl) DeleteSalesOrderDetail(writer http.ResponseWr
 		helper.ReturnError(writer, request, err)
 	}
 	payloads.NewHandleSuccess(writer, ResponseDeleteSalesOrder, "success to delete sales order detail", http.StatusOK)
+}
+func (s *SalesOrderControllerImpl) SalesOrderProposedDiscountMultiId(writer http.ResponseWriter, request *http.Request) {
+	queryValue := request.URL.Query()
+	salesOrderDetailMultiId := queryValue.Get("sales_order_detail_multi_id")
+	proposedDiscount := utils.NewGetQueryfloat(queryValue, "proposed_discount")
+
+	result, errResult := s.SalesOrderService.SalesOrderProposedDiscountMultiId(salesOrderDetailMultiId, proposedDiscount)
+	if errResult != nil {
+		helper.ReturnError(writer, request, errResult)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "success to insert proposed discount", http.StatusOK)
+
+}
+func (s *SalesOrderControllerImpl) UpdateSalesOrderHeader(writer http.ResponseWriter, request *http.Request) {
+	salesOrderId := chi.URLParam(request, "sales_order_system_number")
+	salesOrderSystemNumber, errConvertInt := strconv.Atoi(salesOrderId)
+	if errConvertInt != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errConvertInt,
+			Message:    "failed to convert id parameters",
+		})
+	}
+	requestBody := transactionsparepartpayloads.SalesOrderUpdatePayload{}
+	err := jsonchecker.ReadFromRequestBody(request, &requestBody)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to read request body",
+		})
+		return
+	}
+	res, errResult := s.SalesOrderService.UpdateSalesOrderHeader(requestBody, salesOrderSystemNumber)
+	if errResult != nil {
+		helper.ReturnError(writer, request, errResult)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "success to update sales order header", http.StatusOK)
 }

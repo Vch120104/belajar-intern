@@ -234,6 +234,11 @@ type SalesOrderDeleteDetailResponse struct {
 	DeleteStatus  bool   `json:"delete_status"`
 }
 
+type SalesOrderUpdatePayload struct {
+	SalesOrderRemark  string  `json:"sales_order_remark"`
+	DownPaymentAmount float64 `json:"down_payment_amount"`
+}
+
 //
 //type SalesOrderProposedDiscountResponse struct {
 //	ProposedDiscount float64 `json:"proposed_discount" validate:"required"`
