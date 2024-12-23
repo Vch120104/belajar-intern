@@ -9,7 +9,6 @@ import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
-	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
@@ -539,46 +538,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 	)
 
 	// Fetch item type from external service
-	// itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	// if itemTypeErr != nil {
-	// 	return pagination.Pagination{}, itemTypeErr
-	// }
-
-	var entities masteritementities.ItemType
-	var entitiesService masteritementities.ItemType
-	// var itemTypeFetchGoods masteritempayloads.ItemTypeResponse
-
-	if err := tx.Where("item_type_code = 'G'").First(&entities).Error; err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
+	if itemTypeErr != nil {
+		return pagination.Pagination{}, itemTypeErr
 	}
 
-	var itemTypeFetchGoods = masteritempayloads.ItemTypeResponse{
-		ItemTypeId:   entities.ItemTypeId,
-		ItemTypeCode: entities.ItemTypeCode,
-		ItemTypeName: entities.ItemTypeName,
-		IsActive:     entities.IsActive,
-	}
-
-	// itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	// if itemTypeErr != nil {
-	// 	return pagination.Pagination{}, itemTypeErr
-	// }
-
-	if err := tx.Where("item_type_code = 'S'").First(&entitiesService).Error; err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	var itemTypeFetchServices = masteritempayloads.ItemTypeResponse{
-		ItemTypeId:   entities.ItemTypeId,
-		ItemTypeCode: entities.ItemTypeCode,
-		ItemTypeName: entities.ItemTypeName,
-		IsActive:     entities.IsActive,
+	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
+	if itemTypeErr != nil {
+		return pagination.Pagination{}, itemTypeErr
 	}
 
 	// Base Query
@@ -589,12 +556,12 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
 				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
+				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price, A.model_id AS model_id, A.brand_id AS brand_id, A.variant_id AS variant_id").
 			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
 			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
 			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
 			Where("A.is_active = ?", 1).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
 	case "1":
@@ -633,7 +600,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				DISTINCT
 				A.item_id AS item_id, 
 				A.item_code AS item_code, 
-				A.item_name AS item_name, 
+				A.item_name AS item_name,
+				B.brand_id AS brand_id,
+				B.model_id AS model_id,
+				B.variant_id AS variant_id,
 				ISNULL((SELECT SUM(V.quantity_allocated) 
 				        FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
@@ -649,12 +619,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 					A.item_level_4_id AS item_level_4,
 					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassResp.ItemClassId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	case "3":
@@ -676,7 +647,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select(`DISTINCT
 					A.item_id AS item_id, 
 					A.item_code AS item_code, 
-					A.item_name AS item_name, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
 					ISNULL((SELECT SUM(V.quantity_allocated) 
 							FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
@@ -692,12 +666,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 						A.item_level_4_id AS item_level_4,
 						mil4.item_level_4_code AS item_level_4_code
 				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	case "4":
@@ -728,7 +703,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select(`	DISTINCT
 						A.item_id AS item_id, 
 						A.item_code AS item_code, 
-						A.item_name AS item_name, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
 						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 								WHERE A.item_id = V.item_id 
 								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
@@ -741,12 +719,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 						A.item_level_4_id AS item_level_4,
 						mil4.item_level_4_code AS item_level_4_code
 					`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	case "5":
@@ -774,7 +753,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select(`	DISTINCT
 						A.item_id AS item_id, 
 						A.item_code AS item_code, 
-						A.item_name AS item_name, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
 						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 								WHERE A.item_id = V.item_id 
 								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
@@ -787,12 +769,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 						A.item_level_4_id AS item_level_4,
 						mil4.item_level_4_code AS item_level_4_code
 					`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	case "6":
@@ -814,7 +797,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select(`	DISTINCT
 						A.item_id AS item_id, 
 						A.item_code AS item_code, 
-						A.item_name AS item_name, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
 						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 								WHERE A.item_id = V.item_id 
 								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
@@ -827,12 +813,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 						A.item_level_4_id AS item_level_4,
 						mil4.item_level_4_code AS item_level_4_code
 					`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	case "7":
@@ -854,7 +841,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select(`	DISTINCT
 							A.item_id AS item_id, 
 							A.item_code AS item_code, 
-							A.item_name AS item_name, 
+							A.item_name AS item_name,
+							B.brand_id AS brand_id,
+							B.model_id AS model_id,
+							B.variant_id AS variant_id,
 							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 									WHERE A.item_id = V.item_id 
 									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
@@ -867,12 +857,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 							A.item_level_4_id AS item_level_4,
 							mil4.item_level_4_code AS item_level_4_code
 						`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	case "9":
@@ -894,7 +885,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Select(`		DISTINCT
 							A.item_id AS item_id, 
 							A.item_code AS item_code, 
-							A.item_name AS item_name, 
+							A.item_name AS item_name,
+							B.brand_id AS brand_id,
+							B.model_id AS model_id,
+							B.variant_id AS variant_id,
 							ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 									WHERE A.item_id = V.item_id 
 									AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
@@ -907,12 +901,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 							A.item_level_4_id AS item_level_4,
 							mil4.item_level_4_code AS item_level_4_code
 						`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_detail B ON B.item_id = A.item_id").
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code").
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
 	default:
@@ -943,11 +938,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			case "model_id":
-				baseQuery = baseQuery.Where("ok.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("A.model_id LIKE ?", "%"+filter.ColumnValue+"%")
 			case "brand_id":
-				baseQuery = baseQuery.Where("ok.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("A.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
 			case "variant_id":
-				baseQuery = baseQuery.Where("ok.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("A.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
 			}
 		} else if linetypeStr == "1" {
 			switch filter.ColumnField {
@@ -968,11 +963,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			case "model_id":
-				baseQuery = baseQuery.Where("ok.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("omm.model_id LIKE ?", "%"+filter.ColumnValue+"%")
 			case "brand_id":
-				baseQuery = baseQuery.Where("ok.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("omm.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
 			case "variant_id":
-				baseQuery = baseQuery.Where("ok.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("ofrt.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
 			}
 
 		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
@@ -994,11 +989,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "item_level_4_code":
 				baseQuery = baseQuery.Where("mil4.item_level_4_code LIKE ?", "%"+filter.ColumnValue+"%")
 			case "model_id":
-				baseQuery = baseQuery.Where("ok.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("B.model_id LIKE ?", "%"+filter.ColumnValue+"%")
 			case "brand_id":
-				baseQuery = baseQuery.Where("ok.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("B.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
 			case "variant_id":
-				baseQuery = baseQuery.Where("ok.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("B.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
 			}
 		}
 	}
