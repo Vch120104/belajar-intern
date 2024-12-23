@@ -2,7 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -108,7 +107,7 @@ func Migrate() {
 	//&masteritementities.ItemDetail{},
 	//&masteritementities.ItemLocationSource{},
 	//&masteritementities.Item{},
-	// &masteritementities.ItemPriceCode{},
+	//&masteritementities.ItemPriceCode{},
 	//&masteritementities.ItemGroup{},
 
 	// &masteritementities.ItemLocation{},
@@ -164,7 +163,10 @@ func Migrate() {
 	//&masterwarehouseentities.WarehouseCostingType{},
 	//&masterentities.StockTransactionType{},
 	//&masterentities.StockTransactionReason{},
+	//&masterentities.PurchaseOrderTypeSalesOrderEntity{},
+	//&masteritementities.ItemSubstituteType{},
 
+	//&masterentities.TransactionTypeSalesOrder{},
 	//
 
 	//&transactionjpcbentities.SettingTechnician{},
@@ -229,11 +231,13 @@ func Migrate() {
 	//&transactionsparepartentities.ItemClaimDetail{},
 	//&transactionsparepartentities.StockTransaction{},
 	//&transactionsparepartentities.GoodsReceiveDetail{},
-	// &transactionsparepartentities.GoodsReceive{},
+	//&transactionsparepartentities.GoodsReceive{},
 
-	// &masteritementities.ItemTransferStatus{},
-	// &transactionsparepartentities.ItemWarehouseTransferRequest{},
-	// &transactionsparepartentities.ItemWarehouseTransferRequestDetail{},
+	//&masteritementities.ItemTransferStatus{},
+	//&transactionsparepartentities.ItemWarehouseTransferRequest{},
+	//&transactionsparepartentities.ItemWarehouseTransferRequestDetail{},
+	//&transactionsparepartentities.SalesOrder{},
+	//&transactionsparepartentities.SalesOrderDetail{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

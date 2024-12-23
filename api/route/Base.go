@@ -1896,8 +1896,18 @@ func SalesOrderRouter(
 	SalesOrderController transactionsparepartcontroller.SalesOrderController,
 ) chi.Router {
 	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
+	router.Post("/estimation", SalesOrderController.InsertSalesOrderHeader)
+	router.Get("/", SalesOrderController.GetAllSalesOrder)
+	router.Delete("/{sales_order_system_number}", SalesOrderController.VoidSalesOrder)
+	router.Post("/detail", SalesOrderController.InsertSalesOrderDetail)
+	router.Delete("/detail/{sales_order_detail_system_number}", SalesOrderController.DeleteSalesOrderDetail)
+	router.Patch("/proposed-discount-multi-id", SalesOrderController.SalesOrderProposedDiscountMultiId)
+	router.Put("/{sales_order_system_number}", SalesOrderController.UpdateSalesOrderHeader)
 
 	return router
 }

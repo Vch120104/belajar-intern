@@ -202,6 +202,29 @@ func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 	return nil
 }
 
+func GetCompanyDataByCode(companyCode string) (GetCompanyByIdResponses, *exceptions.BaseErrorResponse) {
+	var companyResponse GetCompanyByIdResponses
+	companyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + companyCode
+
+	err := utils.CallAPI("GET", companyUrl, nil, &companyResponse)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company  due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
+		return companyResponse, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by Code"),
+		}
+	}
+
+	return companyResponse, nil
+}
 func IsFTZCompany(companyId int) bool {
 	return companyId == 139 //  ID for FTZ company check
 }

@@ -10,9 +10,13 @@ import (
 )
 
 type TermOfPaymentResponse struct {
-	TermOfPaymentId   int    `json:"term_of_payment_id"`
-	TermOfPaymentCode string `json:"term_of_payment_code"`
-	TermOfPaymentName string `json:"term_of_payment_name"`
+	TermOfPaymentId          int    `json:"term_of_payment_id"`
+	TermOfPaymentCode        string `json:"term_of_payment_code"`
+	TermOfPaymentName        string `json:"term_of_payment_name"`
+	IsActive                 bool   `json:"is_active"`
+	TermOfPaymentInstallment int    `json:"term_of_payment_installment"`
+	TermOfPaymentInterval    int    `json:"term_of_payment_interval"`
+	TermOfPaymentPolicy      string `json:"term_of_payment_policy"`
 }
 
 func GetTermOfPaymentById(id int) (TermOfPaymentResponse, *exceptions.BaseErrorResponse) {

@@ -25,8 +25,24 @@ type PurchaseRequestServiceImpl struct {
 
 func (p *PurchaseRequestServiceImpl) GetAllItemTypePurchaseRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination, companyId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := p.PurchaseRequestRepo.GetAllItemTypePrRequest(tx, filterCondition, pages, companyId)
-	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}

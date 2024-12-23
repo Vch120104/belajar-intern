@@ -146,7 +146,6 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequest(writer ht
 			return
 		}
 		DateParams["purchase_request_date_from"] = purchase_request_date_from.Format("2006-01-02")
-
 	}
 	if DateParams["purchase_request_date_to"] != "" {
 
