@@ -190,7 +190,7 @@ func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transaction
 	return result, nil
 }
 
-func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int, carWashStatusId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -215,7 +215,7 @@ func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int, carWashStatusId 
 		}
 	}()
 
-	results, err := s.CarWashRepository.GetAllCarWashScreen(tx, companyId, carWashStatusId)
+	results, err := s.CarWashRepository.GetAllCarWashScreen(tx, companyId)
 	if err != nil {
 		return nil, err
 	}

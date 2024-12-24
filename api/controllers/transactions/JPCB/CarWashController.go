@@ -149,21 +149,14 @@ func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query()
 
 	companyId, strConvError := strconv.Atoi(queryValues.Get("company_id"))
-	carWashStatusId, strConvErrorCarWashStatus := strconv.Atoi(queryValues.Get("car_wash_status_id"))
 	if strConvError != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        strConvError,
 		})
 	}
-	if strConvErrorCarWashStatus != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        strConvError,
-		})
-	}
 
-	data, err := r.CarWashService.GetAllCarWashScreen(companyId, carWashStatusId)
+	data, err := r.CarWashService.GetAllCarWashScreen(companyId)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

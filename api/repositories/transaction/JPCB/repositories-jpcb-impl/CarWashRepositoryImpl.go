@@ -413,7 +413,7 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 	return errorHelperBadRequest()
 }
 
-func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int, carWashStatusId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	var responses []transactionjpcbpayloads.CarWashScreenGetAllResponse
 
 	keyAttributes := []string{
@@ -422,10 +422,9 @@ func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int, carWashStatu
 	}
 
 	rows, err := tx.Model(&transactionjpcbentities.CarWash{}).Select(keyAttributes).
-		Order("trx_car_wash.car_wash_status_id desc, trx_car_wash.car_wash_bay_id asc, trx_car_wash.car_wash_priority_id desc").
+		Order("trx_car_wash.car_wash_status_id desc, trx_car_wash.car_wash_bay_id desc, trx_car_wash.car_wash_priority_id desc").
 		Order("trx_work_order.promise_date desc, trx_work_order.promise_time asc").
 		Where("trx_work_order.company_id = ? AND trx_work_order.car_wash = ? AND trx_car_wash.car_wash_status_id <> ?", companyId, 1, utils.CarWashStatStop).
-		Where("trx_car_wash.car_wash_status_id = ?", carWashStatusId).
 		Joins("LEFT JOIN mtr_car_wash_bay on mtr_car_wash_bay.car_wash_bay_id = trx_car_wash.car_wash_bay_id AND mtr_car_wash_bay.company_id =  trx_car_wash.company_id").
 		Joins("LEFT JOIN mtr_car_wash_status on mtr_car_wash_status.car_wash_status_id = trx_car_wash.car_wash_status_id").
 		Joins("LEFT JOIN trx_work_order on trx_work_order.work_order_system_number = trx_car_wash.work_order_system_number").
