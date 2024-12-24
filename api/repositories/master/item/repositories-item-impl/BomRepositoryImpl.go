@@ -192,7 +192,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effe
 		Joins("INNER JOIN mtr_bom AS bom_master ON bom_master.bom_id = bom.bom_id").
 		Joins("LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id").
 		Joins("LEFT JOIN mtr_item_class AS class on item.item_class_id = class.item_class_id").
-		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id").
+		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_stock_id = uom.uom_id").
 		Where("bom_master.item_id = ?", itemId).
 		Where("bom_master.effective_date = ?", effectiveDate)
 	/*
@@ -442,30 +442,75 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
 	// Tentukan nilai BomDetailSeq
 	var newBomDetailSeq int
-	if err := tx.Model(&masteritementities.BomDetail{}).
-		Where("bom_master_id = ?", request.BomMasterId).
-		Select("COALESCE(MAX(bom_detail_seq), 0)").
+	errB := tx.Model(&masteritementities.BomDetail{}).
+		Where("bom_id = ?", request.BomId).
+		Select("COALESCE(MAX(seq), 0)").
 		Row().
-		Scan(&newBomDetailSeq); err != nil {
+		Scan(&newBomDetailSeq)
+	if errB != nil {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errB,
 		}
 	}
 	newBomDetailSeq++ // Tambahkan 1 pada nilai maksimum untuk mendapatkan nilai BomDetailSeq yang baru
 
 	// Buat entitas BomDetail
 	newBomDetail := masteritementities.BomDetail{
-		BomId:             request.BomMasterId,
+		IsActive:          true,
+		BomId:             request.BomId,
 		Seq:               newBomDetailSeq,
-		Qty:               request.BomDetailQty,
-		CostingPercentage: request.BomDetailCostingPercent,
-		Remark:            request.BomDetailRemark,
-		ItemId:            request.BomDetailTypeId, // TypeId -> ItemId
+		ItemId:            request.ItemId,
+		Qty:               request.Qty,
+		Remark:            request.Remark,
+		CostingPercentage: request.CostingPercent,
 	}
 
-	// Simpan entitas BomDetail
-	err := tx.Create(&newBomDetail).Error
+	/// Check if incoming request is unique
+	doAdd := false
+	if request.BomDetailId == 0 {
+		doAdd = true
+	} else {
+		// Check if item id the same
+		var check masteritementities.BomDetail
+		errA := tx.Model(&check).
+			Where("bom_detail_id = ?", request.BomDetailId).
+			First(&check).Error
+		if errA != nil {
+			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errA,
+			}
+		}
+
+		if check.ItemId != request.ItemId {
+			doAdd = true
+		}
+	}
+
+	/// Insert
+	if doAdd {
+		// Update entitas BomDetail
+		err := tx.Create(&newBomDetail).Error
+		if err != nil {
+			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		return newBomDetail, nil
+	}
+
+	/// Update
+	// Update entitas BomDetail
+	err := tx.Model(&newBomDetail).Select("qty", "remark", "costing_percentage").
+		Where("bom_detail_id = ?", newBomDetail.BomDetailId).
+		Updates(masteritementities.BomDetail{
+			Qty:               newBomDetail.Qty,
+			Remark:            newBomDetail.Remark,
+			CostingPercentage: newBomDetail.CostingPercentage,
+		}).Error
 	if err != nil {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -496,9 +541,9 @@ func (r *BomRepositoryImpl) UpdateBomDetail(tx *gorm.DB, id int, request masteri
 		}
 	}
 
-	entities.Qty = request.BomDetailQty
-	entities.CostingPercentage = request.BomDetailCostingPercent
-	entities.Remark = request.BomDetailRemark
+	entities.Qty = request.Qty
+	entities.CostingPercentage = request.CostingPercent
+	entities.Remark = request.Remark
 
 	result = tx.Save(&entities)
 

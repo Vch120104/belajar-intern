@@ -35,7 +35,14 @@ type BomDetailListResponseNew struct { // View multiple bom detail
 	Remark            string  `json:"remark"`
 }
 
-type BomDetailResponseNew struct { // View one bom detail
+type BomDetailRequest struct {
+	BomDetailId    int     `json:"bom_detail_id"` //
+	BomId          int     `json:"bom_id"`
+	Seq            int     `json:"seq"` //
+	ItemId         int     `json:"item_id"`
+	Qty            float64 `json:"qty"`
+	Remark         string  `json:"remark"`
+	CostingPercent float64 `json:"costing_percent"`
 }
 
 // Old Payloads
@@ -118,16 +125,6 @@ type BomDetailResponse struct {
 	BomDetailUom            string  `json:"bom_detail_uom"`
 	BomDetailRemark         string  `json:"bom_detail_remark"`
 	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent"`
-}
-
-type BomDetailRequest struct {
-	BomDetailId             int     `json:"bom_detail_id"`
-	BomMasterId             int     `json:"bom_master_id"`
-	BomDetailQty            float64 `json:"bom_detail_qty"`
-	BomDetailRemark         string  `json:"bom_detail_remark"`
-	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent"`
-	BomDetailTypeId         int     `json:"bom_detail_type_id"`
-	BomDetailMaterialId     int     `json:"bom_detail_material_id"`
 }
 
 type BomItemLookup struct {

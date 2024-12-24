@@ -77,6 +77,7 @@ func ItemClassRouter(
 	//test
 	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
 	router.Get("/drop-down/by-group-id/{item_group_id}", itemClassController.GetItemClassDropDownbyGroupId)
+	router.Get("/mfg/drop-down", itemClassController.GetItemClassMfgDropdown)
 	router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
 	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
@@ -223,6 +224,7 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemController.GetAllItemSearch)
+	router.Get("/inventory", itemController.GetAllItemInventory)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
@@ -543,10 +545,10 @@ func BomRouter(
 	router.Get("/detail/master/{bom_id}", BomController.GetBomDetailByMasterId)
 	router.Get("/detail/master/{item_id}/{effective_date}", BomController.GetBomDetailByMasterUn)
 	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
+	router.Post("/detail", BomController.SaveBomDetail)
 	// BOM detail (unfinished)
 	router.Get("/detail", BomController.GetBomDetailList)
 	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
-	router.Post("/detail", BomController.SaveBomDetail)
 	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
 
 	//bom lookup

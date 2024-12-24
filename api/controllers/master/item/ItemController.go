@@ -19,6 +19,7 @@ import (
 
 type ItemController interface {
 	GetAllItemLookup(writer http.ResponseWriter, request *http.Request)
+	GetAllItemInventory(writer http.ResponseWriter, request *http.Request)
 	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request)
 	GetItembyId(writer http.ResponseWriter, request *http.Request)
 	GetItemByCode(writer http.ResponseWriter, request *http.Request)
@@ -94,6 +95,38 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	data, err := r.itemservice.GetAllItemSearch(criteria, itemIDs, supplierIDs, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
+}
+
+func (r *ItemControllerImpl) GetAllItemInventory(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"itm.item_code":       queryValues.Get("item_code"),
+		"itm.item_name":       queryValues.Get("item_name"),
+		"cls.item_class_name": queryValues.Get("item_class_name"),
+		"grp.item_group_code": queryValues.Get("item_group_code"),
+		"cls.item_class_code": queryValues.Get("item_class_code"),
+		"uom.uom_code":        queryValues.Get("uom_code"),
+		"itm.is_active":       queryValues.Get("is_active"),
+		"itm.item_class_id":   queryValues.Get("item_class_id"), // Use case: item class dropdown
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	data, err := r.itemservice.GetAllItemInventory(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

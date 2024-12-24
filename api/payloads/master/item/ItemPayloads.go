@@ -340,6 +340,17 @@ type ItemSearch struct {
 	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"` // fk luar mtr_supplier, supplier_code dan supplier_name
 }
 
+type ItemInventory struct {
+	ItemId        int    `json:"item_id" parent_entity:"mtr_item"`
+	ItemCode      string `json:"item_code"`
+	ItemName      string `json:"item_name"`
+	ItemClassName string `json:"item_class_name"`
+	ItemGroupCode string `json:"item_group_code"`
+	ItemClassCode string `json:"item_class_code"`
+	UomCode       string `json:"uom_code" parent_entity:"uom_item"`
+	IsActive      bool   `json:"is_active"`
+}
+
 type ItemListTransLookUp struct {
 	ItemId           int    `json:"item_id"`
 	ItemCode         string `json:"item_code"`
