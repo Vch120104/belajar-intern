@@ -3,7 +3,7 @@ package masteritementities
 var CreateBomDetailTable = "mtr_bom_detail"
 
 type BomDetail struct {
-	IsActive          bool    `gorm:"column:is_active;size:1;not null" json:"is_active"`
+	IsActive          bool    `gorm:"column:is_active;size:1;not null" json:"is_active"` // Naturally, this will always be `true`
 	BomDetailId       int     `gorm:"column:bom_detail_id;size:30;not null;primaryKey" json:"bom_detail_id"`
 	BomId             int     `gorm:"column:bom_id;size:30;not null;index:,unique,composite:un" json:"bom_id"`
 	Seq               int     `gorm:"column:seq;size:30;not null" json:"seq"`

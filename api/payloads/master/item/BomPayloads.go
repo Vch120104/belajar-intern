@@ -36,13 +36,25 @@ type BomDetailListResponseNew struct { // View multiple bom detail
 }
 
 type BomDetailRequest struct {
-	BomDetailId    int     `json:"bom_detail_id"` //
 	BomId          int     `json:"bom_id"`
-	Seq            int     `json:"seq"` //
 	ItemId         int     `json:"item_id"`
 	Qty            float64 `json:"qty"`
 	Remark         string  `json:"remark"`
 	CostingPercent float64 `json:"costing_percent"`
+	// Below are used only if BomId = 0
+	BomQty           float64   `json:"bom_qty"`
+	BomEffectiveDate time.Time `json:"bom_effective_date"`
+	BomItemId        int       `json:"bom_item_id"`
+}
+
+type BomMasterSaveRequest struct {
+	Qty float64 `json:"qty"`
+}
+
+type BomMasterNewRequest struct {
+	Qty           float64   `json:"qty"`
+	EffectiveDate time.Time `json:"effective_date"`
+	ItemId        int       `json:"item_id"`
 }
 
 // Old Payloads
@@ -72,15 +84,6 @@ type BomDetailListResponse struct {
 	BomDetailRemark         string  `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
 	BomDetailCostingPercent float64 `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
 	UomDescription          string  `json:"uom_description" parent_entity:"mtr_uom"`
-}
-
-type BomMasterRequest struct {
-	BomMasterId            int       `json:"bom_master_id"`
-	IsActive               bool      `json:"is_active"`
-	BomMasterQty           float64   `json:"bom_master_qty"`
-	BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
-	BomMasterChangeNumber  int       `json:"bom_master_change_number"`
-	ItemId                 int       `json:"item_id"`
 }
 
 type BomDetailsResponse struct {

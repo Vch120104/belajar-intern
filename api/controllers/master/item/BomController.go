@@ -13,6 +13,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -22,18 +23,18 @@ type BomController interface {
 	// Parent
 	GetBomList(writer http.ResponseWriter, request *http.Request)
 	GetBomById(writer http.ResponseWriter, request *http.Request)
-	// Parent (unfinished)
-	SaveBomMaster(writer http.ResponseWriter, request *http.Request)
-	UpdateBomMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request)
+	UpdateBomMaster(writer http.ResponseWriter, request *http.Request)
+	SaveBomMaster(writer http.ResponseWriter, request *http.Request)
 
 	// Detail
 	GetBomDetailByMasterId(writer http.ResponseWriter, request *http.Request)
 	GetBomDetailByMasterUn(writer http.ResponseWriter, request *http.Request)
+	GetBomDetailMaxSeq(writer http.ResponseWriter, request *http.Request)
 	GetBomDetailById(writer http.ResponseWriter, request *http.Request)
-	// Detail (unfinished)
 	GetBomDetailList(writer http.ResponseWriter, request *http.Request)
 	SaveBomDetail(writer http.ResponseWriter, request *http.Request)
+	// Detail (unfinished)
 	UpdateBomDetail(writer http.ResponseWriter, request *http.Request)
 	DeleteBomDetail(writer http.ResponseWriter, request *http.Request)
 
@@ -129,6 +130,36 @@ func (r *BomControllerImpl) GetBomById(writer http.ResponseWriter, request *http
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Change Status Bom Master
+// @Description REST API Bom Master
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Master
+// @param bom_master_id path int true "bom_master_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/{bom_master_id} [patch]
+func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
+	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	entity, err := r.BomService.ChangeStatusBomMaster(bomMasterId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	responseData := map[string]interface{}{
+		"is_active": entity.IsActive,
+		"bom_id":    entity.BomId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
 }
 
 // Get detail from bom master id; paginated
@@ -229,6 +260,22 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+func (r *BomControllerImpl) GetBomDetailMaxSeq(writer http.ResponseWriter, request *http.Request) {
+	bomId, errA := strconv.Atoi(chi.URLParam(request, "bom_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.BomService.GetBomDetailMaxSeq(bomId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
 // @Summary Save Bom Master
 // @Description REST API Bom Master
 // @Accept json
@@ -239,9 +286,7 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/bom/ [post]
 func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *http.Request) {
-
-	var formRequest masteritempayloads.BomMasterRequest
-	var message = ""
+	var formRequest masteritempayloads.BomMasterNewRequest
 	helper.ReadFromRequestBody(request, &formRequest)
 	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
@@ -253,14 +298,8 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	if formRequest.BomMasterId == 0 {
-		message = "Create Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
-	} else {
-		message = "Update Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
-	}
 
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
 // @Summary Update Bom Master
@@ -268,74 +307,36 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
-// @Param bom_master_id path int true "bom_master_id"
+// @Param bom_id path int true "bom_id"
 // @Param reqBody body masteritempayloads.BomMasterRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/bom/{bom_master_id} [put]
+// @Router /v1/bom/{bom_id} [put]
 func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request *http.Request) {
-
-	var formRequest masteritempayloads.BomMasterRequest
-	var message = ""
+	var formRequest masteritempayloads.BomMasterSaveRequest
 	helper.ReadFromRequestBody(request, &formRequest)
 	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
+	if formRequest.Qty < 0 {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("quantity cannot be negative")})
+		return
+	}
 
-	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
-
+	bomId, errA := strconv.Atoi(chi.URLParam(request, "bom_id"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 
-	update, err := r.BomService.UpdateBomMaster(bomMasterId, formRequest)
+	update, err := r.BomService.UpdateBomMaster(bomId, formRequest.Qty)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if formRequest.BomMasterId == 0 {
-		message = "Create Data Successfully!"
-		payloads.NewHandleSuccess(writer, update, message, http.StatusCreated)
-	} else {
-		message = "Update Data Successfully!"
-		payloads.NewHandleSuccess(writer, update, message, http.StatusOK)
-	}
-
-}
-
-// @Summary Change Status Bom Master
-// @Description REST API Bom Master
-// @Accept json
-// @Produce json
-// @Tags Master : Bom Master
-// @param bom_master_id path int true "bom_master_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/bom/{bom_master_id} [patch]
-func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
-
-	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
-
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
-	entity, err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	responseData := map[string]interface{}{
-		"is_active": entity.IsActive,
-		"bom_id":    entity.BomId,
-	}
-
-	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Bom Detail
@@ -415,14 +416,13 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	if formRequest.BomDetailId == 0 {
+	if create.BomDetailId != 0 {
 		message = "Create Data Successfully!"
 		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
 		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
-
 }
 
 // @Summary Update Bom Detail
@@ -458,7 +458,7 @@ func (r *BomControllerImpl) UpdateBomDetail(writer http.ResponseWriter, request 
 		return
 	}
 
-	if formRequest.BomDetailId == 0 {
+	if update.BomDetailId != 0 {
 		message = "Create Data Successfully!"
 		payloads.NewHandleSuccess(writer, update, message, http.StatusCreated)
 	} else {
@@ -539,20 +539,22 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [delete]
 func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request *http.Request) {
+	var err error
+	bomDetailIdsString := chi.URLParam(request, "bom_detail_ids")
 
-	bomDetailID := chi.URLParam(request, "bom_detail_id")
-
-	// Ubah bomDetailID menjadi integer
-	bomDetailIDInt, err := strconv.Atoi(bomDetailID)
-	if err != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
-			Err: errors.New("invalid bom_detail_id"),
-		})
-		return
+	// Convert bomDetailIds to []int
+	bomDetailIdsSlice := strings.Split(bomDetailIdsString, ",")
+	bomDetailIdsInts := make([]int, len(bomDetailIdsSlice))
+	for i := 0; i < len(bomDetailIdsSlice); i++ {
+		bomDetailIdsInts[i], err = strconv.Atoi(bomDetailIdsSlice[i])
+		if err != nil {
+			exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("invalid input")})
+			return
+		}
 	}
 
 	// Call the method to delete bom details by their IDs
-	if deleted, err := r.BomService.DeleteByIds([]int{bomDetailIDInt}); err != nil {
+	if deleted, err := r.BomService.DeleteByIds(bomDetailIdsInts); err != nil {
 		exceptions.NewAppException(writer, request, err)
 	} else if deleted {
 		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)

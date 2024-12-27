@@ -112,6 +112,42 @@ func (*BomRepositoryImpl) GetBomById(tx *gorm.DB, id int) (masteritempayloads.Bo
 	return response, nil
 }
 
+func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.Bom
+
+	err := tx.Model(&entities).
+		Where("bom_id = ?", id).
+		First(&entities).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("BOM with ID %d not found", id),
+			}
+		}
+		// Jika ada galat lain, kembalikan galat internal server
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Ubah status entitas
+	entities.IsActive = !entities.IsActive
+
+	err = tx.Save(&entities).Error
+
+	if err != nil {
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	return entities, nil
+}
+
 func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.BomDetailListResponseNew
 
@@ -273,15 +309,32 @@ func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) (masteritement
 	return entities, nil
 }
 
-func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
+func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, qty float64) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
+	// Check if exists
 	var entities masteritementities.Bom
+	err := tx.Model(&entities).Select("qty").
+		Where("bom_id = ?", id).
+		First(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("BOM with ID %d not found", id),
+			}
+		}
+		// Jika ada galat lain, kembalikan galat internal server
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-	entities.IsActive = request.IsActive
-	entities.Qty = request.BomMasterQty
-	entities.EffectiveDate = request.BomMasterEffectiveDate
-	entities.ItemId = request.ItemId
-
-	err := tx.Create(&entities).Error
+	// Update
+	err = tx.Model(&entities).Select("qty").
+		Where("bom_id = ?", id).
+		Updates(masteritementities.Bom{
+			Qty: qty,
+		}).Error
 	if err != nil {
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -292,75 +345,18 @@ func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.
 	return entities, nil
 }
 
-func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, request masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
-	var entities masteritementities.Bom
-
-	result := tx.Model(&entities).
-		Where("bom_master_id = ?", id).
-		First(&entities)
-
-	if result.Error != nil {
-
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        fmt.Errorf("bom with ID %d not found", id),
-			}
-		}
-
+func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.BomMasterNewRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Bom{
+		IsActive:      true,
+		Qty:           request.Qty,
+		EffectiveDate: request.EffectiveDate,
+		ItemId:        request.ItemId,
+	}
+	err := tx.Create(&entities).Error
+	if err != nil {
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
-		}
-	}
-
-	entities.IsActive = request.IsActive
-	entities.Qty = request.BomMasterQty
-	entities.EffectiveDate = request.BomMasterEffectiveDate
-	entities.ItemId = request.ItemId
-
-	result = tx.Save(&entities)
-
-	if result.Error != nil {
-		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
-		}
-	}
-
-	return entities, nil
-}
-
-func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
-	var entities masteritementities.Bom
-
-	result := tx.Model(&entities).
-		Where("bom_master_id = ?", id).
-		First(&entities)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        fmt.Errorf("bom with ID %d not found", id),
-			}
-		}
-		// Jika ada galat lain, kembalikan galat internal server
-		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
-		}
-	}
-
-	// Ubah status entitas
-	entities.IsActive = !entities.IsActive
-
-	result = tx.Save(&entities)
-
-	if result.Error != nil {
-		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        result.Error,
+			Err:        err,
 		}
 	}
 
@@ -439,14 +435,47 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 	return pages, nil
 }
 
-func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
-	// Tentukan nilai BomDetailSeq
-	var newBomDetailSeq int
-	errB := tx.Model(&masteritementities.BomDetail{}).
-		Where("bom_id = ?", request.BomId).
+func (*BomRepositoryImpl) GetBomDetailMaxSeq(tx *gorm.DB, id int) (int, *exceptions.BaseErrorResponse) {
+	var maxSeq int
+
+	err := tx.Model(&masteritementities.BomDetail{}).
+		Where("bom_id = ?", id).
 		Select("COALESCE(MAX(seq), 0)").
 		Row().
-		Scan(&newBomDetailSeq)
+		Scan(&maxSeq)
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return maxSeq, nil
+}
+
+func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
+	// Check if percentage goes above 100%
+	var curBomPercentage float64
+	errC := tx.Model(&masteritementities.BomDetail{}).
+		Select("COALESCE(SUM(costing_percentage), 0) aa").
+		Where("bom_id = ?", request.BomId).
+		Where("item_id != ?", request.ItemId).
+		Pluck("aa", &curBomPercentage).Error
+	if errC != nil {
+		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errC,
+		}
+	}
+	if curBomPercentage+request.CostingPercent > 100.0 {
+		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("total cost percentage more than 100: %f", curBomPercentage+request.CostingPercent),
+		}
+	}
+
+	// Find next BomDetailSeq
+	newBomDetailSeq, errB := r.GetBomDetailMaxSeq(tx, request.BomId)
 	if errB != nil {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -454,7 +483,6 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 		}
 	}
 	newBomDetailSeq++ // Tambahkan 1 pada nilai maksimum untuk mendapatkan nilai BomDetailSeq yang baru
-
 	// Buat entitas BomDetail
 	newBomDetail := masteritementities.BomDetail{
 		IsActive:          true,
@@ -468,29 +496,24 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 
 	/// Check if incoming request is unique
 	doAdd := false
-	if request.BomDetailId == 0 {
+	// Check if item id the same
+	var check int64
+	errA := tx.Model(&masteritementities.BomDetail{}).
+		Where("bom_id = ?", request.BomId).
+		Where("item_id = ?", request.ItemId).
+		Count(&check).Error
+	if errA != nil {
+		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errA,
+		}
+	}
+	if check == 0 {
 		doAdd = true
-	} else {
-		// Check if item id the same
-		var check masteritementities.BomDetail
-		errA := tx.Model(&check).
-			Where("bom_detail_id = ?", request.BomDetailId).
-			First(&check).Error
-		if errA != nil {
-			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errA,
-			}
-		}
-
-		if check.ItemId != request.ItemId {
-			doAdd = true
-		}
 	}
 
 	/// Insert
 	if doAdd {
-		// Update entitas BomDetail
 		err := tx.Create(&newBomDetail).Error
 		if err != nil {
 			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
@@ -503,9 +526,9 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	}
 
 	/// Update
-	// Update entitas BomDetail
 	err := tx.Model(&newBomDetail).Select("qty", "remark", "costing_percentage").
-		Where("bom_detail_id = ?", newBomDetail.BomDetailId).
+		Where("bom_id = ?", request.BomId).
+		Where("item_id = ?", request.ItemId).
 		Updates(masteritementities.BomDetail{
 			Qty:               newBomDetail.Qty,
 			Remark:            newBomDetail.Remark,
@@ -620,7 +643,17 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filterConditions []utils
 func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.BomDetail
 
-	if err := tx.Delete(&entities, ids).Error; err != nil {
+	// Update isActive to false (if needed at some point in time)
+	/*
+		err := tx.Model(&entities).Select("is_active").
+			Where("bom_detail_id IN ?", ids).
+			Updates(masteritementities.BomDetail{
+				IsActive: false,
+			}).Error
+	*/
+
+	err := tx.Delete(&entities, ids).Error
+	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
