@@ -62,16 +62,26 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"package_id":         queryValues.Get("package_id"),
-		"package_code":       queryValues.Get("package_code"),
-		"package_name":       queryValues.Get("package_name"),
-		"profit_center_name": queryValues.Get("profit_center_name"),
-		"model_code":         queryValues.Get("model_code"),
-		"model_description":  queryValues.Get("model_description"),
-		"package_price":      queryValues.Get("package_price"),
-		"brand_id":           queryValues.Get("brand_id"),
-		"model_id":           queryValues.Get("model_id"),
-		"variant_id":         queryValues.Get("variant_id"),
+		"package_id":                    queryValues.Get("package_id"),
+		"package_code":                  queryValues.Get("package_code"),
+		"package_name":                  queryValues.Get("package_name"),
+		"profit_center_name":            queryValues.Get("profit_center_name"),
+		"model_code":                    queryValues.Get("model_code"),
+		"model_description":             queryValues.Get("model_description"),
+		"package_price":                 queryValues.Get("package_price"),
+		"brand_id":                      queryValues.Get("brand_id"),
+		"model_id":                      queryValues.Get("model_id"),
+		"variant_id":                    queryValues.Get("variant_id"),
+		"operation_id":                  queryValues.Get("operation_id"),
+		"operation_code":                queryValues.Get("operation_code"),
+		"operation_name":                queryValues.Get("operation_name"),
+		"operation_entries_code":        queryValues.Get("operation_entries_code"),
+		"operation_entries_description": queryValues.Get("operation_entries_description"),
+		"operation_key_code":            queryValues.Get("operation_key_code"),
+		"operation_key_description":     queryValues.Get("operation_key_description"),
+		"item_id":                       queryValues.Get("item_id"),
+		"item_code":                     queryValues.Get("item_code"),
+		"item_name":                     queryValues.Get("item_name"),
 	}
 
 	paginate := pagination.Pagination{

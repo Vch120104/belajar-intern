@@ -2296,15 +2296,6 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
-		opertationItemResponse, operationItemErr := aftersalesserviceapiutils.GetItemId(workOrderReq.OperationItemId)
-		if operationItemErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: operationItemErr.StatusCode,
-				Message:    "Failed to retrieve operation item from the external API",
-				Err:        operationItemErr.Err,
-			}
-		}
-
 		wcfTypeResponse, wcfTypeErr := generalserviceapiutils.GetWarrantyClaimTypeById(workOrderReq.AtpmWCFTypeId)
 		if wcfTypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -2352,11 +2343,41 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
+		var OperationItemCode string
+		var Description string
+		opertationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, workOrderReq.OperationItemId)
+		if operationItemErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: operationItemErr.StatusCode,
+				Message:    "Failed to retrieve operation item from the external API",
+				Err:        operationItemErr.Err,
+			}
+		}
+
+		switch response := opertationItemResponse.(type) {
+		case aftersalesserviceapiutils.LineType0Response:
+			OperationItemCode = response.PackageCode
+			Description = response.Description
+		case aftersalesserviceapiutils.LineType1Response:
+			OperationItemCode = response.OperationCode
+			Description = response.OperationName
+		case aftersalesserviceapiutils.LineType2To9Response:
+			OperationItemCode = response.ItemCode
+			Description = response.ItemName
+		default:
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Unknown line type in operation item response",
+				Err:        fmt.Errorf("unexpected response type %T", opertationItemResponse),
+			}
+		}
+
 		workOrderRes := transactionworkshoppayloads.WorkOrderDetailResponse{
 			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
 			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
 			LineTypeId:                          workOrderReq.LineTypeId,
 			LineTypeCode:                        lineTypeResponse.LineTypeCode,
+			LineTypeName:                        lineTypeResponse.LineTypeName,
 			TransactionTypeId:                   workOrderReq.TransactionTypeId,
 			TransactionTypeCode:                 transactionTypeResponse.WoTransactionTypeCode,
 			JobTypeId:                           workOrderReq.JobTypeId,
@@ -2364,8 +2385,8 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			FrtQuantity:                         workOrderReq.FrtQuantity,
 			SupplyQuantity:                      workOrderReq.SupplyQuantity,
 			OperationItemId:                     workOrderReq.OperationItemId,
-			OperationItemCode:                   opertationItemResponse.ItemCode,
-			Description:                         opertationItemResponse.ItemName,
+			OperationItemCode:                   OperationItemCode,
+			Description:                         Description,
 			OperationItemPrice:                  workOrderReq.OperationItemPrice,
 			OperationItemDiscountAmount:         workOrderReq.OperationItemDiscountAmount,
 			OperationItemDiscountRequestAmount:  workOrderReq.OperationItemDiscountRequestAmount,
@@ -2415,6 +2436,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			"service_status":                         response.WorkOrderStatusName,
 			"line_type_id":                           response.LineTypeId,
 			"line_type_code":                         response.LineTypeCode,
+			"line_type_name":                         response.LineTypeName,
 			"transaction_type_id":                    response.TransactionTypeId,
 			"transaction_type_code":                  response.TransactionTypeCode,
 			"job_type_id":                            response.JobTypeId,
