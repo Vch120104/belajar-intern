@@ -605,31 +605,33 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 	switch linetypeStr {
 	case "0":
 		baseQuery = baseQuery.Table("mtr_package A").
-			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
-				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price, A.model_id AS model_id, A.brand_id AS brand_id, A.variant_id AS variant_id").
-			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
-			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
-			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Select("A.package_id, A.package_code, A.package_name, "+
+				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
+				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
+				"A.model_id, A.brand_id, A.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
 			Where("A.is_active = ?", 1).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
 	case "1":
-		baseQuery = baseQuery.Table("mtr_operation_code AS oc").
-			Select("oc.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
+			Select("omm.operation_id AS operation_id, oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
 				"MAX(ofrt.frt_hour) AS frt_hour, oe.operation_entries_code AS operation_entries_code, "+
 				"oe.operation_entries_description AS operation_entries_description, ok.operation_key_code AS operation_key_code, "+
 				"ok.operation_key_description AS operation_key_description, omm.brand_id AS brand_id, omm.model_id AS model_id, ofrt.variant_id AS variant_id").
+			Joins("INNER JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+			Joins("LEFT JOIN mtr_operation_code AS oc ON omm.operation_id = oc.operation_id").
 			Joins("LEFT JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
-			Joins("LEFT JOIN mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
-			Joins("LEFT JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
 			Where("oc.is_active = ?", true).
-			Group("oc.operation_id, oc.operation_code, oc.operation_name, " +
+			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
 				"oe.operation_entries_code, oe.operation_entries_description, " +
-				"ok.operation_key_code, ok.operation_key_description,omm.brand_id, omm.model_id, ofrt.variant_id").
-			Order("oc.operation_id")
+				"ok.operation_key_code, ok.operation_key_description, omm.brand_id, omm.model_id, ofrt.variant_id").
+			Order("omm.operation_id")
 
 	case "2":
 		// Fetch item group from external service
@@ -988,11 +990,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			case "model_id":
-				baseQuery = baseQuery.Where("A.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("A.model_id = ?", filter.ColumnValue)
 			case "brand_id":
-				baseQuery = baseQuery.Where("A.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("A.brand_id = ?", filter.ColumnValue)
 			case "variant_id":
-				baseQuery = baseQuery.Where("A.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
 			}
 		} else if linetypeStr == "1" {
 			switch filter.ColumnField {
@@ -1013,11 +1015,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			case "model_id":
-				baseQuery = baseQuery.Where("omm.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("omm.model_id = ?", filter.ColumnValue)
 			case "brand_id":
-				baseQuery = baseQuery.Where("omm.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("omm.brand_id = ?", filter.ColumnValue)
 			case "variant_id":
-				baseQuery = baseQuery.Where("ofrt.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
 			}
 
 		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
@@ -1039,11 +1041,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "item_level_4_code":
 				baseQuery = baseQuery.Where("mil4.item_level_4_code LIKE ?", "%"+filter.ColumnValue+"%")
 			case "model_id":
-				baseQuery = baseQuery.Where("B.model_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("B.model_id = ?", filter.ColumnValue)
 			case "brand_id":
-				baseQuery = baseQuery.Where("B.brand_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("B.brand_id = ?", filter.ColumnValue)
 			case "variant_id":
-				baseQuery = baseQuery.Where("B.variant_id LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("B.variant_id = ?", filter.ColumnValue)
 			}
 		}
 	}
@@ -1109,15 +1111,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 	switch linetypeStr {
 	case "0":
 		baseQuery = baseQuery.Table("mtr_package A").
-			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
-				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
-			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
-			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
-			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", true).
+			Select("A.package_id, A.package_code, A.package_name, "+
+				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
+				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
+				"A.model_id, A.brand_id, A.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
 			Where("A.package_code = ?", oprItemCode).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
 	case "1":
@@ -1575,15 +1579,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 	switch linetypeStr {
 	case "0":
 		baseQuery = baseQuery.Table("mtr_package A").
-			Select("DISTINCT A.package_id AS package_id, A.package_code AS package_code, A.package_name AS package_name, "+
-				"SUM(mtr_package_master_detail.frt_quantity) AS frt, B.profit_center_id AS profit_center, "+
-				"B.profit_center_name AS profit_center_name, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
-			Joins("LEFT JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
-			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
-			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", true).
+			Select("A.package_id, A.package_code, A.package_name, "+
+				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
+				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
+				"A.model_id, A.brand_id, A.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
 			Where("A.package_id = ?", oprItemId).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_id, B.profit_center_name, C.model_code, C.model_description, A.package_price").
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
 	case "1":
