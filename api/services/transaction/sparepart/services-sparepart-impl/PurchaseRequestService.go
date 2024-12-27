@@ -368,7 +368,7 @@ func (p *PurchaseRequestServiceImpl) GetByIdItemTypePurchaseRequest(companyId in
 	return res, nil
 }
 
-func (p *PurchaseRequestServiceImpl) GetByCodeItemTypePurchaseRequest(companyId int, stingcode string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestServiceImpl) GetByCodeItemTypePurchaseRequest(companyId int, itemCode string, brandId int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -388,7 +388,7 @@ func (p *PurchaseRequestServiceImpl) GetByCodeItemTypePurchaseRequest(companyId 
 		}
 	}()
 	defer helper.CommitOrRollbackTrx(tx)
-	res, err := p.PurchaseRequestRepo.GetByCodePurchaseRequestItemPr(tx, companyId, stingcode)
+	res, err := p.PurchaseRequestRepo.GetByCodePurchaseRequestItemPr(tx, companyId, itemCode, brandId)
 	if err != nil {
 		return res, err
 	}

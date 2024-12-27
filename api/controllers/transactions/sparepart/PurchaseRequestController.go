@@ -506,10 +506,16 @@ func (controller *PurchaseRequestControllerImpl) GetByIdItemTypePr(writer http.R
 //	@Failure		500,400,401,404,403,422			{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-request/item/by-code/{company_id}/{item_code} [get]
 func (controller *PurchaseRequestControllerImpl) GetByCodeItemTypePr(writer http.ResponseWriter, request *http.Request) {
-	ItemCode := chi.URLParam(request, "item_code")
-	CompId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 
-	result, err := controller.PurchaseRequestService.GetByCodeItemTypePurchaseRequest(CompId, ItemCode)
+	queryValues := request.URL.Query()
+
+	//myfilter:=utils.FilterCondition{}
+	ItemCode := queryValues.Get("item_code")
+	CompId := utils.NewGetQueryInt(queryValues, "company_id")
+	brandId := utils.NewGetQueryInt(queryValues, "brand_id")
+	//filter := utils.BuildFilterCondition(queryParams)
+
+	result, err := controller.PurchaseRequestService.GetByCodeItemTypePurchaseRequest(CompId, ItemCode, brandId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
