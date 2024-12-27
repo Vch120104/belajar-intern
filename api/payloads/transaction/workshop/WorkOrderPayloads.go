@@ -1026,6 +1026,7 @@ type WorkOrderDetailResponse struct {
 	WorkOrderStatusName                 string    `json:"work_order_status_name"`
 	LineTypeId                          int       `json:"line_type_id"`
 	LineTypeCode                        string    `json:"line_type_code"`
+	LineTypeName                        string    `json:"line_type_name"`
 	TransactionTypeId                   int       `json:"transaction_type_id"`
 	TransactionTypeCode                 string    `json:"transaction_type_code"`
 	JobTypeId                           int       `json:"job_type_id"`

@@ -2296,15 +2296,6 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
-		opertationItemResponse, operationItemErr := aftersalesserviceapiutils.GetItemId(workOrderReq.OperationItemId)
-		if operationItemErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: operationItemErr.StatusCode,
-				Message:    "Failed to retrieve operation item from the external API",
-				Err:        operationItemErr.Err,
-			}
-		}
-
 		wcfTypeResponse, wcfTypeErr := generalserviceapiutils.GetWarrantyClaimTypeById(workOrderReq.AtpmWCFTypeId)
 		if wcfTypeErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -2352,11 +2343,25 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
+		var OperationItemCode string
+		var Description string
+
+		operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, workOrderReq.OperationItemId)
+		if operationItemErr != nil {
+			return pages, operationItemErr
+		}
+
+		OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		if errResp != nil {
+			return pages, errResp
+		}
+
 		workOrderRes := transactionworkshoppayloads.WorkOrderDetailResponse{
 			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
 			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
 			LineTypeId:                          workOrderReq.LineTypeId,
 			LineTypeCode:                        lineTypeResponse.LineTypeCode,
+			LineTypeName:                        lineTypeResponse.LineTypeName,
 			TransactionTypeId:                   workOrderReq.TransactionTypeId,
 			TransactionTypeCode:                 transactionTypeResponse.WoTransactionTypeCode,
 			JobTypeId:                           workOrderReq.JobTypeId,
@@ -2364,8 +2369,8 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			FrtQuantity:                         workOrderReq.FrtQuantity,
 			SupplyQuantity:                      workOrderReq.SupplyQuantity,
 			OperationItemId:                     workOrderReq.OperationItemId,
-			OperationItemCode:                   opertationItemResponse.ItemCode,
-			Description:                         opertationItemResponse.ItemName,
+			OperationItemCode:                   OperationItemCode,
+			Description:                         Description,
 			OperationItemPrice:                  workOrderReq.OperationItemPrice,
 			OperationItemDiscountAmount:         workOrderReq.OperationItemDiscountAmount,
 			OperationItemDiscountRequestAmount:  workOrderReq.OperationItemDiscountRequestAmount,
@@ -2415,6 +2420,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			"service_status":                         response.WorkOrderStatusName,
 			"line_type_id":                           response.LineTypeId,
 			"line_type_code":                         response.LineTypeCode,
+			"line_type_name":                         response.LineTypeName,
 			"transaction_type_id":                    response.TransactionTypeId,
 			"transaction_type_code":                  response.TransactionTypeCode,
 			"job_type_id":                            response.JobTypeId,
@@ -2505,15 +2511,6 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		}
 	}
 
-	opertationItemResponse, operationItemErr := aftersalesserviceapiutils.GetItemId(entity.OperationItemId)
-	if operationItemErr != nil {
-		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: operationItemErr.StatusCode,
-			Message:    "Failed to retrieve operation item from the external API",
-			Err:        operationItemErr.Err,
-		}
-	}
-
 	wcfTypeResponse, wcfTypeErr := generalserviceapiutils.GetWarrantyClaimTypeById(entity.AtpmWCFTypeId)
 	if wcfTypeErr != nil {
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
@@ -2561,6 +2558,19 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		}
 	}
 
+	var OperationItemCode string
+	var Description string
+
+	operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, entity.OperationItemId)
+	if operationItemErr != nil {
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, operationItemErr
+	}
+
+	OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+	if errResp != nil {
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, errResp
+	}
+
 	payload := transactionworkshoppayloads.WorkOrderDetailResponse{
 		WorkOrderDetailId:                   entity.WorkOrderDetailId,
 		WorkOrderSystemNumber:               entity.WorkOrderSystemNumber,
@@ -2576,8 +2586,8 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		WarehouseGroupId:                    entity.WarehouseGroupId,
 		WarehouseGroupName:                  whsGroup.WarehouseGroupName,
 		OperationItemId:                     entity.OperationItemId,
-		OperationItemCode:                   opertationItemResponse.ItemCode,
-		Description:                         opertationItemResponse.ItemName,
+		OperationItemCode:                   OperationItemCode,
+		Description:                         Description,
 		OperationItemPrice:                  entity.OperationItemPrice,
 		OperationItemDiscountAmount:         entity.OperationItemDiscountAmount,
 		OperationItemDiscountRequestAmount:  entity.OperationItemDiscountRequestAmount,
