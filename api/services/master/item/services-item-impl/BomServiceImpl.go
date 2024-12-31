@@ -13,6 +13,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -23,16 +25,18 @@ import (
 )
 
 type BomServiceImpl struct {
-	BomRepository masteritemrepository.BomRepository
-	DB            *gorm.DB
-	RedisClient   *redis.Client // Redis client
+	BomRepository  masteritemrepository.BomRepository
+	ItemRepository masteritemrepository.ItemRepository
+	DB             *gorm.DB
+	RedisClient    *redis.Client // Redis client
 }
 
-func StartBomService(BomRepository masteritemrepository.BomRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.BomService {
+func StartBomService(BomRepository masteritemrepository.BomRepository, ItemRepository masteritemrepository.ItemRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.BomService {
 	return &BomServiceImpl{
-		BomRepository: BomRepository,
-		DB:            db,
-		RedisClient:   redisClient,
+		BomRepository:  BomRepository,
+		ItemRepository: ItemRepository,
+		DB:             db,
+		RedisClient:    redisClient,
 	}
 }
 
@@ -515,15 +519,15 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
-	f.SetCellValue(sheetName, "A1", "BOM_CODE")
+	f.SetCellValue(sheetName, "A1", "BOM_CODE") // bom_item_id
 	f.SetCellValue(sheetName, "B1", "EFFECTIVE_DATE")
 	f.SetCellValue(sheetName, "C1", "QTY")
-	f.SetCellValue(sheetName, "D1", "MATERIAL_CODE")
+	f.SetCellValue(sheetName, "D1", "MATERIAL_CODE") // bom_detail_item_id
 	f.SetCellValue(sheetName, "E1", "SEQ_DETAIL")
 	f.SetCellValue(sheetName, "F1", "QTY_DETAIL")
 	f.SetCellValue(sheetName, "G1", "REMARK")
 	f.SetCellValue(sheetName, "H1", "COSTING_PERCENTAGE")
-	f.SetColWidth(sheetName, "A", "H", 21.5)
+	f.SetColWidth(sheetName, "A", "H", 21.0)
 
 	style, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{Horizontal: "left"},
@@ -552,42 +556,25 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 		Page:  0,
 	}
 
-	results, errResp := s.BomRepository.GetBomDetailList(tx, internalFilterCondition, paginate)
+	results, errResp := s.BomRepository.GetBomDetailTemplate(tx, internalFilterCondition, paginate)
 	if errResp != nil {
 		return nil, errResp
 	}
 
-	rows, ok := results.Rows.([]map[string]interface{})
-	if !ok {
-		return nil, &exceptions.BaseErrorResponse{
-			Err:        fmt.Errorf("invalid data type for rows, expected []map[string]interface{}"),
-			StatusCode: http.StatusInternalServerError,
-		}
-	}
-
-	if len(rows) == 0 {
-		rows = []map[string]interface{}{}
-	}
-
-	data, err := ConvertBomMapToStruct(rows)
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
-	}
-
-	for i, value := range data {
-		if len(value.BomDetails.Data) > 0 {
+	for i, value := range results {
+		if len(value.BomDetailItemCode) > 0 {
 			f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), value.ItemCode)
-			f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), value.BomMasterEffectiveDate)
-			f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), value.BomMasterQty)
-			f.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), value.BomDetails.Data[0].ItemCode)
-			f.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), value.BomDetails.Data[0].BomDetailSeq)
-			f.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), value.BomDetails.Data[0].BomDetailQty)
-			f.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), value.BomDetails.Data[0].BomDetailRemark)
-			f.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), value.BomDetails.Data[0].BomDetailCostingPercent)
-		} else {
+			f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), value.EffectiveDate)
+			f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), value.Qty)
+			f.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), value.BomDetailItemCode)
+			f.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), value.BomDetailSeq)
+			f.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), value.BomDetailQty)
+			f.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), value.BomDetailRemark)
+			f.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), value.BomDetailCostingPercentage)
+		} else { // Unlikely case where item detail code doesn't exist
 			f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), value.ItemCode)
-			f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), value.BomMasterEffectiveDate)
-			f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), value.BomMasterQty)
+			f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), value.EffectiveDate)
+			f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), value.Qty)
 			f.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), "")
 			f.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), "")
 			f.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), "")
@@ -600,8 +587,8 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 	return f, nil
 }
 
-func ConvertBomMapToStruct(maps []map[string]interface{}) ([]masteritempayloads.BomMasterResponseDetail, error) {
-	var result []masteritempayloads.BomMasterResponseDetail
+func ConvertBomMapToStruct(maps []map[string]interface{}) ([]masteritempayloads.BomDetailTemplate, error) {
+	var result []masteritempayloads.BomDetailTemplate
 
 	// Handle nil or empty maps
 	if maps == nil {
@@ -663,4 +650,190 @@ func (s *BomServiceImpl) FetchItemId(itemCode string) (int, *exceptions.BaseErro
 	}
 
 	return result.Data[0].ItemId, nil
+}
+
+func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse) {
+	var results []masteritempayloads.BomDetailTemplate
+	// var numericRegex = regexp.MustCompile(`^\d*\.?\d+$`)
+
+	// var regexCheckInput = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(,\d{3})*(\.\d{1,2})?)$`)  // Handles 12,345,678.99
+	// var regexCheckInput2 = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(\.\d{3})*(,\d{1,2})?)$`) // Handles 12.345.678,99
+
+	for i, row := range rows {
+		if i == 0 {
+			// Skip header row
+			continue
+		}
+		if len(row) != 8 {
+			// Validate row length
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid row length",
+			}
+		}
+
+		// Debugging row data
+		//fmt.Printf("Debugging Row: %v\n", row)
+
+		// Effective date
+		row[1] = strings.TrimSpace(row[1])
+		row[1] = strings.ReplaceAll(row[1], "/", "-")
+		effectiveDate, err := time.Parse("1-2-06 15:04", row[1])
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid effective date format",
+			}
+		}
+
+		// Bom qty
+		row[2] = strings.ReplaceAll(row[2], ",", ".") // Replace comma with dot
+		bomQty, err := strconv.ParseFloat(row[2], 64)
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid bom quantity format",
+			}
+		}
+
+		// Detail seq
+		detailSeq, err := strconv.Atoi(row[4])
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid sequence format",
+			}
+		}
+
+		// Detail qty
+		row[5] = strings.ReplaceAll(row[5], ",", ".") // Replace comma with dot
+		detailQty, err := strconv.ParseFloat(row[5], 64)
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid detail quantity format",
+			}
+		}
+
+		// Cost percentage
+		row[7] = strings.ReplaceAll(row[7], ",", ".") // Replace comma with dot
+		costPercentage, err := strconv.ParseFloat(row[7], 64)
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid costing percentage format",
+			}
+		}
+
+		results = append(results, masteritempayloads.BomDetailTemplate{
+			ItemCode:                   strings.TrimSpace(row[0]),
+			EffectiveDate:              effectiveDate,
+			Qty:                        bomQty,
+			BomDetailItemCode:          strings.TrimSpace(row[3]),
+			BomDetailSeq:               detailSeq,
+			BomDetailQty:               detailQty,
+			BomDetailRemark:            strings.TrimSpace(row[6]),
+			BomDetailCostingPercentage: costPercentage,
+		})
+	}
+	return results, nil
+}
+
+func (s *BomServiceImpl) ProcessDataUpload(request masteritempayloads.BomDetailUpload) ([]masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	/// Process bom header
+	// Put header to map - any duplicate will not be taken
+	bomDetails := request.BomDetails
+	type headerKey struct {
+		ItemCode      string
+		EffectiveDate time.Time
+	}
+	type headerVal struct {
+		Qty    float64
+		ItemId int
+		BomId  int
+	}
+	header := map[headerKey]headerVal{}
+	for _, bomDetail := range bomDetails {
+		key := headerKey{bomDetail.ItemCode, bomDetail.EffectiveDate}
+		_, ok := header[key]
+		if !ok {
+			header[key] = headerVal{bomDetail.Qty, 0, 0}
+		}
+	}
+
+	for k, v := range header {
+		// Get header itemId
+		results, err := s.ItemRepository.GetItemCode(tx, k.ItemCode)
+		if err != nil {
+			return []masteritementities.BomDetail{}, err
+		}
+
+		// Insert and get header bomId
+		req := masteritempayloads.BomMasterNewRequest{
+			Qty:           v.Qty,
+			EffectiveDate: k.EffectiveDate,
+			ItemId:        results.ItemId,
+		}
+		bomId, err := s.BomRepository.FirstOrCreateBom(tx, req)
+		if err != nil {
+			return []masteritementities.BomDetail{}, err
+		}
+
+		header[k] = headerVal{v.Qty, results.ItemId, bomId}
+	}
+
+	/// Process bom detail
+	results := []masteritementities.BomDetail{}
+	for _, bomDetail := range bomDetails {
+		// Get detail itemId
+		itemQuery, err := s.ItemRepository.GetItemCode(tx, bomDetail.BomDetailItemCode)
+		if err != nil {
+			return []masteritementities.BomDetail{}, err
+		}
+
+		// Insert detail
+		key := headerKey{bomDetail.ItemCode, bomDetail.EffectiveDate}
+		req := masteritempayloads.BomDetailRequest{
+			BomId:            header[key].BomId,
+			Seq:              bomDetail.BomDetailSeq,
+			ItemId:           itemQuery.ItemId,
+			Qty:              bomDetail.Qty,
+			Remark:           bomDetail.BomDetailRemark,
+			CostingPercent:   bomDetail.BomDetailCostingPercentage,
+			BomQty:           header[key].Qty,
+			BomEffectiveDate: bomDetail.EffectiveDate,
+			BomItemId:        header[key].ItemId,
+		}
+		result, err := s.BomRepository.SaveBomDetail(tx, req)
+		if err != nil {
+			return []masteritementities.BomDetail{}, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }

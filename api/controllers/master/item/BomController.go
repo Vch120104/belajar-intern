@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/labstack/gommon/log"
+	"github.com/xuri/excelize/v2"
 )
 
 type BomController interface {
@@ -39,6 +41,8 @@ type BomController interface {
 	DeleteBomDetail(writer http.ResponseWriter, request *http.Request)
 
 	GetBomItemList(writer http.ResponseWriter, request *http.Request)
+	Upload(writer http.ResponseWriter, request *http.Request)
+	ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -402,12 +406,15 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/bom/detail [post]
 func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *http.Request) {
-
 	var formRequest masteritempayloads.BomDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+	if formRequest.ItemId == formRequest.BomItemId {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("item must be different from parent")})
 		return
 	}
 
@@ -445,8 +452,8 @@ func (r *BomControllerImpl) UpdateBomDetail(writer http.ResponseWriter, request 
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
-	bomDetailId, errA := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
 
+	bomDetailId, errA := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
@@ -613,4 +620,88 @@ func (r *BomControllerImpl) DownloadTemplate(writer http.ResponseWriter, request
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
+}
+
+func (r *BomControllerImpl) Upload(writer http.ResponseWriter, request *http.Request) {
+	// Parse the multipart form with a 10 MB limit
+	if err := request.ParseMultipartForm(10 << 20); err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error parsing multipart form",
+			Err:        err,
+		})
+		return
+	}
+
+	// Retrieve the file from the form data
+	file, handler, err := request.FormFile("file")
+	if err != nil {
+		log.Printf("Error retrieving file from form data: %v", err) // Logging error
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error retrieving file from form data",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
+
+	// Log the filename for debugging
+	log.Printf("Received file: %s", handler.Filename)
+
+	// Check that the file is an xlsx format
+	if !strings.HasSuffix(handler.Filename, ".xlsx") {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "File must be in xlsx format",
+			Err:        errors.New("file must be in xlsx format"),
+		})
+		return
+	}
+
+	// Read the uploaded file into an excelize.File
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
+
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error retrieving rows from sheet",
+			Err:        err,
+		})
+		return
+	}
+
+	previewData, errResponse := r.BomService.PreviewUploadData(rows)
+	if errResponse != nil {
+		exceptions.NewNotFoundException(writer, request, errResponse)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
+}
+
+func (r *BomControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.BomDetailUpload
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	create, err := r.BomService.ProcessDataUpload(formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Create/Update Data Successfully!", http.StatusCreated)
 }

@@ -33,4 +33,6 @@ type BomService interface {
 	GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
+	PreviewUploadData([][]string) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse)
+	ProcessDataUpload(request masteritempayloads.BomDetailUpload) ([]masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 }

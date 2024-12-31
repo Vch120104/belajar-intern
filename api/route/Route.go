@@ -275,7 +275,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
-	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
+	BomService := masteritemserviceimpl.StartBomService(BomRepository, itemRepository, db, rdb)
 	BomController := masteritemcontroller.NewBomController(BomService)
 
 	//package master

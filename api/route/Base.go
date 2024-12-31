@@ -547,13 +547,16 @@ func BomRouter(
 	router.Get("/detail/max-seq/{bom_id}", BomController.GetBomDetailMaxSeq)
 	router.Put("/detail", BomController.SaveBomDetail)
 	router.Delete("/detail/{bom_detail_ids}", BomController.DeleteBomDetail)
-	// BOM detail (unfinished)
+	// BOM detail (unfinished/unused)
 	router.Get("/detail", BomController.GetBomDetailList)
 	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
 
+	// BOM Excels
+	router.Get("/download-template", BomController.DownloadTemplate)
+	router.Post("/upload", BomController.Upload)
+	router.Post("/process", BomController.ProcessDataUpload)
 	//bom lookup (unfinished/unused)
 	router.Get("/popup-item", BomController.GetBomItemList)
-	router.Get("/download-template", BomController.DownloadTemplate)
 
 	return router
 }
