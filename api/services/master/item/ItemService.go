@@ -10,6 +10,7 @@ import (
 
 type ItemService interface {
 	GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
+	GetAllItemInventory(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemCode(string) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)

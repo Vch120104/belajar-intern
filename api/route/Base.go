@@ -77,6 +77,7 @@ func ItemClassRouter(
 	//test
 	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
 	router.Get("/drop-down/by-group-id/{item_group_id}", itemClassController.GetItemClassDropDownbyGroupId)
+	router.Get("/mfg/drop-down", itemClassController.GetItemClassMfgDropdown)
 	router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
 	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
@@ -223,6 +224,7 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemController.GetAllItemSearch)
+	router.Get("/inventory", itemController.GetAllItemInventory)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
@@ -532,23 +534,30 @@ func BomRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	//bom master
-	router.Get("/", BomController.GetBomMasterList)
-	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
+	// BOM master
+	router.Get("/", BomController.GetBomList)
+	router.Get("/{bom_id}", BomController.GetBomById)
+	router.Patch("/{bom_id}", BomController.ChangeStatusBomMaster)
+	router.Put("/{bom_id}", BomController.UpdateBomMaster)
 	router.Post("/", BomController.SaveBomMaster)
-	router.Put("/{bom_master_id}", BomController.UpdateBomMaster)
-	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
-	//bom detail
-	router.Get("/detail", BomController.GetBomDetailList)
+	// BOM detail
+	router.Get("/detail/master/{bom_id}", BomController.GetBomDetailByMasterId)
+	router.Get("/detail/master/{item_id}/{effective_date}", BomController.GetBomDetailByMasterUn)
 	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
-	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
-	router.Post("/detail", BomController.SaveBomDetail)
-	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
+	router.Get("/detail/max-seq/{bom_id}", BomController.GetBomDetailMaxSeq)
+	router.Put("/detail", BomController.SaveBomDetail)
+	router.Delete("/detail/{bom_detail_ids}", BomController.DeleteBomDetail)
+	// BOM detail (unfinished/unused)
+	//router.Get("/detail", BomController.GetBomDetailList)
+	//router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
 
-	//bom lookup
-	router.Get("/popup-item", BomController.GetBomItemList)
+	// BOM Excels
 	router.Get("/download-template", BomController.DownloadTemplate)
+	router.Post("/upload", BomController.Upload)
+	router.Post("/process", BomController.ProcessDataUpload)
+	//bom lookup (unfinished/unused)
+	//router.Get("/popup-item", BomController.GetBomItemList)
 
 	return router
 }
@@ -1906,8 +1915,9 @@ func SalesOrderRouter(
 	router.Delete("/{sales_order_system_number}", SalesOrderController.VoidSalesOrder)
 	router.Post("/detail", SalesOrderController.InsertSalesOrderDetail)
 	router.Delete("/detail/{sales_order_detail_system_number}", SalesOrderController.DeleteSalesOrderDetail)
-	router.Patch("/proposed-discount-multi-id", SalesOrderController.SalesOrderProposedDiscountMultiId)
+	router.Put("/proposed-discount-multi-id/{sales_order_detail_multi_id}", SalesOrderController.SalesOrderProposedDiscountMultiId)
 	router.Put("/{sales_order_system_number}", SalesOrderController.UpdateSalesOrderHeader)
+	router.Patch("/submit/{sales_order_system_number}", SalesOrderController.SubmitSalesOrderHeader)
 
 	return router
 }
