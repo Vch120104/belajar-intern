@@ -37,7 +37,7 @@ type QualityControlIdResponse struct {
 	WorkOrderDate           string                        `json:"work_order_date"`
 	BrandName               string                        `json:"brand_name"`
 	ModelName               string                        `json:"model_name"`
-	VariantName             string                        `json:"variant_name"`
+	VariantDescription      string                        `json:"variant_description"`
 	ColourName              string                        `json:"colour_name"`
 	VehicleCode             string                        `json:"vehicle_chassis_number"`
 	EngineCode              string                        `json:"engine_number"`

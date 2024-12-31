@@ -9,7 +9,6 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"fmt"
 	"strconv"
 
 	"net/http"
@@ -63,8 +62,6 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
 	}
 
-	fmt.Println("Query Params:", queryParams)
-
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -73,7 +70,6 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	fmt.Println("Filter Conditions:", criteria)
 
 	result, err := r.QualityControlService.GetAll(criteria, paginate)
 	if err != nil {

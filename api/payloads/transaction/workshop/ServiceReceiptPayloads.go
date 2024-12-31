@@ -116,7 +116,7 @@ type ServiceReceiptResponse struct {
 	ModelId                      int                           `json:"model_id"`
 	ModelName                    string                        `json:"model_name"`
 	VariantId                    int                           `json:"variant_id"`
-	VariantName                  string                        `json:"variant_name"`
+	VariantDescription           string                        `json:"variant_description"`
 	VariantColourName            string                        `json:"variant_colour_name"`
 	VehicleId                    int                           `json:"vehicle_id"`
 	VehicleCode                  string                        `json:"vehicle_chassis_number"`

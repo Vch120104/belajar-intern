@@ -89,7 +89,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 		var variantIds []int
 		for _, v := range variantResponse {
-			variantIds = append(variantIds, v.VariantId)
+			variantIds = append(variantIds, v.Data.VariantId)
 		}
 
 		if len(variantIds) > 0 {
