@@ -24,6 +24,7 @@ type SalesOrderController interface {
 	DeleteSalesOrderDetail(writer http.ResponseWriter, request *http.Request)
 	SalesOrderProposedDiscountMultiId(writer http.ResponseWriter, request *http.Request)
 	UpdateSalesOrderHeader(writer http.ResponseWriter, request *http.Request)
+	SubmitSalesOrderHeader(writer http.ResponseWriter, request *http.Request)
 }
 
 type SalesOrderControllerImpl struct {
@@ -164,7 +165,7 @@ func (s *SalesOrderControllerImpl) DeleteSalesOrderDetail(writer http.ResponseWr
 }
 func (s *SalesOrderControllerImpl) SalesOrderProposedDiscountMultiId(writer http.ResponseWriter, request *http.Request) {
 	queryValue := request.URL.Query()
-	salesOrderDetailMultiId := queryValue.Get("sales_order_detail_multi_id")
+	salesOrderDetailMultiId := chi.URLParam(request, "sales_order_detail_multi_id")
 	proposedDiscount := utils.NewGetQueryfloat(queryValue, "proposed_discount")
 
 	result, errResult := s.SalesOrderService.SalesOrderProposedDiscountMultiId(salesOrderDetailMultiId, proposedDiscount)
@@ -201,4 +202,22 @@ func (s *SalesOrderControllerImpl) UpdateSalesOrderHeader(writer http.ResponseWr
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "success to update sales order header", http.StatusOK)
+}
+func (s *SalesOrderControllerImpl) SubmitSalesOrderHeader(writer http.ResponseWriter, request *http.Request) {
+	//get sales order
+	salesOrderId, errConvertId := strconv.Atoi(chi.URLParam(request, "sales_order_system_number"))
+	if errConvertId != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errConvertId,
+			Message:    "failed to convert id parameters",
+		})
+		return
+	}
+	res, err := s.SalesOrderService.SubmitSalesOrderHeader(salesOrderId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "success to submit sales order header", http.StatusOK)
 }

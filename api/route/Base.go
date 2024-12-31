@@ -1906,8 +1906,9 @@ func SalesOrderRouter(
 	router.Delete("/{sales_order_system_number}", SalesOrderController.VoidSalesOrder)
 	router.Post("/detail", SalesOrderController.InsertSalesOrderDetail)
 	router.Delete("/detail/{sales_order_detail_system_number}", SalesOrderController.DeleteSalesOrderDetail)
-	router.Patch("/proposed-discount-multi-id", SalesOrderController.SalesOrderProposedDiscountMultiId)
+	router.Put("/proposed-discount-multi-id/{sales_order_detail_multi_id}", SalesOrderController.SalesOrderProposedDiscountMultiId)
 	router.Put("/{sales_order_system_number}", SalesOrderController.UpdateSalesOrderHeader)
+	router.Patch("/submit/{sales_order_system_number}", SalesOrderController.SubmitSalesOrderHeader)
 
 	return router
 }

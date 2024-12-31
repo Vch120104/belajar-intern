@@ -534,6 +534,7 @@ func (repo *LocationStockRepositoryImpl) GetAvailableQuantity(db *gorm.DB, paylo
 	if payload.WarehouseGroupId != 0 {
 		query = query.Where(masterentities.LocationStock{WarehouseGroupId: payload.WarehouseGroupId})
 	}
+
 	if err := query.
 		//Where("module_code = ?", moduleCode).
 		Select(`
