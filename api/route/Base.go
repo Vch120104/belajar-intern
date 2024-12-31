@@ -509,6 +509,7 @@ func PriceListRouter(
 	router.Get("/", priceListController.GetAllPriceListNew)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
 	router.Get("/{price_list_id}", priceListController.GetPriceListById)
+	router.Get("/by-code/{price_list_code_id}", priceListController.GetPriceListByCodeId)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
 	router.Patch("/activate/{price_list_id}", priceListController.ActivatePriceList)
@@ -583,7 +584,7 @@ func PurchaseRequestRouter(
 	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequest)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
 	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
-	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
+	router.Get("/item/by-code", PurchaseRequest.GetByCodeItemTypePr)
 
 	//	@Router			/v1/purchase-request/by-code/{company_id}/{item_id} [get]
 	router.Delete("/detail/{purchase_request_detail_system_number}", PurchaseRequest.VoidDetail)
@@ -1904,8 +1905,18 @@ func SalesOrderRouter(
 	SalesOrderController transactionsparepartcontroller.SalesOrderController,
 ) chi.Router {
 	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
+	router.Post("/estimation", SalesOrderController.InsertSalesOrderHeader)
+	router.Get("/", SalesOrderController.GetAllSalesOrder)
+	router.Delete("/{sales_order_system_number}", SalesOrderController.VoidSalesOrder)
+	router.Post("/detail", SalesOrderController.InsertSalesOrderDetail)
+	router.Delete("/detail/{sales_order_detail_system_number}", SalesOrderController.DeleteSalesOrderDetail)
+	router.Patch("/proposed-discount-multi-id", SalesOrderController.SalesOrderProposedDiscountMultiId)
+	router.Put("/{sales_order_system_number}", SalesOrderController.UpdateSalesOrderHeader)
 
 	return router
 }

@@ -23,6 +23,6 @@ type PurchaseRequestService interface {
 	InsertPurchaseRequestUpdateDetail(transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse)
 	GetAllItemTypePurchaseRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination, companyId int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdItemTypePurchaseRequest(companyId int, id int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
-	GetByCodeItemTypePurchaseRequest(companyId int, stingcode string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
+	GetByCodeItemTypePurchaseRequest(companyId int, itemCode string, brandId int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
 	VoidPurchaseRequestDetail(string2 string) (bool, *exceptions.BaseErrorResponse)
 }
