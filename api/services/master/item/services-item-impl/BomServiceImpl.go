@@ -1,7 +1,6 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -9,8 +8,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -235,38 +232,6 @@ func (s *BomServiceImpl) GetBomDetailById(id int) (masteritementities.BomDetail,
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	results, err := s.BomRepository.GetBomDetailList(tx, filterCondition, pages)
-	if err != nil {
-		return results, err
-	}
-
-	return results, nil
-}
-
 func (s *BomServiceImpl) GetBomDetailMaxSeq(id int) (int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -410,68 +375,6 @@ func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) 
 	return results, nil
 }
 
-func (s *BomServiceImpl) UpdateBomDetail(id int, req masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	results, err := s.BomRepository.UpdateBomDetail(tx, id, req)
-	if err != nil {
-		return masteritementities.BomDetail{}, err
-	}
-	return results, nil
-}
-
-func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			}
-		}
-	}()
-	results, err := s.BomRepository.GetBomItemList(tx, filterCondition, pages)
-	if err != nil {
-		return results, err
-	}
-	return results, nil
-}
-
 func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -505,6 +408,28 @@ func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResp
 
 func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	f := excelize.NewFile()
 	sheetName := "Sheet1"
@@ -514,9 +439,9 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 		}
 	}()
 
-	index, err := f.NewSheet(sheetName)
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
+	index, errA := f.NewSheet(sheetName)
+	if errA != nil {
+		return nil, &exceptions.BaseErrorResponse{Err: errA, StatusCode: http.StatusInternalServerError}
 	}
 
 	f.SetCellValue(sheetName, "A1", "BOM_CODE") // bom_item_id
@@ -529,7 +454,7 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 	f.SetCellValue(sheetName, "H1", "COSTING_PERCENTAGE")
 	f.SetColWidth(sheetName, "A", "H", 21.0)
 
-	style, err := f.NewStyle(&excelize.Style{
+	style, errA := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{Horizontal: "left"},
 		Font: &excelize.Font{
 			Bold: true,
@@ -541,8 +466,8 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 			{Type: "right", Color: "000000", Style: 1},
 		},
 	})
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
+	if errA != nil {
+		return nil, &exceptions.BaseErrorResponse{Err: errA, StatusCode: http.StatusInternalServerError}
 	}
 
 	for col := 'A'; col <= 'H'; col++ {
@@ -585,71 +510,6 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 
 	f.SetActiveSheet(index)
 	return f, nil
-}
-
-func ConvertBomMapToStruct(maps []map[string]interface{}) ([]masteritempayloads.BomDetailTemplate, error) {
-	var result []masteritempayloads.BomDetailTemplate
-
-	// Handle nil or empty maps
-	if maps == nil {
-		return nil, errors.New("maps is nil")
-	}
-
-	jsonData, err := json.Marshal(maps)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(jsonData, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (s *BomServiceImpl) FetchItemId(itemCode string) (int, *exceptions.BaseErrorResponse) {
-	resp, err := http.Get(config.EnvConfigs.AfterSalesServiceUrl + "item?item_code=" + itemCode + "&limit=1&page=0")
-	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error fetching item ID",
-			Err:        err,
-		}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: resp.StatusCode,
-			Message:    "Error fetching item ID, item code: " + itemCode + " not found in master item service",
-		}
-	}
-
-	var result struct {
-		StatusCode int    `json:"status_code"`
-		Message    string `json:"message"`
-		Data       []struct {
-			ItemId int `json:"item_id"`
-		} `json:"data"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error decoding item ID response",
-			Err:        err,
-		}
-	}
-
-	if len(result.Data) == 0 {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Item not found for item code: " + itemCode,
-		}
-	}
-
-	return result.Data[0].ItemId, nil
 }
 
 func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse) {

@@ -12,7 +12,6 @@ type Bom struct {
 	EffectiveDate time.Time `gorm:"column:effective_date;not null;type:datetime;index:,unique,composite:un" json:"effective_date"`
 	ItemId        int       `gorm:"column:item_id;size:30;not null;index:,unique,composite:un" json:"item_id"`
 	Qty           float64   `gorm:"column:qty;size:30;not null" json:"qty"`
-	//Item          Item      `gorm:"foreignKey:ItemId;references:ItemId"`  // not needed
 }
 
 func (*Bom) TableName() string {

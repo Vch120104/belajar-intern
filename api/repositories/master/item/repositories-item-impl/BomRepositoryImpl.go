@@ -6,7 +6,6 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
-	"math"
 	"time"
 
 	"after-sales/api/utils"
@@ -149,7 +148,7 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masterit
 }
 
 func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailListResponseNew
+	var responses []masteritempayloads.BomDetailListResponse
 
 	baseQuery := tx.Table("mtr_bom_detail AS bom").
 		Select(`
@@ -210,7 +209,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages
 }
 
 func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effectiveDate time.Time, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailListResponseNew
+	var responses []masteritempayloads.BomDetailListResponse
 
 	baseQuery := tx.Table("mtr_bom_detail AS bom").
 		Select(`
@@ -414,63 +413,6 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 	return bomId, nil
 }
 
-func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailResponse
-
-	baseQuery := tx.Table("mtr_bom_detail AS det").
-		Select(`
-			det.bom_master_id,
-			det.bom_detail_seq,
-			item.item_code,
-			item.item_name,
-			iclas.item_class_code,
-			lt.line_type_name,
-			det.bom_detail_costing_percentage,
-			det.bom_detail_remark,
-			det.bom_detail_qty,
-			det.bom_detail_id,
-			uom.uom_description`).
-		Joins("LEFT JOIN mtr_item AS item ON det.bom_detail_material_id = item.item_id").
-		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id").
-		Joins("LEFT JOIN mtr_item_class AS iclas ON item.item_class_id = iclas.item_class_id").
-		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_line_type AS lt ON iclas.line_type_id = lt.line_type_id")
-
-	baseQuery = utils.ApplyFilter(baseQuery, filters)
-
-	var totalRows int64
-	err := baseQuery.Count(&totalRows).Error
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
-
-	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
-
-	if err := paginatedQuery.Scan(&responses).Error; err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	if len(responses) == 0 {
-		pages.Rows = []map[string]interface{}{}
-		pages.TotalRows = totalRows
-		pages.TotalPages = totalPages
-		return pages, nil
-	}
-
-	pages.Rows = responses
-	pages.TotalRows = totalRows
-	pages.TotalPages = totalPages
-
-	return pages, nil
-}
-
 func (r *BomRepositoryImpl) GetBomDetailTemplate(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.BomDetailTemplate
 
@@ -627,102 +569,6 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	}
 
 	return newBomDetail, nil
-}
-
-func (r *BomRepositoryImpl) UpdateBomDetail(tx *gorm.DB, id int, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
-	var entities masteritementities.BomDetail
-
-	result := tx.Model(&entities).
-		Where("bom_detail_id = ?", id).
-		First(&entities)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        fmt.Errorf("bom detail with ID %d not found", id),
-			}
-		}
-		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
-		}
-	}
-
-	entities.Qty = request.Qty
-	entities.CostingPercentage = request.CostingPercent
-	entities.Remark = request.Remark
-
-	result = tx.Save(&entities)
-
-	if result.Error != nil {
-		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
-		}
-	}
-
-	return entities, nil
-}
-
-func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
-	type BomItemResponse struct {
-		IsActive       bool   `json:"is_active"`
-		ItemId         int    `json:"item_id"`
-		ItemCode       string `json:"item_code"`
-		ItemName       string `json:"item_name"`
-		ItemTypeId     string `json:"item_type_id"`
-		ItemGroupId    int    `json:"item_group_id"`
-		ItemClassId    int    `json:"item_class_id"`
-		ItemClassCode  string `json:"item_class_code"`
-		UomId          int    `json:"uom_id"`
-		UomDescription string `json:"uom_description"`
-	}
-
-	var responses []BomItemResponse
-
-	baseQuery := tx.Table("mtr_item AS item").
-		Select(`
-			item.is_active,
-			item.item_id,
-			item.item_code,
-			item.item_name,
-			item.item_type_id,
-			item.item_group_id,
-			item_class.item_class_id,
-			item_class.item_class_code,
-			uom.uom_id,
-			uom.uom_description`).
-		Joins("LEFT JOIN mtr_item_class AS item_class ON item.item_class_id = item_class.item_class_id").
-		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_selling_id = uom.uom_id")
-
-	// Apply filters
-	baseQuery = utils.ApplyFilter(baseQuery, filterConditions)
-
-	// Apply pagination
-	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
-
-	// Scan the results into the response struct
-	if err := paginatedQuery.Scan(&responses).Error; err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	// Handle empty results
-	if len(responses) == 0 {
-		pages.Rows = []BomItemResponse{}
-		pages.TotalRows = 0
-		pages.TotalPages = 0
-		return pages, nil
-	}
-
-	// Assign results to the paginated response
-	pages.Rows = responses
-
-	return pages, nil
 }
 
 func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {

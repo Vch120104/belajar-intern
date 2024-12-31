@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/labstack/gommon/log"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -34,13 +33,10 @@ type BomController interface {
 	GetBomDetailByMasterUn(writer http.ResponseWriter, request *http.Request)
 	GetBomDetailMaxSeq(writer http.ResponseWriter, request *http.Request)
 	GetBomDetailById(writer http.ResponseWriter, request *http.Request)
-	GetBomDetailList(writer http.ResponseWriter, request *http.Request)
 	SaveBomDetail(writer http.ResponseWriter, request *http.Request)
-	// Detail (unfinished)
-	UpdateBomDetail(writer http.ResponseWriter, request *http.Request)
 	DeleteBomDetail(writer http.ResponseWriter, request *http.Request)
 
-	GetBomItemList(writer http.ResponseWriter, request *http.Request)
+	// Excel
 	Upload(writer http.ResponseWriter, request *http.Request)
 	ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
@@ -343,59 +339,6 @@ func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request 
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
-// @Summary Get All Bom Detail
-// @Description REST API Bom Detail
-// @Accept json
-// @Produce json
-// @Tags Master : Bom Detail
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param is_active query string false "is_active" Enums(true, false)
-// @Param bom_detail_id query string false "bom_detail_id"
-// @Param bom_master_id query string false "bom_master_id"
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/bom/detail [get]
-func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"mtr_bom_detail.bom_detail_id":              queryValues.Get("bom_detail_id"), // Ambil nilai bom_detail_id tanpa mtr_bom_detail.
-		"mtr_bom_detail.bom_master_id":              queryValues.Get("bom_master_id"),
-		"mtr_bom_detail.bom_detail_qty":             queryValues.Get("bom_detail_qty"),
-		"mtr_bom_detail.bom_detail_remark":          queryValues.Get("bom_detail_remark"),
-		"mtr_bom_detail.bom_detail_costing_percent": queryValues.Get("bom_detail_costing_percent"),
-	}
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	result, err := r.BomService.GetBomDetailList(criteria, paginate)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccessPagination(
-		writer,
-		result.Rows,
-		"Get Data Successfully!",
-		http.StatusOK,
-		result.Limit,
-		result.Page,
-		int64(result.TotalRows),
-		result.TotalPages,
-	)
-}
-
 // @Summary Save Bom Detail
 // @Description REST API Bom Detail
 // @Accept json
@@ -430,109 +373,6 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 		message = "Update Data Successfully!"
 		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
-}
-
-// @Summary Update Bom Detail
-// @Description REST API Bom Detail
-// @Accept json
-// @Produce json
-// @Tags Master : Bom Detail
-// @Param bom_master_id path int true "bom_master_id"
-// @Param bom_detail_id path int true "bom_detail_id"
-// @Param reqBody body masteritempayloads.BomDetailRequest true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [put]
-func (r *BomControllerImpl) UpdateBomDetail(writer http.ResponseWriter, request *http.Request) {
-
-	var formRequest masteritempayloads.BomDetailRequest
-	var message = ""
-	helper.ReadFromRequestBody(request, &formRequest)
-	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
-		exceptions.NewBadRequestException(writer, request, validationErr)
-		return
-	}
-
-	bomDetailId, errA := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
-	update, err := r.BomService.UpdateBomDetail(bomDetailId, formRequest)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	if update.BomDetailId != 0 {
-		message = "Create Data Successfully!"
-		payloads.NewHandleSuccess(writer, update, message, http.StatusCreated)
-	} else {
-		message = "Update Data Successfully!"
-		payloads.NewHandleSuccess(writer, update, message, http.StatusOK)
-	}
-
-}
-
-// @Summary Get All Bom Item Lookup
-// @Description REST API Bom Detail
-// @Accept json
-// @Produce json
-// @Tags Master : Bom Detail
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param item_code query string false "item_code"
-// @Param item_name query string false "item_name"
-// @Param item_type query string false "item_type"
-// @Param item_group_code query string false "item_group_code"
-// @Param item_class_code query string false "item_class_code"
-// @Param uom_code query string false "uom_code"
-// @Param is_active query string false "is_active"
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/bom/popup-item [get]
-func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"item_code":       queryValues.Get("item_code"),
-		"item_name":       queryValues.Get("item_name"),
-		"item_type":       queryValues.Get("item_type"),
-		"item_group_code": queryValues.Get("item_group_code"),
-		"item_class_code": queryValues.Get("item_class_code"),
-		"uom_name":        queryValues.Get("uom_name"),
-		"is_active":       queryValues.Get("is_active"),
-	}
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	paginatedData, err := r.BomService.GetBomItemList(criteria, paginate)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccessPagination(
-		writer,
-		paginatedData.Rows,
-		"Get Data Successfully!",
-		http.StatusOK,
-		paginate.Limit,
-		paginate.Page,
-		int64(paginatedData.TotalRows),
-		paginatedData.TotalPages,
-	)
-
 }
 
 // @Summary Delete Bom Detail
@@ -636,7 +476,7 @@ func (r *BomControllerImpl) Upload(writer http.ResponseWriter, request *http.Req
 	// Retrieve the file from the form data
 	file, handler, err := request.FormFile("file")
 	if err != nil {
-		log.Printf("Error retrieving file from form data: %v", err) // Logging error
+		//log.Printf("Error retrieving file from form data: %v", err) // Logging error
 		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Error retrieving file from form data",
@@ -647,7 +487,7 @@ func (r *BomControllerImpl) Upload(writer http.ResponseWriter, request *http.Req
 	defer file.Close()
 
 	// Log the filename for debugging
-	log.Printf("Received file: %s", handler.Filename)
+	//log.Printf("Received file: %s", handler.Filename)
 
 	// Check that the file is an xlsx format
 	if !strings.HasSuffix(handler.Filename, ".xlsx") {
