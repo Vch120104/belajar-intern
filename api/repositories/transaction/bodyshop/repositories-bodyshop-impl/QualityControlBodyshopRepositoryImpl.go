@@ -277,7 +277,7 @@ func (r *QualityControlBodyshopRepositoryImpl) GetById(tx *gorm.DB, id int, filt
 		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 		WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
 		ModelName:               modelResponses.ModelName,
-		VariantName:             variantResponses.VariantName,
+		VariantDescription:      variantResponses.VariantDescription,
 		VehicleCode:             vehicleResponses.VehicleChassisNumber,
 		VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CustomerName:            customerResponses.CustomerName,

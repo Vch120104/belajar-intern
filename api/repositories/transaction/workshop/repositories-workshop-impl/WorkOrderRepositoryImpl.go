@@ -507,9 +507,9 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	// Fetch workorder details with pagination
 	var workorderDetails []transactionworkshoppayloads.WorkOrderDetailResponse
 	errWorkOrderDetails := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Select("trx_work_order_detail.work_order_detail_id, trx_work_order_detail.work_order_system_number, trx_work_order_detail.line_type_id, lt.line_type_code, trx_work_order_detail.transaction_type_id, tt.transaction_type_code AS transaction_type_code, trx_work_order_detail.job_type_id, tc.job_type_code AS job_type_code, trx_work_order_detail.warehouse_group_id, trx_work_order_detail.frt_quantity, trx_work_order_detail.supply_quantity, trx_work_order_detail.operation_item_price, trx_work_order_detail.operation_item_discount_amount, trx_work_order_detail.operation_item_discount_request_amount").
-		Joins("INNER JOIN mtr_work_order_line_type AS lt ON lt.line_type_id = trx_work_order_detail.line_type_id").
-		Joins("INNER JOIN mtr_work_order_transaction_type AS tt ON tt.transaction_type_id = trx_work_order_detail.transaction_type_id").
+		Select("trx_work_order_detail.work_order_detail_id, trx_work_order_detail.work_order_system_number, trx_work_order_detail.line_type_id, lt.line_type_code as line_type_code, lt.line_type_name as line_type_name,trx_work_order_detail.transaction_type_id, tt.work_order_transaction_type_code AS transaction_type_code, trx_work_order_detail.job_type_id, tc.job_type_code AS job_type_code, trx_work_order_detail.warehouse_group_id, trx_work_order_detail.frt_quantity, trx_work_order_detail.supply_quantity, trx_work_order_detail.operation_item_price, trx_work_order_detail.operation_item_discount_amount, trx_work_order_detail.operation_item_discount_request_amount").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_line_type AS lt ON lt.line_type_id = trx_work_order_detail.line_type_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_work_order_transaction_type AS tt ON tt.work_order_transaction_type_id = trx_work_order_detail.transaction_type_id").
 		Joins("INNER JOIN mtr_work_order_job_type AS tc ON tc.job_type_id = trx_work_order_detail.job_type_id").
 		Where("work_order_system_number = ?", Id).
 		Offset(pagination.GetOffset()).
@@ -804,7 +804,7 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		ModelId:                            entity.ModelId,
 		ModelName:                          modelResponse.ModelName,
 		VariantId:                          entity.VariantId,
-		VariantName:                        variantResponse.VariantName,
+		VariantDescription:                 variantResponse.VariantDescription,
 		VehicleId:                          entity.VehicleId,
 		VehicleCode:                        "", //vehicleResponses.VehicleChassisNumber,
 		VehicleTnkb:                        "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
@@ -4083,7 +4083,7 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 		ModelId:                       entity.ModelId,
 		ModelName:                     modelResponse.ModelName,
 		VariantId:                     entity.VariantId,
-		VariantName:                   variantResponse.VariantName,
+		VariantDescription:            variantResponse.VariantDescription,
 		VehicleId:                     entity.VehicleId,
 		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
 		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,
@@ -4505,7 +4505,7 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 		ModelId:                       entity.ModelId,
 		ModelName:                     modelResponse.ModelName,
 		VariantId:                     entity.VariantId,
-		VariantName:                   variantResponse.VariantName,
+		VariantDescription:            variantResponse.VariantDescription,
 		VehicleId:                     entity.VehicleId,
 		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
 		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,

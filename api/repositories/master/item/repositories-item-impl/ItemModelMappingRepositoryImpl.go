@@ -70,14 +70,14 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 
 		result := map[string]interface{}{
-			"item_id":      response.ItemId,
-			"brand_id":     response.BrandId,
-			"brand_name":   brandResponse.BrandName,
-			"model_id":     response.ModelId,
-			"model_name":   modelResponse.ModelName,
-			"variant_id":   response.VariantId,
-			"variant_name": variantResponse.VariantName,
-			"is_active":    response.IsActive,
+			"item_id":             response.ItemId,
+			"brand_id":            response.BrandId,
+			"brand_name":          brandResponse.BrandName,
+			"model_id":            response.ModelId,
+			"model_name":          modelResponse.ModelName,
+			"variant_id":          response.VariantId,
+			"variant_description": variantResponse.VariantDescription,
+			"is_active":           response.IsActive,
 		}
 
 		results = append(results, result)
