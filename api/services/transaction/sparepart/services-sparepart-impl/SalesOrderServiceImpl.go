@@ -230,3 +230,27 @@ func (s *SalesOrderServiceImpl) UpdateSalesOrderHeader(payload transactionsparep
 	}
 	return result, nil
 }
+func (s *SalesOrderServiceImpl) SubmitSalesOrderHeader(salesOrderId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+		}
+	}()
+	result, err := s.salesOrderRepo.SubmitSalesOrderHeader(tx, salesOrderId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

@@ -17,6 +17,7 @@ import (
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"math"
 	"net/http"
@@ -1309,4 +1310,514 @@ func (r *SalesOrderRepositoryImpl) UpdateSalesOrderHeader(db *gorm.DB, payload t
 		}
 	}
 	return soEntity, nil
+}
+
+// uspg atsalesorder0 Update option 1
+func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrderId int) (bool, *exceptions.BaseErrorResponse) {
+	//BEGIN
+	//IF NOT EXISTS(SELECT TOP 1 1
+	//FROM atSalesOrderLog_KIANONIMG A
+	//WHERE A.SO_SYS_NO = @So_Sys_No
+	//AND A.PROCESS_CODE = '02')--SO_PROCESS_CODE_DEALERSUBMIT
+	//BEGIN
+	//RAISERROR('Submit Failed, Non IMG dealers haven''t submitted this SPSE yet.',16,1)
+
+	//SET @Src_Doc  = dbo.getVariableValue('SRC_DOC_SP_SO')
+	//not yet dev
+	//var srcDoc = "SPSO"
+	var discountOriginal float64
+	var discountRequest float64
+
+	//SELECT @Disc_Ori = SUM(ISNULL(DISC_AMOUNT,0)),
+	//@Disc_Req = SUM(ISNULL(DISC_REQ_AMOUNT,0))
+	//FROM atSalesOrder1
+	//get discountOriginal and discountRequest
+	err := db.Model(&transactionsparepartentities.SalesOrderDetail{}).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: salesOrderId}).
+		Select(`SUM(ISNULL(discount_amount,0)),SUM(ISNULL(discount_request_amount,0))`).
+		Row().
+		Scan(&discountOriginal, &discountRequest)
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get discount amount and discount request amount",
+		}
+	}
+	if discountOriginal != discountRequest {
+		//SET @Disc_Req = (SELECT ROUND(ISNULL(SUM(CASE WHEN DISC_REQ_AMOUNT > 0
+		//THEN ISNULL(DISC_REQ_AMOUNT,0) * ISNULL(QTY_DEMAND,0)
+		//ELSE ISNULL(DISC_AMOUNT,0) * ISNULL(QTY_DEMAND,0)
+		//END ),0),0)
+		//FROM atSalesOrder1 WHERE SO_SYS_NO = @So_Sys_No)
+		err = db.Model(&transactionsparepartentities.SalesOrderDetail{}).
+			Select(`ROUND(ISNULL(SUM(CASE WHEN discount_request_amount > 0
+											   THEN ISNULL(discount_request_amount,0) * ISNULL(quantity_demand,0)
+											   ELSE ISNULL(discount_amount,0) * ISNULL(quantity_demand,0)
+											   END ),0),0)`).
+			Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: salesOrderId}).
+			Scan(&discountRequest).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to get discount request amount",
+			}
+		}
+	} else {
+		discountRequest = 0
+	}
+	//salesOrderEntities
+	salesOrderEntities := transactionsparepartentities.SalesOrder{}
+	err = db.Model(&salesOrderEntities).
+		Where(transactionsparepartentities.SalesOrder{SalesOrderSystemNumber: salesOrderId}).
+		First(&salesOrderEntities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "sales order data with that id is not found please check input",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get sales order data",
+		}
+	}
+	//@Disc
+	var discountApproval float64
+	//@Disc = ISNULL(SO.ADD_DISC_AMOUNT,0) + ISNULL(@Disc_Req,0) ,
+	discountApproval = salesOrderEntities.AdditionalDiscountAmount + discountRequest
+
+	//check empty item code
+	isExist := false
+	err = db.Model(&transactionsparepartentities.SalesOrderDetail{}).
+		Select("1").
+		Where("ISNULL(item_id,0) = 0").
+		Scan(&isExist).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to check item code empty",
+		}
+	}
+	if isExist {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("please insert all item code first"),
+			Message:    "Please insert all item code first",
+		}
+	}
+	//--==SET VALUE FOR CALCULATE==--
+	var SalesOrderSubTotal float64
+	var SalesOrderTotalDiscount float64
+	var SalesOrderTotal float64
+	var SalesOrderAdditionalDiscountAmount float64
+	var SalesOrderTotalVat float64
+	var SalesOrderTotalAfterVat float64
+	var moduleCode = "SP"
+	var ApproveCode = "SO"
+	var ApprovalRequestNumber int
+	itemSubstituteType := masteritementities.ItemSubstituteType{}
+	err = db.Model(&itemSubstituteType).Where(masteritementities.ItemSubstituteType{ItemSubstituteTypeCode: "S"}).
+		Scan(&itemSubstituteType).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get item substitute type",
+		}
+	}
+
+	err = db.Model(&transactionsparepartentities.SalesOrderDetail{}).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: salesOrderId}).
+		Select(`
+				COALESCE(SUM(CASE WHEN item_substitute_type_id = ? THEN 0 ELSE COALESCE(price, 0) * COALESCE(quantity_demand, 0) END), 0)
+				`, itemSubstituteType.ItemSubstituteTypeId).
+		Scan(&SalesOrderSubTotal).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sub total from sales order detail",
+			Err:        err,
+		}
+	}
+
+	//round to nearest integer
+	SalesOrderSubTotal = math.Round(SalesOrderSubTotal)
+
+	//calculate total discount
+	err = db.Model(&transactionsparepartentities.SalesOrderDetail{}).
+		Where(transactionsparepartentities.SalesOrderDetail{SalesOrderSystemNumber: salesOrderId}).
+		Select(`
+				COALESCE(SUM(CASE WHEN COALESCE(discount_request_amount,0) > 0 THEN 
+				COALESCE(discount_request_amount, 0) * COALESCE(quantity_demand, 0) 
+				ELSE 
+				COALESCE(discount_amount,0) * COALESCE(quantity_demand,0)
+				END), 0)
+				`).
+		Scan(&SalesOrderTotalDiscount).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get sub total from sales order detail",
+			Err:        err,
+		}
+	}
+	//rounding
+	SalesOrderTotalDiscount = math.Round(SalesOrderTotalDiscount)
+	//SET @Total = @Sub_Total - @Total_Disc
+	SalesOrderTotal = SalesOrderSubTotal - SalesOrderTotalDiscount
+	//SET @Add_Disc_Amount = (@Total * ISNULL(@Add_Disc_Percent,0)) / 100
+
+	SalesOrderAdditionalDiscountAmount = SalesOrderTotal * (salesOrderEntities.AdditionalDiscountPercentage / 100)
+	//rounding
+	SalesOrderAdditionalDiscountAmount = math.Round(SalesOrderAdditionalDiscountAmount)
+	//notes  math.Round(value/10) * 10 -> sama dengan round(...,-1)
+	SalesOrderTotalVat = (SalesOrderTotal - SalesOrderAdditionalDiscountAmount) * (math.Round(SalesOrderTotalVat))
+
+	SalesOrderTotalAfterVat = (SalesOrderTotal - SalesOrderAdditionalDiscountAmount) + SalesOrderTotalVat
+
+	if salesOrderEntities.DownPaymentPaidAmount > SalesOrderTotalAfterVat {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "DP Amount cannot larger than total sales order",
+		}
+	}
+	companyCodeNmdi, companyCodeNmdiErr := generalserviceapiutils.GetCompanyDataByCode("3125098")
+	if companyCodeNmdiErr != nil {
+		return false, companyCodeNmdiErr
+	}
+
+	if companyCodeNmdi.CompanyId == salesOrderEntities.CompanyID {
+		//check defect item
+		itemMaster := masteritementities.Item{}
+		err = db.Table("trx_sales_order_detail A").
+			Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id").
+			Select("B.*").
+			Where("A.sales_order_system_number = ? AND B.is_technical_defect = 1", salesOrderId).Scan(&itemMaster).
+			Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to cek ",
+			}
+		}
+		if itemMaster.IsTechnicalDefect == true {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("this item has technical defect"),
+				Message:    fmt.Sprintf("item : %s had technical defect", itemMaster.ItemCode),
+			}
+		}
+		var exists bool
+		err = db.Table("trx_sales_order_detail A").
+			Joins("INNER JOIN trx_sales_order B ON A.sales_order_system_number = B.sales_order_system_number").
+			Select("1").
+			Where("A.sales_order_system_number = ?", salesOrderId).
+			Where("COALESCE(A.price, 0) = 0").
+			Limit(1).
+			Scan(&exists).
+			Error
+		if exists {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("item price must not be 0"),
+				Message:    "item price must not be 0",
+			}
+		}
+	}
+
+	//updating Header
+	salesOrderEntities.Total = SalesOrderTotal
+	salesOrderEntities.TotalDiscount = SalesOrderTotalDiscount
+	salesOrderEntities.AdditionalDiscountPercentage = SalesOrderAdditionalDiscountAmount
+	salesOrderEntities.AdditionalDiscountAmount = SalesOrderAdditionalDiscountAmount
+	salesOrderEntities.TotalVAT = SalesOrderTotalVat
+	salesOrderEntities.TotalAfterVAT = SalesOrderTotalAfterVat
+
+	//save
+	err = db.Save(&salesOrderEntities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to save sales order header data",
+		}
+	}
+	//checking transaction type SU05
+	transactionTypeInternal := masterentities.TransactionTypeSalesOrder{}
+	err = db.Model(&transactionTypeInternal).Where(masterentities.TransactionTypeSalesOrder{TransactionTypeSalesOrderCode: "SU05"}).
+		First(&transactionTypeInternal).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+				Message:    "transaction type sales order with code SU05 is not found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get transaction type internal",
+		}
+	}
+	//get warehouse PG
+	WarehouseGroupPG := masterwarehouseentities.WarehouseGroup{}
+	err = db.Model(&WarehouseGroupPG).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupCode: "PG"}).
+		First(&WarehouseGroupPG).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "warehouse group with code PG is not found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get warehouse group with code pg",
+		}
+	}
+	salesOrderStatusWaitApproved, ApprovalErr := generalserviceapiutils.GetApprovalStatusByCode(utils.ApprovalWaitApproveCode)
+	if ApprovalErr != nil {
+		return false, ApprovalErr
+	}
+	//IF @Vehicle_Brand IN ('NISSAN', 'DATSUN', 'KIA', 'CITROEN') AND @Company_Code <> '3125098'
+	brandNissan, brandNissanErr := salesserviceapiutils.GetUnitBrandByCode("NISSAN")
+	if brandNissanErr != nil {
+		return false, brandNissanErr
+	}
+	brandDatsun, brandDatsunErr := salesserviceapiutils.GetUnitBrandByCode("DATSUN")
+	if brandDatsunErr != nil {
+		return false, brandDatsunErr
+	}
+	brandKIA, brandKIAErr := salesserviceapiutils.GetUnitBrandByCode("KIA")
+	if brandKIAErr != nil {
+		return false, brandKIAErr
+	}
+	brandCitroen, brandCITROENErr := salesserviceapiutils.GetUnitBrandByCode("CITROEN")
+	if brandCITROENErr != nil {
+		return false, brandCITROENErr
+	}
+
+	var cekBrandId []int
+	cekBrandId = append(cekBrandId, brandNissan.BrandId)
+	cekBrandId = append(cekBrandId, brandDatsun.BrandId)
+	cekBrandId = append(cekBrandId, brandKIA.BrandId)
+	cekBrandId = append(cekBrandId, brandCitroen.BrandId)
+
+	if companyCodeNmdi.CompanyId != salesOrderEntities.CompanyID && !utils.NotInList(cekBrandId, salesOrderEntities.BrandID) {
+		//moduleCode := "SP"
+		//ApproveCode := "SO"
+		//SET @Approv_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Doc,'',@Vehicle_Brand,@Cpc_Code,'')
+		fmt.Println(moduleCode, ApproveCode)
+		//EXEC dbo.usp_comApprovalReq_Insert
+		//@Company_Code = @Company_Code ,
+		//@Approval_Code = @Approv_Code ,
+		//@Module_Code = @Module_Code ,
+		//@Src_Doc_Type = @Src_Doc ,
+		//@Src_Sys_No = @So_Sys_No ,
+		//@Src_Doc_No = '' ,
+		//@Src_Doc_Line = 0 ,
+		//@Src_Doc_Date  = @So_Date ,
+		//@Src_Doc_Amount = @Disc ,
+		//@Change_No = 0 ,
+		//@Creation_User_Id = @Change_User_Id ,
+		//@Req_No = @Approval_Req_No OUTPUT
+		ApprovalRequestNumber = 12345678
+		salesOrderEntities.ApprovalRequestNumber = ApprovalRequestNumber
+		salesOrderEntities.SalesOrderStatusID = salesOrderStatusWaitApproved.ApprovalStatusId //wait approved
+		err = db.Save(&salesOrderEntities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to save sales order entities update approval request number",
+			}
+		}
+		//update sales order detail status to
+
+		err = db.Model(&transactionsparepartentities.SalesOrderDetail{}).
+			Update("sales_order_line_status_id", salesOrderStatusWaitApproved.ApprovalStatusId).
+			Where("sales_order_system_number = ?", salesOrderId).
+			Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to save sales order entities update line status",
+			}
+		}
+	} else if companyCodeNmdi.CompanyId == salesOrderEntities.CompanyID &&
+		salesOrderEntities.TransactionTypeID == transactionTypeInternal.TransactionTypeSalesOrderId &&
+		salesOrderEntities.WarehouseGroupID == WarehouseGroupPG.WarehouseGroupId {
+
+		//IF ISNULL((SELECT ATPM_INTERNAL_PURPOSE FROM atSalesOrder0 WHERE SO_SYS_NO = @So_Sys_No),'') = ''
+		if salesOrderEntities.AtpmInternalPurpose == "" {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("please choose ATPM Internal Purpose Event"),
+				Message:    "Please Choose ATPM Internal Purpose Event!",
+			}
+		}
+		ApproveCode = "SOIT"
+		//EXEC dbo.usp_comApprovalReq_Insert
+		//@Company_Code = @Company_Code ,
+		//@Approval_Code = @Approv_Code ,
+		//@Module_Code = @Module_Code ,
+		//@Src_Doc_Type = @Src_Doc ,
+		//@Src_Sys_No = @So_Sys_No ,
+		//@Src_Doc_No = '' ,
+		//@Src_Doc_Line = 0 ,
+		//@Src_Doc_Date  = @So_Date ,
+		//@Src_Doc_Amount = @Disc ,
+		//@Change_No = 0 ,
+		//@Creation_User_Id = @Change_User_Id ,
+		//@Req_No = @Approval_Req_No OUTPUT
+		ApprovalRequestNumber = 123456789
+		salesOrderEntities.SalesOrderStatusID = salesOrderStatusWaitApproved.ApprovalStatusId
+		salesOrderEntities.ApprovalRequestNumber = ApprovalRequestNumber
+		err = db.Save(&salesOrderEntities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed to save sales order entities",
+			}
+		}
+		//NOT YET DEVELOP WAITING FOR APPROVAL REQUEST INSERT
+	} else {
+		if discountApproval != 0 {
+			documentNumberSalesOrder, DocumentNumberError := r.GenerateDocumentNumber(db, salesOrderEntities.SalesOrderSystemNumber)
+			if DocumentNumberError != nil {
+				return false, DocumentNumberError
+			}
+			//SET @So_Status = dbo.getVariableValue('APPROVAL_WAITAPPROVED')
+			//--SET @Approv_Code = dbo.getVariableValue('APV_CODE_SO')
+			//SET @Module_Code = dbo.getVariableValue('MODULE_SP')
+			//SET @Approv_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Doc,'',@Vehicle_Brand,@Cpc_Code,'')
+			ApproveCode = "SO"
+			//waiting for com approval request from general
+			//EXEC dbo.usp_comApprovalReq_Insert
+			ApprovalRequestNumber = 12345
+			salesOrderEntities.SalesOrderStatusID = salesOrderStatusWaitApproved.ApprovalStatusId
+			salesOrderEntities.ApprovalRequestNumber = ApprovalRequestNumber
+			salesOrderEntities.SalesOrderDocumentNumber = documentNumberSalesOrder
+			err = db.Save(&salesOrderEntities).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+					Message:    "failed to save sales order entities",
+				}
+			}
+		} else {
+
+			approvalApproved, approvalApprovedErr := generalserviceapiutils.GetApprovalStatusByCode(utils.ApprovalApprovedCode)
+			if approvalApprovedErr != nil {
+				return false, approvalApprovedErr
+			}
+
+			//-----------
+			//EXEC uspg_gmSrcDoc1_Update
+
+			//-----------------
+			salesOrderEntities.SalesOrderStatusID = approvalApproved.ApprovalStatusId
+			salesOrderEntities.ApprovalRequestNumber = ApprovalRequestNumber
+			err = db.Save(&salesOrderEntities).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+					Message:    "failed to save sales order entities",
+				}
+			}
+		}
+	}
+	return true, nil
+}
+func (r *SalesOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, id int) (string, *exceptions.BaseErrorResponse) {
+	var salesOrder transactionsparepartentities.SalesOrder
+
+	// Get the work order based on the work order system number
+	err := tx.Model(&transactionsparepartentities.SalesOrder{}).Where("sales_order_system_number = ?", id).First(&salesOrder).Error
+	if err != nil {
+
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve sales order from the database: %v", err)}
+	}
+
+	if salesOrder.BrandID == 0 {
+
+		return "", &exceptions.BaseErrorResponse{Message: "brand_id is missing in the sales order. Please ensure the sales order has a valid brand_id before generating document number."}
+	}
+
+	// Get the last work order based on the work order system number
+	var lastWorkOrder transactionsparepartentities.SalesOrder
+	err = tx.Model(&transactionsparepartentities.SalesOrder{}).
+		Where("brand_id = ?", salesOrder.BrandID).
+		Order("sales_order_system_number desc").
+		Limit(1).
+		Scan(&lastWorkOrder).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve last sales order : %v", err)}
+	}
+
+	currentTime := time.Now()
+	month := int(currentTime.Month())
+	year := currentTime.Year() % 100 // Use last two digits of the year
+
+	// fetch data brand from external api
+	brandResponse, brandErr := generalserviceapiutils.GetBrandGenerateDoc(salesOrder.BrandID)
+	if brandErr != nil {
+		return "", &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch brand data from external service",
+			Err:        brandErr.Err,
+		}
+	}
+
+	// Check if BrandCode is not empty before using it
+	if brandResponse.BrandCode == "" {
+		return "", &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Message: "Brand code is empty"}
+	}
+
+	// Get the initial of the brand code
+	brandInitial := brandResponse.BrandCode[0]
+
+	// Handle the case when there is no last work order or the format is invalid
+	newDocumentNumber := fmt.Sprintf("SPSO/%c/%02d/%02d/00001", brandInitial, month, year)
+	if lastWorkOrder.SalesOrderStatusID != 0 {
+		lastWorkOrderDate := lastWorkOrder.SalesOrderDate
+		lastWorkOrderYear := lastWorkOrderDate.Year() % 100
+
+		// Check if the last work order is from the same year
+		if lastWorkOrderYear == year {
+			lastWorkOrderCode := lastWorkOrder.SalesOrderDocumentNumber
+			codeParts := strings.Split(lastWorkOrderCode, "/")
+			if len(codeParts) == 5 {
+				lastWorkOrderNumber, err := strconv.Atoi(codeParts[4])
+				if err == nil {
+					newWorkOrderNumber := lastWorkOrderNumber + 1
+					newDocumentNumber = fmt.Sprintf("SPPR/%c/%02d/%02d/%05d", brandInitial, month, year, newWorkOrderNumber)
+				} else {
+					log.Printf("Failed to parse last work order code: %v", err)
+				}
+			} else {
+				log.Println("Invalid last work order code format")
+			}
+		}
+	}
+
+	log.Printf("New document number: %s", newDocumentNumber)
+	return newDocumentNumber, nil
 }
