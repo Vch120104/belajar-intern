@@ -24,7 +24,7 @@ func StartBomRepositoryImpl() masteritemrepository.BomRepository {
 }
 
 func (r *BomRepositoryImpl) GetBomList(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomListResponse
+	responses := []masteritempayloads.BomListResponse{}
 
 	baseQuery := tx.Table("mtr_bom AS bom").
 		Select(`
@@ -58,16 +58,9 @@ func (r *BomRepositoryImpl) GetBomList(tx *gorm.DB, filterConditions []utils.Fil
 	if err := paginatedQuery.Scan(&responses).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM list",
 			Err:        err,
 		}
-	}
-
-	// If empty, return empty list
-	if len(responses) == 0 {
-		pages.Rows = []masteritementities.MarkupMaster{}
-		pages.TotalRows = 0
-		pages.TotalPages = 0
-		return pages, nil
 	}
 
 	pages.Rows = responses
@@ -122,12 +115,14 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masterit
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
 				Err:        fmt.Errorf("BOM with ID %d not found", id),
 			}
 		}
 		// Jika ada galat lain, kembalikan galat internal server
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM",
 			Err:        err,
 		}
 	}
@@ -139,7 +134,8 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masterit
 
 	if err != nil {
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM",
 			Err:        err,
 		}
 	}
@@ -148,7 +144,7 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masterit
 }
 
 func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailListResponse
+	responses := []masteritempayloads.BomDetailListResponse{}
 
 	baseQuery := tx.Table("mtr_bom_detail AS bom").
 		Select(`
@@ -192,16 +188,9 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages
 	if err := paginatedQuery.Scan(&responses).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        err,
 		}
-	}
-
-	// If id 0, return empty list
-	if len(responses) == 0 {
-		pages.Rows = []masteritementities.MarkupMaster{}
-		pages.TotalRows = 0
-		pages.TotalPages = 0
-		return pages, nil
 	}
 
 	pages.Rows = responses
@@ -209,7 +198,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages
 }
 
 func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effectiveDate time.Time, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailListResponse
+	responses := []masteritempayloads.BomDetailListResponse{}
 
 	baseQuery := tx.Table("mtr_bom_detail AS bom").
 		Select(`
@@ -256,16 +245,9 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effe
 	if err := paginatedQuery.Scan(&responses).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        err,
 		}
-	}
-
-	// If id 0, return empty list
-	if len(responses) == 0 {
-		pages.Rows = []masteritementities.MarkupMaster{}
-		pages.TotalRows = 0
-		pages.TotalPages = 0
-		return pages, nil
 	}
 
 	pages.Rows = responses
@@ -318,12 +300,14 @@ func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, qty float64) (mas
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
 				Err:        fmt.Errorf("BOM with ID %d not found", id),
 			}
 		}
 		// Jika ada galat lain, kembalikan galat internal server
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM",
 			Err:        err,
 		}
 	}
@@ -337,6 +321,7 @@ func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, qty float64) (mas
 	if err != nil {
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM",
 			Err:        err,
 		}
 	}
@@ -355,6 +340,7 @@ func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.
 	if err != nil {
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM",
 			Err:        err,
 		}
 	}
@@ -377,6 +363,7 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 	if errA != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM record",
 			Err:        errA,
 		}
 	}
@@ -385,6 +372,7 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 		if err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    "Error creating BOM",
 				Err:        err,
 			}
 		}
@@ -406,7 +394,7 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 		}
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch BOM Master record",
+			Message:    "Failed to fetch BOM record",
 			Err:        err,
 		}
 	}
@@ -414,7 +402,7 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 }
 
 func (r *BomRepositoryImpl) GetBomDetailTemplate(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomDetailTemplate
+	responses := []masteritempayloads.BomDetailTemplate{}
 
 	baseQuery := tx.Table("mtr_bom_detail AS detail").
 		Select(`
@@ -437,6 +425,7 @@ func (r *BomRepositoryImpl) GetBomDetailTemplate(tx *gorm.DB, filters []utils.Fi
 	if err != nil {
 		return []masteritempayloads.BomDetailTemplate{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        err,
 		}
 	}
@@ -446,12 +435,9 @@ func (r *BomRepositoryImpl) GetBomDetailTemplate(tx *gorm.DB, filters []utils.Fi
 	if err := paginatedQuery.Scan(&responses).Error; err != nil {
 		return []masteritempayloads.BomDetailTemplate{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        err,
 		}
-	}
-
-	if len(responses) == 0 {
-		return []masteritempayloads.BomDetailTemplate{}, nil
 	}
 
 	return responses, nil
@@ -468,6 +454,7 @@ func (*BomRepositoryImpl) GetBomDetailMaxSeq(tx *gorm.DB, id int) (int, *excepti
 	if err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        err,
 		}
 	}
@@ -486,12 +473,14 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	if errC != nil {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        errC,
 		}
 	}
 	if curBomPercentage+request.CostingPercent > 100.0 {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input BOM detail record",
 			Err:        fmt.Errorf("total cost percentage more than 100: %f", curBomPercentage+request.CostingPercent),
 		}
 	}
@@ -503,6 +492,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 		if errB != nil {
 			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    errB.Message,
 				Err:        errB,
 			}
 		}
@@ -521,9 +511,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 		CostingPercentage: request.CostingPercent,
 	}
 
-	/// Check if incoming request is unique
-	doAdd := false
-	// Check if item id the same
+	// Check if incoming request is unique
 	var check int64
 	errA := tx.Model(&masteritementities.BomDetail{}).
 		Where("bom_id = ?", request.BomId).
@@ -532,19 +520,17 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	if errA != nil {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
 			Err:        errA,
 		}
 	}
 	if check == 0 {
-		doAdd = true
-	}
-
-	/// Insert
-	if doAdd {
+		/// Insert
 		err := tx.Create(&newBomDetail).Error
 		if err != nil {
 			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
+				Message:    "Error creating BOM detail",
 				Err:        err,
 			}
 		}
@@ -564,6 +550,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	if err != nil {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM detail",
 			Err:        err,
 		}
 	}
@@ -587,6 +574,7 @@ func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptio
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting BOM detail record",
 			Err:        err,
 		}
 	}

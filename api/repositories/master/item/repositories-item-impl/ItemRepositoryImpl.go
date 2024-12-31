@@ -193,7 +193,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 }
 
 func (r *ItemRepositoryImpl) GetAllItemInventory(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.ItemInventory
+	responses := []masteritempayloads.ItemInventory{}
 
 	baseQuery := tx.Table("mtr_item AS itm").
 		Select(`
@@ -209,7 +209,6 @@ func (r *ItemRepositoryImpl) GetAllItemInventory(tx *gorm.DB, filter []utils.Fil
 		Joins("INNER JOIN mtr_item_class cls on itm.item_class_id = cls.item_class_id").
 		Joins("INNER JOIN mtr_uom uom on itm.unit_of_measurement_stock_id = uom.uom_id").
 		Where("grp.item_group_code = 'IN'")
-		//.Where("itm.item_class_id", [item_class_id])  implied
 
 	baseQuery = utils.ApplyFilter(baseQuery, filter)
 
@@ -218,16 +217,9 @@ func (r *ItemRepositoryImpl) GetAllItemInventory(tx *gorm.DB, filter []utils.Fil
 	if err := paginatedQuery.Scan(&responses).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching item record",
 			Err:        err,
 		}
-	}
-
-	// If empty, return empty list
-	if len(responses) == 0 {
-		pages.Rows = []masteritementities.MarkupMaster{}
-		pages.TotalRows = 0
-		pages.TotalPages = 0
-		return pages, nil
 	}
 
 	pages.Rows = responses
