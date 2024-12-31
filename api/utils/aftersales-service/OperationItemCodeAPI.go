@@ -3,15 +3,17 @@ package aftersalesserviceapiutils
 import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
-	"after-sales/api/utils"
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
+	"time"
 )
 
+// Define response structures for different line types.
 type LineType0Response struct {
 	Description      string  `json:"description"`
 	FRT              float64 `json:"frt"`
@@ -36,214 +38,198 @@ type LineType1Response struct {
 }
 
 type LineType2To9Response struct {
-	AvailableQty   int     `json:"available_qty"`
-	ItemCode       string  `json:"item_code"`
-	ItemID         int     `json:"item_id"`
-	ItemLevel1     int     `json:"item_level_1"`
-	ItemLevel1Code string  `json:"item_level_1_code"`
-	ItemLevel2     *int    `json:"item_level_2"`
-	ItemLevel2Code *string `json:"item_level_2_code"`
-	ItemLevel3     *int    `json:"item_level_3"`
-	ItemLevel3Code *string `json:"item_level_3_code"`
-	ItemLevel4     *int    `json:"item_level_4"`
-	ItemLevel4Code *string `json:"item_level_4_code"`
-	ItemName       string  `json:"item_name"`
+	AvailableQty   int    `json:"available_qty"`
+	ItemCode       string `json:"item_code"`
+	ItemID         int    `json:"item_id"`
+	ItemLevel1     int    `json:"item_level_1"`
+	ItemLevel1Code string `json:"item_level_1_code"`
+	ItemLevel2     int    `json:"item_level_2"`
+	ItemLevel2Code string `json:"item_level_2_code"`
+	ItemLevel3     int    `json:"item_level_3"`
+	ItemLevel3Code string `json:"item_level_3_code"`
+	ItemLevel4     int    `json:"item_level_4"`
+	ItemLevel4Code string `json:"item_level_4_code"`
+	ItemName       string `json:"item_name"`
 }
 
+// General structure for API responses.
 type ApiResponse struct {
-	StatusCode int             `json:"status_code"`
-	Message    string          `json:"message"`
-	Data       json.RawMessage `json:"data"`
+	StatusCode int                    `json:"status_code"`
+	Message    string                 `json:"message"`
+	Data       map[string]interface{} `json:"data"`
 }
 
-// GetOperationItemById fetches the operation item details based on LineTypeId and OperationItemId.
-func GetOperationItemById(LineTypeId int, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse) {
-	// Validate LineTypeId
-	if LineTypeId <= 0 || LineTypeId > 9 {
+// Custom API request handler for getting operation item by ID.
+func GetOperationItemById(LineTypeStr string, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse) {
+	// Validate LineType
+	lineType, err := strconv.Atoi(LineTypeStr)
+	if err != nil || lineType < 0 || lineType > 9 {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid LineTypeId",
-			Err:        errors.New("invalid LineTypeId value"),
+			Message:    "Invalid LineType",
+			Err:        fmt.Errorf("invalid LineType: %s", LineTypeStr),
 		}
 	}
 
-	// Construct the URL for the request
-	url := fmt.Sprintf("%slookup/item-opr-code/%d/by-id/%d", config.EnvConfigs.AfterSalesServiceUrl, LineTypeId, OperationItemId)
-	fmt.Println("Requesting URL:", url)
+	// URL for the request
+	url := fmt.Sprintf("%slookup/item-opr-code/%s/by-id/%d", config.EnvConfigs.AfterSalesServiceUrl, LineTypeStr, OperationItemId)
+	log.Printf("Requesting URL: %s", url)
 
-	// Make the API request using CallAPI utility
-	var body []byte
-	if err := utils.CallAPI("GET", url, nil, &body); err != nil {
-		// Handle errors in the API request
-		status := http.StatusBadGateway
-		message := "Failed to retrieve operation item due to an external service error"
-		if errors.Is(err, utils.ErrServiceUnavailable) {
-			status = http.StatusServiceUnavailable
-			message = "Operation item service is temporarily unavailable"
-		}
-
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: status,
-			Message:    message,
-			Err:        errors.New("error consuming external API while getting operation item by ID"),
-		}
-	}
-
-	// Convert the response body to ApiResponse
-	var apiResponse ApiResponse
-	if err := json.Unmarshal(body, &apiResponse); err != nil {
-		fmt.Println("Error decoding response:", err)
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    fmt.Sprintf("Error decoding response: %v", err),
+			Message:    "Failed to create request",
 			Err:        err,
 		}
 	}
 
-	body, _ = io.ReadAll(bytes.NewBuffer(apiResponse.Data))
-	fmt.Println("Response Body:", string(body))
-	// Check if the response is successful
-	if apiResponse.StatusCode != http.StatusOK || apiResponse.Data == nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: apiResponse.StatusCode,
-			Message:    fmt.Sprintf("Failed to retrieve operation item: %s", apiResponse.Message),
-			Err:        errors.New(apiResponse.Message),
-		}
-	}
-
-	// Select the appropriate struct based on LineTypeId
-	switch LineTypeId {
-	case 1:
-		var response LineType0Response
-		if err := json.Unmarshal(apiResponse.Data, &response); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response for lineType 0: %v", err),
-				Err:        err,
-			}
-		}
-		return response, nil
-
-	case 2:
-		var response LineType1Response
-		if err := json.Unmarshal(apiResponse.Data, &response); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response for lineType 1: %v", err),
-				Err:        err,
-			}
-		}
-		return response, nil
-
-	case 3, 4, 5, 6, 7, 8, 9:
-		var response LineType2To9Response
-		if err := json.Unmarshal(apiResponse.Data, &response); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response for lineType 2-9: %v", err),
-				Err:        err,
-			}
-		}
-		return response, nil
-
-	default:
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid lineTypeId provided",
-			Err:        errors.New("invalid lineTypeId provided"),
-		}
-	}
-}
-
-// ValidateOperationItemId validates if the given OperationItemId matches the expected value for the given LineTypeId.
-func ValidateOperationItemId(lineTypeId, operationItemId int) (*http.Response, *exceptions.BaseErrorResponse) {
-	url := fmt.Sprintf("%slookup/item-opr-code/%d/by-id/%d", config.EnvConfigs.AfterSalesServiceUrl, lineTypeId, operationItemId)
-	fmt.Println("Requesting URL:", url)
-
-	// Make the HTTP GET request
-	resp, err := http.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    fmt.Sprintf("Error calling external service: %v", err),
+			Message:    "Failed to make request",
 			Err:        err,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Log response body for debugging
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Println("Response Body:", string(body))
-	resp.Body = io.NopCloser(bytes.NewBuffer(body))
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Invalid combination of LineType & OperationItemId from external service",
-			Err:        errors.New("invalid combination of LineType & OperationItemId from external service"),
+			StatusCode: resp.StatusCode,
+			Message:    "Failed to get operation item",
+			Err:        errors.New("failed to get operation item"),
 		}
 	}
 
-	// Validate based on LineTypeId
-	switch lineTypeId {
-	case 1:
-		var response LineType0Response
-		if err := json.Unmarshal(body, &response); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
+	var body []byte
+	body, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to read response body",
+			Err:        err,
 		}
-		if response.PackageID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for LineType 0",
-				Err:        errors.New("OperationItemId is invalid for LineType 0"),
-			}
-		}
+	}
 
-	case 2:
-		var response LineType1Response
-		if err := json.Unmarshal(body, &response); err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
-				Err:        err,
-			}
-		}
-		if response.OperationID != operationItemId {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for LineType 1",
-				Err:        errors.New("OperationItemId is invalid for LineType 1"),
-			}
-		}
+	//log.Printf("Raw Response: %s", string(body))
 
-	case 3, 4, 5, 6, 7, 8, 9:
+	var apiResponse ApiResponse
+	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to decode API response",
+			Err:        err,
+		}
+	}
+
+	if apiResponse.StatusCode != http.StatusOK {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: apiResponse.StatusCode,
+			Message:    apiResponse.Message,
+			Err:        errors.New(apiResponse.Message),
+		}
+	}
+
+	// Handle data according to LineType
+	var responseData interface{}
+	switch lineType {
+	case 2, 3, 4, 5, 6, 7, 8, 9:
 		var response LineType2To9Response
-		if err := json.Unmarshal(body, &response); err != nil {
+		if err := mapToStruct(apiResponse.Data, &response); err != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("Error decoding response: %v", err),
+				Message:    "Error unmarshaling 'data' into LineType2To9Response",
 				Err:        err,
 			}
 		}
-		if response.ItemID != operationItemId {
+		responseData = response
+	case 1:
+		var response LineType1Response
+		if err := mapToStruct(apiResponse.Data, &response); err != nil {
 			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "OperationItemId is invalid for LineType 2-9",
-				Err:        errors.New("OperationItemId is invalid for LineType 2-9"),
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error unmarshaling 'data' into LineType1Response",
+				Err:        err,
+			}
+		}
+		responseData = response
+	case 0:
+		var response LineType0Response
+		if err := mapToStruct(apiResponse.Data, &response); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error unmarshaling 'data' into LineType0Response",
+				Err:        err,
+			}
+		}
+		responseData = response
+	default:
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Unknown line type in operation item response",
+			Err:        fmt.Errorf("unexpected line type %d", lineType),
+		}
+	}
+
+	return responseData, nil
+}
+
+// Helper function to map data into the correct struct
+func mapToStruct(data map[string]interface{}, result interface{}) error {
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("error marshaling data: %v", err)
+	}
+
+	if err := json.Unmarshal(dataBytes, result); err != nil {
+		return fmt.Errorf("error unmarshaling into struct: %v", err)
+	}
+	return nil
+}
+
+// aftersalesserviceapiutils/response_utils.go
+func HandleLineTypeResponse(lineTypeCode string, operationItemResponse interface{}) (string, string, *exceptions.BaseErrorResponse) {
+	var OperationItemCode, Description string
+
+	switch lineTypeCode {
+	case "0":
+		if response, ok := operationItemResponse.(LineType0Response); ok {
+			OperationItemCode = response.PackageCode
+			Description = response.PackageName
+		} else {
+			return "", "", &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to decode LineType0 response",
+				Err:        errors.New("failed to decode LineType0 response"),
+			}
+		}
+
+	case "1":
+		if response, ok := operationItemResponse.(LineType1Response); ok {
+			OperationItemCode = response.OperationCode
+			Description = response.OperationName
+		} else {
+			return "", "", &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to decode LineType1 response",
+				Err:        errors.New("failed to decode LineType1 response"),
 			}
 		}
 
 	default:
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid LineType provided",
-			Err:        errors.New("invalid LineType provided"),
+		if response, ok := operationItemResponse.(LineType2To9Response); ok {
+			OperationItemCode = response.ItemCode
+			Description = response.ItemName
+		} else {
+			return "", "", &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to decode LineType2-9 response",
+				Err:        errors.New("failed to decode LineType2-9 response"),
+			}
 		}
 	}
 
-	return resp, nil
+	return OperationItemCode, Description, nil
 }

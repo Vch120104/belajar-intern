@@ -460,8 +460,18 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		}
 
 		for _, detail := range packageDetails {
+			// Get LineType Code
+			lineTypeCode, linetypeErr := generalserviceapiutils.GetLineTypeById(detail.LineTypeId)
+			if linetypeErr != nil {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "error fetching line type code",
+					Err:        linetypeErr.Err, // Fixing the error reference
+				}
+			}
+
 			// Get Item Price Code
-			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, detail.LineTypeCode, req.CompanyId, detail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, lineTypeCode.LineTypeCode, req.CompanyId, detail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
 			if err != nil {
 				return response, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -469,11 +479,12 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 					Err:        err.Err,
 				}
 			}
+
 			if itemPriceCode == 0 {
 				return response, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
 					Message:    "item price code not found",
-					Err:        err,
+					Err:        nil,
 				}
 			}
 		}
@@ -490,8 +501,18 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 			}
 		}
 
+		// get linetype code
+		lineTypeCode, linetypeErr := generalserviceapiutils.GetLineTypeById(packageDetail.LineTypeId)
+		if linetypeErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching line type code",
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		// Get Item Price Code
-		itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, packageDetail.LineTypeCode, req.CompanyId, packageDetail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+		itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, lineTypeCode.LineTypeCode, req.CompanyId, packageDetail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
 		if err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -503,7 +524,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		campaignDetail = masterentities.CampaignMasterDetail{
 			IsActive:        true,
 			CampaignId:      req.CampaignId,
-			LineTypeCode:    packageDetail.LineTypeCode,
+			LineTypeCode:    lineTypeCode.LineTypeCode,
 			ItemOperationId: packageDetail.ItemOperationId,
 			Quantity:        packageDetail.FrtQuantity,
 			ShareBillTo:     "",
@@ -1252,10 +1273,20 @@ func (r *CampaignMasterRepositoryImpl) SelectFromPackageMaster(tx *gorm.DB, id i
 					Err:        err2,
 				}
 			}
+
+			//get linetype code
+			linetypecode, linetypeerr := generalserviceapiutils.GetLineTypeById(pack.LineTypeId)
+			if linetypeerr != nil {
+				return 0, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        linetypeerr,
+				}
+			}
+
 			entity := masterentities.CampaignMasterDetail{
 				IsActive:        pack.IsActive,
 				CampaignId:      idhead,
-				LineTypeCode:    pack.LineTypeCode,
+				LineTypeCode:    linetypecode.LineTypeCode,
 				Quantity:        pack.FrtQuantity,
 				ItemOperationId: pack.ItemOperationId,
 				ShareBillTo:     "",
@@ -1293,10 +1324,20 @@ func (r *CampaignMasterRepositoryImpl) SelectFromPackageMaster(tx *gorm.DB, id i
 					Err:        err,
 				}
 			}
+
+			//get linetype code
+			linetypecode, linetypeerr := generalserviceapiutils.GetLineTypeById(pack.LineTypeId)
+			if linetypeerr != nil {
+				return 0, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        linetypeerr,
+				}
+			}
+
 			entity := masterentities.CampaignMasterDetail{
 				IsActive:        pack.IsActive,
 				CampaignId:      idhead,
-				LineTypeCode:    pack.LineTypeCode,
+				LineTypeCode:    linetypecode.LineTypeCode,
 				Quantity:        pack.FrtQuantity,
 				ItemOperationId: pack.ItemOperationId,
 				ShareBillTo:     "",

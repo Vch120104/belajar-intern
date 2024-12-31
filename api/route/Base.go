@@ -575,7 +575,7 @@ func PurchaseRequestRouter(
 	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequest)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
 	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
-	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
+	router.Get("/item/by-code", PurchaseRequest.GetByCodeItemTypePr)
 
 	//	@Router			/v1/purchase-request/by-code/{company_id}/{item_id} [get]
 	router.Delete("/detail/{purchase_request_detail_system_number}", PurchaseRequest.VoidDetail)
