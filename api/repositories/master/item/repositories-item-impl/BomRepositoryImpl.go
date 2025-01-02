@@ -36,7 +36,7 @@ func (r *BomRepositoryImpl) GetBomList(tx *gorm.DB, filterConditions []utils.Fil
 			uom.uom_code,
 			bom.is_active`).
 		Joins("LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id").
-		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id")
+		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_stock_id = uom.uom_id")
 	/*
 		SELECT
 			bom_id
@@ -48,7 +48,7 @@ func (r *BomRepositoryImpl) GetBomList(tx *gorm.DB, filterConditions []utils.Fil
 			,bom.is_active
 		FROM [dms_microservices_aftersales_dev].[dbo].[mtr_bom] as bom
 		LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id
-		LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id
+		LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_stock_id = uom.uom_id
 	*/
 
 	baseQuery = utils.ApplyFilter(baseQuery, filterConditions)
@@ -161,7 +161,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages
 			bom.remark`).
 		Joins("LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id").
 		Joins("LEFT JOIN mtr_item_class AS class on item.item_class_id = class.item_class_id").
-		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id").
+		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_stock_id = uom.uom_id").
 		Where("bom_id = ?", bomId)
 	/*
 		SELECT
@@ -179,7 +179,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages
 		FROM [dms_microservices_aftersales_dev].[dbo].[mtr_bom_detail] as bom
 		LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id
 		LEFT JOIN mtr_item_type AS itype on item.item_type_id = itype.item_type_id
-		LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id
+		LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_stock_id = uom.uom_id
 		WHERE bom_id = [int]
 	*/
 
@@ -236,7 +236,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effe
 		INNER JOIN mtr_bom AS bom_master ON bom_master.bom_id = bom.bom_id
 		LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id
 		LEFT JOIN mtr_item_class AS class on item.item_class_id = class.item_class_id
-		LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id
+		LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_stock_id = uom.uom_id
 		WHERE item_id = [int] AND effective_date = [datetime]
 	*/
 
@@ -340,7 +340,7 @@ func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.
 	if err != nil {
 		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Error updating BOM",
+			Message:    "Data already exists",
 			Err:        err,
 		}
 	}
