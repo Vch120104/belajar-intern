@@ -204,20 +204,19 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB,
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	entitiesitem := []masterentities.FieldActionEligibleVehicleItem{}
-	entitiesoperation := []masterentities.FieldActionEligibleVehicleOperation{}
-	payloadsoperation := []masterpayloads.FieldActionEligibleVehicleOperation{}
-	payloadsitem := []masterpayloads.FieldActionEligibleVehicleItem{}
-	combinedpayloads := make([]map[string]interface{}, 0)
+func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemOperationDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.FieldActionEligibleVehicleItemOperation{}
+	payloads := []masterpayloads.FieldActionEligibleVehicleItemOperationResp{}
+	// combinedpayloads := make([]map[string]interface{}, 0)
 	// tableStruct := masterpayloads.FieldActionItemDetailResponse{}
 
 	// baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masterentities.FieldActionEligibleVehicle{FieldActionEligibleVehicleSystemNumber: Id})
-	err := tx.Model(&entitiesitem).
-		Where(masterentities.FieldActionEligibleVehicleItem{
+	err := tx.Model(&entities).Select("mtr_field_action_eligible_vehicle_item_operation.*,mtr_item.*,mtr_operation_code.*").
+		Joins("JOIN mtr_mapping_item_operation ON mtr_mapping_item_operation.item_operation_id=mtr_field_action_eligible_vehicle_item_operation.item_operation_id").
+		Where(masterentities.FieldActionEligibleVehicleItemOperation{
 			FieldActionEligibleVehicleSystemNumber: Id,
-		}).Joins("JOIN mtr_item ON mtr_item.item_id=mtr_field_action_eligible_vehicle_item.item_id").Select("mtr_field_action_eligible_vehicle_item.*,mtr_item.*").
-		Scan(&payloadsitem).Error
+		}).
+		Scan(&payloads).Error
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
