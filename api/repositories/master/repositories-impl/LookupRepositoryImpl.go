@@ -4581,3 +4581,33 @@ func (r *LookupRepositoryImpl) GetPartNumberItemImport(tx *gorm.DB, internalCond
 
 	return pages, nil
 }
+
+// usp_comLookUp
+// IF @strEntity = 'LocationItem'
+func (r *LookupRepositoryImpl) LocationItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemLocation{}
+	response := []masterpayloads.LocationItemResponse{}
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			MIN(mwl.warehouse_location_id) warehouse_location_id,
+			mwl.warehouse_location_code,
+			mwl.warehouse_location_name
+		`).
+		Joins("LEFT JOIN mtr_warehouse_location mwl ON mwl.warehouse_id = mtr_location_item.warehouse_id AND mwl.warehouse_location_id = mtr_location_item.warehouse_location_id").
+		Where("is_active = ?", true)
+	whereCondition := utils.ApplyFilter(baseModelQuery, filterCondition).Group("mwl.warehouse_location_id, mwl.warehouse_location_code, mwl.warehouse_location_name")
+	err := whereCondition.Scopes(pagination.Paginate(&pages, baseModelQuery)).Order("mwl.warehouse_location_id").Scan(&response).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching lookup data 'LocationItem'",
+			Err:        err,
+		}
+	}
+
+	pages.Rows = response
+
+	return pages, nil
+}

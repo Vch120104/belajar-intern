@@ -41,6 +41,7 @@ type LookupController interface {
 	ItemDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request)
+	LocationItem(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -1001,4 +1002,30 @@ func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWrite
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	filterCondition := map[string]string{}
+
+	criteria := utils.BuildFilterCondition(filterCondition)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	item, baseErr := r.LookupService.LocationItem(criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+
 }

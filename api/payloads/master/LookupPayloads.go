@@ -109,3 +109,9 @@ type ItemImportSupplierResponse struct {
 	SupplierCode string `json:"supplier_code"`
 	SupplierName string `json:"supplier_name"`
 }
+
+type LocationItemResponse struct {
+	WarehouseLocationId   int    `json:"warehouse_location_id"`
+	WarehouseLocationCode string `json:"warehouse_location_code"`
+	WarehouseLocationName string `json:"warehouse_location_name"`
+}
