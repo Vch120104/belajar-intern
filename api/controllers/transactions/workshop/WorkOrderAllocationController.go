@@ -225,8 +225,10 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnician(writer http.Respo
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"service_date": queryValues.Get("service_date"),
-		"foreman_id":   queryValues.Get("foreman_id"),
+		"technician_id": queryValues.Get("technician_id"),
+		"company_id":    queryValues.Get("company_id"),
+		"service_date":  queryValues.Get("service_date"),
+		"foreman_id":    queryValues.Get("foreman_id"),
 	}
 
 	paginate := pagination.Pagination{
