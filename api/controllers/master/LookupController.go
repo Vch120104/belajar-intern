@@ -42,6 +42,7 @@ type LookupController interface {
 	ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request)
 	LocationItem(writer http.ResponseWriter, request *http.Request)
+	ItemLocUOM(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -1028,4 +1029,42 @@ func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request 
 	}
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 
+}
+
+func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	filterCondition := map[string]string{
+		"company_id":         queryValues.Get("company_id"),
+		"mi.item_id":         queryValues.Get("item_id"),
+		"mi.item_code":       queryValues.Get("item_code"),
+		"mi.item_name":       queryValues.Get("item_name"),
+		"mu.uom_code":        queryValues.Get("uom_code"),
+		"quantity_available": queryValues.Get("quantity_available"),
+		"mi.is_active":       queryValues.Get("is_active"),
+	}
+
+	if filterCondition["company_id"] == "" {
+		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	criteria := utils.BuildFilterCondition(filterCondition)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	item, baseErr := r.LookupService.ItemLocUOM(criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
