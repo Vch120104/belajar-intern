@@ -681,7 +681,7 @@ func (s *BomServiceImpl) ProcessDataUpload(request masteritempayloads.BomDetailU
 			BomId:            header[key].BomId,
 			Seq:              bomDetail.BomDetailSeq,
 			ItemId:           itemQuery.ItemId,
-			Qty:              bomDetail.Qty,
+			Qty:              bomDetail.BomDetailQty,
 			Remark:           bomDetail.BomDetailRemark,
 			CostingPercent:   bomDetail.BomDetailCostingPercentage,
 			BomQty:           header[key].Qty,
