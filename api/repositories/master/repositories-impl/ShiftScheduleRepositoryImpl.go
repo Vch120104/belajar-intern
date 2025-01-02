@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -21,29 +20,24 @@ func StartShiftScheduleRepositoryImpl() masterrepository.ShiftScheduleRepository
 }
 
 func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	entities := []masterentities.ShiftSchedule{}
-	//define base model
 	baseModelQuery := tx.Model(&entities)
-	//apply where query
+
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
-	if len(entities) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.ShiftSchedule{}
+		return pages, nil
+	}
 
 	pages.Rows = entities
 
@@ -205,21 +199,23 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 	return true, nil
 }
 
+// USPG_AMSHIFTSCH_SELECT
+// IF @Option = 6
 func (r *ShiftScheduleRepositoryImpl) GetShiftScheduleDropDown(tx *gorm.DB) ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse) {
-	entities := []masterentities.ShiftSchedule{}
+	entities := masterentities.ShiftSchedule{}
 	response := []masterpayloads.ShiftScheduleDropDownResponse{}
-	if err := tx.Model(entities).Scan(&response).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+
+	err := tx.Model(&entities).
+		Select("MAX(shift_schedule_id) shift_schedule_id, shift_group, is_active").
+		Group("shift_group, is_active").
+		Order("shift_schedule_id ASC").Scan(&response).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching shift schedule dropdown",
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
-		}
-	}
 	return response, nil
 }

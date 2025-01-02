@@ -63,18 +63,23 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.CarWashService.GetAll(criteria, paginate)
+	result, err := r.CarWashService.GetAll(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, request *http.Request) {
@@ -144,14 +149,21 @@ func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query()
 
 	companyId, strConvError := strconv.Atoi(queryValues.Get("company_id"))
+	carWashStatusId, strConvErrorCarWashStatus := strconv.Atoi(queryValues.Get("car_wash_status_id"))
 	if strConvError != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        strConvError,
 		})
 	}
+	if strConvErrorCarWashStatus != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        strConvError,
+		})
+	}
 
-	data, err := r.CarWashService.GetAllCarWashScreen(companyId)
+	data, err := r.CarWashService.GetAllCarWashScreen(companyId, carWashStatusId)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

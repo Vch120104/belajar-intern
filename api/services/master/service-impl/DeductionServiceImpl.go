@@ -3,7 +3,8 @@ package masterserviceimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
+	"fmt"
+	"net/http"
 
 	// "after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -13,6 +14,7 @@ import (
 	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -34,13 +36,34 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, dbErr := s.deductionrepo.GetAllDeduction(tx, filterCondition, pages)
 	if dbErr != nil {
 		// Handle error from the database operation
 		return pagination.Pagination{}, dbErr
 	}
 
-	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
 
@@ -48,20 +71,63 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, dbErr := s.deductionrepo.GetByIdDeductionDetail(tx, Id)
 	if dbErr != nil {
 		// Handle error
 		return result, dbErr // Return the existing BaseErrorResponse
 	}
 
-	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
 
 func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (masterentities.DeductionList, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.deductionrepo.SaveDeductionList(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -70,8 +136,30 @@ func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionLis
 
 func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse, id int) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.deductionrepo.SaveDeductionDetail(tx, req, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return result, err
 	}
@@ -82,8 +170,30 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagi
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, dbErr := s.deductionrepo.GetDeductionById(tx, Id, paginate)
-	defer helper.CommitOrRollback(tx, dbErr)
+
 	if dbErr != nil {
 		// Handle error
 		return masterpayloads.DeductionById{}, dbErr
@@ -93,8 +203,29 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagi
 
 func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	detail_result, detail_err := s.deductionrepo.GetAllDeductionDetail(tx, pages, Id)
-	defer helper.CommitOrRollback(tx, detail_err)
 
 	if detail_err != nil {
 		return detail_result, detail_err
@@ -104,9 +235,30 @@ func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pa
 
 func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 
 	results, err := s.deductionrepo.ChangeStatusDeduction(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +267,30 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interfa
 
 func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.DeductionDetailUpdate) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	result, err := s.deductionrepo.UpdateDeductionDetail(tx, id, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return masterentities.DeductionDetail{}, err
 	}

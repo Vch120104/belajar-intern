@@ -341,149 +341,93 @@ func (r *SupplySlipRepositoryImpl) SaveSupplySlipDetail(tx *gorm.DB, request tra
 	return entities, nil
 }
 
-func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionsparepartpayloads.SupplySlipSearchResponse
-	var getSupplyTypeResponse transactionsparepartpayloads.SupplyTypeResponse
-	var getSupplyTypeAllResponse []transactionsparepartpayloads.SupplyTypeResponse
-	var getApprovalStatusResponse transactionsparepartpayloads.ApprovalStatusResponse
-	var getApprovalStatusAllResponse []transactionsparepartpayloads.ApprovalStatusResponse
 
-	supplyTypeId := ""
-	approvalStatusId := ""
+	baseModelQuery := tx.Model(&transactionsparepartentities.SupplySlip{}).
+		Select(`
+			trx_supply_slip.supply_system_number,
+			trx_supply_slip.supply_document_number,
+			trx_supply_slip.supply_status_id,
+			trx_supply_slip.supply_date,
+			trx_supply_slip.supply_type_id,
+			trx_supply_slip.company_id,
+			trx_supply_slip.work_order_system_number,
+			trx_supply_slip.technician_id,
+			trx_supply_slip.campaign_id,
+			trx_supply_slip.remark,
+			trx_work_order.customer_id
+		`).
+		Joins("LEFT JOIN trx_work_order ON trx_supply_slip.work_order_system_number = trx_work_order.work_order_system_number")
 
-	// apply external services filter
+	whereQuery := utils.ApplyFilter(baseModelQuery, internalFilter)
 
-	for i := 0; i < len(externalFilter); i++ {
-		if strings.Contains(externalFilter[i].ColumnField, "supply_type_id") {
-			supplyTypeId = externalFilter[i].ColumnValue
-		} else if strings.Contains(externalFilter[i].ColumnField, "approval_status_id") {
-			approvalStatusId = externalFilter[i].ColumnValue
-		}
-	}
-
-	// define table struct
-	tableStruct := transactionsparepartpayloads.SupplySlipSearchResponse{}
-	//define join table
-	joinTable := utils.CreateJoinSelectStatementTransaction(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilterSearch(joinTable, internalFilter)
-
-	// Execute the query
-	rows, err := whereQuery.Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
-	// Scan the results into the responses slice
-	for rows.Next() {
-		var response transactionsparepartpayloads.SupplySlipSearchResponse
-		if err := rows.Scan(&response.SupplySystemNumber, &response.SupplyDocumentNumber, &response.SupplyDate, &response.SupplyTypeId, &response.WorkOrderSystemNumber, &response.WorkOrderDocumentNumber, &response.CustomerId, &response.SupplyStatusId); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		responses = append(responses, response)
-	}
-
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	var supplyTypeId, approvalStatusId string
+	for _, filter := range externalFilter {
+		if strings.Contains(filter.ColumnField, "supply_type_id") {
+			supplyTypeId = filter.ColumnValue
+		} else if strings.Contains(filter.ColumnField, "approval_status_id") {
+			approvalStatusId = filter.ColumnValue
 		}
 	}
 
-	var joinedData1 []map[string]interface{}
-
-	// Fetch supply type data
+	var supplyTypeResponses []transactionsparepartpayloads.SupplyTypeResponse
+	supplyTypeUrl := config.EnvConfigs.GeneralServiceUrl + "supply-type"
 	if supplyTypeId != "" {
-		supplyTypeUrl := config.EnvConfigs.GeneralServiceUrl + "supply-type/" + supplyTypeId
-		errUrlSupplyType := utils.Get(supplyTypeUrl, &getSupplyTypeResponse, nil)
-		if errUrlSupplyType != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlSupplyType,
-			}
-		}
-		// Perform inner join with supply type data
-		joinedData1, err = utils.DataFrameInnerJoin(responses, []transactionsparepartpayloads.SupplyTypeResponse{getSupplyTypeResponse}, "SupplyTypeId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-	} else {
-		supplyTypeUrl := config.EnvConfigs.GeneralServiceUrl + "supply-type"
-		errUrlSupplyType := utils.Get(supplyTypeUrl, &getSupplyTypeAllResponse, nil)
-		if errUrlSupplyType != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlSupplyType,
-			}
-		}
-		// Perform inner join with supply type data
-		joinedData1, err = utils.DataFrameInnerJoin(responses, getSupplyTypeAllResponse, "SupplyTypeId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		supplyTypeUrl += "/" + supplyTypeId
+	}
+	errSupplyType := utils.Get(supplyTypeUrl, &supplyTypeResponses, nil)
+	if errSupplyType != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errSupplyType,
 		}
 	}
 
-	var joinedData2 []map[string]interface{}
+	joinedData1, err := utils.DataFrameInnerJoin(responses, supplyTypeResponses, "SupplyTypeId")
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-	// Fetch approval status data
+	var approvalStatusResponses []transactionsparepartpayloads.ApprovalStatusResponse
+	approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status"
 	if approvalStatusId != "" {
-		approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status/" + approvalStatusId
-		errUrlapprovalStatus := utils.Get(approvalStatusUrl, &getApprovalStatusResponse, nil)
-		if errUrlapprovalStatus != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlapprovalStatus,
-			}
-		}
-		// Perform inner join with supply type data
-		joinedData2, err = utils.DataFrameInnerJoin(joinedData1, []transactionsparepartpayloads.ApprovalStatusResponse{getApprovalStatusResponse}, "SupplyStatusId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-	} else {
-		approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status"
-		errUrlapprovalStatus := utils.Get(approvalStatusUrl, &getApprovalStatusAllResponse, nil)
-		if errUrlapprovalStatus != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlapprovalStatus,
-			}
-		}
-		// Perform inner join with supply type data
-		joinedData2, err = utils.DataFrameInnerJoin(joinedData1, getApprovalStatusAllResponse, "SupplyStatusId")
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		approvalStatusUrl += "/" + approvalStatusId
+	}
+	errApprovalStatus := utils.Get(approvalStatusUrl, &approvalStatusResponses, nil)
+	if errApprovalStatus != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errApprovalStatus,
 		}
 	}
 
-	// Paginate the joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+	finalData, err := utils.DataFrameInnerJoin(joinedData1, approvalStatusResponses, "SupplyStatusId")
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = finalData
+	return pages, nil
 }
 
 func (r *SupplySlipRepositoryImpl) UpdateSupplySlip(tx *gorm.DB, req transactionsparepartentities.SupplySlip, id int) (transactionsparepartentities.SupplySlip, *exceptions.BaseErrorResponse) {
@@ -618,7 +562,7 @@ func (r *SupplySlipRepositoryImpl) SubmitSupplySlip(tx *gorm.DB, supplySlipId in
 		if genErr != nil {
 			return false, "", genErr
 		}
-		//newDocumentNumber 
+		//newDocumentNumber
 
 		entity.SupplyDocumentNumber = newDocumentNumber
 

@@ -1,4 +1,4 @@
-package generalserviceapiutils
+package aftersalesserviceapiutils
 
 import (
 	"after-sales/api/config"
@@ -16,7 +16,20 @@ type ItemGroupResponse struct {
 
 func GetItemGroupById(itemGroupId int) (ItemGroupResponse, *exceptions.BaseErrorResponse) {
 	var ItemGroup ItemGroupResponse
-	ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(itemGroupId)
+	ItemGroupURL := config.EnvConfigs.AfterSalesServiceUrl + "item-group/" + strconv.Itoa(itemGroupId)
+	if err := utils.CallAPI("GET", ItemGroupURL, nil, &ItemGroup); err != nil {
+		return ItemGroup, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item Group data from external service",
+			Err:        err,
+		}
+	}
+	return ItemGroup, nil
+}
+
+func GetItemGroupByCode(itemGroupCode string) (ItemGroupResponse, *exceptions.BaseErrorResponse) {
+	var ItemGroup ItemGroupResponse
+	ItemGroupURL := config.EnvConfigs.AfterSalesServiceUrl + "item-group/code/" + itemGroupCode
 	if err := utils.CallAPI("GET", ItemGroupURL, nil, &ItemGroup); err != nil {
 		return ItemGroup, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

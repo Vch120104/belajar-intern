@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -183,4 +184,21 @@ func NotInSlice(item string, slice []string) bool {
 		}
 	}
 	return true
+}
+func NotInList(list []int, value int) bool {
+	for _, v := range list {
+		if v == value {
+			return false
+		}
+	}
+	return true
+}
+
+// IntSliceToSQLString mengubah []int menjadi string untuk SQL IN clause
+func IntSliceToSQLString(slice []int) string {
+	strValues := make([]string, len(slice))
+	for i, val := range slice {
+		strValues[i] = fmt.Sprintf("%d", val)
+	}
+	return strings.Join(strValues, ",")
 }

@@ -11,8 +11,8 @@ import (
 )
 
 type PackageMasterRepository interface {
-	GetAllPackageMaster(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAllPackageMasterDetail(*gorm.DB, int, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllPackageMaster(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllPackageMasterDetail(*gorm.DB, int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPackageMaster(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByIdPackageMasterDetail(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByCodePackageMaster(*gorm.DB, string) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
@@ -22,4 +22,6 @@ type PackageMasterRepository interface {
 	DeactivateMultiIdPackageMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	ActivateMultiIdPackageMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	CopyToOtherModel(*gorm.DB, int, string, int) (int, *exceptions.BaseErrorResponse)
+	GetPackageLatestId(tx *gorm.DB) (masterpayloads.LatestPackageAndLineTypeResponse, *exceptions.BaseErrorResponse)
+	SavePackageToMappingItemOperation(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 }

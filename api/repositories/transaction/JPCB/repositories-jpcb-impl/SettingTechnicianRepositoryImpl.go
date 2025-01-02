@@ -1,16 +1,15 @@
 package transactionjpcbrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -34,8 +33,8 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnician(tx *gorm.DB, f
 	}
 
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -75,7 +74,7 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 			trx_setting_technician_detail.is_booking`).
 		Joins("INNER JOIN mtr_shift_schedule mss ON mss.shift_schedule_id = trx_setting_technician_detail.shift_group_id")
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -84,45 +83,29 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 		}
 	}
 
-	userEmployeeId := []int{}
+	mapResponses := []transactionjpcbpayloads.SettingTechnicianGetAllDetailResponse{}
 	for _, result := range responses {
-		userEmployeeId = append(userEmployeeId, result.TechnicianEmployeeNumberId)
-	}
-	userEmployeeId = utils.RemoveDuplicateIds(userEmployeeId)
-
-	employeeResponse := []transactionjpcbpayloads.SettingTechnicianEmployeeResponse{}
-	for _, Id := range userEmployeeId {
-		employeeURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(Id)
-		employeePayloads := transactionjpcbpayloads.SettingTechnicianEmployeeResponse{}
-		if err := utils.Get(employeeURL, &employeePayloads, nil); err != nil {
+		employeePayloads, employeeError := generalserviceapiutils.GetUserDetailsByID(result.TechnicianEmployeeNumberId)
+		if employeeError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
+
 		if employeePayloads.UserEmployeeId == 0 {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errors.New("employee data not found"),
 			}
 		}
-		employeeResponse = append(employeeResponse, employeePayloads)
-	}
 
-	mapResponses := []transactionjpcbpayloads.SettingTechnicianGetAllDetailResponse{}
-	for _, result := range responses {
-		employeeName := ""
-		for _, employee := range employeeResponse {
-			if result.TechnicianEmployeeNumberId == employee.UserEmployeeId {
-				employeeName = employee.EmployeeName
-			}
-		}
 		responsePayloads := transactionjpcbpayloads.SettingTechnicianGetAllDetailResponse{
 			SettingTechnicianDetailSystemNumber: result.SettingTechnicianDetailSystemNumber,
 			SettingTechnicianSystemNumber:       result.SettingTechnicianSystemNumber,
 			TechnicianNumber:                    result.TechnicianNumber,
 			UserEmployeeId:                      result.TechnicianEmployeeNumberId,
-			EmployeeName:                        employeeName,
+			EmployeeName:                        employeePayloads.EmployeeName,
 			GroupExpress:                        result.GroupExpress,
 			ShiftGroupId:                        result.ShiftGroupId,
 			ShiftGroup:                          result.ShiftGroup,
@@ -240,15 +223,15 @@ func (r *SettingTechnicianRepositoryImpl) SaveSettingTechnicianDetail(tx *gorm.D
 	}
 	responses := transactionjpcbpayloads.SettingTechnicianDetailGetByIdResponse{}
 
-	employeeURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entities.TechnicianEmployeeNumberId)
-	employeePayloads := transactionjpcbpayloads.SettingTechnicianEmployeeResponse{}
-	if err := utils.Get(employeeURL, &employeePayloads, nil); err != nil {
+	employeeResponse, employeeError := generalserviceapiutils.GetUserDetailsByID(entities.TechnicianEmployeeNumberId)
+	if employeeError != nil {
 		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Message:    "Error fetching user detail data",
+			Err:        employeeError,
 		}
 	}
-	if employeePayloads.UserEmployeeId == 0 {
+	if employeeResponse.UserEmployeeId == 0 {
 		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("employee data not found"),
@@ -265,6 +248,7 @@ func (r *SettingTechnicianRepositoryImpl) SaveSettingTechnicianDetail(tx *gorm.D
 	}
 
 	responses.SettingTechnicianDetailSystemNumber = entities.SettingTechnicianDetailSystemNumber
+	responses.TechnicianEmployeeNumberId = entities.TechnicianEmployeeNumberId
 	responses.ShiftGroupId = entities.ShiftGroupId
 	responses.TechnicianNumber = entities.TechnicianNumber
 	responses.IsBooking = entities.IsBooking

@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,15 +24,17 @@ type FilterCondition struct {
 //
 // Example Usage:
 //
-//	type FilterCondition struct {
-//	    ColumnField string // e.g., "name", "is_active"
-//	    ColumnValue string // e.g., "John", "true"
-//	}
-//	criteria := []FilterCondition{
-//	    {ColumnField: "name", ColumnValue: "John"},
-//	    {ColumnField: "is_active", ColumnValue: "true"},
-//	}
-//	query := ApplyFilter(db, criteria)
+//		type FilterCondition struct {
+//		    ColumnField string // e.g., "name", "is_active"
+//		    ColumnValue string // e.g., "John", "true"
+//		}
+//		criteria := []FilterCondition{
+//		   {ColumnField: "name", ColumnValue: "John"},
+//	   	   {ColumnField: "is_active", ColumnValue: "true"},
+//	       {ColumnField: "created_at_from", ColumnValue: "2024-01-01"},
+//	       {ColumnField: "id#multiple", ColumnValue: "1,2,3"},
+//		}
+//		query := ApplyFilter(db, criteria)
 //
 // Notes:
 //   - The function takes a GORM database query and a slice of filter criteria as input.
@@ -42,37 +44,54 @@ type FilterCondition struct {
 //   - The modified GORM database query is then returned as the result.
 func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	var queryWhere []string
-	var columnValue, columnName []string
-	var condition string
 
 	for _, c := range criteria {
-		columnValue, columnName = append(columnValue, c.ColumnValue), append(columnName, c.ColumnField)
-	}
-
-	for i := 0; i < len(columnValue); i++ {
-
-		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
-			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
-			columnValue[i] = n[columnValue[i]]
+		if c.ColumnValue == "" {
+			continue
 		}
-		if strings.Contains(columnName[i], "id") {
-			if strings.Contains(columnName[i], "#multiple") {
-				//SCENARIO FILTER FOR MULTIPLE ID
-				s := strings.Split(columnName[i], " ")
-				condition = s[0] + fmt.Sprintf(" IN (%s)", columnValue[i])
-			} else {
-				condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
+
+		column := c.ColumnField
+		value := c.ColumnValue
+		var condition string
+
+		if strings.ToLower(value) == "true" || strings.ToLower(value) == "false" {
+			// Handle boolean values
+			boolMap := map[string]string{"true": "1", "false": "0"}
+			condition = column + " = " + boolMap[strings.ToLower(value)]
+		} else if strings.HasSuffix(column, "_id") {
+			// Handle exact match for _id suffix
+			condition = column + " = '" + value + "'"
+		} else if strings.HasSuffix(column, "_from") {
+			// Handle range filter (>=)
+			key := strings.TrimSuffix(column, "_from")
+			condition = key + " >= '" + value + "'"
+		} else if strings.HasSuffix(column, "_to") {
+			// Handle range filter (<=)
+			key := strings.TrimSuffix(column, "_to")
+			condition = key + " <= '" + value + "'"
+		} else if strings.Contains(column, "date") {
+			// Handle exact date match
+			parsedDate, err := time.Parse("2006-01-02", value)
+			if err == nil {
+				condition = column + " = '" + parsedDate.Format("2006-01-02") + "'"
 			}
-		} else if strings.Contains(columnName[i], "date") {
-			condition = "CAST(" + columnName[i] + " AS DATETIME)" + " LIKE " + "'%" + columnValue[i] + "%'"
+		} else if strings.HasSuffix(column, "#multiple") {
+			// Handle IN condition
+			key := strings.TrimSuffix(column, "#multiple")
+			values := strings.Split(value, ",")
+			quotedValues := "'" + strings.Join(values, "','") + "'"
+			condition = key + " IN (" + quotedValues + ")"
 		} else {
-			condition = columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
+			// Default to LIKE condition
+			condition = column + " LIKE '%" + value + "%'"
 		}
-		queryWhere = append(queryWhere, condition)
-	}
-	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
 
-	return queryFinal
+		if condition != "" {
+			queryWhere = append(queryWhere, condition)
+		}
+	}
+
+	return db.Where(strings.Join(queryWhere, " AND "))
 }
 
 // DefineInternalExternalFilter categorizes filter conditions into internal and external filters based on the provided table structure.
@@ -103,76 +122,16 @@ func DefineInternalExternalFilter(filterCondition []FilterCondition, tableStruct
 	return internalFilter, externalFilter
 }
 
-func ApplyFilterExact(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
-	var queryWhere []string
-	var columnValue, columnName []string
-
-	for _, c := range criteria {
-		columnValue, columnName = append(columnValue, c.ColumnValue), append(columnName, c.ColumnField)
-	}
-
-	for i := 0; i < len(columnValue); i++ {
-
-		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
-			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
-			columnValue[i] = n[columnValue[i]]
-		} else if strings.Contains(columnName[i], "date") {
-			columnName[i] = "CAST(" + columnName[i] + " AS DATE)"
-		}
-
-		condition := columnName[i] + " LIKE '" + columnValue[i] + "'"
-		queryWhere = append(queryWhere, condition)
-	}
-	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
-
-	return queryFinal
-}
-
-// ApplyFilterForDB applies WHERE conditions based on a set of filter criteria to a GORM database query.
-//
-// Parameters:
-//   - db: A pointer to a GORM database query to which the WHERE conditions will be applied.
-//   - criteria: A slice of FilterCondition representing the filter criteria to be applied.
-//
-// Returns:
-//   - result: A modified GORM database query with WHERE conditions based on the provided filter criteria.
-func ApplyFilterForDB(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
-	for _, c := range criteria {
-		db = db.Where(c.ColumnField, c.ColumnValue)
-	}
-	return db
-}
-
-func ApplyFilterSearch(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
-	var queryWhere []string
-	var columnValue, columnName []string
-	var condition string
-	var key string
-
-	for _, c := range criteria {
-		columnValue, columnName = append(columnValue, c.ColumnValue), append(columnName, c.ColumnField)
-	}
-
-	for i := 0; i < len(columnValue); i++ {
-
-		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
-			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
-			columnValue[i] = n[columnValue[i]]
-		}
-		if strings.Contains(columnName[i], "id") {
-			condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
-		} else if strings.Contains(columnName[i], "date_from") {
-			key = strings.Split(columnName[i], "_from")[0]
-			condition = key + " >= " + "'" + columnValue[i] + "'"
-		} else if strings.Contains(columnName[i], "date_to") {
-			key = strings.Split(columnName[i], "_to")[0]
-			condition = key + " <= " + "'" + columnValue[i] + "'"
-		} else {
-			condition = columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
-		}
-		queryWhere = append(queryWhere, condition)
-	}
-	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
-
-	return queryFinal
-}
+// func ApplyBrandModelVehicleFilters(db *gorm.DB, filters []FilterCondition) *gorm.DB {
+// 	for _, filter := range filters {
+// 		switch filter.ColumnField {
+// 		case "brand_id":
+// 			db = db.Where("omm.brand_id = ?", filter.ColumnValue)
+// 		case "model_id":
+// 			db = db.Where("omm.model_id = ?", filter.ColumnValue)
+// 		case "variant_id":
+// 			db = db.Where("ofrt.variant_id = ?", filter.ColumnValue)
+// 		}
+// 	}
+// 	return db
+// }

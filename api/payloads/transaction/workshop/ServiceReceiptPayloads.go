@@ -15,7 +15,6 @@ type ServiceReceiptNew struct {
 	BookingSystemNumber          int       `json:"booking_system_number" parent_entity:"trx_service_request" `
 	EstimationSystemNumber       int       `json:"estimation_system_number" parent_entity:"trx_service_request" `
 	WorkOrderSystemNumber        int       `json:"work_order_system_number" parent_entity:"trx_service_request" `
-	ReferenceDocSystemNumber     int       `json:"reference_doc_system_number" parent_entity:"trx_service_request" `
 	ProfitCenterId               int       `json:"profit_center_id" parent_entity:"trx_service_request" `
 	CompanyId                    int       `json:"company_id" parent_entity:"trx_service_request" `
 	DealerRepresentativeId       int       `json:"dealer_representative_id" parent_entity:"trx_service_request" `
@@ -117,7 +116,7 @@ type ServiceReceiptResponse struct {
 	ModelId                      int                           `json:"model_id"`
 	ModelName                    string                        `json:"model_name"`
 	VariantId                    int                           `json:"variant_id"`
-	VariantName                  string                        `json:"variant_name"`
+	VariantDescription           string                        `json:"variant_description"`
 	VariantColourName            string                        `json:"variant_colour_name"`
 	VehicleId                    int                           `json:"vehicle_id"`
 	VehicleCode                  string                        `json:"vehicle_chassis_number"`
@@ -126,7 +125,7 @@ type ServiceReceiptResponse struct {
 	EstimationSystemNumber       int                           `json:"estimation_system_number"`
 	WorkOrderSystemNumber        int                           `json:"work_order_system_number"`
 	WorkOrderDocumentNumber      string                        `json:"work_order_document_number"`
-	ReferenceDocSystemNumber     int                           `json:"reference_doc_system_number"`
+	ReferenceSystemNumber        int                           `json:"reference_system_number"`
 	ProfitCenterId               int                           `json:"profit_center_id"`
 	ProfitCenterName             string                        `json:"profit_center_name"`
 	CompanyId                    int                           `json:"company_id"`

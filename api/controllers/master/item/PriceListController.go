@@ -32,6 +32,7 @@ type PriceListController interface {
 	ActivatePriceList(writer http.ResponseWriter, request *http.Request)
 	DeactivatePriceList(writer http.ResponseWriter, request *http.Request)
 	GetPriceListById(writer http.ResponseWriter, request *http.Request)
+	GetPriceListByCodeId(writer http.ResponseWriter, request *http.Request)
 	GenerateDownloadTemplateFile(writer http.ResponseWriter, request *http.Request)
 	UploadFile(writer http.ResponseWriter, request *http.Request)
 	CheckPriceListItem(writer http.ResponseWriter, request *http.Request)
@@ -438,14 +439,23 @@ func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
+	result, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, request *http.Request) {
@@ -476,4 +486,22 @@ func (r *PriceListControllerImpl) DeletePriceList(writer http.ResponseWriter, re
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Delete data successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) GetPriceListByCodeId(writer http.ResponseWriter, request *http.Request) {
+	priceListCodeId := chi.URLParam(request, "price_list_code_id")
+	if priceListCodeId == "" {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("price_list_code_id parameter is required"),
+		})
+		return
+	}
+
+	response, err := r.pricelistservice.GetPriceListByCodeId(priceListCodeId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Get data successfully!", http.StatusOK)
 }

@@ -11,6 +11,7 @@ import (
 	"after-sales/api/validation"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -86,7 +87,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(writer http.ResponseWriter, request *http.Request) {
@@ -208,16 +209,24 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 }
 
 func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.ResponseWriter, request *http.Request) {
-	campaignCode := chi.URLParam(request, "campaign_code")
-	if campaignCode == "" {
-		payloads.NewHandleError(writer, "campaign_code cannot be empty", http.StatusNotFound)
+
+	encodedcampaignCode := chi.URLParam(request, "*")
+
+	if len(encodedcampaignCode) > 0 && encodedcampaignCode[0] == '/' {
+		encodedcampaignCode = encodedcampaignCode[1:]
+	}
+
+	campaignCode, err := url.PathUnescape(encodedcampaignCode)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed to decode campaign code")})
 		return
 	}
 
-	result, err := r.CampaignMasterService.GetByCodeCampaignMaster(campaignCode)
-
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	result, baseErr := r.CampaignMasterService.GetByCodeCampaignMaster(campaignCode)
+	if baseErr != nil {
+		helper.ReturnError(writer, request, baseErr)
 		return
 	}
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
@@ -228,12 +237,16 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 
 	queryParams := map[string]string{
 		"is_active":            queryValues.Get("is_active"),
+		"brand_id":             queryValues.Get("brand_id"),
+		"campaign_id":          queryValues.Get("campaign_id"),
 		"campaign_code":        queryValues.Get("campaign_code"),
 		"campaign_name":        queryValues.Get("campaign_name"),
+		"model_id":             queryValues.Get("model_id"),
 		"model_code":           queryValues.Get("model_code"),
 		"model_description":    queryValues.Get("model_description"),
 		"campaign_period_from": queryValues.Get("campaign_period_from"),
 		"campaign_period_to":   queryValues.Get("campaign_period_to"),
+		"company_id":           queryValues.Get("company_id"),
 	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -244,14 +257,22 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, totalpages, totalrows, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
-
+	result, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 	if err != nil {
-		result = []map[string]interface{}{}
-		totalpages = 0
-		totalrows = 0
+		helper.ReturnError(writer, request, err)
+		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
@@ -270,13 +291,22 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.Re
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, pages, rows, err := r.CampaignMasterService.GetAllCampaignMasterDetail(pagination, CampaignId)
+	result, err := r.CampaignMasterService.GetAllCampaignMasterDetail(pagination, CampaignId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(rows), pages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 
 }
 

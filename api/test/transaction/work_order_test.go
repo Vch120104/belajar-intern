@@ -192,9 +192,9 @@ func (m *MockWorkOrderService) New(request transactionworkshoppayloads.WorkOrder
 	return args.Get(0).(transactionworkshopentities.WorkOrder), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderResponseDetail, *exceptions.BaseErrorResponse) {
@@ -223,9 +223,9 @@ func (m *MockWorkOrderService) CloseOrder(Id int) (bool, *exceptions.BaseErrorRe
 }
 
 // Service Request
-func (m *MockWorkOrderService) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceResponse, *exceptions.BaseErrorResponse) {
@@ -259,9 +259,9 @@ func (m *MockWorkOrderService) DeleteRequestMultiId(idwosn int, idwos []int) (bo
 }
 
 // Service Vehicle
-func (m *MockWorkOrderService) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleResponse, *exceptions.BaseErrorResponse) {
@@ -290,9 +290,9 @@ func (m *MockWorkOrderService) DeleteVehicleServiceMultiId(idwosn int, idwos []i
 }
 
 // Detail Work Order
-func (m *MockWorkOrderService) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse) {
@@ -326,9 +326,9 @@ func (m *MockWorkOrderService) NewBooking(request transactionworkshoppayloads.Wo
 	return args.Get(0).(transactionworkshopentities.WorkOrder), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) GetBookingById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderBookingResponse, *exceptions.BaseErrorResponse) {
@@ -347,9 +347,9 @@ func (m *MockWorkOrderService) NewAffiliated(workOrderId int, request transactio
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) GetAffiliatedById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderAffiliateResponse, *exceptions.BaseErrorResponse) {
@@ -435,6 +435,11 @@ func (m *MockWorkOrderService) GetDetailWOByATPMBillCode(workOrderId int, transa
 func (m *MockWorkOrderService) GetSupplyByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	args := m.Called(pages)
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) CalculateWorkOrderTotal(workOrderId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	args := m.Called(workOrderId)
+	return args.Get(0).([]map[string]interface{}), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Get All Normal Work Order

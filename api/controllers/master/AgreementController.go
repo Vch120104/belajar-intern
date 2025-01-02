@@ -14,7 +14,9 @@ import (
 	"after-sales/api/validation"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -28,22 +30,28 @@ type AgreementController interface {
 	GetAllAgreement(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDiscountGroup(writer http.ResponseWriter, request *http.Request)
+	GetDiscountGroupAgreementByHeaderId(writer http.ResponseWriter, request *http.Request)
 	GetDiscountGroupAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddDiscountGroup(writer http.ResponseWriter, request *http.Request)
 	UpdateDiscountGroup(writer http.ResponseWriter, request *http.Request)
 	DeleteDiscountGroup(writer http.ResponseWriter, request *http.Request)
+	DeleteMultiIdDiscountGroup(writer http.ResponseWriter, request *http.Request)
 
 	GetAllItemDiscount(writer http.ResponseWriter, request *http.Request)
+	GetDiscountItemAgreementByHeaderId(writer http.ResponseWriter, request *http.Request)
 	GetDiscountItemAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddItemDiscount(writer http.ResponseWriter, request *http.Request)
 	UpdateItemDiscount(writer http.ResponseWriter, request *http.Request)
 	DeleteItemDiscount(writer http.ResponseWriter, request *http.Request)
+	DeleteMultiIdItemDiscount(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDiscountValue(writer http.ResponseWriter, request *http.Request)
+	GetDiscountValueAgreementByHeaderId(writer http.ResponseWriter, request *http.Request)
 	GetDiscountValueAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddDiscountValue(writer http.ResponseWriter, request *http.Request)
 	UpdateDiscountValue(writer http.ResponseWriter, request *http.Request)
 	DeleteDiscountValue(writer http.ResponseWriter, request *http.Request)
+	DeleteMultiIdDiscountValue(writer http.ResponseWriter, request *http.Request)
 }
 
 type AgreementControllerImpl struct {
@@ -203,30 +211,23 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
-	queryParams := map[string]string{
-		"mtr_agreement.agreement_id":           queryValues.Get("agreement_id"),
-		"mtr_agreement.brand_id":               queryValues.Get("brand_id"),
-		"mtr_agreement.customer_id":            queryValues.Get("customer_id"),
-		"mtr_customer.customer_name":           queryValues.Get("customer_name"),
-		"mtr_customer.customer_code":           queryValues.Get("customer_code"),
-		"mtr_agreement.profit_center_id":       queryValues.Get("profit_center_id"),
-		"mtr_profit_center.profit_center_name": queryValues.Get("profit_center_name"),
-		"mtr_agreement.company_id":             queryValues.Get("dealer_id"),
-		"mtr_agreement.top_id":                 queryValues.Get("top_id"),
-		"mtr_agreement.is_active":              queryValues.Get("is_active"),
-		"mtr_agreement.agreement_code":         queryValues.Get("agreement_code"),
-		"mtr_agreement.date_from":              queryValues.Get("date_from"),
-		"mtr_agreement.date_to":                queryValues.Get("date_to"),
+	internalFilterCondition := map[string]string{
+		"mtr_agreement.agreement_id":     queryValues.Get("agreement_id"),
+		"mtr_agreement.brand_id":         queryValues.Get("brand_id"),
+		"mtr_agreement.customer_id":      queryValues.Get("customer_id"),
+		"mtr_agreement.profit_center_id": queryValues.Get("profit_center_id"),
+		"mtr_agreement.company_id":       queryValues.Get("company_id"),
+		"mtr_agreement.top_id":           queryValues.Get("top_id"),
+		"mtr_agreement.is_active":        queryValues.Get("is_active"),
+		"mtr_agreement.agreement_code":   queryValues.Get("agreement_code"),
 	}
 
-	if customerName := queryValues.Get("customer_name"); customerName != "" {
-		queryParams["customer_name"] = customerName
-	}
-	if customerCode := queryValues.Get("customer_code"); customerCode != "" {
-		queryParams["customer_code"] = customerCode
-	}
-	if profitCenterName := queryValues.Get("profit_center_name"); profitCenterName != "" {
-		queryParams["profit_center_name"] = profitCenterName
+	externalFilterCondition := map[string]string{
+		"customer_name":       queryValues.Get("customer_name"),
+		"customer_code":       queryValues.Get("customer_code"),
+		"profit_center_name":  queryValues.Get("profit_center_name"),
+		"agreement_date_from": queryValues.Get("agreement_date_from"),
+		"agreement_date_to":   queryValues.Get("agreement_date_to"),
 	}
 
 	paginate := pagination.Pagination{
@@ -235,21 +236,26 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 		SortOf: chi.URLParam(request, "sort_of"),
 		SortBy: chi.URLParam(request, "sort_by"),
 	}
-	print(queryParams)
 
-	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllAgreement(criteria, paginate)
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
+	result, err := r.AgreementService.GetAllAgreement(internalCriteria, externalCriteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Add Discount Group
@@ -586,18 +592,23 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
+	result, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Discount Group By Id
@@ -659,18 +670,23 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
+	result, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Discount Item By Id
@@ -732,18 +748,23 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
+	result, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Discount Value By Id
@@ -787,13 +808,336 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/by-code/{agreement_code} [get]
 func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter, request *http.Request) {
-	agreementCode := chi.URLParam(request, "agreement_code")
 
-	result, err := r.AgreementService.GetAgreementByCode(agreementCode)
+	encodedAgreementCode := chi.URLParam(request, "*")
+
+	if len(encodedAgreementCode) > 0 && encodedAgreementCode[0] == '/' {
+		encodedAgreementCode = encodedAgreementCode[1:]
+	}
+
+	agreementCode, err := url.PathUnescape(encodedAgreementCode)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed to decode agreement code"),
+		})
+		return
+	}
+
+	result, baseErr := r.AgreementService.GetAgreementByCode(agreementCode)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @GetDiscountGroupAgreementByHeaderId Get Discount Group Agreement By Header Id
+// @Description Retrieve all discount groups from an agreement by its header ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_header_id path int true "Agreement Header ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group [get]
+func (r *AgreementControllerImpl) GetDiscountGroupAgreementByHeaderId(writer http.ResponseWriter, request *http.Request) {
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"agreement_id": queryValues.Get("agreement_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	result, err := r.AgreementService.GetDiscountGroupAgreementByHeaderId(agreementID, criteria, paginate)
+
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
+}
+
+// @GetDiscountItemAgreementByHeaderId Get Discount Item Agreement By Header Id
+// @Description Retrieve all discount items from an agreement by its header ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_header_id path int true "Agreement Header ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item [get]
+func (r *AgreementControllerImpl) GetDiscountItemAgreementByHeaderId(writer http.ResponseWriter, request *http.Request) {
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"agreement_id": queryValues.Get("agreement_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	result, err := r.AgreementService.GetDiscountItemAgreementByHeaderId(agreementID, criteria, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
+}
+
+// @GetDiscountValueAgreementByHeaderId Get Discount Value Agreement By Header Id
+// @Description Retrieve all discount values from an agreement by its header ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_header_id path int true "Agreement Header ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value [get]
+func (r *AgreementControllerImpl) GetDiscountValueAgreementByHeaderId(writer http.ResponseWriter, request *http.Request) {
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"agreement_id": queryValues.Get("agreement_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	result, err := r.AgreementService.GetDiscountValueAgreementByHeaderId(agreementID, criteria, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
+}
+
+// @DeleteMultiIdDiscountGroup Delete Multi Id Discount Group Item Value
+// @Description Delete Multi Id Discount Group Item Value
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param multi_id path int true "Group ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group/{multi_id} [delete]
+func (r *AgreementControllerImpl) DeleteMultiIdDiscountGroup(writer http.ResponseWriter, request *http.Request) {
+	agreementstrID := chi.URLParam(request, "agreement_id")
+	agreementID, err := strconv.Atoi(agreementstrID)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid agreement id", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.AgreementService.DeleteMultiIdDiscountGroup(agreementID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "request detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Discount group deleted successfully", http.StatusOK)
+}
+
+// @DeleteMultiIdItemDiscount Delete Multi Id Discount Item Value
+// @Description Delete Multi Id Discount Item Value
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param multi_id path int true "Item ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item/{multi_id} [delete]
+func (r *AgreementControllerImpl) DeleteMultiIdItemDiscount(writer http.ResponseWriter, request *http.Request) {
+	agreementstrID := chi.URLParam(request, "agreement_id")
+	agreementID, err := strconv.Atoi(agreementstrID)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid agreement id", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.AgreementService.DeleteMultiIdItemDiscount(agreementID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "request detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Discount item deleted successfully", http.StatusOK)
+}
+
+// @DeleteMultiIdDiscountValue Delete Multi Id Discount Value
+// @Description Delete Multi Id Discount Value
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param multi_id path int true "Value ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value/{multi_id} [delete]
+func (r *AgreementControllerImpl) DeleteMultiIdDiscountValue(writer http.ResponseWriter, request *http.Request) {
+	agreementstrID := chi.URLParam(request, "agreement_id")
+	agreementID, err := strconv.Atoi(agreementstrID)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid agreement id", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.AgreementService.DeleteMultiIdDiscountValue(agreementID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "request detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Discount value deleted successfully", http.StatusOK)
 }

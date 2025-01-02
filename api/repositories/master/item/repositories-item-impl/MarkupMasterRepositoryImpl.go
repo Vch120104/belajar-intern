@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -25,11 +24,10 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB, filterCond
 	var responses []masteritementities.MarkupMaster
 
 	baseModelQuery := tx.Model(&responses)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&responses, &pages, whereQuery)).Scan(&responses).Rows()
 
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery.Where(whereQuery))).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -38,16 +36,13 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB, filterCond
 	}
 
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []masteritementities.MarkupMaster{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
+		return pages, nil
 	}
 
-	defer rows.Close()
-
 	pages.Rows = responses
-
 	return pages, nil
 }
 

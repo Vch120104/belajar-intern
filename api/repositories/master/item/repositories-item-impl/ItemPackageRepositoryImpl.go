@@ -1,17 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"errors"
-	"fmt"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -29,16 +26,11 @@ func (r *ItemPackageRepositoryImpl) GetItemPackageByCode(tx *gorm.DB, itemPackag
 	tableStruct := masteritementities.ItemPackage{}
 	response := masteritempayloads.GetItemPackageResponse{}
 
-	getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
-
 	baseModelQuery := tx.Model(&tableStruct).Select("mtr_item_package.*")
-
 	err := baseModelQuery.Where(masteritementities.ItemPackage{
 		ItemPackageCode: itemPackageCode,
 	}).First(&response).Error
 
-	fmt.Println(response)
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -46,104 +38,75 @@ func (r *ItemPackageRepositoryImpl) GetItemPackageByCode(tx *gorm.DB, itemPackag
 		}
 	}
 
-	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
-
-	response.ItemGroupName = &getItemGroupResponses.ItemGroupName
-	response.ItemGroupCode = &getItemGroupResponses.ItemGroupCode
-
-	if errUrlItemPackage != nil {
+	itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if itemGroupErr != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
+			StatusCode: itemGroupErr.StatusCode,
+			Err:        itemGroupErr.Err,
 		}
 	}
+
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
+	response.ItemGroupCode = itemGroupResponse.ItemGroupCode
 
 	return response, nil
 }
 
-func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.GetAllItemPackageResponse
-	var getItemGroupResponses []masteritempayloads.GetItemGroupResponse
+func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	var itemGroupCode string
+	responses := []masteritempayloads.GetAllItemPackageResponse{}
+	entities := masteritementities.ItemPackage{}
 
-	//apply external services filter
-	for i := 0; i < len(externalFilterCondition); i++ {
-		itemGroupCode = externalFilterCondition[i].ColumnValue
+	query := tx.Model(&entities).
+		Select(`
+			mtr_item_package.is_active,
+			mtr_item_package.item_package_id,
+			mtr_item_package.item_package_code,
+			mtr_item_package.item_package_name,
+			mtr_item_group.item_group_id AS item_group_id,
+			mtr_item_group.item_group_code AS item_group_code,
+			mtr_item_group.item_group_name AS item_group_name,
+			mtr_item_package.item_package_set
+		`).
+		Joins("LEFT JOIN mtr_item_group ON mtr_item_group.item_group_id = mtr_item_package.item_group_id")
+	queryFilter := utils.ApplyFilter(query, internalFilterCondition)
+
+	for _, filter := range externalFilterCondition {
+		if filter.ColumnField == "item_group_code" {
+			queryFilter = queryFilter.Where("mtr_item_group.item_group_code = ?", filter.ColumnValue)
+		}
 	}
 
-	tableStruct := masteritementities.ItemPackage{}
-
-	baseModelQuery := tx.Model(&tableStruct)
-
-	whereQuery := utils.ApplyFilter(baseModelQuery, internalFilterCondition)
-
-	rows, err := whereQuery.Scan(&responses).Rows()
+	err := queryFilter.Scopes(pagination.Paginate(&pages, queryFilter)).
+		Order("mtr_item_package.item_package_id").
+		Scan(&responses).Error
 
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []masteritempayloads.GetAllItemPackageResponse{}
+		return pages, nil
 	}
 
-	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=" + itemGroupCode
+	pages.Rows = responses
 
-	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
-
-	if errUrlItemPackage != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
-		}
-	}
-
-	if len(getItemGroupResponses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
-	}
-
-	joinedData, errdf := utils.DataFrameInnerJoin(responses, getItemGroupResponses, "ItemGroupId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse) {
-
 	tableStruct := masteritementities.ItemPackage{}
 	response := masteritempayloads.GetItemPackageResponse{}
 
-	getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
-
 	baseModelQuery := tx.Model(&tableStruct).Select("mtr_item_package.*")
-
 	err := baseModelQuery.Where(masteritementities.ItemPackage{
 		ItemPackageId: Id,
 	}).First(&response).Error
 
-	fmt.Println(response)
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -151,18 +114,16 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 		}
 	}
 
-	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
-
-	response.ItemGroupName = &getItemGroupResponses.ItemGroupName
-	response.ItemGroupCode = &getItemGroupResponses.ItemGroupCode
-
-	if errUrlItemPackage != nil {
+	itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if itemGroupErr != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
+			StatusCode: itemGroupErr.StatusCode,
+			Err:        itemGroupErr.Err,
 		}
 	}
+
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
+	response.ItemGroupCode = itemGroupResponse.ItemGroupCode
 
 	return response, nil
 }

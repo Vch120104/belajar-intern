@@ -7,12 +7,13 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
-	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
-	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,21 +25,73 @@ func StartAgreementRepositoryImpl() masterrepository.AgreementRepository {
 	return &AgreementRepositoryImpl{}
 }
 
-func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Agreement{}
-	response := masterpayloads.AgreementRequest{}
+	response := masterpayloads.AgreementResponse{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.Agreement{
-			AgreementId: AgreementId,
-		}).
+		Where("agreement_id = ?", AgreementId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement",
 			Err:        err,
+		}
+	}
+
+	// fetch data customer from utils cross service
+	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterById(entities.CustomerId)
+	if custErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        custErr.Err,
+		}
+	}
+
+	// fetch data client type from utils cross service
+	clientTypeResponse, clientTypeErr := generalserviceapiutils.GetClientTypeById(customerResponse.ClientTypeId)
+	if clientTypeErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        clientTypeErr.Err,
+		}
+	}
+
+	// fetch data company from utils cross service
+	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
+	if compErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        compErr.Err,
+		}
+	}
+
+	// fetch data profit center from utils cross service
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entities.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	// fetch term of payment from utils cross service
+	termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entities.TopId)
+	if termOfPaymentErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        termOfPaymentErr.Err,
 		}
 	}
 
@@ -47,21 +100,54 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 	response.IsActive = entities.IsActive
 	response.BrandId = entities.BrandId
 	response.CustomerId = entities.CustomerId
+	response.CustomerName = customerResponse.CustomerName
+	response.CustomerCode = customerResponse.CustomerCode
+	response.AddressStreet1 = customerResponse.AddressStreet1
+	response.AddressStreet2 = customerResponse.AddressStreet2
+	response.AddressStreet3 = customerResponse.AddressStreet3
+	response.VillageName = customerResponse.VillageName
+	response.VillageZipCode = customerResponse.VillageZipCode
+	response.DistrictName = customerResponse.DistrictName
+	response.CityName = customerResponse.CityName
+	response.ProvinceName = customerResponse.ProvinceName
+	response.CountryName = customerResponse.CountryName
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
-	response.DealerId = entities.DealerId
+	response.CompanyId = entities.CompanyId
+	response.CompanyName = companyResponse.CompanyName
+	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
+	response.CustomerType = clientTypeResponse.ClientTypeDescription
+	response.ProfitCenterName = profitCenterResponse.ProfitCenterName
+	response.TermOfPaymentCode = termOfPaymentResponse.TermOfPaymentCode
+	response.TermOfPaymentName = termOfPaymentResponse.TermOfPaymentName
 
 	return response, nil
 }
 
 func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
+	// Validasi: tidak ada AgreementCode yang sama dalam satu CompanyId
+	var existingAgreement masterentities.Agreement
+	err := tx.Where("agreement_code = ? AND company_id = ?", req.AgreementCode, req.CompanyId).First(&existingAgreement).Error
+
+	if err == nil {
+		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errors.New("agreement code already exists in the same company"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	entities := masterentities.Agreement{
 		AgreementCode:     req.AgreementCode,
 		BrandId:           req.BrandId,
-		DealerId:          req.DealerId,
+		CompanyId:         req.CompanyId,
 		TopId:             req.TopId,
 		AgreementDateFrom: req.AgreementDateFrom,
 		AgreementDateTo:   req.AgreementDateTo,
@@ -71,8 +157,7 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 		CustomerId:        req.CustomerId,
 	}
 
-	err := tx.Save(&entities).Error
-
+	err = tx.Save(&entities).Error
 	if err != nil {
 		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -92,7 +177,7 @@ func (r *AgreementRepositoryImpl) UpdateAgreement(tx *gorm.DB, Id int, req maste
 			"aggreement_id":       Id,
 			"agreement_code":      req.AgreementCode,
 			"brand_id":            req.BrandId,
-			"company_id":          req.DealerId,
+			"company_id":          req.CompanyId,
 			"top_id":              req.TopId,
 			"agreement_date_from": req.AgreementDateFrom,
 			"agreement_date_to":   req.AgreementDateTo,
@@ -151,130 +236,187 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (ma
 	return entities, nil
 }
 
-func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	model := masterentities.Agreement{}
+	var responses []masterpayloads.AgreementResponse
 
-	var responses []masterpayloads.AgreementRequest
-	tableStruct := masterpayloads.AgreementRequest{}
+	var customerCode, customerName, profitCenterName string
+	var dateFrom, dateTo string
+	layoutDate := "2006-01-02" // Format parsing date
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Find(&responses).Rows()
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	defer rows.Close()
-
-	var convertedResponses []masterpayloads.AgreementResponse
-	var filterCustomerName, filterCustomerCode, filterProfitCenterName string
-
-	//Extract filters for customer_name, customer_code, and profit_center_name
-	for _, cond := range filterCondition {
-		switch cond.ColumnField {
-		case "customer_name":
-			filterCustomerName = cond.ColumnValue
+	// External filter processing for customer and profit center
+	for _, filter := range externalFilter {
+		switch filter.ColumnField {
 		case "customer_code":
-			filterCustomerCode = cond.ColumnValue
+			customerCode = filter.ColumnValue
+		case "customer_name":
+			customerName = filter.ColumnValue
 		case "profit_center_name":
-			filterProfitCenterName = cond.ColumnValue
+			profitCenterName = filter.ColumnValue
+		case "agreement_date_from":
+			dateFrom = filter.ColumnValue
+		case "agreement_date_to":
+			dateTo = filter.ColumnValue
 		}
 	}
 
-	for rows.Next() {
+	query := tx.Model(&model).
+		Select("mtr_agreement.*, cust.customer_name, cust.customer_code, comp.company_name, comp.company_code, pc.profit_center_name, tops.term_of_payment_code, tops.term_of_payment_name").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_customer cust ON mtr_agreement.customer_id = cust.customer_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_company comp ON mtr_agreement.company_id = comp.company_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_profit_center pc ON mtr_agreement.profit_center_id = pc.profit_center_id").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_term_of_payment tops ON mtr_agreement.top_id = tops.term_of_payment_id")
 
-		var (
-			AgreementReq masterpayloads.AgreementRequest
-			AgreementRes masterpayloads.AgreementResponse
-		)
+	// External filters processing
+	if customerCode != "" || customerName != "" {
+		customerParams := generalserviceapiutils.CustomerMasterParams{
+			CustomerCode: customerCode,
+			CustomerName: customerName,
+		}
 
-		if err := rows.Scan(
-			&AgreementReq.AgreementId,
-			&AgreementReq.AgreementCode,
-			&AgreementReq.IsActive,
-			&AgreementReq.BrandId,
-			&AgreementReq.CustomerId,
-			&AgreementReq.ProfitCenterId,
-			&AgreementReq.AgreementDateFrom,
-			&AgreementReq.AgreementDateTo,
-			&AgreementReq.DealerId,
-			&AgreementReq.TopId,
-			&AgreementReq.AgreementRemark); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+		customerResponse, customerError := generalserviceapiutils.GetAllCustomerMaster(customerParams)
+		if customerError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: customerError.StatusCode,
+				Message:    "Error fetching customer data",
+				Err:        customerError.Err,
+			}
+		}
+
+		if len(customerResponse) == 0 {
+
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "mtr_agreement.customer_id",
+				ColumnValue: "-1",
+			})
+		} else if len(customerResponse) > 0 {
+			if len(customerCode) > 0 && len(customerResponse) > 1 {
+				query = query.Where("cust.customer_code LIKE ?", fmt.Sprintf("%%%s%%", customerCode))
+			} else if len(customerName) > 0 && len(customerResponse) > 1 {
+				query = query.Where("cust.customer_name LIKE ?", fmt.Sprintf("%%%s%%", customerName))
+			} else {
+				var customerIds []int
+				for _, customer := range customerResponse {
+					customerIds = append(customerIds, customer.CustomerId)
+				}
+				query = query.Where("mtr_agreement.customer_id IN (?)", customerIds)
+			}
+		} else {
+			// Return empty rows if no customers found
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	// External filter for Profit Center
+	if profitCenterName != "" {
+		profitCenterParams := generalserviceapiutils.ProfitCenterParams{
+			ProfitCenterName: profitCenterName,
+		}
+
+		profitCenterResponse, profitCenterError := generalserviceapiutils.GetAllProfitCenter(profitCenterParams)
+		if profitCenterError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: profitCenterError.StatusCode,
+				Message:    "Error fetching profit center data",
+				Err:        profitCenterError.Err,
+			}
+		}
+
+		if len(profitCenterResponse) == 0 {
+
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "mtr_agreement.profit_center_id",
+				ColumnValue: "-1",
+			})
+		} else if len(profitCenterResponse) > 0 {
+
+			if len(profitCenterName) > 0 && len(profitCenterResponse) > 1 {
+				query = query.Where("pc.profit_center_name LIKE ?", fmt.Sprintf("%%%s%%", profitCenterName))
+			} else {
+
+				var profitCenterIds []int
+				for _, profitCenter := range profitCenterResponse {
+					profitCenterIds = append(profitCenterIds, profitCenter.ProfitCenterId)
+				}
+				query = query.Where("mtr_agreement.profit_center_id IN (?)", profitCenterIds)
+			}
+		} else {
+
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	if dateTo != "" {
+		parsedDateTo, err := time.Parse(layoutDate, dateTo)
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    fmt.Sprintf("Invalid dateTo format: %v", dateTo),
 				Err:        err,
 			}
 		}
-
-		// Fetch Customer data from external service
-		getCustomerResponse, custErr := generalserviceapiutils.GetCustomerMasterByID(AgreementReq.CustomerId)
-		if custErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        custErr.Err,
-			}
-		}
-
-		if filterCustomerName != "" && !strings.Contains(strings.ToLower(getCustomerResponse.CustomerName), strings.ToLower(filterCustomerName)) {
-			continue
-		}
-
-		if filterCustomerCode != "" && !strings.Contains(strings.ToLower(getCustomerResponse.CustomerCode), strings.ToLower(filterCustomerCode)) {
-			continue
-		}
-
-		// Fetch Company data from external service
-		getCompanyResponse, compErr := generalserviceapiutils.GetCompanyDataById(AgreementReq.DealerId)
-		if compErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        compErr.Err,
-			}
-		}
-
-		// fetch data profit center from utils cross service
-		profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(AgreementReq.ProfitCenterId)
-		if profitCenterErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        profitCenterErr.Err,
-			}
-		}
-
-		if filterProfitCenterName != "" && !strings.Contains(strings.ToLower(profitCenterResponse.ProfitCenterName), strings.ToLower(filterProfitCenterName)) {
-			continue
-		}
-
-		AgreementRes = masterpayloads.AgreementResponse{
-			AgreementId:       AgreementReq.AgreementId,
-			AgreementCode:     AgreementReq.AgreementCode,
-			IsActive:          AgreementReq.IsActive,
-			BrandId:           AgreementReq.BrandId,
-			CustomerId:        AgreementReq.CustomerId,
-			CustomerName:      getCustomerResponse.CustomerName,
-			CustomerCode:      getCustomerResponse.CustomerCode,
-			ProfitCenterId:    AgreementReq.ProfitCenterId,
-			ProfitCenterName:  profitCenterResponse.ProfitCenterName,
-			AgreementDateFrom: AgreementReq.AgreementDateFrom,
-			AgreementDateTo:   AgreementReq.AgreementDateTo,
-			DealerId:          AgreementReq.DealerId,
-			DealerName:        getCompanyResponse.CompanyName,
-			DealerCode:        getCompanyResponse.CompanyCode,
-			TopId:             AgreementReq.TopId,
-			AgreementRemark:   AgreementReq.AgreementRemark,
-		}
-
-		convertedResponses = append(convertedResponses, AgreementRes)
+		dateTo = parsedDateTo.Format(layoutDate)
+		query = query.Where("mtr_agreement.agreement_date_to <= ?", dateTo)
 	}
 
-	var mapResponses []map[string]interface{}
+	if dateFrom != "" {
+		parsedDateFrom, err := time.Parse(layoutDate, dateFrom)
+		if err != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    fmt.Sprintf("Invalid dateFrom format: %v", dateFrom),
+				Err:        err,
+			}
+		}
+		dateFrom = parsedDateFrom.Format(layoutDate)
+		query = query.Where("mtr_agreement.agreement_date_from >= ?", dateFrom)
+	}
 
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
+	whereQuery := utils.ApplyFilter(query, internalFilter)
+
+	// Manually calculate total rows for pagination
+	var totalRows int64
+	err := whereQuery.Model(&model).Count(&totalRows).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Calculate pagination parameters
+	offset := pages.GetOffset()
+	limit := pages.GetLimit()
+
+	// Apply pagination manually
+	err = whereQuery.Offset(offset).Limit(limit).Order("mtr_agreement.agreement_id").Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(totalRows) / float64(limit)))
+	pages.TotalRows = totalRows
+	pages.TotalPages = totalPages
+
+	// If no responses found, return empty rows
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	var results []map[string]interface{}
+	for _, response := range responses {
+		result := map[string]interface{}{
 			"agreement_id":        response.AgreementId,
 			"agreement_code":      response.AgreementCode,
+			"is_active":           response.IsActive,
+			"brand_id":            response.BrandId,
 			"customer_id":         response.CustomerId,
 			"customer_name":       response.CustomerName,
 			"customer_code":       response.CustomerCode,
@@ -282,26 +424,26 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 			"profit_center_name":  response.ProfitCenterName,
 			"agreement_date_from": response.AgreementDateFrom,
 			"agreement_date_to":   response.AgreementDateTo,
-			"dealer_id":           response.DealerId,
-			"dealer_name":         response.DealerName,
-			"dealer_code":         response.DealerCode,
+			"company_id":          response.CompanyId,
 			"top_id":              response.TopId,
-			"agreement_remark":    response.AgreementRemark,
-			"brand_id":            response.BrandId,
-			"is_active":           response.IsActive,
+			"top_code":            response.TermOfPaymentCode,
+			"top_description":     response.TermOfPaymentName,
+			"company_name":        response.CompanyName,
+			"company_code":        response.CompanyCode,
 		}
-		mapResponses = append(mapResponses, responseMap)
+
+		results = append(results, result)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	// Set the pagination info
+	pages.Rows = results
+	return pages, nil
 }
 
 func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
 
 	// Validasi AgreementSelection
-	if req.AgreementSelection != 0 && req.AgreementSelection != 1 {
+	if req.AgreementSelection != 1 && req.AgreementSelection != 2 {
 		return masterentities.AgreementDiscountGroupDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("agreement Selection not valid"),
@@ -311,7 +453,7 @@ func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int,
 	entities := masterentities.AgreementDiscountGroupDetail{
 		AgreementId:               AgreementId,
 		AgreementSelection:        req.AgreementSelection,
-		AgreementOrderType:        req.AgreementOrderTypeId,
+		AgreementOrderTypeId:      req.AgreementOrderTypeId,
 		AgreementDiscountMarkupId: req.AgreementDiscountMarkup,
 		AgreementDiscount:         req.AgreementDiscount,
 		AgreementDetailRemarks:    req.AgreementDetailRemaks,
@@ -372,13 +514,16 @@ func (r *AgreementRepositoryImpl) DeleteDiscountGroup(tx *gorm.DB, AgreementId i
 }
 
 func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, req masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse) {
+
 	entities := masterentities.AgreementItemDetail{
-		AgreementId:              AgreementId,
-		LineTypeId:               req.LineTypeId,
-		AgreementItemOperationId: req.AgreementItemOperationId,
-		DiscountPercent:          req.DiscountPercent,
-		MinValue:                 req.MinValue,
-		AgreementRemark:          req.AgreementRemark,
+		AgreementId:                       AgreementId,
+		LineTypeId:                        req.LineTypeId,
+		AgreementItemOperationId:          req.AgreementItemOperationId,
+		AgreementItemOperationCode:        req.AgreementItemOperationCode,
+		AgreementItemOperationDescription: req.AgreementItemOperationDescription,
+		DiscountPercent:                   req.DiscountPercent,
+		MinValue:                          req.MinValue,
+		AgreementRemark:                   req.AgreementRemark,
 	}
 
 	err := tx.Save(&entities).Error
@@ -494,227 +639,143 @@ func (r *AgreementRepositoryImpl) DeleteDiscountValue(tx *gorm.DB, AgreementId i
 	return nil
 }
 
-func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	var responses []masterpayloads.DiscountGroupRequest
+	entities := []masterentities.AgreementDiscountGroupDetail{}
 
-	tableStruct := masterpayloads.DiscountGroupRequest{}
+	baseModelQuery := tx.Model(&masterentities.AgreementDiscountGroupDetail{})
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Find(&responses).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	var mapResponses []map[string]interface{}
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
-	for rows.Next() {
-
-		var DiscountGroupRes masterpayloads.DiscountGroupResponse
-
-		if err := rows.Scan(
-			&DiscountGroupRes.AgreementDiscountGroupId,
-			&DiscountGroupRes.AgreementId,
-			&DiscountGroupRes.AgreementSelection,
-			&DiscountGroupRes.AgreementOrderTypeId,
-			&DiscountGroupRes.AgreementDiscountMarkup,
-			&DiscountGroupRes.AgreementDiscount,
-			&DiscountGroupRes.AgreementDetailRemaks); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		// selection name field
+	var results []map[string]interface{}
+	for _, entity := range entities {
 		selectionName := "unknown"
-		if DiscountGroupRes.AgreementSelection == 0 {
+		if entity.AgreementSelection == 1 {
 			selectionName = "discount"
-		} else if DiscountGroupRes.AgreementSelection == 1 {
+		} else if entity.AgreementSelection == 2 {
 			selectionName = "markup"
 		}
 
-		responseMap := map[string]interface{}{
-			"agreement_discount_group_id": DiscountGroupRes.AgreementDiscountGroupId,
-			"agreement_id":                DiscountGroupRes.AgreementId,
-			"agreement_selection":         DiscountGroupRes.AgreementSelection,
-			"agreement_selection_name":    selectionName,
-			"agreement_order_type_id":     DiscountGroupRes.AgreementOrderTypeId,
-			"agreement_discount_markup":   DiscountGroupRes.AgreementDiscountMarkup,
-			"agreement_discount":          DiscountGroupRes.AgreementDiscount,
-			"agreement_detail_remarks":    DiscountGroupRes.AgreementDetailRemaks,
-		}
-
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
-}
-
-func (r *AgreementRepositoryImpl) GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masterpayloads.ItemDiscountRequest
-
-	tableStruct := masterpayloads.ItemDiscountRequest{}
-
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Find(&responses).Rows()
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	defer rows.Close()
-
-	var convertedResponses []masterpayloads.ItemDiscountResponse
-
-	for rows.Next() {
-
-		var ItemDiscountRes masterpayloads.ItemDiscountResponse
-		var discountPercent, minValue sql.NullFloat64
-
-		if err := rows.Scan(
-			&ItemDiscountRes.AgreementItemId,
-			&ItemDiscountRes.AgreementId,
-			&ItemDiscountRes.LineTypeId,
-			&ItemDiscountRes.AgreementItemOperationId,
-			&discountPercent,
-			&minValue,
-			&ItemDiscountRes.AgreementRemark); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+		// fetch order type from utils cross service
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
+		if orderTypeError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: orderTypeError.StatusCode,
+				Err:        orderTypeError.Err,
 			}
 		}
 
-		if discountPercent.Valid {
-			ItemDiscountRes.DiscountPercent = float32(discountPercent.Float64)
-		} else {
-			ItemDiscountRes.DiscountPercent = 0
+		result := map[string]interface{}{
+			"agreement_discount_group_id":  entity.AgreementDiscountGroupId,
+			"agreement_id":                 entity.AgreementId,
+			"agreement_selection":          entity.AgreementSelection,
+			"agreement_selection_name":     selectionName,
+			"agreement_order_type_id":      entity.AgreementOrderTypeId,
+			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
+			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
+			"agreement_discount":           entity.AgreementDiscount,
+			"agreement_detail_remarks":     entity.AgreementDetailRemarks,
 		}
-		if minValue.Valid {
-			ItemDiscountRes.MinValue = int(minValue.Float64)
-		} else {
-			ItemDiscountRes.MinValue = 0
-		}
-
-		convertedResponses = append(convertedResponses, ItemDiscountRes)
+		results = append(results, result)
 	}
 
-	var mapResponses []map[string]interface{}
+	pages.Rows = results
 
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
-			"agreement_item_id":           response.AgreementItemId,
-			"agreement_id":                response.AgreementId,
-			"line_type_id":                response.LineTypeId,
-			"agreement_item_operation_id": response.AgreementItemOperationId,
-			"discount_percent":            response.DiscountPercent,
-			"min_value":                   response.MinValue,
-			"agreement_remark":            response.AgreementRemark,
-		}
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
-func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.AgreementItemDetail{}
 
-	var responses []masterpayloads.DiscountValueRequest
+	baseModelQuery := tx.Model(&masterentities.AgreementItemDetail{})
 
-	tableStruct := masterpayloads.DiscountValueRequest{}
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Find(&responses).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	var convertedResponses []masterpayloads.DiscountValueResponse
-
-	for rows.Next() {
-
-		var DiscountValueRes masterpayloads.DiscountValueResponse
-
-		if err := rows.Scan(
-			&DiscountValueRes.AgreementDiscountId,
-			&DiscountValueRes.AgreementId,
-			&DiscountValueRes.LineTypeId,
-			&DiscountValueRes.MinValue,
-			&DiscountValueRes.DiscountPercent,
-			&DiscountValueRes.DiscountRemarks); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		convertedResponses = append(convertedResponses, DiscountValueRes)
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.AgreementItemDetail{}
+		return pages, nil
 	}
 
-	var mapResponses []map[string]interface{}
+	pages.Rows = entities
 
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
-			"agreement_discount_id": response.AgreementDiscountId,
-			"agreement_id":          response.AgreementId,
-			"line_type_id":          response.LineTypeId,
-			"min_value":             response.MinValue,
-			"discount_percent":      response.DiscountPercent,
-			"discount_remarks":      response.DiscountRemarks,
-		}
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, DiscountGroupId, AgreementId int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	entities := []masterentities.AgreementDiscount{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementDiscount{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.AgreementDiscount{}
+		return pages, nil
+	}
+
+	pages.Rows = entities
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, AgreementId int, DiscountGroupId int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscountGroupDetail{}
 	response := masterpayloads.DiscountGroupRequest{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.AgreementDiscountGroupDetail{
-			AgreementDiscountGroupId: DiscountGroupId,
-			AgreementId:              AgreementId,
-		}).
+		Where(" agreement_id = ? AND agreement_discount_group_id = ? ", AgreementId, DiscountGroupId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount Group not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount Group",
 			Err:        err,
 		}
 	}
 
 	response.AgreementId = entities.AgreementId
 	response.AgreementSelection = entities.AgreementSelection
-	response.AgreementOrderTypeId = entities.AgreementOrderType
+	response.AgreementOrderTypeId = entities.AgreementOrderTypeId
 	response.AgreementDiscountMarkup = entities.AgreementDiscountMarkupId
 	response.AgreementDiscount = entities.AgreementDiscount
 	response.AgreementDetailRemaks = entities.AgreementDetailRemarks
@@ -722,21 +783,27 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, Dis
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, ItemDiscountId, AgreementId int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, AgreementId int, ItemDiscountId int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementItemDetail{}
 	response := masterpayloads.ItemDiscountRequest{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.AgreementItemDetail{
-			AgreementItemId: ItemDiscountId,
-			AgreementId:     AgreementId,
-		}).
+		Where("agreement_id = ? AND agreement_item_id = ? ", AgreementId, ItemDiscountId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount Item not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount Item",
 			Err:        err,
 		}
 	}
@@ -752,21 +819,27 @@ func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, Item
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, DiscountValueId, AgreementId int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, AgreementId int, DiscountValueId int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscount{}
 	response := masterpayloads.DiscountValueRequest{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.AgreementDiscount{
-			AgreementDiscountId: DiscountValueId,
-			AgreementId:         AgreementId,
-		}).
+		Where("agreement_id = ? AND agreement_discount_id = ?  ", AgreementId, DiscountValueId).
 		First(&entities).
 		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Agreement Discount value not found",
+				Err:        err,
+			}
+		}
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching Agreement Discount value",
 			Err:        err,
 		}
 	}
@@ -786,9 +859,7 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response := masterpayloads.AgreementResponse{}
 
 	err := tx.Model(&entities).
-		Where(masterentities.Agreement{
-			AgreementCode: AgreementCode,
-		}).
+		Where("agreement_code = ?", AgreementCode).
 		First(&entities).
 		Error
 
@@ -800,7 +871,7 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	}
 
 	// fetch data customer from utils cross service
-	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterByID(entities.CustomerId)
+	customerResponse, custErr := generalserviceapiutils.GetCustomerMasterById(entities.CustomerId)
 	if custErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -808,12 +879,39 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 		}
 	}
 
+	// fetch data client type from utils cross service
+	clientTypeResponse, clientTypeErr := generalserviceapiutils.GetClientTypeById(customerResponse.ClientTypeId)
+	if clientTypeErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        clientTypeErr.Err,
+		}
+	}
+
 	// fetch data company from utils cross service
-	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.DealerId)
+	companyResponse, compErr := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
 	if compErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        compErr.Err,
+		}
+	}
+
+	// fetch data profit center from utils cross service
+	profitCenterResponse, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entities.ProfitCenterId)
+	if profitCenterErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        profitCenterErr.Err,
+		}
+	}
+
+	// fetch term of payment from utils cross service
+	termOfPaymentResponse, termOfPaymentErr := generalserviceapiutils.GetTermOfPaymentById(entities.TopId)
+	if termOfPaymentErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        termOfPaymentErr.Err,
 		}
 	}
 
@@ -836,11 +934,180 @@ func (r *AgreementRepositoryImpl) GetAgreementByCode(tx *gorm.DB, AgreementCode 
 	response.ProfitCenterId = entities.ProfitCenterId
 	response.AgreementDateFrom = entities.AgreementDateFrom
 	response.AgreementDateTo = entities.AgreementDateTo
-	response.DealerId = entities.DealerId
-	response.DealerName = companyResponse.CompanyName
-	response.DealerCode = companyResponse.CompanyCode
+	response.CompanyId = entities.CompanyId
+	response.CompanyName = companyResponse.CompanyName
+	response.CompanyCode = companyResponse.CompanyCode
 	response.TopId = entities.TopId
 	response.AgreementRemark = entities.AgreementRemark
+	response.CustomerType = clientTypeResponse.ClientTypeDescription
+	response.ProfitCenterName = profitCenterResponse.ProfitCenterName
+	response.TermOfPaymentCode = termOfPaymentResponse.TermOfPaymentCode
+	response.TermOfPaymentName = termOfPaymentResponse.TermOfPaymentName
 
 	return response, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementByHeaderId(tx *gorm.DB, AgreementId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.AgreementDiscountGroupDetail{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementDiscountGroupDetail{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	whereQuery = whereQuery.Where("agreement_id = ?", AgreementId)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	var results []map[string]interface{}
+	for _, entity := range entities {
+		selectionName := "unknown"
+		if entity.AgreementSelection == 0 {
+			selectionName = "discount"
+		} else if entity.AgreementSelection == 1 {
+			selectionName = "markup"
+		}
+
+		// fetch order type from utils cross service
+		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
+		if orderTypeError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: orderTypeError.StatusCode,
+				Err:        orderTypeError.Err,
+			}
+		}
+
+		result := map[string]interface{}{
+			"agreement_discount_group_id":  entity.AgreementDiscountGroupId,
+			"agreement_id":                 entity.AgreementId,
+			"agreement_selection":          entity.AgreementSelection,
+			"agreement_selection_name":     selectionName,
+			"agreement_order_type_id":      entity.AgreementOrderTypeId,
+			"agreement_order_type_name":    orderTypeResponse.OrderTypeName,
+			"agreement_discount_markup_id": entity.AgreementDiscountMarkupId,
+			"agreement_discount":           entity.AgreementDiscount,
+			"agreement_detail_remarks":     entity.AgreementDetailRemarks,
+		}
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountItemAgreementByHeaderId(tx *gorm.DB, AgreementId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.AgreementItemDetail{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementItemDetail{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	whereQuery = whereQuery.Where("agreement_id = ?", AgreementId)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.AgreementItemDetail{}
+		return pages, nil
+	}
+
+	pages.Rows = entities
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountValueAgreementByHeaderId(tx *gorm.DB, AgreementId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	entities := []masterentities.AgreementDiscount{}
+
+	baseModelQuery := tx.Model(&masterentities.AgreementDiscount{})
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	whereQuery = whereQuery.Where("agreement_id = ?", AgreementId)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masterentities.AgreementDiscount{}
+		return pages, nil
+	}
+
+	pages.Rows = entities
+
+	return pages, nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteMultiIdDiscountGroup(tx *gorm.DB, AgreementId int, DiscountGroupIds []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementDiscountGroupDetail
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_group_id IN (?)", AgreementId, DiscountGroupIds).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting discount group",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteMultiIdItemDiscount(tx *gorm.DB, AgreementId int, ItemDiscountIds []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementItemDetail
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_item_id IN (?)", AgreementId, ItemDiscountIds).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting item discount",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteMultiIdDiscountValue(tx *gorm.DB, AgreementId int, DiscountValueIds []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementDiscount
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_id IN (?)", AgreementId, DiscountValueIds).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error deleting discount value",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
 }

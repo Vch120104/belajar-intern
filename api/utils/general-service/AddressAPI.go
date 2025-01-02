@@ -70,7 +70,7 @@ func UpdateAddress(id int, request UpdateAddressRequest) (AddressResponse, *exce
 	return response, nil
 }
 
-func GetAddressByID(id int) (AddressResponse, *exceptions.BaseErrorResponse) {
+func GetAddressById(id int) (AddressResponse, *exceptions.BaseErrorResponse) {
 	var response AddressResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &response)
@@ -104,7 +104,7 @@ func GetAddressByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 	}
 	strIds := "[" + strings.Join(idStrings, ",") + "]"
 
-	url := config.EnvConfigs.GeneralServiceUrl + "address-by-multi-id/" + strIds
+	url := config.EnvConfigs.GeneralServiceUrl + "address-multi-id/" + strIds
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {
 		return &exceptions.BaseErrorResponse{

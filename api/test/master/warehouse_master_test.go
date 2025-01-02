@@ -3,7 +3,6 @@ package test
 import (
 	"after-sales/api/config"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
-	"after-sales/api/payloads/pagination"
 
 	// "after-sales/api/payloads/pagination"
 
@@ -53,14 +52,7 @@ func TestGetWarehouseMaster(t *testing.T) {
 	warehouseMasterRepo := masterwarehouserepo.OpenWarehouseMasterImpl()
 	warehouseMasterService := masterwarehousegroupservice.OpenWarehouseMasterService(warehouseMasterRepo, db, nil)
 
-	pagination := pagination.Pagination{
-		Page:       0,
-		Limit:      10,
-		TotalRows:  1,
-		TotalPages: 1,
-	}
-
-	save, err := warehouseMasterService.GetById(1, pagination)
+	save, err := warehouseMasterService.GetById(1)
 
 	if err != nil {
 		panic(err)

@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
@@ -30,23 +31,22 @@ func OpenQualityControlRepositoryImpl() transactionworkshoprepository.QualityCon
 // uspg_wtWorkOrder0_Select
 // IF @Option = 7
 // USE IN MODUL : AWS - 006 QUALITY CONTROL PAGE 1 REQ: ???
-func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
+func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshoppayloads.QualityControlRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.QualityControlRequest{})
-	whereQuery := utils.ApplyFilterSearch(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	whereQuery = whereQuery.Where("work_order_status_id = ?", utils.WoStatStop) // 40 Stop
 
 	if err := whereQuery.Find(&entities).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Work order not found",
 				Err:        err,
 			}
 		}
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch entity",
 			Err:        err,
@@ -54,74 +54,68 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	}
 
 	if len(entities) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "No data found",
-			Err:        errors.New("no data found"),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
 	var convertedResponses []transactionworkshoppayloads.QualityControlResponse
 
+	// Process entities
 	for _, entity := range entities {
-		// Fetch data model from external services
+		// Fetch data from external services
 		modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
 		if modelErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch model data from external service",
 				Err:        modelErr.Err,
 			}
 		}
 
-		// Fetch data variant from external services
 		variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
 		if variantErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch variant data from external service",
 				Err:        variantErr.Err,
 			}
 		}
 
-		// Fetch data vehicle from external API
-		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
-		if vehicleErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve vehicle data from the external API",
-				Err:        vehicleErr.Err,
-			}
-		}
+		// vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+		// if vehicleErr != nil {
+		// 	return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to retrieve vehicle data from external service",
+		// 		Err:        vehicleErr.Err,
+		// 	}
+		// }
 
-		// Fetch data customer from external API
 		customerResponses, customerErr := generalserviceapiutils.GetCustomerMasterDetailById(entity.CustomerId)
 		if customerErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve customer data from the external API",
+				Message:    "Failed to retrieve customer data from external service",
 				Err:        customerErr.Err,
 			}
 		}
 
-		// Fetch data work order from external API
+		// Fetch work order data from external API
 		WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(entity.WorkOrderSystemNumber)
 		var workOrderResponses transactionworkshoppayloads.WorkOrderResponse
 		errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
 		if errWorkOrder != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve work order data from the external API",
 				Err:        errWorkOrder,
 			}
 		}
 
-		// Append converted response
 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-			VehicleCode:             vehicleResponses.VehicleChassisNumber,
-			VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
+			VehicleCode:             "", //vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:             "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
 			CustomerName:            customerResponses.CustomerName,
 			WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
 			VarianCode:              variantResponses.VariantCode,
@@ -146,7 +140,11 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = paginatedData
+	pages.TotalRows = int64(totalRows)
+	pages.TotalPages = totalPages
+
+	return pages, nil
 }
 
 func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionworkshoppayloads.QualityControlIdResponse, *exceptions.BaseErrorResponse) {
@@ -202,60 +200,52 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 
 	// Fetch data vehicle from external API
-	vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
-	if vehicleErr != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve vehicle data from the external API",
-			Err:        vehicleErr.Err,
-		}
-	}
+	// vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+	// if vehicleErr != nil {
+	// 	return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to retrieve vehicle data from the external API",
+	// 		Err:        vehicleErr.Err,
+	// 	}
+	// }
 
 	// Fetch data colour from external API
-	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
-	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
-	if errColour != nil || len(colourResponses) == 0 {
+	colourByBrand, colourErr := salesserviceapiutils.GetUnitColourByBrandId(entity.BrandId)
+	if colourErr != nil {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve colour data from the external API",
-			Err:        errColour,
+			Err:        colourErr.Err,
 		}
 	}
 
 	// Fetch data customer from external API
-	CustomerUrl := config.EnvConfigs.SalesServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
-	var customerResponses transactionworkshoppayloads.CustomerResponse
-	errCustomer := utils.Get(CustomerUrl, &customerResponses, nil)
-	if errCustomer != nil {
+	customerResponses, customerErr := generalserviceapiutils.GetCustomerMasterById(entity.CustomerId)
+	if customerErr != nil {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve customer data from the external API",
-			Err:        errCustomer,
+			Err:        customerErr.Err,
 		}
 	}
 
 	// Fetch foreman data from external API
-	ForemanUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entity.ForemanId)
-	var foremanResponses transactionworkshoppayloads.QualityControlForemanResponse
-	errForeman := utils.Get(ForemanUrl, &foremanResponses, nil)
-	if errForeman != nil {
+	foremanResponses, foremanErr := generalserviceapiutils.GetUserDetailsByID(entity.ForemanId)
+	if foremanErr != nil {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve foreman data from the external API",
-			Err:        errForeman,
+			Err:        foremanErr.Err,
 		}
 	}
 
 	// fetch service advisor data from external API
-	ServiceAdvisorUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entity.ServiceAdvisorId)
-	var serviceAdvisorResponses transactionworkshoppayloads.QualityControlServiceAdvisorResponse
-	errServiceAdvisor := utils.Get(ServiceAdvisorUrl, &serviceAdvisorResponses, nil)
-	if errServiceAdvisor != nil {
+	serviceAdvisorResponses, serviceAdvisorErr := generalserviceapiutils.GetUserDetailsByID(entity.ServiceAdvisorId)
+	if serviceAdvisorErr != nil {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve service advisor data from the external API",
-			Err:        errServiceAdvisor,
+			Err:        serviceAdvisorErr.Err,
 		}
 	}
 
@@ -326,14 +316,12 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 
 	// Fetch data work order from external API
-	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(entity.WorkOrderSystemNumber)
-	var workOrderResponses transactionworkshoppayloads.WorkOrderResponse
-	errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
-	if errWorkOrder != nil {
+	workOrderResponses, workOrderErr := aftersalesserviceapiutils.GetWorkOrderById(entity.WorkOrderSystemNumber)
+	if workOrderErr != nil {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve work order data from the external API",
-			Err:        errWorkOrder,
+			Err:        workOrderErr.Err,
 		}
 	}
 
@@ -392,25 +380,25 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 
 	response := transactionworkshoppayloads.QualityControlIdResponse{
-		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
-		WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
+		WorkOrderDocumentNumber: workOrderResponses.Data.WorkOrderDocumentNumber,
+		WorkOrderDate:           workOrderResponses.Data.WorkOrderDate,
 		BrandName:               brandResponses.BrandName,
 		ModelName:               modelResponses.ModelName,
-		VariantName:             variantResponses.VariantName,
-		ColourName:              colourResponses[0].VariantColourName,
-		VehicleCode:             vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
-		CustomerName:            workorderUsers[0].CustomerName,
-		Address0:                workorderUsers[0].Address_Street_1,
-		Address1:                workorderUsers[0].Address_Street_2,
-		RTRW:                    workorderUsers[0].Address_Street_3,
+		VariantDescription:      variantResponses.VariantDescription,
+		ColourName:              colourByBrand.Data[0].ColourCommercialName,
+		VehicleCode:             "", //vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:             "", //vehicleResponses.VehicleRegistrationCertificateTNKB,
+		CustomerName:            customerResponses.CustomerName,
+		Address0:                customerResponses.AddressStreet1,
+		Address1:                customerResponses.AddressStreet2,
+		RTRW:                    customerResponses.AddressStreet3,
 		LastMilage:              workorderVehicleDetails[0].VehicleLastKm,
-		CurrentMilage:           workOrderResponses.WorkOrderCurrentMileage,
-		Phone:                   workOrderResponses.PhoneCust,
-		ForemanName:             foremanResponses.ForemanName,
-		ServiceAdvisorName:      serviceAdvisorResponses.ServiceAdvisorName,
-		OrderDateTime:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-		EstimatedFinished:       workOrderResponses.PromiseTime.Format("15:04:05"),
+		CurrentMilage:           workOrderResponses.Data.WorkOrderCurrentMileage,
+		Phone:                   workOrderResponses.Data.PhoneCustomer,
+		ForemanName:             foremanResponses.EmployeeName,
+		ServiceAdvisorName:      serviceAdvisorResponses.EmployeeName,
+		OrderDateTime:           "",
+		EstimatedFinished:       "",
 		QualityControlDetails: transactionworkshoppayloads.QualityControlDetailsResponse{
 			Page:       pages.GetPage(),
 			Limit:      pages.GetLimit(),

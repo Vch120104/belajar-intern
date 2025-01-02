@@ -50,6 +50,29 @@ func GetServiceRequestStatusById(id int) (ServiceRequestStatus, *exceptions.Base
 	return getServiceRequestStatus, nil
 }
 
+func GetServiceRequestStatusByCode(code string) (ServiceRequestStatus, *exceptions.BaseErrorResponse) {
+	var getServiceRequestStatus ServiceRequestStatus
+	url := config.EnvConfigs.GeneralServiceUrl + "service-request-status-code/" + code
+
+	err := utils.CallAPI("GET", url, nil, &getServiceRequestStatus)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve service request status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "service request status service is temporarily unavailable"
+		}
+
+		return getServiceRequestStatus, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting service request status by code"),
+		}
+	}
+	return getServiceRequestStatus, nil
+}
+
 func GetReferenceTypeById(id int) (ReferenceType, *exceptions.BaseErrorResponse) {
 	var getReferenceType ReferenceType
 	url := config.EnvConfigs.GeneralServiceUrl + "service-request-reference-type/" + strconv.Itoa(id)

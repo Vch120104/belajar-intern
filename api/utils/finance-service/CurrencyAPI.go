@@ -16,6 +16,7 @@ type CurrencyParams struct {
 	Page         int    `json:"page"`
 	Limit        int    `json:"limit"`
 	CurrencyCode string `json:"currency_code"`
+	CurrencyName string `json:"currency_name"`
 }
 
 type CurrencyResponse struct {
@@ -70,6 +71,28 @@ func GetAllCurrency(params CurrencyParams) ([]CurrencyResponse, *exceptions.Base
 func GetCurrencyId(id int) (CurrencyResponse, *exceptions.BaseErrorResponse) {
 	var getCurrency CurrencyResponse
 	url := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(id)
+	err := utils.CallAPI("GET", url, nil, &getCurrency)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve currency due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "currency service is temporarily unavailable"
+		}
+
+		return getCurrency, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting currency by ID"),
+		}
+	}
+	return getCurrency, nil
+}
+
+func GetCurrencyByCode(code string) (CurrencyResponse, *exceptions.BaseErrorResponse) {
+	var getCurrency CurrencyResponse
+	url := config.EnvConfigs.FinanceServiceUrl + "currency-code/code/" + code
 	err := utils.CallAPI("GET", url, nil, &getCurrency)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502

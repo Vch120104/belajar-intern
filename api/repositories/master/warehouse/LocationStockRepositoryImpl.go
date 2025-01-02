@@ -8,12 +8,14 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"fmt"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
+	"gorm.io/gorm"
 )
 
 type LocationStockRepositoryImpl struct {
@@ -23,10 +25,10 @@ func NewLocationStockRepositoryImpl() masterrepository.LocationStockRepository {
 	return &LocationStockRepositoryImpl{}
 }
 
-func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+// viewlocationstock table view
+func (repo *LocationStockRepositoryImpl) GetViewLocationStock(db *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//var
 	var response []masterwarehousepayloads.LocationStockDBResponse
-	entities := masterentities.LocationStock{}
 	Jointable := db.Table("mtr_location_stock a").Select(`a.company_id,
 		a.period_year,
 		a.period_month,
@@ -64,17 +66,16 @@ func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils
 		ISNULL(A.quantity_allocated, 0))
 		AS quantity_available`).Joins("left outer join mtr_warehouse_master b ON a.company_id = b.company_id AND a.warehouse_id = b.warehouse_id")
 	whereQuaery := utils.ApplyFilter(Jointable, filter)
-	err := whereQuaery.Scopes(pagination.Paginate(&entities, &pages, whereQuaery)).Scan(&response).Error
+	err := whereQuaery.Scopes(pagination.Paginate(&pages, whereQuaery)).Scan(&response).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch",
-			Data:       nil,
 			Err:        errors.New("Failed to fetch"),
 		}
 	}
+
 	pages.Rows = response
-	//page := pagination.Pagination{}
 
 	return pages, nil
 }
@@ -328,7 +329,6 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 		}
 	}
 	var NegativeStock bool = false
-
 	err = db.Model(&WarehouseMasterEntity).
 		Where(masterwarehouseentities.WarehouseMaster{CompanyId: payloads.ItemId, WarehouseId: payloads.WarehouseId}).
 		Select("warehouse_negative_stock").Scan(&NegativeStock).Error
@@ -461,4 +461,96 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 		//}
 	}
 	return true, nil
+}
+
+// [uspg_amLocationStockItem_Select] option 1
+func (repo *LocationStockRepositoryImpl) GetAvailableQuantity(db *gorm.DB, payload masterwarehousepayloads.GetAvailableQuantityPayload) (masterwarehousepayloads.GetQuantityAvailablePayload, *exceptions.BaseErrorResponse) {
+	var qtyResult float64
+	var qtyTemp float64
+	var periodYear, periodMonth string
+	quantityAvail := masterwarehousepayloads.GetQuantityAvailablePayload{}
+	quantityAvail.QuantityAvailable = 0
+	moduleCode := "SP"
+	//periodStatusClose := 3
+
+	// Validate Item Code
+	var itemCount int64
+	if err := db.Table("mtr_item").
+		Where("item_id = ?", payload.ItemId).
+		Count(&itemCount).Error; err != nil {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count item",
+			Err:        err,
+		}
+	}
+
+	if itemCount == 0 {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Item not found",
+			Err:        errors.New("item not found"),
+		}
+	}
+
+	// Handle period date if not provided
+	if payload.PeriodDate.IsZero() {
+		payload.PeriodDate = time.Now()
+	}
+
+	// Get current period year and month
+	periodYear = payload.PeriodDate.Format("2006")
+	periodMonth = payload.PeriodDate.Format("01")
+
+	// Check if the period is closed
+	openPeriodResponse, openPeriodErr := financeserviceapiutils.GetOpenPeriodByCompany(payload.CompanyId, moduleCode)
+	if openPeriodErr != nil {
+		return quantityAvail, openPeriodErr
+	}
+	if openPeriodResponse.PeriodMonth != periodMonth && openPeriodResponse.PeriodYear != periodYear {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Period is closed",
+			Err:        errors.New("period is closed"),
+		}
+	}
+
+	query := db.Model(&masterentities.LocationStock{})
+	if periodYear != "" {
+		query = query.Where(masterentities.LocationStock{PeriodYear: periodYear})
+	}
+	if periodMonth != "" {
+		query = query.Where(masterentities.LocationStock{PeriodMonth: periodMonth})
+	}
+	if payload.WarehouseId != 0 {
+		query = query.Where(masterentities.LocationStock{WarehouseId: payload.WarehouseId})
+	}
+	if payload.LocationId != 0 {
+		query = query.Where(masterentities.LocationStock{LocationId: payload.LocationId})
+	}
+	if payload.ItemId != 0 {
+		query = query.Where(masterentities.LocationStock{ItemId: payload.ItemId})
+	}
+	if payload.WarehouseGroupId != 0 {
+		query = query.Where(masterentities.LocationStock{WarehouseGroupId: payload.WarehouseGroupId})
+	}
+
+	if err := query.
+		//Where("module_code = ?", moduleCode).
+		Select(`
+		(ISNULL(quantity_begin, 0) + ISNULL(quantity_purchase, 0) - ISNULL(quantity_purchase_return, 0) +
+		ISNULL(quantity_transfer_in, 0) + ISNULL(quantity_robbing_in, 0) + ISNULL(quantity_adjustment, 0)
+		 + ISNULL(quantity_sales_return, 0) + ISNULL(quantity_assembly_in, 0)) - (ISNULL(quantity_sales, 0) 
+		 + ISNULL(quantity_transfer_out, 0) + ISNULL(quantity_robbing_out, 0) + ISNULL(quantity_assembly_out, 0) +
+		ISNULL(quantity_allocated, 0))
+		AS quantity_available`).Scan(&qtyTemp).Error; err != nil {
+		return quantityAvail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get available quantity for item",
+			Err:        err,
+		}
+	}
+	qtyResult = qtyTemp
+	quantityAvail.QuantityAvailable = qtyResult
+	return quantityAvail, nil
 }

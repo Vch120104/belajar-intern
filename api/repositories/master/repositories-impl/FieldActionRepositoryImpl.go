@@ -25,26 +25,13 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 
 func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.FieldActionResponse
-	// entities := masterentities.FieldAction{}
-	JoinTable := tx.Table("mtr_field_action as fa").
-		Select(`
-			fa.is_active,
-			fa.field_action_system_number,
-			fa.approval_status_id,
-			fa.brand_id,
-			fa.field_action_document_number,
-			fa.field_action_name,
-			fa.field_action_period_from,
-			fa.field_action_period_to,
-			fa.is_never_expired,
-			fa.remark_popup,
-			fa.is_critical,
-			fa.remark_invoice,
-			faev.vehicle_id
-		`).
-		Joins("Join mtr_field_action_eligible_vehicle as faev ON faev.field_action_system_number=fa.field_action_system_number")
+	entities := masterentities.FieldAction{}
+	JoinTable := tx.Model(&entities).
+		Select("mtr_field_action.*,faev.*").
+		Joins("Join mtr_field_action_eligible_vehicle as faev ON faev.field_action_system_number=mtr_field_action.field_action_system_number")
 
 	whereQuery := utils.ApplyFilter(JoinTable, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&pages, JoinTable)).Order("mtr_field_action.field_action_system_number").Scan(&responses).Error
 
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
@@ -158,7 +145,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.
 			FieldActionSystemNumber: Id,
 		})
 	filterQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, filterQuery)).Scan(&payloads).Rows()
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&pages, filterQuery)).Scan(&payloads).Rows()
 
 	if len(payloads) == 0 {
 		return pages, &exceptions.BaseErrorResponse{

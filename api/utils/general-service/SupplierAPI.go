@@ -69,7 +69,7 @@ func GetAllSupplierMaster(params SupplierMasterParams) ([]SupplierMasterResponse
 		params.Limit = 1000000
 	}
 
-	baseURL := config.EnvConfigs.GeneralServiceUrl + "supplier"
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "supplier-list"
 
 	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
 
@@ -108,7 +108,7 @@ func GetAllSupplierMaster(params SupplierMasterParams) ([]SupplierMasterResponse
 
 func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
 	var getSupplierMaster SupplierMasterResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "supplier-by-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "supplier-code/" + code
 
 	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {
@@ -129,7 +129,7 @@ func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.B
 	return getSupplierMaster, nil
 }
 
-func GetSupplierMasterByID(id int) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
+func GetSupplierMasterById(id int) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
 	var getSupplierMaster SupplierMasterResponse
 	url := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(id)
 

@@ -1,15 +1,16 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
-	masterpayloads "after-sales/api/payloads/master"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"log"
@@ -78,9 +79,8 @@ func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloa
 	return responses, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tableStruct := masteritempayloads.ItemSearch{}
-
 	var supplierCode, supplierName string
 	newFilterCondition := []utils.FilterCondition{}
 
@@ -96,17 +96,18 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 		newFilterCondition = append(newFilterCondition, filter)
 	}
 
-	// Membuat join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
-		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id").
 		Joins("LEFT JOIN mtr_item_type AS mtr_item_type_alias ON mtr_item_type_alias.item_type_id = mtr_item.item_type_id")
 
-	// Terapkan filter
 	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
 
-	// Handle item_id filter
 	if len(itemIDs) > 0 && itemIDs[0] != "" {
 		whereQuery = whereQuery.Where("mtr_item.item_id IN (?)", itemIDs)
+	}
+
+	if len(supplierIDs) > 0 && supplierIDs[0] != "" {
+		whereQuery = whereQuery.Where("mtr_item.supplier_id IN (?)", supplierIDs)
 	}
 
 	var supplierIds []int
@@ -118,12 +119,10 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			SupplierName: supplierName,
 		}
 		supplierResponse, supplierError := generalserviceapiutils.GetAllSupplierMaster(supplierParams)
-		if supplierError != nil {
-			return nil, 0, 0, supplierError
-		}
-
-		for _, supplier := range supplierResponse {
-			supplierIds = append(supplierIds, supplier.SupplierId)
+		if supplierError == nil {
+			for _, supplier := range supplierResponse {
+				supplierIds = append(supplierIds, supplier.SupplierId)
+			}
 		}
 
 		if len(supplierIds) == 0 {
@@ -134,46 +133,38 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 	}
 
 	var responses []masteritempayloads.ItemSearch
-	err := whereQuery.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch data from database",
-			Err:        errors.New("failed to fetch data from database"),
+			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "no data found",
-			Err:        errors.New("no data found"),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
 	var mapResponses []map[string]interface{}
 	for _, response := range responses {
-		// Panggil API eksternal untuk mengambil Supplier data
-		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-		var getSupplierResponse masteritempayloads.SupplierMasterResponse
-		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(response.SupplierId)
+		if supplierErr != nil || getSupplierResponse.SupplierId == 0 {
+			getSupplierResponse = generalserviceapiutils.SupplierMasterResponse{
+				SupplierName: "",
+				SupplierCode: "",
 			}
 		}
 
-		itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-		getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
-		errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
-		if errUrlItemPackage != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+		getItemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+		if itemGroupErr != nil || getItemGroupResponse.ItemGroupId == 0 {
+			getItemGroupResponse = aftersalesserviceapiutils.ItemGroupResponse{
+				ItemGroupCode: "",
 			}
 		}
 
-		// Build response map dengan data dari supplier
 		responseMap := map[string]interface{}{
 			"is_active":       response.IsActive,
 			"item_id":         response.ItemId,
@@ -185,61 +176,54 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			"item_type":       response.ItemTypeCode,
 			"supplier_id":     response.SupplierId,
 			"item_class_code": response.ItemClassCode,
-			"item_group_code": getItemGroupResponses.ItemGroupCode,
+			"item_group_code": getItemGroupResponse.ItemGroupCode,
 			"supplier_name":   getSupplierResponse.SupplierName,
 			"supplier_code":   getSupplierResponse.SupplierCode,
 		}
+
+		responseMap["supplier_name"] = getSupplierResponse.SupplierName
+		responseMap["supplier_code"] = getSupplierResponse.SupplierCode
+		responseMap["item_group_code"] = getItemGroupResponse.ItemGroupCode
+
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
+	pages.Rows = mapResponses
+	return pages, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetAllItemInventory(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	responses := []masteritempayloads.ItemInventory{}
 
-	var responses []masteritempayloads.ItemLookup
+	baseQuery := tx.Table("mtr_item AS itm").
+		Select(`
+			itm.item_id,
+			itm.is_active,
+			itm.item_code,
+			itm.item_name,
+			cls.item_class_name,
+			grp.item_group_code,
+			cls.item_class_code,
+			uom.uom_code`).
+		Joins("INNER JOIN mtr_item_group grp on itm.item_group_id = grp.item_group_id").
+		Joins("INNER JOIN mtr_item_class cls on itm.item_class_id = cls.item_class_id").
+		Joins("INNER JOIN mtr_uom uom on itm.unit_of_measurement_stock_id = uom.uom_id").
+		Where("grp.item_group_code = 'IN'")
 
-	tableStruct := masteritempayloads.ItemLookup{}
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilterForDB(joinTable, filterCondition)
+	baseQuery = utils.ApplyFilter(baseQuery, filter)
 
-	err := whereQuery.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Error
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
+
+	if err := paginatedQuery.Scan(&responses).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
+			Message:    "Error fetching item record",
+			Err:        err,
 		}
 	}
 
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
-		}
-	}
-
-	var mapResponses []map[string]interface{}
-
-	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"is_active":       response.IsActive,
-			"item_id":         response.ItemId,
-			"item_code":       response.ItemCode,
-			"item_name":       response.ItemName,
-			"item_group_id":   response.ItemGroupId,
-			"item_class_id":   response.ItemClassId,
-			"item_type_id":    response.ItemTypeId,
-			"supplier_id":     response.SupplierId,
-			"item_class_name": response.ItemClassName,
-			"item_level_1":    response.ItemLevel_1,
-			"item_level_2":    response.ItemLevel_2,
-			"item_level_3":    response.ItemLevel_3,
-			"item_level_4":    response.ItemLevel_4,
-		}
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
+	pages.Rows = responses
+	return pages, nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
@@ -251,7 +235,6 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	// Fetch the item entity from the database
 	err := tx.Model(&entities).
 		Select(`
 			mtr_item.*,
@@ -292,24 +275,20 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 		}
 	}
 
-	// Call external service to get Supplier details
-	supplierResponse := masteritempayloads.SupplierMasterResponse{}
 	if response.SupplierId != nil {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
-		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-			return response, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to fetch supplier data",
-				Err:        err,
-			}
+		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterById(*response.SupplierId)
+		if supplierError != nil {
+			response.SupplierCode = nil
+			response.SupplierName = nil
+		} else {
+			response.SupplierCode = &supplierResponse.SupplierCode
+			response.SupplierName = &supplierResponse.SupplierName
 		}
+	} else {
+		response.SupplierCode = nil
+		response.SupplierName = nil
 	}
 
-	// Populate supplier data into response
-	response.SupplierCode = &supplierResponse.SupplierCode
-	response.SupplierName = &supplierResponse.SupplierName
-
-	// Return the response with a populated supplier
 	return response, nil
 }
 
@@ -388,19 +367,19 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 		}
 	}
 
-	supplierResponse := masteritempayloads.SupplierMasterResponse{}
 	if response.SupplierId != nil {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
-		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-			return response, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		supplierResponse, supplierError := generalserviceapiutils.GetSupplierMasterById(*response.SupplierId)
+		if supplierError != nil {
+			response.SupplierCode = nil
+			response.SupplierName = nil
+		} else {
+			response.SupplierCode = &supplierResponse.SupplierCode
+			response.SupplierName = &supplierResponse.SupplierName
 		}
+	} else {
+		response.SupplierCode = nil
+		response.SupplierName = nil
 	}
-
-	response.SupplierCode = &supplierResponse.SupplierCode
-	response.SupplierName = &supplierResponse.SupplierName
 
 	// joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
 
@@ -410,6 +389,60 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 	return response, nil
 
+}
+
+func (r *ItemRepositoryImpl) GetItemLatestId(tx *gorm.DB) (masteritempayloads.LatestItemAndLineTypeResponse, *exceptions.BaseErrorResponse) {
+	var latestID int
+	lineResponse := masteritempayloads.LatestItemAndLineTypeResponse{}
+
+	err := tx.Table("mtr_item").
+		Select("item_id").
+		Order("item_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if err != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	errLine := tx.Table("mtr_item mi").
+		Select("DISTINCT mi.item_id, mic.item_class_id, mic.line_type_id").
+		Joins("JOIN mtr_item_class mic ON mi.item_class_id = mic.item_class_id").
+		Where("mi.item_id = ?", latestID).
+		Scan(&lineResponse).Error
+
+	if errLine != nil {
+		return lineResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return lineResponse, nil
+}
+
+func (r *ItemRepositoryImpl) SaveItemToMappingItemOperation(tx *gorm.DB, response masteritempayloads.LatestItemAndLineTypeResponse) (bool, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: 0,
+		LineTypeId:      response.LineTypeId,
+		ItemId:          response.ItemId,
+		OperationId:     0,
+		PackageId:       0,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
@@ -496,7 +529,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	//CHECK SUPPLIER
 	if req.SupplierId != nil {
 		fmt.Println("call supplier api")
-		supplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(*req.SupplierId)
+		supplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(*req.SupplierId)
 		if supplierErr != nil || supplierResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -532,7 +565,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK ATPM SUPPLIER EXISTENCE
 	if req.AtpmSupplierId != nil {
-		atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterByID(*req.AtpmSupplierId)
+		atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterById(*req.AtpmSupplierId)
 		if atpmSupplierError != nil || atpmSupplierResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -568,7 +601,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK ATPM SUPPLIER CODE ORDER EXISTENCE
 	if req.AtpmSupplierCodeOrderId != nil {
-		atpmSupplierCodeOrderResponse, atpmSupplierCodeOrderError := generalserviceapiutils.GetSupplierMasterByID(*req.AtpmSupplierCodeOrderId)
+		atpmSupplierCodeOrderResponse, atpmSupplierCodeOrderError := generalserviceapiutils.GetSupplierMasterById(*req.AtpmSupplierCodeOrderId)
 		if atpmSupplierCodeOrderError != nil || atpmSupplierCodeOrderResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -580,7 +613,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK PERSON IN CHARGE EXISTENCE
 	if req.PersonInChargeId != nil {
-		picResponse, picError := generalserviceapiutils.GetEmployeeByID(*req.PersonInChargeId)
+		picResponse, picError := generalserviceapiutils.GetEmployeeById(*req.PersonInChargeId)
 		if picError != nil || picResponse.UserEmployeeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -1194,131 +1227,75 @@ func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempaylo
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
+func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemDetailRequest
 
 	tableStruct := masteritempayloads.ItemDetailRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilterExact(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	rows, err := whereQuery.Find(&responses).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch data from database",
-			Err:        err,
-		}
-	}
-	defer rows.Close()
-
-	var convertedResponses []masteritempayloads.ItemDetailResponse
-
-	for rows.Next() {
-		var (
-			itemDetailReq masteritempayloads.ItemDetailRequest
-			itemDetailRes masteritempayloads.ItemDetailResponse
-		)
-
-		if err := rows.Scan(
-			&itemDetailReq.ItemDetailId,
-			&itemDetailReq.ItemId,
-			&itemDetailReq.BrandId,
-			&itemDetailReq.ModelId,
-			&itemDetailReq.VariantId,
-			&itemDetailReq.MileageEvery,
-			&itemDetailReq.ReturnEvery,
-			&itemDetailReq.IsActive); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to scan item detail data",
-				Err:        err,
-			}
-		}
-
-		// Fetch Brand data
-		BrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(itemDetailReq.BrandId)
-		var getBrandResponse masterpayloads.BrandResponse
-		if err := utils.Get(BrandURL, &getBrandResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to fetch brand data",
-				Err:        err,
-			}
-		}
-
-		// Fetch Model data
-		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(itemDetailReq.ModelId)
-		var getModelResponse masterpayloads.UnitModelResponse
-		if err := utils.Get(ModelURL, &getModelResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to fetch model data",
-				Err:        err,
-			}
-		}
-
-		// Fetch Variant data
-		VariantURL := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(itemDetailReq.VariantId)
-		var getVariantResponse masterpayloads.GetVariantResponse
-		if err := utils.Get(VariantURL, &getVariantResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to fetch variant data",
-				Err:        err,
-			}
-		}
-
-		itemDetailRes = masteritempayloads.ItemDetailResponse{
-			ItemDetailId:       itemDetailReq.ItemDetailId,
-			ItemId:             itemDetailReq.ItemId,
-			BrandId:            itemDetailReq.BrandId,
-			BrandName:          getBrandResponse.BrandName,
-			ModelId:            itemDetailReq.ModelId,
-			ModelCode:          getModelResponse.ModelCode,
-			ModelDescription:   getModelResponse.ModelDescription,
-			VariantId:          itemDetailReq.VariantId,
-			VariantCode:        getVariantResponse.VariantCode,
-			VariantDescription: getVariantResponse.VariantDescription,
-			ReturnEvery:        itemDetailReq.ReturnEvery,
-			MileageEvery:       itemDetailReq.MileageEvery,
-			IsActive:           itemDetailReq.IsActive,
-		}
-
-		convertedResponses = append(convertedResponses, itemDetailRes)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error in item detail rows iteration",
 			Err:        err,
 		}
 	}
 
-	var mapResponses []map[string]interface{}
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	var results []map[string]interface{}
+
+	for _, response := range responses {
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: brandErr.StatusCode,
+				Err:        brandErr.Err,
+			}
+		}
+
+		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		if modelErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: modelErr.StatusCode,
+				Err:        modelErr.Err,
+			}
+		}
+
+		variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
+		if variantErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: variantErr.StatusCode,
+				Err:        variantErr.Err,
+			}
+		}
+
+		result := map[string]interface{}{
 			"item_detail_id":      response.ItemDetailId,
 			"item_id":             response.ItemId,
 			"brand_id":            response.BrandId,
-			"brand_name":          response.BrandName,
+			"brand_name":          brandResponse.BrandName,
 			"model_id":            response.ModelId,
-			"model_code":          response.ModelCode,
-			"model_description":   response.ModelDescription,
+			"model_code":          modelResponse.ModelCode,
+			"model_description":   modelResponse.ModelCodeDescription,
 			"variant_id":          response.VariantId,
-			"variant_code":        response.VariantCode,
-			"variant_description": response.VariantDescription,
+			"variant_code":        variantResponse.VariantCode,
+			"variant_description": variantResponse.VariantDescription,
 			"mileage_every":       response.MileageEvery,
 			"return_every":        response.ReturnEvery,
 			"is_active":           response.IsActive,
 		}
-		mapResponses = append(mapResponses, responseMap)
+
+		results = append(results, result)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+	pages.Rows = results
 
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (r *ItemRepositoryImpl) GetItemDetailById(tx *gorm.DB, ItemId, ItemDetailId int) (masteritempayloads.ItemDetailRequest, *exceptions.BaseErrorResponse) {
@@ -1523,15 +1500,23 @@ func (r *ItemRepositoryImpl) GetPrincipalBrandParent(tx *gorm.DB, id int) ([]mas
 
 func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse) {
 	var itemDetails []masteritempayloads.ItemDetailResponse
-	brandid := strings.Split(id, ",")
+	brandIds := strings.Split(id, ",")
 
-	for _, id := range brandid {
-		var getdatabybrand []masteritempayloads.BrandModelVariantResponse
-		err := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant-by-brand/"+id, &getdatabybrand, nil)
+	for _, id := range brandIds {
+		brandId, err := strconv.Atoi(strings.TrimSpace(id))
 		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        errors.New("brand has no variant and model"),
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("invalid brand ID"),
+			}
+		}
+
+		getdatabybrand, errFetch := salesserviceapiutils.GetUnitVariantByBrand(brandId)
+		if errFetch != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: errFetch.StatusCode,
+				Err:        errFetch.Err,
+				Message:    "Failed to fetch unit variants by brand",
 			}
 		}
 
@@ -1544,11 +1529,12 @@ func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId
 				VariantId: detail.VariantId,
 			}
 
-			err = tx.Save(&entities).Error
+			err := tx.Save(&entities).Error
 			if err != nil {
 				return nil, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusConflict,
 					Err:        err,
+					Message:    "Failed to save item detail",
 				}
 			}
 

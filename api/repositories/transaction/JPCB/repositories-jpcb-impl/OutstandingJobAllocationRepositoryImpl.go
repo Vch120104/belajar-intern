@@ -68,7 +68,7 @@ func (r *OutstandingJobAllocationRepositoryImpl) GetAllOutstandingJobAllocation(
 
 	approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-description/Wait%20Approve"
 	approvalStatusPayloads := []transactionjpcbpayloads.OutstandingJAApprovalStatusPayload{}
-	if err := utils.GetArray(approvalStatusUrl, &approvalStatusPayloads, nil); err != nil || approvalStatusPayloads[0].ApprovalStatusId == "" {
+	if err := utils.Get(approvalStatusUrl, &approvalStatusPayloads, nil); err != nil || approvalStatusPayloads[0].ApprovalStatusId == "" {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("error fetching approval status data"),
@@ -96,7 +96,7 @@ func (r *OutstandingJobAllocationRepositoryImpl) GetAllOutstandingJobAllocation(
 
 	workOrderStatusUrl := config.EnvConfigs.GeneralServiceUrl + "work-order-status-by-descriptions/Draft,QC Pass,Closed"
 	workOrderStatusPayloads := []transactionjpcbpayloads.OutstandingJAWorkOrderStatusPayload{}
-	if err := utils.GetArray(workOrderStatusUrl, &workOrderStatusPayloads, nil); err != nil || len(workOrderStatusPayloads) != 3 {
+	if err := utils.Get(workOrderStatusUrl, &workOrderStatusPayloads, nil); err != nil || len(workOrderStatusPayloads) != 3 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("error fetching work order status data"),
@@ -235,7 +235,7 @@ func (r *OutstandingJobAllocationRepositoryImpl) GetAllOutstandingJobAllocation(
 	if plateNumber != nil {
 		vehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_registration_certificate_tnkb=" + *plateNumber
 		vehiclePayloads := []transactionjpcbpayloads.OutstandingJAVehicleMasterByTnkbPayload{}
-		if err := utils.GetArray(vehicleUrl, &vehiclePayloads, nil); err != nil {
+		if err := utils.Get(vehicleUrl, &vehiclePayloads, nil); err != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errors.New("error fetching vehicle by tnkb data"),

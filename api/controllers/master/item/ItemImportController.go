@@ -214,8 +214,11 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	queryValues := request.URL.Query()
 
 	internalFilterCondition := map[string]string{
-		"Item.item_code": queryValues.Get("item_code"),
-		"Item.item_name": queryValues.Get("item_name"),
+		"mtr_item_import.item_import_id": queryValues.Get("item_import_id"),
+		"mtr_item_import.item_id":        queryValues.Get("item_id"),
+		"mtr_item_import.supplier_id":    queryValues.Get("supplier_id"),
+		"Item.item_code":                 queryValues.Get("item_code"),
+		"Item.item_name":                 queryValues.Get("item_name"),
 	}
 	externalFilterCondition := map[string]string{
 		"supplier_code": queryValues.Get("supplier_code"),
@@ -232,14 +235,23 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
 	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	paginatedData, totalPages, totalRows, err := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
+	paginatedData, err := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		utils.ModifyKeysInResponse(paginatedData.Rows),
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // SaveItemImport implements ItemImportController.

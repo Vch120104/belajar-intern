@@ -13,7 +13,7 @@ type Agreement struct {
 	ProfitCenterId               int                            `gorm:"column:profit_center_id;size:30;not null" json:"profit_center_id"`
 	AgreementDateFrom            time.Time                      `gorm:"column:agreement_date_from;not null;" json:"agreement_date_from"`
 	AgreementDateTo              time.Time                      `gorm:"column:agreement_date_to;not null;" json:"agreement_date_to"`
-	DealerId                     int                            `gorm:"column:company_id;size:30;not null" json:"company_id"`
+	CompanyId                    int                            `gorm:"column:company_id;size:30;not null" json:"company_id"`
 	TopId                        int                            `gorm:"column:top_id;size:30;not null" json:"top_id"`
 	AgreementRemark              string                         `gorm:"column:agreement_remark;size:50;not null" json:"agreement_remark"`
 	AgreementDiscount            []AgreementDiscount            `gorm:"foreignKey:AgreementId;" json:"agreement_discount"`

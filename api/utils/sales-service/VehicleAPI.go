@@ -7,14 +7,20 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type VehicleParams struct {
-	Page      int `json:"page"`
-	Limit     int `json:"limit"`
-	VehicleID int `json:"vehicle_id"`
+	Page                               int    `json:"page"`
+	Limit                              int    `json:"limit"`
+	VehicleID                          int    `json:"vehicle_id"`
+	VehicleChassisNumber               string `json:"vehicle_chassis_number"`
+	VehicleRegistrationCertificateTNKB string `json:"vehicle_registration_certificate_tnkb"`
+	SortBy                             string `json:"sort_by"`
+	SortOf                             string `json:"sort_of"`
 }
 
 type VehicleResponse struct {
@@ -86,35 +92,67 @@ func UpdateVehicle(id int, request VehicleUpdate) *exceptions.BaseErrorResponse 
 	return nil
 }
 
-func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
-	var vehicleResponse VehicleListResponse
-
-	baseURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master"
-
-	params := VehicleParams{
-		Page:      0,
-		Limit:     100000,
-		VehicleID: id,
+func GetAllVehicle(params VehicleParams) ([]VehicleResponse, *exceptions.BaseErrorResponse) {
+	var getVehicle []VehicleResponse
+	if params.Limit == 0 {
+		params.Limit = 1000000
 	}
 
-	finalURL := fmt.Sprintf("%s?page=%d&limit=%d&vehicle_id=%d", baseURL, params.Page, params.Limit, params.VehicleID)
-	//log.Printf("Final URL: %s", finalURL)
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "vehicle-master"
 
-	// Make the GET request
-	err := utils.GetArray(finalURL, nil, &vehicleResponse) // Ensure you pass nil if no body is needed
+	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
+
+	v := reflect.ValueOf(params)
+	typeOfParams := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		value := v.Field(i).Interface()
+		if strVal, ok := value.(string); ok && strVal != "" {
+			key := typeOfParams.Field(i).Tag.Get("json")
+			value := strings.ReplaceAll(strVal, " ", "%20")
+			queryParams += "&" + key + "=" + value
+		}
+	}
+
+	url := baseURL + "?" + queryParams
+
+	err := utils.CallAPI("GET", url, nil, &getVehicle)
 	if err != nil {
-		return VehicleResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external vehicle API: " + err.Error(),
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve vehicle due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit vehicle is temporarily unavailable"
+		}
+
+		return getVehicle, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting vehicle by ID"),
 		}
 	}
 
-	if len(vehicleResponse.Data) == 0 {
-		return VehicleResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "vehicle not found",
+	return getVehicle, nil
+}
+
+func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
+	var vehicleData VehicleResponse
+	url := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(id)
+	err := utils.CallAPI("GET", url, nil, &vehicleData)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve vehicle due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "brand service is temporarily unavailable"
+		}
+
+		return vehicleData, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting vehicle by ID"),
 		}
 	}
-
-	return vehicleResponse.Data[0], nil
+	return vehicleData, nil
 }

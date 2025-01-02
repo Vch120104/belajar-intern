@@ -14,6 +14,7 @@ type OperationModelMapping struct {
 	OperationFrt                 []OperationFrt                 `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	OperationDocumentRequirement []OperationDocumentRequirement `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	OperationLevel               []OperationLevel               `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
+	// FieldActionEligibleVehicle   masterentities.FieldActionEligibleVehicleOperation `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 }
 
 func (*OperationModelMapping) TableName() string {

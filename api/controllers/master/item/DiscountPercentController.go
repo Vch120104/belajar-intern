@@ -55,11 +55,13 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_discount.discount_code":        queryValues.Get("discount_code"),
-		"mtr_discount.discount_description": queryValues.Get("discount_description"),
-		"order_type_name":                   queryValues.Get("order_type_name"),
-		"mtr_discount_percent.discount":     queryValues.Get("discount"),
-		"mtr_discount_percent.is_active":    queryValues.Get("is_active"),
+		"mtr_discount.discount_code_id":      queryValues.Get("discount_code_id"),
+		"mtr_discount.discount_code":         queryValues.Get("discount_code"),
+		"mtr_discount.discount_description":  queryValues.Get("discount_description"),
+		"mtr_discount_percent.order_type_id": queryValues.Get("order_type_id"),
+		"order_type_name":                    queryValues.Get("order_type_name"),
+		"mtr_discount_percent.discount":      queryValues.Get("discount"),
+		"mtr_discount_percent.is_active":     queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
@@ -71,14 +73,14 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
+	paginatedData, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, paginatedData.Rows, "Get Data Successfully!", http.StatusOK, paginate.Limit, paginate.Page, paginatedData.TotalRows, paginatedData.TotalPages)
 }
 
 // @Summary Get Discount Percent By ID

@@ -27,7 +27,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterC
 	IncentiveGroupResponse := []masterpayloads.IncentiveGroupResponse{}
 	// IncentiveGroupResponse1 := masterpayloads.IncentiveGroupResponse{}
 	query := tx.
-		Model(masterentities.IncentiveGroup{}).
+		Model(&IncentiveGroupMapping).
 		Scan(&IncentiveGroupResponse)
 		// Select("email").
 		// Where("id in (?)", userIDs).
@@ -37,7 +37,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterC
 	ApplyFilter := utils.ApplyFilter(query, filterCondition)
 
 	err := ApplyFilter.
-		Scopes(pagination.Paginate(&IncentiveGroupMapping, &pages, ApplyFilter)).
+		Scopes(pagination.Paginate(&pages, ApplyFilter)).
 		// Order("approval.name").
 		Scan(&IncentiveGroupResponse).
 		Error

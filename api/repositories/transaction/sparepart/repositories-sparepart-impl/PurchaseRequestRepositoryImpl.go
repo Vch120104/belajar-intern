@@ -11,6 +11,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -35,14 +36,13 @@ func NewPurchaseRequestRepositoryImpl() transactionsparepartrepository.PurchaseR
 func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, conditions []utils.FilterCondition, paginationResponses pagination.Pagination, Dateparams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionsparepartpayloads.PurchaseRequestResponses
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
-	Jointable := db.Table("trx_purchase_request A").
+	Jointable := db.Model(&entities).
 		Select("purchase_request_system_number," +
 			"purchase_request_document_number," +
 			"purchase_request_document_status_id," +
-			"item_group_id,purchase_request_document_number," +
+			"item_group_id," +
 			"reference_system_number,order_type_id,purchase_request_document_date," +
-			"expected_arrival_date,created_by_user_id,reference_document_number," +
-			"'A.purchase_request_system_number'") //.Scan(&responses).Error
+			"expected_arrival_date,created_by_user_id,reference_document_number") //.Scan(&responses).Error
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
 	var strDateFilter string
 	if Dateparams["purchase_request_date_from"] == "" {
@@ -52,7 +52,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 		Dateparams["purchase_request_date_to"] = "99991212"
 	}
 	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date <= '" + Dateparams["purchase_request_date_to"] + "'"
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &paginationResponses, WhereQuery)).Where(strDateFilter).Scan(&responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Where(strDateFilter).Order("purchase_request_document_date DESC").Scan(&responses).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -60,10 +60,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 		}
 	}
 	if len(responses) == 0 {
-		return paginationResponses, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+		paginationResponses.Rows = []string{}
+		return paginationResponses, nil
 	}
 	var result []transactionsparepartpayloads.PurchaseRequestGetAllListResponses
 	for _, res := range responses {
@@ -77,14 +75,9 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			}
 		}
 
-		var RequestBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-		RequestByURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(res.CreatedByUserId)
-		if err := utils.Get(RequestByURL, &RequestBy, nil); err != nil {
-			return paginationResponses, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Requested By data from external service",
-				Err:        err,
-			}
+		RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
+		if RequestByErr != nil {
+			return paginationResponses, RequestByErr
 		}
 
 		var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
@@ -132,7 +125,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			ReferenceNo:                   res.ReferenceDocumentNumber,
 			ExpectedArrivalDate:           res.ExpectedArrivalDate,
 			Status:                        purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-			RequestBy:                     RequestBy.UserEmployeeName,
+			RequestBy:                     RequestBy.EmployeeName,
 		}
 		result = append(result, tempRes)
 	}
@@ -160,7 +153,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	if CompanyReponseerr != nil {
 		return response, CompanyReponseerr
 	}
-	ItemGroup, ItemGroupErr := generalserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	ItemGroup, ItemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
 	if ItemGroupErr != nil {
 		return response, ItemGroupErr
 	}
@@ -185,10 +178,13 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	if GetBrandNameErr != nil {
 		return response, GetBrandNameErr
 	}
-
-	GetDivision, GetDivisionErr := generalserviceapiutils.GetDivisionById(response.DivisionId)
-	if GetDivisionErr != nil {
-		return response, GetDivisionErr
+	GetDivision := generalserviceapiutils.DivisionResponseAPI{}
+	GetDivisionErr := &exceptions.BaseErrorResponse{}
+	if response.DivisionId != 0 {
+		GetDivision, GetDivisionErr = generalserviceapiutils.GetDivisionById(response.DivisionId)
+		if GetDivisionErr != nil {
+			return response, GetDivisionErr
+		}
 	}
 
 	//var GetCostCenterName transactionsparepartpayloads.CostCenterResponses
@@ -243,7 +239,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Message:    "warehouse master is not found please check inputt",
+				Message:    "warehouse master is not found please check input",
 				Err:        err,
 			}
 		}
@@ -272,29 +268,27 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	//		Err:        err,
 	//	}
 	//}
-	var RequestBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	RequestByURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(response.CreatedByUserId)
-	if err := utils.Get(RequestByURL, &RequestBy, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Requested By data from external service",
-			Err:        err,
-		}
+
+	RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	if RequestByErr != nil {
+		return response, RequestByErr
 	}
 
 	//var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
 	if UpdatedByerr != nil {
 		return response, UpdatedByerr
 	}
 
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
-	PurchaseReuqestReferenceType := config.EnvConfigs.GeneralServiceUrl + "reference-type-purchase-request/" + strconv.Itoa(response.ReferenceTypeId)
-	if err := utils.Get(PurchaseReuqestReferenceType, &PurchaseRequestReferenceType, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Failed to fetch Reference from external service",
-			Err:        err,
+	if response.ReferenceTypeId != 0 {
+		PurchaseReuqestReferenceType := config.EnvConfigs.GeneralServiceUrl + "reference-type-purchase-request/" + strconv.Itoa(response.ReferenceTypeId)
+		if err := utils.CallAPI("GET", PurchaseReuqestReferenceType, nil, &PurchaseRequestReferenceType); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Failed to fetch Reference from external service",
+				Err:        err,
+			}
 		}
 	}
 
@@ -325,55 +319,22 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		SetOrder:                   response.SetOrder,
 		Currency:                   GetCcyName.CurrencyName,
 		ChangeNo:                   0,
-		CreatedByUser:              RequestBy.UserEmployeeName,
+		CreatedByUser:              RequestBy.EmployeeName,
 		CreatedDate:                response.CreatedDate,
 		UpdatedByUser:              UpdatedBy.EmployeeName,
 		UpdatedDate:                response.UpdatedDate,
 	}
 	fmt.Println(result)
 	return response, nil
-	//result = transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{
-	//	Company:                       CompanyReponse[0].CompanyName,
-	//	PurchaseRequestSystemNumber:   response.PurchaseRequestSystemNumber,
-	//	PurchaseRequestDocumentNumber: response.PurchaseRequestDocumentNumber,
-	//	PurchaseRequestDocumentDate:   response.PurchaseRequestDocumentDate,
-	//	PurchaseRequestDocumentStatus: purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-	//	ItemGroup:                     ItemGroup.ItemGroupName,
-	//	Brand:                         GetBrandName.PurchaseRequestStatusDescription,
-	//	ReferenceType:                 PurchaseRequestReferenceType.ReferenceTypePurchaseRequestName,
-	//	//ReferenceDocumentNumber:       docNo,
-	//	ReferenceDocumentNumber: response.ReferenceDocumentNumber,
-	//
-	//	OrderType:                  OrderType.OrderTypeName,
-	//	BudgetCode:                 response.BudgetCode,
-	//	ProjectNo:                  response.ProjectNo,
-	//	Division:                   GetDivisionName.DivisionName,
-	//	PurchaseRequestRemark:      response.PurchaseRequestRemark,
-	//	PurchaseRequestTotalAmount: response.PurchaseRequestTotalAmount,
-	//	ExpectedArrivalDate:        response.ExpectedArrivalDate,
-	//	ExpectedArrivalTime:        response.ExpectedArrivalTime,
-	//	CostCenter:                 GetCostCenterName.CostCenterName,
-	//	ProfitCenter:               ProfitCenterName.ProfitCenterName,
-	//	WarehouseGroup:             WarehouseGroupName.WarehouseGroupName,
-	//	Warehouse:                  GetWarehouseResponsesName.WarehouseName,
-	//	SetOrder:                   response.SetOrder,
-	//	Currency:                   GetCcyName.CurrencyName,
-	//	ChangeNo:                   0,
-	//	CreatedByUser:              RequestBy.UserEmployeeName,
-	//	CreatedDate:                response.CreatedDate,
-	//	UpdatedByUser:              UpdatedBy.UserEmployeeName,
-	//	UpdatedDate:                response.UpdatedDate,
-	//}
-	//fmt.Println(result)
 }
 func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB, conditions []utils.FilterCondition, paginationResponses pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
 	entities := transactionsparepartentities.PurchaseRequestDetail{}
 	var response []transactionsparepartpayloads.PurchaseRequestDetailRequestPayloads
-	Jointable := db.Table("trx_purchase_request_detail").
+	Jointable := db.Model(&entities).
 		Select("item_id,item_quantity,item_remark,item_unit_of_measure,purchase_request_system_number,purchase_request_line_number,reference_system_number,reference_line,purchase_request_detail_system_number")
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &paginationResponses, WhereQuery)).Scan(&response).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Scan(&response).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -409,22 +370,18 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 
 		}
 		var UomRate float64
-		var QtyRes float64
-		if UomItemResponse.SourceConvertion == 0 {
-			QtyRes = 0
-		} else {
-			QtyRes = *res.ItemQuantity * UomItemResponse.TargetConvertion
+		//var QtyRes float64
+		//if UomItemResponse.SourceConvertion == 0 {
+		//	QtyRes = 0
+		//} else {
+		//	QtyRes = *res.ItemQuantity * UomItemResponse.TargetConvertion
+		//
+		//}
 
-		}
-		if UomItemResponse.SourceConvertion == 0 {
-			return paginationResponses, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    "Failed to fetch Uom Source Convertion From External Data",
-				Err:        err,
-			}
-		}
-		UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+		//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+		//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+		UomRate = UomItemResponse.TargetConvertion
+
 		result := transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
 			PurchaseRequestDetailSystemNumber: res.PurchaseRequestDetailSystemNumber,
 			PurchaseRequestSystemNumber:       res.PurchaseRequestSystemNumber,
@@ -498,23 +455,17 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	//	}
 	//}
 	var UomRate float64
-	var QtyRes float64
-	if UomItemResponse.SourceConvertion == 0 {
-		QtyRes = 0
-	} else {
-		QtyRes = *response.ItemQuantity * UomItemResponse.TargetConvertion
+	//var QtyRes float64
+	//if UomItemResponse.SourceConvertion == 0 {
+	//	QtyRes = 0
+	//} else {
+	//	QtyRes = *response.ItemQuantity * UomItemResponse.TargetConvertion
+	//
+	//}
 
-	}
-	if UomItemResponse.SourceConvertion == 0 {
-		return result, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Source Convertion From External Data",
-			Err:        err,
-		}
-	}
-	UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-
+	//UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	UomRate = UomItemResponse.TargetConvertion
 	result = transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
 		PurchaseRequestDetailSystemNumber: response.PurchaseRequestDetailSystemNumber,
 		PurchaseRequestSystemNumber:       response.PurchaseRequestSystemNumber,
@@ -597,7 +548,23 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestDetail(db *gorm.DB, pa
 	//get header data
 	var Response = transactionsparepartentities.PurchaseRequestDetail{}
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
-	err := db.Model(&entities).
+	isExistDuplicate := 0
+	err := db.Model(&Response).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestSystemNumber: payloads.PurchaseRequestSystemNumber, ItemId: payloads.ItemId}).Select("1").Scan(&isExistDuplicate).Error
+	if err != nil {
+		return Response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "error on check duplicate item",
+			Err:        err,
+		}
+	}
+	if isExistDuplicate != 0 {
+		return Response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "cannot insert duplicate item data on detail",
+			Err:        err,
+		}
+	}
+	err = db.Model(&entities).
 		Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: payloads.PurchaseRequestSystemNumber}).
 		First(&entities).Error
 	if err != nil {
@@ -711,8 +678,24 @@ func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestDetail(db *gorm.DB, p
 	//TODO implement me
 	response := transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads{}
 	entities := transactionsparepartentities.PurchaseRequestDetail{}
+	isExistDuplicate := 0
+	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id, ItemId: payloads.ItemId}).Select("1").Scan(&isExistDuplicate).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "error on check duplicate item",
+			Err:        err,
+		}
+	}
+	if isExistDuplicate != 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "cannot insert duplicate item data on detail",
+			Err:        err,
+		}
+	}
 
-	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id}).First(&entities).Error
+	err = db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id}).First(&entities).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
@@ -871,22 +854,10 @@ func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, reque
 			Err:        err,
 		}
 	}
-	//this is logic for getting doc no
-	//CEK DOC STATUS ID FOR READY CODE = 20 status ready code = 20
-	//var DocResponse transactionsparepartpayloads.PurchaseRequestDocumentStatus
-	//DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/20"
 	DocResponseReady, DocResponsErr := generalserviceapiutils.GetDocumentStatusByCode("20")
 	if DocResponsErr != nil {
 		return res, DocResponsErr
 	}
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
-	//if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-	//	return res, &exceptions.BaseErrorResponse{
-	//		StatusCode: http.StatusBadRequest,
-	//		Message:    "Failed to Fetch Document Status From General Service",
-	//		Err:        err,
-	//	}
-	//}
 	entities.PurchaseRequestDocumentStatusId = DocResponseReady.DocumentStatusId //status ready
 	docNo, errDocNo := p.GenerateDocumentNumber(db, 10)
 	if errDocNo != nil {
@@ -895,6 +866,9 @@ func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, reque
 	entities.PurchaseRequestDocumentNumber = docNo
 	entities.ChangeNo = entities.ChangeNo + 1
 	entities.UpdatedDate = &request.UpdatedDate
+	if request.UpdatedByUserId == 0 {
+		request.UpdatedByUserId = 1231
+	}
 	entities.UpdatedByUserId = request.UpdatedByUserId
 
 	err = db.Save(&entities).Error
@@ -933,52 +907,52 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 
 	year := PeriodResponse.PeriodYear
 	month := PeriodResponse.PeriodMonth
-	JoinTable := db.Table("mtr_item A").Select("A.item_id,"+
-		"A.item_code,"+
-		"A.item_name,"+
-		"A.item_name,"+
+	JoinTable := db.Model(&entities).Select("mtr_item.item_id,"+
+		"mtr_item.item_code,"+
+		"mtr_item.item_name,"+
 		"Z.item_class_name,"+
-		"A.item_type_id,"+
-		"A.item_level_1_id,"+
-		"A.item_level_2_id,"+
-		"A.item_level_3_id,"+
+		"mtr_item.item_type_id,"+
+		"mtr_item.item_level_1_id,"+
+		"mtr_item.item_level_2_id,"+
+		"mtr_item.item_level_3_id,"+
 		"L1.item_level_1_code as item_level_1,"+
 		"L2.item_level_2_code as item_level_2,"+
 		"L3.item_level_3_code as item_level_3,"+
 		"L4.item_level_4_code as item_level_4,"+
 		"IT.item_type_code,"+
-		"A.item_level_4_id,A.unit_of_measurement_type_id,"+
+		"mtr_item.item_level_4_id,mtr_item.unit_of_measurement_type_id,"+
 		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
-		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
-		Joins(`LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_3 L3 ON A.item_level_3_id = L3.item_level_3_id AND A.item_level_3_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_4 L4 ON A.item_level_4_id = L4.item_level_4_id AND A.item_level_4_id <> 0`).
-		Joins("LEFT JOIN mtr_item_type IT ON IT.item_type_id = a.item_type_id").
-		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
+		Joins(`LEFT JOIN mtr_item_detail DT ON mtr_item.item_id = DT.item_id`).
+		Joins("LEFT JOIN mtr_item_class Z on mtr_item.item_class_id = Z.item_class_id").
+		Joins(`LEFT JOIN mtr_item_level_1 L1 ON mtr_item.item_level_1_id = L1.item_level_1_id AND mtr_item.item_level_1_id <> 0`).
+		Joins(`LEFT JOIN mtr_item_level_2 L2 ON mtr_item.item_level_2_id = L2.item_level_2_id AND mtr_item.item_level_2_id <> 0`).
+		Joins(`LEFT JOIN mtr_item_level_3 L3 ON mtr_item.item_level_3_id = L3.item_level_3_id AND mtr_item.item_level_3_id <> 0`).
+		Joins(`LEFT JOIN mtr_item_level_4 L4 ON mtr_item.item_level_4_id = L4.item_level_4_id AND mtr_item.item_level_4_id <> 0`).
+		Joins("LEFT JOIN mtr_item_type IT ON IT.item_type_id = mtr_item.item_type_id").
+		Joins("LEFT JOIN mtr_location_stock x ON mtr_item.item_id = x.item_id and x.company_id = ? and period_year =?"+
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type_id <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 2 "+
 			" AND whs.warehouse_id = x.warehouse_id) ", companyid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
-		Group("A.item_id,A.item_code," +
-			"A.item_name," +
+		Group("mtr_item.item_id,mtr_item.item_code," +
+			"mtr_item.item_name," +
 			"Z.item_class_name," +
-			"A.item_type_id," +
-			"A.item_level_1_id," +
-			"A.item_level_2_id," +
-			"A.item_level_3_id," +
-			"A.item_level_4_id," +
+			"mtr_item.item_type_id," +
+			"mtr_item.item_level_1_id," +
+			"mtr_item.item_level_2_id," +
+			"mtr_item.item_level_3_id," +
+			"mtr_item.item_level_4_id," +
 			"L1.item_level_1_code," +
 			"L2.item_level_2_code," +
 			"L3.item_level_3_code," +
 			"L4.item_level_4_code," +
-			"A.unit_of_measurement_type_id," +
+			"mtr_item.unit_of_measurement_type_id," +
 			"IT.item_type_code")
 	//.Order("A.item_id")
 	WhereQuery := utils.ApplyFilter(JoinTable, conditions)
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &page, WhereQuery)).Scan(&response).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&page, WhereQuery)).Scan(&response).Error
 	if len(response) == 0 {
 		page.Rows = []string{}
 		return page, nil
@@ -992,16 +966,6 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 	var result []transactionsparepartpayloads.PurchaseRequestItemGetAll
 
 	for _, res := range response {
-		//get item type
-		//itemTypeEntities := masteritementities.ItemType{}
-		//err = db.Model(&itemTypeEntities).Where(masteritementities.ItemType{ItemTypeId: res.ItemTypeId}).
-		//	First(&itemTypeEntities).Error
-		//if err != nil {
-		//	if errors.Is(err, gorm.ErrRecordNotFound) {
-		//		return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err, Message: "item type is not found"}
-		//	}
-		//	return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err, Message: "item type error please check input"}
-		//}
 		UomItemResponse := masteritementities.UomItem{}
 		err = db.Model(&UomItemResponse).Where(masteritementities.UomItem{ItemId: res.ItemId, UomSourceTypeCode: "P"}).
 			First(&UomItemResponse).Error
@@ -1015,100 +979,17 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 				Message:    "failed to get uom item",
 			}
 		}
-		//if res.ItemLevel1Id != 0 {
-		//	itemLevel1Entities := masteritementities.ItemLevel1{}
-		//	err = db.Model(&itemLevel1Entities).Where(masteritementities.ItemLevel1{ItemLevel1Id: res.ItemLevel1Id}).
-		//		First(&itemLevel1Entities).Error
-		//	if err != nil {
-		//		if errors.Is(err, gorm.ErrRecordNotFound) {
-		//			return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err, Message: "item level 1 is not found"}
-		//		}
-		//		return page, &exceptions.BaseErrorResponse{
-		//			StatusCode: http.StatusInternalServerError,
-		//			Err:        err,
-		//			Message:    "Failed to get item level id 3",
-		//		}
-		//	}
-		//	res.ItemLevel1 = itemLevel1Entities.ItemLevel1Code
-		//}
-		//if res.ItemLevel2Id != 0 {
-		//	itemLevel2Entities := masteritementities.ItemLevel2{}
-		//	err = db.Model(&itemLevel2Entities).Where(masteritementities.ItemLevel2{ItemLevel2Id: res.ItemLevel2Id}).
-		//		First(&itemLevel2Entities).Error
-		//	if err != nil {
-		//		if errors.Is(err, gorm.ErrRecordNotFound) {
-		//			return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err, Message: "item level 2 is not found"}
-		//		}
-		//		return page, &exceptions.BaseErrorResponse{
-		//			StatusCode: http.StatusInternalServerError,
-		//			Err:        err,
-		//			Message:    "Failed to get item level id 3",
-		//		}
-		//	}
-		//	res.ItemLevel2 = itemLevel2Entities.ItemLevel2Code
-		//}
-		//if res.ItemLevel3Id != 0 {
-		//	itemLevel3Entities := masteritementities.ItemLevel3{}
-		//	err = db.Model(&itemLevel3Entities).Where(masteritementities.ItemLevel3{ItemLevel3Id: res.ItemLevel3Id}).
-		//		First(&itemLevel3Entities).Error
-		//	if err != nil {
-		//		if errors.Is(err, gorm.ErrRecordNotFound) {
-		//			return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err, Message: "item level 3 is not found"}
-		//		}
-		//		return page, &exceptions.BaseErrorResponse{
-		//			StatusCode: http.StatusInternalServerError,
-		//			Err:        err,
-		//			Message:    "Failed to get item level id 3",
-		//		}
-		//	}
-		//	res.ItemLevel3 = itemLevel3Entities.ItemLevel3Code
-		//}
-		//if res.ItemLevel4Id != 0 {
-		//	itemLevel4Entities := masteritementities.ItemLevel4{}
-		//	err = db.Model(&itemLevel4Entities).Where(masteritementities.ItemLevel4{ItemLevel4Id: res.ItemLevel4Id}).
-		//		First(&itemLevel4Entities).Error
-		//	if err != nil {
-		//		if errors.Is(err, gorm.ErrRecordNotFound) {
-		//			return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err, Message: "item level 4 is not found"}
-		//		}
-		//	}
-		//	res.ItemLevel1 = itemLevel4Entities.ItemLevel4Code
-		//}
-
-		//var UomItemResponse transactionsparepartpayloads.UomItemResponses
-		//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(res.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
-		////UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
-		//if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
-		//	return page, &exceptions.BaseErrorResponse{
-		//		StatusCode: http.StatusInternalServerError,
-		//		Message:    "Failed to fetch Uom Item data from external service",
-		//		Err:        err,
-		//	}
-		//}
 		var UomRate float64
-		var QtyRes float64
-		if UomItemResponse.SourceConvertion == 0 {
-			QtyRes = 0
-		} else {
-			QtyRes = res.Quantity * UomItemResponse.TargetConvertion
+		UomRate = UomItemResponse.TargetConvertion
+		//uomentities := masteritementities.UomItem{}
+		res.UnitOfMeasurementCode = ""
+		err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+			Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&res.UnitOfMeasurementCode).Error
 
-		}
-		if UomItemResponse.SourceConvertion == 0 {
-			return page, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Uom Source Conversion From External Data",
-				Err:        err,
-			}
-		}
-		UomRate = QtyRes * UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-
-		uomentities := masteritementities.UomItem{}
-		err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: res.ItemId}).Scan(&uomentities).Error
-		res.UnitOfMeasurementCode = uomentities.UomTypeCode
+		//err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: res.ItemId}).Scan(&uomentities).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				uomentities.UomTypeCode = ""
+				res.UnitOfMeasurementCode = ""
 			} else {
 				return page, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -1116,8 +997,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 					Err:        err,
 				}
 			}
-
 		}
+		//res.UnitOfMeasurementCode = uomentities.UomTypeCode
 		res.UnitOfMeasurementRate = UomRate
 		res.Sequence = i
 		//res.ItemTypeCode = itemTypeEntities.ItemTypeCode
@@ -1139,49 +1020,75 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	fmt.Println("year = " + year)
 
 	fmt.Println(PeriodResponse)
-	err := db.Table("mtr_item A").Select("A.item_id,"+
-		"A.item_code,"+
-		"A.item_name,"+
-		"A.item_name,"+
-		"Z.item_class_name,"+
-		"A.item_type_id,"+
-		"A.item_level_1_id,"+
-		"A.item_level_2_id,"+
-		"A.item_level_3_id,"+
-		"L1.item_level_1_code as item_level_1,"+
-		"L2.item_level_2_code as item_level_2,"+
-		"L3.item_level_3_code as item_level_3,"+
-		"L4.item_level_4_code as item_level_4,"+
-		"IT.item_type_code,"+
-		"A.item_level_4_id,A.unit_of_measurement_type_id,"+
-		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
-		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
-		Joins(`LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_3 L3 ON A.item_level_3_id = L3.item_level_3_id AND A.item_level_3_id <> 0`).
-		Joins(`LEFT JOIN mtr_item_level_4 L4 ON A.item_level_4_id = L4.item_level_4_id AND A.item_level_4_id <> 0`).
-		Joins("LEFT JOIN mtr_item_type IT ON IT.item_type_id = a.item_type_id").
-		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
-			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
-			" from mtr_warehouse_master whs "+
-			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type_id <> 'NON' "+
-			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
-		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
-		Group("A.item_id,A.item_code,"+
-			"A.item_name,"+
-			"Z.item_class_name,"+
-			"A.item_type_id,"+
-			"A.item_level_1_id,"+
-			"A.item_level_2_id,"+
-			"A.item_level_3_id,"+
-			"A.item_level_4_id,"+
-			"L1.item_level_1_code,"+
-			"L2.item_level_2_code,"+
-			"L3.item_level_3_code,"+
-			"L4.item_level_4_code,"+
-			"A.unit_of_measurement_type_id,"+
-			"IT.item_type_code").Where("A.item_id = ?", i).First(&response).Error
+	err := db.Table("mtr_item A").
+		Select(`
+		A.item_id,
+		A.item_code,
+		A.item_name,
+		A.item_name,
+		Z.item_class_name,
+		A.item_type_id,
+		A.item_level_1_id,
+		A.item_level_2_id,
+		A.item_level_3_id,
+		L1.item_level_1_code as item_level_1,
+		L2.item_level_2_code as item_level_2,
+		L3.item_level_3_code as item_level_3,
+		L4.item_level_4_code as item_level_4,
+		IT.item_type_code,
+		A.item_level_4_id,
+		A.unit_of_measurement_type_id,
+		ISNULL(SUM(x.quantity_ending-x.quantity_allocated), 0) as quantity
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_3 L3 ON A.item_level_3_id = L3.item_level_3_id AND A.item_level_3_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_level_4 L4 ON A.item_level_4_id = L4.item_level_4_id AND A.item_level_4_id <> 0
+	`).
+		Joins(`
+		LEFT JOIN mtr_item_type IT ON IT.item_type_id = A.item_type_id
+	`).
+		Joins(`
+		LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id AND x.company_id = ? AND period_year = ? AND period_month = ?
+		AND x.warehouse_id in (
+			SELECT whs.warehouse_id
+			FROM mtr_warehouse_master whs
+			WHERE whs.company_id = x.company_id
+			AND whs.warehouse_costing_type_id <> 2
+			AND whs.warehouse_id = x.warehouse_id
+		)
+	`, compid, year, month).
+		Group(`
+		A.item_id,
+		A.item_code,
+		A.item_name,
+		Z.item_class_name,
+		A.item_type_id,
+		A.item_level_1_id,
+		A.item_level_2_id,
+		A.item_level_3_id,
+		A.item_level_4_id,
+		L1.item_level_1_code,
+		L2.item_level_2_code,
+		L3.item_level_3_code,
+		L4.item_level_4_code,
+		A.unit_of_measurement_type_id,
+		IT.item_type_code
+	`).
+		Where("A.item_id = ?", i).
+		First(&response).
+		Error
+
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1200,30 +1107,17 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 			Err:        err,
 		}
 	}
-	// var QtyRes float64
-	// if UomItemResponse.SourceConvertion == nil {
-	// 	QtyRes = 0
-	// } else {
-	// 	QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+	var UomRate float64
+	//UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	UomRate = UomItemResponse.TargetConvertion
+	response.UnitOfMeasurementCode = ""
+	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&response.UnitOfMeasurementCode).Error
 
-	// }
-	// if UomItemResponse.SourceConvertion == nil {
-	// 	return response, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to fetch Uom Source Convertion From External Data",
-	// 		Err:        err,
-	// 	}
-	// }
-
-	// var UomRate float64
-	// UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	// UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	uomentities := masteritementities.UomItem{}
-	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			uomentities.UomTypeCode = ""
+			response.UnitOfMeasurementCode = ""
 		} else {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1233,13 +1127,34 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 		}
 
 	}
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	response.UnitOfMeasurementRate = UomRate
 	return response, nil
 }
 
-func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.DB, compid int, s string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.DB, compid int, itemCode string, brandId int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
-
+	//cek brand id
+	//join first
+	itemBrandId := 0
+	err := db.Table("mtr_item A").
+		Joins("INNER JOIN mtr_item_detail B ON A.item_id = B.item_id").
+		Where("A.item_code = ?", itemCode).
+		Select("B.brand_id").
+		Scan(&itemBrandId).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get brand id",
+		}
+	}
+	if itemBrandId != brandId {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+			Message:    "that item code brand is not same with header brand id",
+		}
+	}
 	PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(compid, "SP")
 	if periodErr != nil {
 		return response, periodErr
@@ -1249,7 +1164,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	month := PeriodResponse.PeriodMonth
 	//year := "2012"
 	//month := "12"
-	err := db.Table("mtr_item A").Select("A.item_id,"+
+	err = db.Table("mtr_item A").Select("A.item_id,"+
 		"A.item_code,"+
 		"A.item_name,"+
 		"A.item_name,"+
@@ -1275,7 +1190,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type_id <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 2 "+
 			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
 		Group("A.item_id,A.item_code,"+
@@ -1291,7 +1206,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 			"L3.item_level_3_code,"+
 			"L4.item_level_4_code,"+
 			"A.unit_of_measurement_type_id,"+
-			"IT.item_type_code").Where("A.item_code = ?", s).First(&response).Error
+			"IT.item_type_code").Where("A.item_code = ?", itemCode).First(&response).Error
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1310,29 +1225,16 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 		}
 	}
 	var UomRate float64
-	var QtyRes float64
-	if UomItemResponse.SourceConvertion == nil {
-		QtyRes = 0
-	} else {
-		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+	UomRate = UomItemResponse.TargetConvertion
+	response.UnitOfMeasurementCode = ""
+	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
+		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", response.ItemId, "P").Scan(&response.UnitOfMeasurementCode).Error
 
-	}
-	if UomItemResponse.SourceConvertion == nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Source Conversion From External Data",
-			Err:        err,
-		}
-	}
-	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	uomentities := masteritementities.UomItem{}
-	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	//response.UnitOfMeasurementCode = response.UomTypeCode
 	response.UnitOfMeasurementRate = UomRate
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			uomentities.UomTypeCode = ""
+			response.UnitOfMeasurementCode = ""
 		} else {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1342,7 +1244,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 		}
 
 	}
-	response.UnitOfMeasurementCode = uomentities.UomTypeCode
 	return response, nil
 }
 

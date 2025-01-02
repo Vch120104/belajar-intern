@@ -80,6 +80,11 @@ type UserDetailResponse struct {
 	EmployeeName   string `json:"employee_name"`
 }
 
+type LatestItemAndLineTypeResponse struct {
+	ItemId     int `json:"item_id"`
+	LineTypeId int `json:"line_type_id"`
+}
+
 type ItemRequest struct {
 	IsActive                     bool    `json:"is_active"`
 	ItemId                       int     `json:"item_id"`
@@ -333,6 +338,17 @@ type ItemSearch struct {
 	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` // fk dalam item_class_id -> ItemClassName
 	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"`
 	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"` // fk luar mtr_supplier, supplier_code dan supplier_name
+}
+
+type ItemInventory struct {
+	ItemId        int    `json:"item_id" parent_entity:"mtr_item"`
+	ItemCode      string `json:"item_code"`
+	ItemName      string `json:"item_name"`
+	ItemClassName string `json:"item_class_name"`
+	ItemGroupCode string `json:"item_group_code"`
+	ItemClassCode string `json:"item_class_code"`
+	UomCode       string `json:"uom_code" parent_entity:"uom_item"`
+	IsActive      bool   `json:"is_active"`
 }
 
 type ItemListTransLookUp struct {

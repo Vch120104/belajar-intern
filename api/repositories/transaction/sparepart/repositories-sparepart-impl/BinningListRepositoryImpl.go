@@ -35,7 +35,7 @@ func (b *BinningListRepositoryImpl) GetReferenceNumberTypoPOWithPagination(db *g
 						A.supplier_id
 `)
 	WhereQuery := utils.ApplyFilter(joinTable, filter)
-	err := WhereQuery.Scopes(pagination.Paginate(&transactionsparepartentities.PurchaseOrderEntities{}, &paginations, WhereQuery)).Order("purchase_order_document_number").Scan(&purchaseOrderEntities).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginations, WhereQuery)).Order("purchase_order_document_number").Scan(&purchaseOrderEntities).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return paginations, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -50,7 +50,7 @@ func (b *BinningListRepositoryImpl) GetReferenceNumberTypoPOWithPagination(db *g
 	var responsePO []transactionsparepartpayloads.BinningListReferenceDocumentNumberTypePOResponse
 
 	for _, item := range purchaseOrderEntities {
-		supplierRes, errRes := generalserviceapiutils.GetSupplierMasterByID(item.SupplierId)
+		supplierRes, errRes := generalserviceapiutils.GetSupplierMasterById(item.SupplierId)
 		if errRes != nil {
 			return paginations, errRes
 		}
@@ -70,7 +70,6 @@ func NewbinningListRepositoryImpl() transactionsparepartrepository.BinningListRe
 	return &BinningListRepositoryImpl{}
 }
 func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *gorm.DB, filter []utils.FilterCondition, paginations pagination.Pagination, binningListId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var binningDetailEntities []transactionsparepartentities.BinningStockDetail
 	var Responses []transactionsparepartpayloads.BinningListGetByIdResponses
 	joinTable := db.Table("trx_binning_list_stock_detail A").
 		Select(`
@@ -97,7 +96,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 		Joins("INNER JOIN mtr_warehouse_location WL ON A.warehouse_location_id = WL.warehouse_location_id").
 		Where("A.binning_system_number = ?", binningListId)
 	WhereQuery := utils.ApplyFilter(joinTable, filter)
-	err := WhereQuery.Scopes(pagination.Paginate(&binningDetailEntities, &paginations, WhereQuery)).Order("binning_system_number").Scan(&Responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginations, WhereQuery)).Order("binning_system_number").Scan(&Responses).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return paginations, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -128,7 +127,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB,
 	var BinningResponses []transactionsparepartpayloads.BinningListGetPaginationResponse
 	joinTable := db.Model(&binningEntities)
 	WhereQuery := utils.ApplyFilter(joinTable, filter)
-	err := WhereQuery.Scopes(pagination.Paginate(&binningEntities, &paginations, WhereQuery)).Order("binning_system_number").Scan(&binningEntities).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginations, WhereQuery)).Order("binning_system_number").Scan(&binningEntities).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return paginations, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -141,7 +140,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB,
 	}
 
 	for _, binningEntity := range binningEntities {
-		SupplierData, errSupplierMaster := generalserviceapiutils.GetSupplierMasterByID(binningEntity.SupplierId)
+		SupplierData, errSupplierMaster := generalserviceapiutils.GetSupplierMasterById(binningEntity.SupplierId)
 		if err != nil {
 			return paginations, errSupplierMaster
 		}
@@ -248,7 +247,7 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 		}
 	}
 	//get supplier data
-	SupplierData, supplierDataErr := generalserviceapiutils.GetSupplierMasterByID(BinningStockEntities.SupplierId)
+	SupplierData, supplierDataErr := generalserviceapiutils.GetSupplierMasterById(BinningStockEntities.SupplierId)
 	if supplierDataErr != nil {
 		return Response, supplierDataErr
 	}

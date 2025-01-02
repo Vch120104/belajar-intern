@@ -146,7 +146,7 @@ type WorkOrderResponseDetail struct {
 	ModelId                 int       `json:"model_id"`
 	ModelName               string    `json:"model_name"`
 	VariantId               int       `json:"variant_id"`
-	VariantName             string    `json:"variant_name"`
+	VariantDescription      string    `json:"variant_description"`
 	ServiceSite             string    `json:"servicesite"`
 	VehicleId               int       `json:"vehicle_id"`
 	VehicleCode             string    `json:"vehicle_code"`
@@ -200,44 +200,46 @@ type WorkOrderResponseDetail struct {
 	PromiseTime        time.Time `json:"promise_time"`
 
 	// Additional information
-	FSCouponNo string `json:"fs_coupon_no"`
-	Notes      string `json:"notes"`
-	Suggestion string `json:"suggestion"`
-
-	InvoiceSystemNumber             int                             `json:"invoice_system_number"`
-	CurrencyId                      int                             `json:"currency_id"`
-	ATPMWCFDocNo                    string                          `json:"atpm_warranty_claim_form_document_number"`
-	ATPMWCFDate                     *time.Time                      `json:"atpm_warranty_claim_form_date"`
-	ATPMFSDocNo                     string                          `json:"atpm_free_service_document_number"`
-	ATPMFSDate                      *time.Time                      `json:"atpm_free_service_date"`
-	TotalAfterDisc                  *float64                        `json:"total_after_discount"`
-	ApprovalReqNo                   int                             `json:"approval_request_number"`
-	JournalSysNo                    int                             `json:"journal_system_number"`
-	ApprovalGatepassReqNo           int                             `json:"approval_gatepass_request_number"`
-	DPAmount                        float64                         `json:"downpayment_amount"`
-	DPPayment                       *float64                        `json:"downpayment_payment"`
-	DPPaymentAllocated              *float64                        `json:"downpayment_payment_allocated"`
-	DPPaymentVAT                    *float64                        `json:"downpayment_payment_vat"`
-	DPAllocToInv                    *float64                        `json:"downpayment_payment_to_invoice"`
-	DPVATAllocToInv                 *float64                        `json:"downpayment_payment_vat_to_invoice"`
-	JournalOverpaySysNo             int                             `json:"journal_overpay_system_number"`
-	DPOverpay                       *float64                        `json:"downpayment_overpay"`
-	SiteTypeId                      int                             `json:"work_order_site_type_id"`
-	CostCenterId                    int                             `json:"cost_center_id"`
-	JobOnHoldReason                 string                          `json:"job_on_hold_reason"`
-	CPTitlePrefix                   string                          `json:"contact_person_title_prefix"`
-	WorkOrderCampaign               WorkOrderCampaignDetail         `json:"work_order_campaign"`
-	WorkOrderGeneralRepairAgreement WorkOrderGeneralRepairAgreement `json:"work_order_general_repair_agreement"`
-	WorkOrderBooking                WorkOrderBookingDetail          `json:"work_order_booking"`
-	WorkOrderEstimation             WorkOrderEstimationDetail       `json:"work_order_estimation"`
-	WorkOrderContract               WorkOrderContractDetail         `json:"work_order_contract"`
-	WorkOrderCurrentUserDetail      WorkOrderCurrentUserDetail      `json:"work_order_current_user_detail"`
-	WorkOrderVehicleDetail          WorkOrderVehicleDetail          `json:"work_order_vehicle_detail"`
-	WorkOrderStnkDetail             WorkOrderStnkDetail             `json:"work_order_stnk_detail"`
-	WorkOrderBillingDetail          WorkOrderBillingDetail          `json:"work_order_billing_detail"`
-	WorkOrderDetailService          WorkOrderDetailsResponseRequest `json:"work_order_details_service"`
-	WorkOrderDetailVehicle          WorkOrderDetailsResponseVehicle `json:"work_order_details_vehicle"`
-	WorkOrderDetails                WorkOrderDetailsResponse        `json:"work_order_details"`
+	FSCouponNo                         string                          `json:"fs_coupon_no"`
+	Notes                              string                          `json:"notes"`
+	Suggestion                         string                          `json:"suggestion"`
+	AdditionalDiscountStatusApprovalId int                             `json:"additional_discount_status_approval"`
+	AdditionalDiscountStatusApproval   string                          `json:"additional_discount_status_approval_description"`
+	InvoiceSystemNumber                int                             `json:"invoice_system_number"`
+	CurrencyId                         int                             `json:"currency_id"`
+	CurrencyCode                       string                          `json:"currency_code"`
+	ATPMWCFDocNo                       string                          `json:"atpm_warranty_claim_form_document_number"`
+	ATPMWCFDate                        *time.Time                      `json:"atpm_warranty_claim_form_date"`
+	ATPMFSDocNo                        string                          `json:"atpm_free_service_document_number"`
+	ATPMFSDate                         *time.Time                      `json:"atpm_free_service_date"`
+	TotalAfterDisc                     *float64                        `json:"total_after_discount"`
+	ApprovalReqNo                      int                             `json:"approval_request_number"`
+	JournalSysNo                       int                             `json:"journal_system_number"`
+	ApprovalGatepassReqNo              int                             `json:"approval_gatepass_request_number"`
+	DPAmount                           float64                         `json:"downpayment_amount"`
+	DPPayment                          *float64                        `json:"downpayment_payment"`
+	DPPaymentAllocated                 *float64                        `json:"downpayment_payment_allocated"`
+	DPPaymentVAT                       *float64                        `json:"downpayment_payment_vat"`
+	DPAllocToInv                       *float64                        `json:"downpayment_payment_to_invoice"`
+	DPVATAllocToInv                    *float64                        `json:"downpayment_payment_vat_to_invoice"`
+	JournalOverpaySysNo                int                             `json:"journal_overpay_system_number"`
+	DPOverpay                          *float64                        `json:"downpayment_overpay"`
+	SiteTypeId                         int                             `json:"work_order_site_type_id"`
+	CostCenterId                       int                             `json:"cost_center_id"`
+	JobOnHoldReason                    string                          `json:"job_on_hold_reason"`
+	CPTitlePrefix                      string                          `json:"contact_person_title_prefix"`
+	WorkOrderCampaign                  WorkOrderCampaignDetail         `json:"work_order_campaign"`
+	WorkOrderGeneralRepairAgreement    WorkOrderGeneralRepairAgreement `json:"work_order_general_repair_agreement"`
+	WorkOrderBooking                   WorkOrderBookingDetail          `json:"work_order_booking"`
+	WorkOrderEstimation                WorkOrderEstimationDetail       `json:"work_order_estimation"`
+	WorkOrderContract                  WorkOrderContractDetail         `json:"work_order_contract"`
+	WorkOrderCurrentUserDetail         WorkOrderCurrentUserDetail      `json:"work_order_current_user_detail"`
+	WorkOrderVehicleDetail             WorkOrderVehicleDetail          `json:"work_order_vehicle_detail"`
+	WorkOrderStnkDetail                WorkOrderStnkDetail             `json:"work_order_stnk_detail"`
+	WorkOrderBillingDetail             WorkOrderBillingDetail          `json:"work_order_billing_detail"`
+	WorkOrderDetailService             WorkOrderDetailsResponseRequest `json:"work_order_details_service"`
+	WorkOrderDetailVehicle             WorkOrderDetailsResponseVehicle `json:"work_order_details_vehicle"`
+	WorkOrderDetails                   WorkOrderDetailsResponse        `json:"work_order_details"`
 }
 
 type WorkOrderCampaignDetail struct {
@@ -353,6 +355,8 @@ type WorkOrderNormalRequest struct {
 
 	// Additional information
 	FSCouponNo        string  `json:"fs_coupon_no"`
+	IDType            int     `json:"id_type"`
+	IDNumber          string  `json:"id_number"`
 	Notes             string  `json:"notes"`
 	Suggestion        string  `json:"suggestion"`
 	DownpaymentAmount float64 `json:"dp_amount"`
@@ -562,7 +566,7 @@ type WorkOrderBookingResponse struct {
 	ModelId                         int                             `json:"model_id"`
 	ModelName                       string                          `json:"model_name"`
 	VariantId                       int                             `json:"variant_id"`
-	VariantName                     string                          `json:"variant_name"`
+	VariantDescription              string                          `json:"variant_description"`
 	ServiceSite                     string                          `json:"service_site"`
 	VehicleId                       int                             `json:"vehicle_id"`
 	VehicleCode                     string                          `json:"vehicle_chassis_number"`
@@ -729,7 +733,7 @@ type WorkOrderAffiliateResponse struct {
 	ModelId                       int                             `json:"model_id"`
 	ModelName                     string                          `json:"model_name"`
 	VariantId                     int                             `json:"variant_id"`
-	VariantName                   string                          `json:"variant_name"`
+	VariantDescription            string                          `json:"variant_description"`
 	ServiceSite                   string                          `json:"service_site"`
 	VehicleId                     int                             `json:"vehicle_id"`
 	VehicleCode                   string                          `json:"vehicle_chassis_number"`
@@ -992,29 +996,37 @@ type WorkOrderAddRequest struct {
 }
 
 type WorkOrderDetailRequest struct {
-	WorkOrderDetailId                   int     `json:"work_order_detail_id" parent_entity:"trx_work_order_detail" main_table:"trx_work_order_detail"`
-	WorkOrderSystemNumber               int     `json:"work_order_system_number" parent_entity:"trx_work_order_detail"`
-	LineTypeId                          int     `json:"line_type_id" parent_entity:"trx_work_order_detail"`
-	TransactionTypeId                   int     `json:"transaction_type_id" parent_entity:"trx_work_order_detail" `
-	JobTypeId                           int     `json:"job_type_id" parent_entity:"trx_work_order_detail"`
-	FrtQuantity                         float64 `json:"frt_quantity" parent_entity:"trx_work_order_detail"`
-	SupplyQuantity                      float64 `json:"supply_quantity" parent_entity:"trx_work_order_detail"`
-	PriceListId                         int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
-	WarehouseGroupId                    int     `json:"warehouse_group_id" parent_entity:"trx_work_order_detail"`
-	OperationItemId                     int     `json:"operation_item_id" parent_entity:"trx_work_order_detail"`
-	OperationItemCode                   string  `json:"operation_item_code" parent_entity:"trx_work_order_detail"`
-	OperationItemPrice                  float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
-	OperationItemDiscountAmount         float64 `json:"operation_item_discount_amount" parent_entity:"trx_work_order_detail"`
-	OperationItemDiscountPercent        float64 `json:"operation_item_discount_percent" parent_entity:"trx_work_order_detail"`
-	OperationItemDiscountRequestPercent float64 `json:"operation_item_discount_request_percent" parent_entity:"trx_work_order_detail"`
-	OperationItemDiscountRequestAmount  float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
+	WorkOrderDetailId                   int     `gorm:"column:work_order_detail_id" json:"work_order_detail_id" parent_entity:"trx_work_order_detail" main_table:"trx_work_order_detail"`
+	WorkOrderSystemNumber               int     `gorm:"column:work_order_system_number" json:"work_order_system_number" parent_entity:"trx_work_order_detail"`
+	LineTypeId                          int     `gorm:"column:line_type_id" json:"line_type_id" parent_entity:"trx_work_order_detail"`
+	TransactionTypeId                   int     `gorm:"column:transaction_type_id" json:"transaction_type_id" parent_entity:"trx_work_order_detail" `
+	JobTypeId                           int     `gorm:"column:job_type_id" json:"job_type_id" parent_entity:"trx_work_order_detail"`
+	FrtQuantity                         float64 `gorm:"column:frt_quantity" json:"frt_quantity" parent_entity:"trx_work_order_detail"`
+	SupplyQuantity                      float64 `gorm:"column:supply_quantity" json:"supply_quantity" parent_entity:"trx_work_order_detail"`
+	PriceListId                         int     `gorm:"column:price_list_id" json:"price_list_id" parent_entity:"trx_work_order_detail"`
+	WarehouseGroupId                    int     `gorm:"column:warehouse_group_id" json:"warehouse_group_id" parent_entity:"trx_work_order_detail"`
+	OperationItemId                     int     `gorm:"column:operation_item_id" json:"operation_item_id" parent_entity:"trx_work_order_detail"`
+	OperationItemCode                   string  `gorm:"column:operation_item_code" json:"operation_item_code" parent_entity:"trx_work_order_detail"`
+	OperationItemPrice                  float64 `gorm:"column:operation_item_price" json:"operation_item_price" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountAmount         float64 `gorm:"column:operation_item_discount_amount" json:"operation_item_discount_amount" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountPercent        float64 `gorm:"column:operation_item_discount_percent" json:"operation_item_discount_percent" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountRequestPercent float64 `gorm:"column:operation_item_discount_request_percent" json:"operation_item_discount_request_percent" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountRequestAmount  float64 `gorm:"column:operation_item_discount_request_amount" json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
+	WorkorderStatusId                   int     `gorm:"column:work_order_status_id" json:"work_order_status_id" parent_entity:"trx_work_order_detail"`
+	InvoiceSystemNumber                 int     `gorm:"column:invoice_system_number" json:"invoice_system_number" parent_entity:"trx_work_order_detail"`
+	TechnicianId                        int     `gorm:"column:technician_id" json:"technician_id" parent_entity:"trx_work_order_detail"`
+	SubstituteTypeId                    int     `gorm:"column:substitute_type_id" json:"substitute_type_id" parent_entity:"trx_work_order_detail"`
+	AtpmWCFTypeId                       int     `gorm:"column:warranty_claim_type_id" json:"warranty_claim_type_id" parent_entity:"trx_work_order_detail"`
 }
 
 type WorkOrderDetailResponse struct {
 	WorkOrderDetailId                   int       `json:"work_order_detail_id"`
 	WorkOrderSystemNumber               int       `json:"work_order_system_number"`
+	WorkOrderStatusId                   int       `json:"work_order_status_id"`
+	WorkOrderStatusName                 string    `json:"work_order_status_name"`
 	LineTypeId                          int       `json:"line_type_id"`
 	LineTypeCode                        string    `json:"line_type_code"`
+	LineTypeName                        string    `json:"line_type_name"`
 	TransactionTypeId                   int       `json:"transaction_type_id"`
 	TransactionTypeCode                 string    `json:"transaction_type_code"`
 	JobTypeId                           int       `json:"job_type_id"`
@@ -1030,8 +1042,8 @@ type WorkOrderDetailResponse struct {
 	OperationItemDiscountPercent        float64   `json:"operation_item_discount_percent"`
 	OperationItemDiscountRequestPercent float64   `json:"operation_item_discount_request_percent"`
 	OperationItemCode                   string    `json:"operation_item_code"`
-	OperationItemName                   string    `json:"operation_item_name"`
 	AtpmWCFTypeId                       int       `json:"warranty_claim_type_id"`
+	WarrantyClaimTypeDescription        string    `json:"warranty_claim_type_description"`
 	TotalCostOfGoodsSold                float64   `json:"total_cost_of_goods_sold"`
 	ServiceCategoryId                   int       `json:"service_category_id"`
 	PphAmount                           float64   `json:"pph_amount"`
@@ -1043,14 +1055,16 @@ type WorkOrderDetailResponse struct {
 	QualityControlExtraFrt              float64   `json:"quality_control_extra_frt"`
 	QualityControlExtraReason           string    `json:"quality_control_extra_reason"`
 	SubstituteTypeId                    int       `json:"substitute_type_id"`
-	SubstituteItemCode                  string    `json:"substitute_item_code"`
+	SubstituteTypeName                  string    `json:"substitute_type_description"`
 	AtpmClaimNumber                     string    `json:"atpm_claim_number"`
 	AtpmClaimDate                       time.Time `json:"atpm_claim_date"`
+	Package                             string    `json:"package"`
 	PurchaseRequestSystemNumber         int       `json:"purchase_request_system_number"`
 	PurchaseRequestDetailId             int       `json:"purchase_request_detail_id"`
 	PurchaseOrderSystemNumber           int       `json:"purchase_order_system_number"`
 	PurchaseOrderLine                   int       `json:"purchase_order_line"`
 	InvoiceSystemNumber                 int       `json:"invoice_system_number"`
+	InvoiceDate                         time.Time `json:"invoice_date"`
 	GoodsReceiveQuantity                float64   `json:"goods_receive_quantity"`
 	QualityControlTotalExtraFrt         float64   `json:"quality_control_total_extra_frt"`
 	ReorderNumber                       float64   `json:"reorder_number"`
@@ -1058,15 +1072,19 @@ type WorkOrderDetailResponse struct {
 	IncentiveSystemNumber               int       `json:"incentive_system_number"`
 	Bypass                              bool      `json:"bypass"`
 	TechnicianId                        int       `json:"technician_id"`
-	UserEmployeeId                      int       `json:"user_employee_id"`
+	TechnicianName                      string    `json:"technician_name"`
+	ForemanId                           int       `json:"foreman_id"`
+	ForemanName                         string    `json:"foreman_name"`
 	RecSystemNumber                     int       `json:"recall_system_number"`
 	Request                             string    `json:"request"`
 	FrtQuantityExpress                  float64   `json:"frt_quantity_express"`
 	PriceListId                         int       `json:"price_list_id"`
-	ClaimSystemNumber                   int       `json:"claim_system_number"`
+	ClaimNumber                         string    `json:"claim_number"`
 	QualityControlPassDatetime          time.Time `json:"quality_control_pass_datetime"`
 	ExtendedWarranty                    bool      `json:"extended_warranty"`
 	RemarkExtendedWarranty              string    `json:"remark_extended_warranty"`
+	WarehouseGroupName                  string    `json:"warehouse_group_name"`
+	PendingReason                       string    `json:"pending_reason"`
 }
 
 type WorkOrderAffiliate struct {
@@ -1211,12 +1229,12 @@ type WorkOrderContractServiceResponse struct {
 }
 
 type WorkOrderGeneralRepairPackageRequest struct {
-	CompanyId   int `json:"company_id"`
-	CPCCode     int `json:"cpc_code"`
-	AgreementId int `json:"agreement_id"`
-	VehicleId   int `json:"vehicle_id"`
-	BrandId     int `json:"brand_id"`
-	PackageId   int `json:"package_id"`
+	CompanyId   int    `json:"company_id"`
+	CPCCode     string `json:"cpc_code"`
+	AgreementId int    `json:"agreement_id"`
+	VehicleId   int    `json:"vehicle_id"`
+	BrandId     int    `json:"brand_id"`
+	PackageId   int    `json:"package_id"`
 }
 
 type WorkOrderFieldActionRequest struct {

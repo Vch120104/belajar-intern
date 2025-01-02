@@ -107,7 +107,7 @@ func Migrate() {
 	//&masteritementities.ItemDetail{},
 	//&masteritementities.ItemLocationSource{},
 	//&masteritementities.Item{},
-	// &masteritementities.ItemPriceCode{},
+	//&masteritementities.ItemPriceCode{},
 	//&masteritementities.ItemGroup{},
 
 	// &masteritementities.ItemLocation{},
@@ -163,7 +163,10 @@ func Migrate() {
 	//&masterwarehouseentities.WarehouseCostingType{},
 	//&masterentities.StockTransactionType{},
 	//&masterentities.StockTransactionReason{},
+	//&masterentities.PurchaseOrderTypeSalesOrderEntity{},
+	//&masteritementities.ItemSubstituteType{},
 
+	//&masterentities.TransactionTypeSalesOrder{},
 	//
 
 	//&transactionjpcbentities.SettingTechnician{},
@@ -224,11 +227,17 @@ func Migrate() {
 	//&transactionsparepartentities.BinningStock{},
 	//&transactionsparepartentities.BinningStockDetail{},
 	//&transactionsparepartentities.PurchaseOrderLimit{},
-	//transactionsparepartentities.ItemClaim{},
-	//transactionsparepartentities.ItemClaimDetail{},
+	//&transactionsparepartentities.ItemClaim{},
+	//&transactionsparepartentities.ItemClaimDetail{},
 	//&transactionsparepartentities.StockTransaction{},
 	//&transactionsparepartentities.GoodsReceiveDetail{},
-	// &transactionsparepartentities.GoodsReceive{},
+	//&tra  nsactionsparepartentities.GoodsReceive{},
+
+	//&masteritementities.ItemTransferStatus{},
+	//&transactionsparepartentities.ItemWarehouseTransferRequest{},
+	//&transactionsparepartentities.ItemWarehouseTransferRequestDetail{},
+	//&transactionsparepartentities.SalesOrder{},
+	//&transactionsparepartentities.SalesOrderDetail{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

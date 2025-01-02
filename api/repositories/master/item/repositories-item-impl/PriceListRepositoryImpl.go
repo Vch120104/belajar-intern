@@ -1,15 +1,17 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
-	masterpayloads "after-sales/api/payloads/master"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -55,7 +57,7 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 		Where(masteritementities.ItemPriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
 		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date)
 
-	if err := query.Scopes(pagination.Paginate(model, &pages, query)).Scan(&result).Error; err != nil {
+	if err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&result).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("price list item not found"),
@@ -229,9 +231,6 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemPriceList{}
 	response := masteritempayloads.PriceListGetbyId{}
-	brandpayloads := masteritempayloads.UnitBrandResponses{}
-	itemgrouppayloads := masteritempayloads.ItemGroupResponse{}
-	currencypayloads := masteritempayloads.CurrencyResponse{}
 
 	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
 		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
@@ -246,44 +245,39 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
-	ErrUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(response.BrandId), &brandpayloads, nil)
-	if ErrUrlBrand != nil {
+	// Fetch Brand
+	brandResponse, errBrand := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	if errBrand != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        ErrUrlBrand,
+			StatusCode: errBrand.StatusCode,
+			Err:        errBrand.Err,
 		}
 	}
+	response.BrandId = brandResponse.BrandId
+	response.BrandName = brandResponse.BrandName
+	response.BrandCode = brandResponse.BrandCode
 
-	if brandpayloads != (masteritempayloads.UnitBrandResponses{}) {
-		response.BrandId = brandpayloads.BrandId
-		response.BrandName = brandpayloads.BrandName
-	}
-
-	ErrUrlItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group/"+strconv.Itoa(response.ItemGroupId), &itemgrouppayloads, nil)
-	if ErrUrlItemGroup != nil {
+	// Fetch Item Group
+	itemGroupResponse, errItemGroup := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if errItemGroup != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        ErrUrlItemGroup,
+			StatusCode: errItemGroup.StatusCode,
+			Err:        errItemGroup.Err,
 		}
 	}
+	response.ItemGroupId = itemGroupResponse.ItemGroupId
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
 
-	if itemgrouppayloads != (masteritempayloads.ItemGroupResponse{}) {
-		response.ItemGroupId = itemgrouppayloads.ItemGroupId
-		response.ItemGroupName = itemgrouppayloads.ItemGroupName
-	}
-
-	ErrUrlCurrency := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code/"+strconv.Itoa(response.CurrencyId), &currencypayloads, nil)
-	if ErrUrlCurrency != nil {
+	// Fetch Currency
+	currencyResponse, errCurrency := financeserviceapiutils.GetCurrencyId(response.CurrencyId)
+	if errCurrency != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        ErrUrlCurrency,
+			StatusCode: errCurrency.StatusCode,
+			Err:        errCurrency.Err,
 		}
 	}
-
-	if currencypayloads != (masteritempayloads.CurrencyResponse{}) {
-		response.CurrencyId = currencypayloads.CurrencyId
-		response.CurrencyCode = currencypayloads.CurrencyCode
-	}
+	response.CurrencyId = currencyResponse.CurrencyId
+	response.CurrencyCode = currencyResponse.CurrencyCode
 
 	return response, nil
 }
@@ -395,85 +389,112 @@ func RemoveDuplicates(input []string) []string {
 	return result
 }
 
-func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var payloads []masteritempayloads.PriceListGetAllResponse
-	var brandpayloads []masterpayloads.BrandResponse
-	var itemgrouppayloads []masteritempayloads.ItemGroupResponse
-	var currencypayloads []masteritempayloads.CurrencyResponse
 
-	model := masteritementities.ItemPriceList{}
-
-	query := tx.Model(&model).
+	baseModelQuery := tx.Model(&masteritementities.ItemPriceList{}).
 		Select(`
-        mtr_item_price_list.brand_id,
-        mtr_item_price_list.item_group_id,
-        mtr_item_price_list.item_class_id,
-        mtr_item_class.item_class_name,
-        mtr_item_price_list.currency_id,
-		CAST(effective_date AS DATE) AS effective_date,
-        mtr_item_price_code.item_price_code,
-        MIN(mtr_item_price_list.price_list_id) AS price_list_id,
-        mtr_item_price_list.is_active
-    `).
+			mtr_item_price_list.brand_id,
+			mtr_item_price_list.item_group_id,
+			mtr_item_price_list.item_class_id,
+			mtr_item_class.item_class_name,
+			mtr_item_price_list.currency_id,
+			CAST(effective_date AS DATE) AS effective_date,
+			mtr_item_price_code.item_price_code,
+			MIN(mtr_item_price_list.price_list_id) AS price_list_id,
+			mtr_item_price_list.is_active
+		`).
 		Joins("JOIN mtr_item ON mtr_item.item_id = mtr_item_price_list.item_id").
 		Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
 		Joins("LEFT JOIN mtr_item_price_code ON mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id").
 		Group(`
-        mtr_item_price_list.brand_id,
-        mtr_item_price_list.item_group_id,
-        mtr_item_price_list.item_class_id,
-        mtr_item_class.item_class_name,
-        mtr_item_price_list.currency_id,
-        CAST(effective_date AS DATE),
-        mtr_item_price_code.item_price_code,
-        mtr_item_price_list.is_active
-    `).Order("CAST(effective_date AS DATE) desc")
+			mtr_item_price_list.brand_id,
+			mtr_item_price_list.item_group_id,
+			mtr_item_price_list.item_class_id,
+			mtr_item_class.item_class_name,
+			mtr_item_price_list.currency_id,
+			CAST(effective_date AS DATE),
+			mtr_item_price_code.item_price_code,
+			mtr_item_price_list.is_active
+		`).
+		Order("CAST(effective_date AS DATE) DESC")
 
-	//apply where query
-	whereQuery := utils.ApplyFilterExact(query, filtercondition)
-	//execute
-	err := whereQuery.Scan(&payloads).Error
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	var totalRows int64
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	errBrandUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand-dropdown", &brandpayloads, nil)
-	if errBrandUrl != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("failed to fetch brand data"),
+	pages.TotalRows = totalRows
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+	pages.TotalPages = totalPages
+
+	err := whereQuery.Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&payloads).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 
-	joinedData := utils.DataFrameLeftJoin(payloads, brandpayloads, "BrandId")
-
-	errItemGroupUrl := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-groups", &itemgrouppayloads, nil)
-	if errItemGroupUrl != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("failed to fetch item group data"),
-		}
+	if len(payloads) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	joinedData1 := utils.DataFrameLeftJoin(joinedData, itemgrouppayloads, "ItemGroupId")
-
-	errCurrencyUrl := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code?page=0&limit=100000", &currencypayloads, nil)
-	if errCurrencyUrl != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("failed to fetch currency data"),
+	var results []map[string]interface{}
+	for _, payload := range payloads {
+		// Fetch data eksternal seperti brand, item group, currency
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(payload.BrandId)
+		if brandErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        brandErr.Err,
+			}
 		}
+
+		itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(payload.ItemGroupId)
+		if itemGroupErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        itemGroupErr.Err,
+			}
+		}
+
+		currencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(payload.CurrencyId)
+		if currencyErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        currencyErr.Err,
+			}
+		}
+
+		result := map[string]interface{}{
+			"price_list_id":   payload.PriceListId,
+			"brand_id":        payload.BrandId,
+			"brand_name":      brandResponse.BrandName,
+			"item_group_id":   payload.ItemGroupId,
+			"item_group_name": itemGroupResponse.ItemGroupName,
+			"item_class_id":   payload.ItemClassId,
+			"item_class_name": payload.ItemClassName,
+			"currency_id":     payload.CurrencyId,
+			"currency_code":   currencyResponse.CurrencyCode,
+			"effective_date":  payload.EffectiveDate,
+			"item_price_code": payload.ItemPriceCode,
+			"is_active":       payload.IsActive,
+		}
+
+		results = append(results, result)
 	}
 
-	joinedData2 := utils.DataFrameLeftJoin(joinedData1, currencypayloads, "CurrencyId")
+	pages.Rows = results
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (r *PriceListRepositoryImpl) DeletePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
@@ -538,4 +559,59 @@ func (r *PriceListRepositoryImpl) DeactivatePriceList(tx *gorm.DB, id string) (b
 		}
 	}
 	return true, nil
+}
+
+func (r *PriceListRepositoryImpl) GetPriceListByCodeId(tx *gorm.DB, CodeId string) (masteritempayloads.PriceListGetbyCode, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemPriceList{}
+	response := masteritempayloads.PriceListGetbyCode{}
+
+	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Where("mtr_item_price_list.price_list_code_id = ?", CodeId).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on get price list by code id",
+			Err:        err,
+		}
+	}
+
+	// Fetch Brand
+	brandResponse, errBrand := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	if errBrand != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: errBrand.StatusCode,
+			Err:        errBrand.Err,
+		}
+	}
+	response.BrandId = brandResponse.BrandId
+	response.BrandName = brandResponse.BrandName
+	response.BrandCode = brandResponse.BrandCode
+
+	// Fetch Item Group
+	itemGroupResponse, errItemGroup := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if errItemGroup != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: errItemGroup.StatusCode,
+			Err:        errItemGroup.Err,
+		}
+	}
+	response.ItemGroupId = itemGroupResponse.ItemGroupId
+	response.ItemGroupName = itemGroupResponse.ItemGroupName
+
+	// Fetch Currency
+	currencyResponse, errCurrency := financeserviceapiutils.GetCurrencyId(response.CurrencyId)
+	if errCurrency != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: errCurrency.StatusCode,
+			Err:        errCurrency.Err,
+		}
+	}
+	response.CurrencyId = currencyResponse.CurrencyId
+	response.CurrencyCode = currencyResponse.CurrencyCode
+
+	return response, nil
 }

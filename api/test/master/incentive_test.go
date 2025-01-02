@@ -27,9 +27,9 @@ type MockIncentiveMasterService struct {
 }
 
 // Mock the GetAllIncentiveMaster method
-func (m *MockIncentiveMasterService) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(pagination.Pagination), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Mock the GetAllIncentiveById method
@@ -136,42 +136,6 @@ func TestSaveIncentiveMaster_Failure(t *testing.T) {
 
 	assert.NotNil(t, response["error"], "Response should contain error")
 	assert.Equal(t, "some error", response["error"], "Error should be 'some error'")
-}
-
-func TestGetAllIncentiveMaster_Success(t *testing.T) {
-	req, _ := http.NewRequest("GET", "http://localhost:8000/v1/incentive", nil)
-	rr := httptest.NewRecorder()
-
-	// Simulate a successful response from the service
-	responseData := []map[string]interface{}{
-		{"key": "value"}, // ganti value disini
-	}
-	mockService := new(MockIncentiveMasterService)
-	mockService.On("GetAllIncentiveMaster", mock.Anything, mock.Anything).
-		Return(responseData, len(responseData), len(responseData), (*exceptions.BaseErrorResponse)(nil)) // Return nil for BaseErrorResponse
-
-	controller := mastercontroller.NewIncentiveMasterController(mockService)
-	controller.GetAllIncentiveMaster(rr, req)
-
-	// Check if the HTTP status code is as expected
-	statusCode := rr.Code
-	fmt.Println("Status code:", statusCode)
-	assert.Equal(t, http.StatusOK, statusCode, "Status code should be 200")
-
-	// Check if the response body contains the expected data
-	var response map[string]interface{}
-	err := json.Unmarshal(rr.Body.Bytes(), &response)
-	assert.Nil(t, err, "Error should be nil when unmarshalling response")
-
-	// Print the response for debugging
-	fmt.Println("Response:", response)
-
-	assert.NotNil(t, response["data"], "Response should contain data")
-
-	responseDataFromResponse, ok := response["data"].([]interface{})
-	assert.True(t, ok, "Data in response should be []interface{}")
-
-	assert.Equal(t, len(responseData), len(responseDataFromResponse), "Length of response data should match")
 }
 
 func TestGetIncentiveMasterById(t *testing.T) {

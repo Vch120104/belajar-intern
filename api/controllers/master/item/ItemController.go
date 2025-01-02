@@ -10,7 +10,6 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,8 +18,8 @@ import (
 )
 
 type ItemController interface {
-	GetAllItem(writer http.ResponseWriter, request *http.Request)
 	GetAllItemLookup(writer http.ResponseWriter, request *http.Request)
+	GetAllItemInventory(writer http.ResponseWriter, request *http.Request)
 	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request)
 	GetItembyId(writer http.ResponseWriter, request *http.Request)
 	GetItemByCode(writer http.ResponseWriter, request *http.Request)
@@ -68,7 +67,6 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		"dms_microservices_general_dev.dbo.mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
 	}
 
-	// Handle item_type (Goods, Services, G, S)
 	itemTypes := strings.Split(queryValues.Get("item_type"), ",")
 	var processedItemTypes []string
 	for _, itemType := range itemTypes {
@@ -80,12 +78,10 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		}
 	}
 
-	// Jika ada itemTypes yang valid, tambahkan ke queryParams
 	if len(processedItemTypes) > 0 {
 		queryParams["mtr_item_type.item_type_code"] = strings.Join(processedItemTypes, ",")
 	}
 
-	// Handle multi_id and supplier_id as multiple parameters
 	itemIDs := strings.Split(queryValues.Get("item_id"), ",")
 	supplierIDs := strings.Split(queryValues.Get("supplier_id"), ",")
 
@@ -98,13 +94,45 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	data, totalPages, totalRows, err := r.itemservice.GetAllItemSearch(criteria, itemIDs, supplierIDs, paginate)
+	data, err := r.itemservice.GetAllItemSearch(criteria, itemIDs, supplierIDs, paginate)
 	if err != nil {
-		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
+}
+
+func (r *ItemControllerImpl) GetAllItemInventory(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"itm.item_code":       queryValues.Get("item_code"),
+		"itm.item_name":       queryValues.Get("item_name"),
+		"cls.item_class_name": queryValues.Get("item_class_name"),
+		"grp.item_group_code": queryValues.Get("item_group_code"),
+		"cls.item_class_code": queryValues.Get("item_class_code"),
+		"uom.uom_code":        queryValues.Get("uom_code"),
+		"itm.is_active":       queryValues.Get("is_active"),
+		"itm.item_class_id":   queryValues.Get("item_class_id"), // Use case: item class dropdown
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	data, err := r.itemservice.GetAllItemInventory(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
 }
 
 // GetItembyId implements ItemController.
@@ -155,68 +183,6 @@ func (r *ItemControllerImpl) GetUomTypeDropDown(writer http.ResponseWriter, requ
 	}
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 
-}
-
-// @Summary Get All Item
-// @Description REST API Item
-// @Accept json
-// @Produce json
-// @Tags Master : Item
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param item_code query string false "item_code"
-// @Param item_name query string false "item_name"
-// @Param item_type query string false "item_type"
-// @Param is_active query string false "is_active"
-// @Param item_class_code query string false "item_class_code"
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item [get]
-func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"mtr_item.item_id":               queryValues.Get("item_id"),
-		"mtr_item.item_code":             queryValues.Get("item_code"),
-		"mtr_item.item_name":             queryValues.Get("item_name"),
-		"mtr_item.item_type":             queryValues.Get("item_type"),
-		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
-		"mtr_item.is_active":             queryValues.Get("is_active"),
-		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
-		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
-		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
-		"mtr_item.supplier_id":           queryValues.Get("supplier_id"), // Add supplier_id to queryParams
-	}
-
-	// Periksa apakah parameter query ada dan tidak kosong
-	for key, value := range queryParams {
-		if value == "" {
-			delete(queryParams, key)
-		}
-	}
-
-	// Debug log for query parameters
-	fmt.Printf("Query parameters: %+v\n", queryParams)
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	data, totalPages, totalRows, err := r.itemservice.GetAllItem(criteria, paginate)
-
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get All Item Lookup
@@ -425,14 +391,23 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	data, totalPages, totalRows, err := r.itemservice.GetAllItemDetail(criteria, paginate)
+	result, err := r.itemservice.GetAllItemDetail(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Detail Item By Id

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -70,15 +71,20 @@ func NewPurchaseRequestController(PurchaseRequestService transactionsparepartser
 func (controller *PurchaseRequestControllerImpl) GetAllItemTypePr(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"item_code":            queryValues.Get("item_code"),
-		"item_name":            queryValues.Get("item_name"),
-		"item_class_name":      queryValues.Get("item_class_name"),
-		"IT.item_type_code":    queryValues.Get("item_type_code"),
-		"L1.item_level_1_code": queryValues.Get("item_level_1"),
-		"L2.item_level_2_code": queryValues.Get("item_level_2"),
-		"L3.item_level_3_code": queryValues.Get("item_level_3"),
-		"L4.item_level_4_code": queryValues.Get("item_level_4"),
-		"quantity":             queryValues.Get("quantity"),
+		// tambahin item group, stock keep, brand_id, stock_keeping = 1
+		// item detail tidak boleh duplicate
+		//
+		"mtr_item.item_group_id": queryValues.Get("item_group_id"),
+		"DT.brand_id":            queryValues.Get("brand_id"),
+		"item_code":              queryValues.Get("item_code"),
+		"item_name":              queryValues.Get("item_name"),
+		"item_class_name":        queryValues.Get("item_class_name"),
+		"IT.item_type_code":      queryValues.Get("item_type_code"),
+		"L1.item_level_1_code":   queryValues.Get("item_level_1"),
+		"L2.item_level_2_code":   queryValues.Get("item_level_2"),
+		"L3.item_level_3_code":   queryValues.Get("item_level_3"),
+		"L4.item_level_4_code":   queryValues.Get("item_level_4"),
+		"quantity":               queryValues.Get("quantity"),
 	}
 	compid, _ := strconv.Atoi(queryValues.Get("company_id"))
 	pagination := pagination.Pagination{
@@ -133,7 +139,26 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequest(writer ht
 		"purchase_request_date_from": queryValues.Get("purchase_request_date_from"),
 		"purchase_request_date_to":   queryValues.Get("purchase_request_date_to"),
 	}
-	fmt.Println(DateParams["purchase_request_date_from"])
+	if DateParams["purchase_request_date_from"] != "" {
+		purchase_request_date_from, errsparseTime := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_from"])
+		if errsparseTime != nil {
+			payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+			return
+		}
+		DateParams["purchase_request_date_from"] = purchase_request_date_from.Format("2006-01-02")
+	}
+	if DateParams["purchase_request_date_to"] != "" {
+
+		purchase_request_date_to, errsparse := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_to"])
+		if errsparse != nil {
+			payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+			return
+		}
+		DateParams["purchase_request_date_to"] = purchase_request_date_to.Format("2006-01-02")
+		DateParams["purchase_request_date_to"] = DateParams["purchase_request_date_to"] + " 23:59:59.999"
+	}
+
+	fmt.Println(DateParams["purchase_request_date_to"])
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -480,10 +505,16 @@ func (controller *PurchaseRequestControllerImpl) GetByIdItemTypePr(writer http.R
 //	@Failure		500,400,401,404,403,422			{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-request/item/by-code/{company_id}/{item_code} [get]
 func (controller *PurchaseRequestControllerImpl) GetByCodeItemTypePr(writer http.ResponseWriter, request *http.Request) {
-	ItemCode := chi.URLParam(request, "item_code")
-	CompId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 
-	result, err := controller.PurchaseRequestService.GetByCodeItemTypePurchaseRequest(CompId, ItemCode)
+	queryValues := request.URL.Query()
+
+	//myfilter:=utils.FilterCondition{}
+	ItemCode := queryValues.Get("item_code")
+	CompId := utils.NewGetQueryInt(queryValues, "company_id")
+	brandId := utils.NewGetQueryInt(queryValues, "brand_id")
+	//filter := utils.BuildFilterCondition(queryParams)
+
+	result, err := controller.PurchaseRequestService.GetByCodeItemTypePurchaseRequest(CompId, ItemCode, brandId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

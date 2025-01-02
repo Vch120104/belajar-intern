@@ -1,15 +1,15 @@
 package masteritemrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,19 +28,13 @@ func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
 func (r *ItemClassRepositoryImpl) GetItemClassDropDownbyGroupId(tx *gorm.DB, groupId int) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
 	response := []masteritempayloads.ItemClassDropdownResponse{}
-	if err := tx.Model(entities).Where(masteritementities.ItemClass{ItemGroupID: groupId}).Scan(&response).Error; err != nil {
+	if err := tx.Model(&entities).Where(masteritementities.ItemClass{ItemGroupID: groupId}).Scan(&response).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
-		}
-	}
 	return response, nil
 }
 
@@ -62,18 +56,24 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 		}
 	}
 
-	lineTypeResponse := masteritempayloads.LineTypeResponse{}
-
-	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
-
-	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
+	lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(response.LineTypeId)
+	if lineErr != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			StatusCode: lineErr.StatusCode,
+			Err:        lineErr.Err,
 		}
 	}
 
-	joinedData, errdf := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+	lineTypePayload := masteritempayloads.LineTypeResponse{
+		LineTypeId:   lineTypeResponse.LineTypeId,
+		LineTypeCode: lineTypeResponse.LineTypeCode,
+		LineTypeName: lineTypeResponse.LineTypeName,
+	}
+
+	joinedData, errdf := utils.DataFrameInnerJoin(
+		[]masteritempayloads.ItemClassResponse{response},
+		[]masteritempayloads.LineTypeResponse{lineTypePayload},
+		"LineTypeId")
 
 	if errdf != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -82,11 +82,8 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 		}
 	}
 
-	value, ok := joinedData[0]["LineTypeName_1"]
-
-	if ok {
-		switch v := value.(type) {
-		case string:
+	if value, ok := joinedData[0]["LineTypeName_1"]; ok {
+		if v, ok := value.(string); ok {
 			response.LineTypeName = v
 		}
 	}
@@ -98,26 +95,41 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
 	response := []masteritempayloads.ItemClassDropdownResponse{}
-	if err := tx.Model(entities).Scan(&response).Error; err != nil {
+	if err := tx.Model(&entities).Scan(&response).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
+	return response, nil
+}
+
+func (r *ItemClassRepositoryImpl) GetItemClassMfgDropdown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
+	response := []masteritempayloads.ItemClassDropdownResponse{}
+
+	err := tx.Table("mtr_item_class AS cls").
+		Select(`is_active, item_class_id, item_class_name`).
+		Joins("INNER JOIN mtr_mfg_item_type mfg on cls.item_class_code = mfg.mtr_mfg_item_type_code").
+		Order("item_class_name").
+		Scan(&response).Error
+	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(""),
+			Message:    "Error fetching item class record",
+			Err:        err,
 		}
 	}
+
 	return response, nil
 }
 
 func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteritempayloads.ItemClassResponse{}
 	var groupName, lineTypeCode string
+	var groupId int
 
+	// Extract external filters for groupName and lineTypeCode
 	for _, filter := range externalFilter {
 		if strings.Contains(filter.ColumnField, "line_type_code") {
 			lineTypeCode = filter.ColumnValue
@@ -126,148 +138,78 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 		}
 	}
 
-	// Filter berdasarkan group name
+	// Filter by item group using GetItemGroupById
 	if groupName != "" {
-		groupServiceURL := config.EnvConfigs.GeneralServiceUrl + "item-group?page=0&limit=100&item_group_name=" + groupName
-		var itemGroups []masteritempayloads.ItemGroupResponse
-
-		if err := utils.Get(groupServiceURL, &itemGroups, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		itemGroupResponse, groupErr := aftersalesserviceapiutils.GetItemGroupById(groupId)
+		if groupErr == nil {
+			internalFilter = append(internalFilter, utils.FilterCondition{
+				ColumnField: "item_group_id",
+				ColumnValue: strconv.Itoa(itemGroupResponse.ItemGroupId),
+			})
 		}
-
-		if len(itemGroups) == 0 {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNoContent,
-				Err:        errors.New("item group not found"),
-			}
-		}
-
-		var ids string
-		for _, group := range itemGroups {
-			ids += fmt.Sprintf("%d,", group.ItemGroupId)
-		}
-
-		internalFilter = append(internalFilter, utils.FilterCondition{
-			ColumnField: "item_group_id #multiple",
-			ColumnValue: strings.TrimSuffix(ids, ","),
-		})
 	}
 
-	// Filter berdasarkan line type
-	if lineTypeCode != "" {
-		lineTypeURL := config.EnvConfigs.GeneralServiceUrl + "line-types?page=0&limit=100&line_type_code=" + lineTypeCode
-		var lineTypes []masteritempayloads.LineTypeResponse
-
-		if err := utils.Get(lineTypeURL, &lineTypes, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		if len(lineTypes) == 0 {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNoContent,
-				Err:        errors.New("line type not found"),
-			}
-		}
-
-		var ids string
-		for _, lineType := range lineTypes {
-			ids += fmt.Sprintf("%d,", lineType.LineTypeId)
-		}
-
-		internalFilter = append(internalFilter, utils.FilterCondition{
-			ColumnField: "line_type_id #multiple",
-			ColumnValue: strings.TrimSuffix(ids, ","),
-		})
-	}
-
+	// Apply internal filters and paginate
 	joinTable := utils.CreateJoinSelectStatement(tx, masteritempayloads.ItemClassGetAllResponse{})
 	whereQuery := utils.ApplyFilter(joinTable, internalFilter)
 
-	if err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Error; err != nil {
+	// Filter by line type using GetLineTypeByCode
+	if lineTypeCode != "" {
+		lineTypeParam := generalserviceapiutils.LineTypeListParams{
+			Page:         0,
+			Limit:        1000,
+			LineTypeCode: lineTypeCode,
+		}
+
+		lineTypeResponse, errLine := generalserviceapiutils.GetLineTypeListByCode(lineTypeParam)
+		if errLine != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errLine.StatusCode,
+				Message:    "Error fetching supplier data",
+				Err:        errLine.Err,
+			}
+		}
+
+		var lineTypeIds []int
+		for _, lineType := range lineTypeResponse {
+			lineTypeIds = append(lineTypeIds, lineType.LineTypeId)
+		}
+		if len(lineTypeIds) != 0 {
+			whereQuery = whereQuery.Where("line_type_id IN ?", lineTypeIds)
+		} else {
+			pages.Rows = []map[string]interface{}{}
+			return pages, nil
+		}
+	}
+
+	if err := joinTable.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&entities).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	var itemGroupIds []int
-	var lineTypeIds []int
-
-	for _, entity := range entities {
-		if entity.ItemGroupId != 0 {
-			itemGroupIds = append(itemGroupIds, entity.ItemGroupId)
-		}
-		if entity.LineTypeId != 0 {
-			lineTypeIds = append(lineTypeIds, entity.LineTypeId)
-		}
-	}
-
-	// Get item group names based on itemGroupIds
-	if len(itemGroupIds) > 0 {
-		groupServiceURL := fmt.Sprintf("%sitem-group?page=0&limit=100&item_group_ids=%s", config.EnvConfigs.GeneralServiceUrl, strings.Join(toStringList(itemGroupIds), ","))
-		var itemGroups []masteritempayloads.ItemGroupResponse
-
-		if err := utils.Get(groupServiceURL, &itemGroups, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+	// Fetch detailed information for item groups and line types
+	for i := range entities {
+		itemGroupResponse, groupErr := aftersalesserviceapiutils.GetItemGroupById(entities[i].ItemGroupId)
+		if groupErr != nil {
+			entities[i].ItemGroupName = ""
+		} else {
+			entities[i].ItemGroupName = itemGroupResponse.ItemGroupName
 		}
 
-		itemGroupNames := map[int]string{}
-		for _, group := range itemGroups {
-			itemGroupNames[group.ItemGroupId] = group.ItemGroupName
-		}
-
-		for i := range entities {
-			if groupName, found := itemGroupNames[entities[i].ItemGroupId]; found {
-				entities[i].ItemGroupName = groupName
-			}
-		}
-	}
-
-	// Get line type names based on lineTypeIds
-	if len(lineTypeIds) > 0 {
-		lineTypeURL := fmt.Sprintf("%sline-types?page=0&limit=100&line_type_ids=%s", config.EnvConfigs.GeneralServiceUrl, strings.Join(toStringList(lineTypeIds), ","))
-		var lineTypes []masteritempayloads.LineTypeResponse
-
-		if err := utils.Get(lineTypeURL, &lineTypes, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		lineTypeNames := map[int]string{}
-		for _, lineType := range lineTypes {
-			lineTypeNames[lineType.LineTypeId] = lineType.LineTypeName
-		}
-
-		for i := range entities {
-			if lineTypeName, found := lineTypeNames[entities[i].LineTypeId]; found {
-				entities[i].LineTypeName = lineTypeName
-			}
+		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(entities[i].LineTypeId)
+		if lineErr != nil {
+			entities[i].LineTypeName = ""
+			entities[i].LineTypeCode = ""
+		} else {
+			entities[i].LineTypeName = lineTypeResponse.LineTypeName
+			entities[i].LineTypeCode = lineTypeResponse.LineTypeCode
 		}
 	}
 
 	pages.Rows = entities
-
 	return pages, nil
-}
-
-// Helper function to convert a list of integers to a list of strings
-func toStringList(ids []int) []string {
-	var result []string
-	for _, id := range ids {
-		result = append(result, fmt.Sprintf("%d", id))
-	}
-	return result
 }
 
 func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
@@ -294,81 +236,60 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
-	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 	if response.LineTypeId != 0 {
 
-		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
-		if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
+		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(response.LineTypeId)
+		if lineErr != nil {
+
 			return response, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				StatusCode: lineErr.StatusCode,
+				Err:        lineErr.Err,
 			}
 		}
-	}
 
-	joinedData, errdf := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
-
-	if errdf != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	value, ok := joinedData[0]["LineTypeName_1"]
-
-	if ok {
-		switch v := value.(type) {
-		case string:
-			response.LineTypeName = v
-		}
+		response.LineTypeName = lineTypeResponse.LineTypeName
 	}
 
 	return response, nil
 }
 
 func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse) {
-	var getLineTypeResponse masteritempayloads.LineTypeResponse
-	var getItemGroupResponse masteritempayloads.ItemGroupResponse
 
-	//CHECK ITEM GROUP ID
-	groupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(request.ItemGroupId)
-
-	errUrlItemGroup := utils.Get(groupUrl, &getItemGroupResponse, nil)
-
-	if errUrlItemGroup != nil {
+	itemGroup, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(request.ItemGroupId)
+	if itemGroupErr != nil {
 		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlItemGroup,
+			StatusCode: itemGroupErr.StatusCode,
+			Err:        itemGroupErr.Err,
 		}
 	}
 
-	if getItemGroupResponse == (masteritempayloads.ItemGroupResponse{}) {
+	if itemGroup == (aftersalesserviceapiutils.ItemGroupResponse{}) {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("item group not found"),
 		}
 	}
 
-	//CHECK LINE TYPE ID IF ITEM GROUP IS 'INVENTORY'
-	if getItemGroupResponse.ItemGroupName == "Inventory" || getItemGroupResponse.ItemGroupCode == "IN" {
-		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(request.LineTypeId)
-		errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
+	// CHECK LINE TYPE ID IF ITEM GROUP IS 'INVENTORY'
+	if itemGroup.ItemGroupName == "Inventory" || itemGroup.ItemGroupCode == "IN" {
 
-		if errUrlLineType != nil {
+		lineType, lineTypeErr := generalserviceapiutils.GetLineTypeById(request.LineTypeId)
+		if lineTypeErr != nil {
 			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errUrlLineType,
+				StatusCode: lineTypeErr.StatusCode,
+				Err:        lineTypeErr.Err,
 			}
 		}
 
-		if getLineTypeResponse == (masteritempayloads.LineTypeResponse{}) {
+		if lineType == (generalserviceapiutils.LineTypeResponse{}) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errors.New("line type not found"),
 			}
 		}
+
 	} else {
+
 		request.LineTypeId = 0
 	}
 
@@ -382,7 +303,6 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritemp
 	}
 
 	err := tx.Save(&entities).Error
-
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
 			return false, &exceptions.BaseErrorResponse{
@@ -390,7 +310,6 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritemp
 				Err:        err,
 			}
 		} else {
-
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,

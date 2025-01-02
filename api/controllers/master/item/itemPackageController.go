@@ -76,6 +76,7 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 		"mtr_item_package.item_package_set":  queryValues.Get("item_package_set"),
 		"mtr_item_package.description":       queryValues.Get("description"),
 		"mtr_item_package.is_active":         queryValues.Get("is_active"),
+		"mtr_item_group.item_group_code":     queryValues.Get("item_group_code"),
 	}
 	externalFilterCondition := map[string]string{
 
@@ -92,14 +93,23 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
 	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	paginatedData, totalPages, totalRows, err := r.ItemPackageService.GetAllItemPackage(internalCriteria, externalCriteria, paginate)
+	paginatedData, err := r.ItemPackageService.GetAllItemPackage(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		utils.ModifyKeysInResponse(paginatedData.Rows),
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // @Summary Get Item Package By ID

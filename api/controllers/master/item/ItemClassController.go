@@ -25,6 +25,7 @@ type ItemClassController interface {
 	SaveItemClass(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
 	GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request)
+	GetItemClassMfgDropdown(writer http.ResponseWriter, request *http.Request)
 }
 type ItemClassControllerImpl struct {
 	ItemClassService masteritemservice.ItemClassService
@@ -164,6 +165,16 @@ func (r *ItemClassControllerImpl) GetItemClassDropdown(writer http.ResponseWrite
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
+	payloads.NewHandleSuccess(writer, result, "success", 200)
+}
+
+func (r *ItemClassControllerImpl) GetItemClassMfgDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.ItemClassService.GetItemClassMfgDropdown()
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 

@@ -103,14 +103,12 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	// Define query parameters
 	queryParams := map[string]string{
 		"mtr_item_location_detail.item_location_detail_id": queryValues.Get("item_location_detail_id"),
 		"mtr_item_location_detail.item_location_id":        queryValues.Get("item_location_id"),
 		"mtr_item_location_detail.item_location_source_id": queryValues.Get("item_location_source_id"),
 	}
 
-	// Extract pagination parameters
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -118,22 +116,25 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Build filter condition based on query parameters
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocationDetail(criteria, paginate)
+	result, err := r.ItemLocationService.GetAllItemLocationDetail(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
 	// Construct the response
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Save Item Location Detail
@@ -215,17 +216,22 @@ func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, r
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	result, totalpage, totalrows, err := r.ItemLocationService.GetAllItemLoc(criteria, paginate)
+	result, err := r.ItemLocationService.GetAllItemLoc(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	if len(result) == 0 {
-		payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
-		return
-	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
