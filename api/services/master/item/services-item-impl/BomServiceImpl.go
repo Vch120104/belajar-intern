@@ -477,7 +477,7 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 
 	internalFilterCondition := []utils.FilterCondition{}
 	paginate := pagination.Pagination{
-		Limit: 10,
+		Limit: 3,
 		Page:  0,
 	}
 
@@ -513,7 +513,30 @@ func (s *BomServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.Bas
 }
 
 func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 	var results []masteritempayloads.BomDetailTemplate
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
 	// var numericRegex = regexp.MustCompile(`^\d*\.?\d+$`)
 
 	// var regexCheckInput = regexp.MustCompile(`^(0[,.]?\d{1,2}|\d*(,\d{3})*(\.\d{1,2})?)$`)  // Handles 12,345,678.99
@@ -534,22 +557,70 @@ func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayload
 
 		// Debugging row data
 		//fmt.Printf("Debugging Row: %v\n", row)
+		var validation_text string
+		row[0] = strings.TrimSpace(row[0])
+		row[3] = strings.TrimSpace(row[3])
+		row[6] = strings.TrimSpace(row[6])
+
+		// Check duplicate item id
+		if row[0] == row[3] {
+			validation_text += "Child item cannot be same with parent item. "
+		}
+
+		// Check if item id bom header exists
+		_, err := s.ItemRepository.GetItemCode(tx, row[0])
+		if err != nil {
+			if err.StatusCode == http.StatusNotFound {
+				validation_text += "Bom code does not exist in Item Master. "
+			} else {
+				return []masteritempayloads.BomDetailTemplate{}, err
+			}
+		}
+		_, err = s.ItemRepository.GetItemInventoryByCode(tx, row[0])
+		if err != nil {
+			if err.StatusCode == http.StatusNotFound {
+				validation_text += "Bom item class not MFG type. "
+			} else {
+				return []masteritempayloads.BomDetailTemplate{}, err
+			}
+		}
+
+		// Check if item id bom detail exists
+		_, err = s.ItemRepository.GetItemCode(tx, row[3])
+		if err != nil {
+			if err.StatusCode == http.StatusNotFound {
+				validation_text += "Material code does not exist in Item Master. "
+			} else {
+				return []masteritempayloads.BomDetailTemplate{}, err
+			}
+		}
+		_, err = s.ItemRepository.GetItemInventoryByCode(tx, row[3])
+		if err != nil {
+			if err.StatusCode == http.StatusNotFound {
+				validation_text += "Material item class not MFG type. "
+			} else {
+				return []masteritempayloads.BomDetailTemplate{}, err
+			}
+		}
 
 		// Effective date
 		row[1] = strings.TrimSpace(row[1])
 		row[1] = strings.ReplaceAll(row[1], "/", "-")
-		effectiveDate, err := time.Parse("1-2-06 15:04", row[1])
-		if err != nil {
+		effectiveDate, errA := time.Parse("1-2-06 15:04", row[1])
+		if errA != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid effective date format",
 			}
 		}
+		if effectiveDate.Unix() < time.Now().Unix() {
+			validation_text += "Effective date must be later than current date. "
+		}
 
 		// Bom qty
 		row[2] = strings.ReplaceAll(row[2], ",", ".") // Replace comma with dot
-		bomQty, err := strconv.ParseFloat(row[2], 64)
-		if err != nil {
+		bomQty, errA := strconv.ParseFloat(row[2], 64)
+		if errA != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid bom quantity format",
@@ -557,8 +628,8 @@ func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayload
 		}
 
 		// Detail seq
-		detailSeq, err := strconv.Atoi(row[4])
-		if err != nil {
+		detailSeq, errA := strconv.Atoi(row[4])
+		if errA != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid sequence format",
@@ -567,8 +638,8 @@ func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayload
 
 		// Detail qty
 		row[5] = strings.ReplaceAll(row[5], ",", ".") // Replace comma with dot
-		detailQty, err := strconv.ParseFloat(row[5], 64)
-		if err != nil {
+		detailQty, errA := strconv.ParseFloat(row[5], 64)
+		if errA != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid detail quantity format",
@@ -577,8 +648,8 @@ func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayload
 
 		// Cost percentage
 		row[7] = strings.ReplaceAll(row[7], ",", ".") // Replace comma with dot
-		costPercentage, err := strconv.ParseFloat(row[7], 64)
-		if err != nil {
+		costPercentage, errA := strconv.ParseFloat(row[7], 64)
+		if errA != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid costing percentage format",
@@ -586,14 +657,15 @@ func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayload
 		}
 
 		results = append(results, masteritempayloads.BomDetailTemplate{
-			ItemCode:                   strings.TrimSpace(row[0]),
+			ItemCode:                   row[0],
 			EffectiveDate:              effectiveDate,
 			Qty:                        bomQty,
-			BomDetailItemCode:          strings.TrimSpace(row[3]),
+			BomDetailItemCode:          row[3],
 			BomDetailSeq:               detailSeq,
 			BomDetailQty:               detailQty,
-			BomDetailRemark:            strings.TrimSpace(row[6]),
+			BomDetailRemark:            row[6],
 			BomDetailCostingPercentage: costPercentage,
+			Validation:                 validation_text,
 		})
 	}
 	return results, nil
@@ -642,6 +714,12 @@ func (s *BomServiceImpl) ProcessDataUpload(request masteritempayloads.BomDetailU
 		_, ok := header[key]
 		if !ok {
 			header[key] = headerVal{bomDetail.Qty, 0, 0}
+		}
+		if bomDetail.Validation != "" {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "The Validation is Not Ok Please Check your data",
+			}
 		}
 	}
 

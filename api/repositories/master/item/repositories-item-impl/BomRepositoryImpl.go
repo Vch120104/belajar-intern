@@ -480,7 +480,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	if curBomPercentage+request.CostingPercent > 100.0 {
 		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid input BOM detail record",
+			Message:    "Total cost percentage exceeds 100%",
 			Err:        fmt.Errorf("total cost percentage more than 100: %f", curBomPercentage+request.CostingPercent),
 		}
 	}
