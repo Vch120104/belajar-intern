@@ -108,9 +108,9 @@ func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masterite
 func (r *ItemClassRepositoryImpl) GetItemClassMfgDropdown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	response := []masteritempayloads.ItemClassDropdownResponse{}
 
-	err := tx.Table("mtr_item_class AS cls").
+	err := tx.Table("mtr_item_class").
 		Select(`is_active, item_class_id, item_class_name`).
-		Joins("INNER JOIN mtr_mfg_item_type mfg on cls.item_class_code = mfg.mtr_mfg_item_type_code").
+		Where("is_manufacturing_item_type = 1 AND is_active = 1").
 		Order("item_class_name").
 		Scan(&response).Error
 	if err != nil {

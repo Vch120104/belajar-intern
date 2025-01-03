@@ -225,6 +225,7 @@ func ItemRouter(
 
 	router.Get("/", itemController.GetAllItemSearch)
 	router.Get("/inventory", itemController.GetAllItemInventory)
+	router.Get("/inventory/by-code", itemController.GetItemInventoryByCode)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
