@@ -4595,9 +4595,10 @@ func (r *LookupRepositoryImpl) LocationItem(tx *gorm.DB, filterCondition []utils
 			mwl.warehouse_location_name
 		`).
 		Joins("LEFT JOIN mtr_warehouse_location mwl ON mwl.warehouse_id = mtr_location_item.warehouse_id AND mwl.warehouse_location_id = mtr_location_item.warehouse_location_id").
-		Where("is_active = ?", true)
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
+		Where("mwl.is_active = ?", true)
 	whereCondition := utils.ApplyFilter(baseModelQuery, filterCondition).Group("mwl.warehouse_location_id, mwl.warehouse_location_code, mwl.warehouse_location_name")
-	err := whereCondition.Scopes(pagination.Paginate(&pages, baseModelQuery)).Order("mwl.warehouse_location_id").Scan(&response).Error
+	err := whereCondition.Scopes(pagination.Paginate(&pages, baseModelQuery)).Scan(&response).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -4674,10 +4675,9 @@ func (r *LookupRepositoryImpl) ItemLocUOM(tx *gorm.DB, filterCondition []utils.F
 															AND vls.location_id = mtr_location_item.warehouse_location_id
 															AND vls.period_year = ?
 															AND vls.period_month = ?`, viewLocStock, periodYear, periodMonth)
-	whereQuery := utils.ApplyFilter(baseModelQuery, newFilterCondition).Group("mtr_location_item.item_location_id, mi.item_code, mi.item_name, mu.uom_code, mi.is_active")
+	whereQuery := utils.ApplyFilter(baseModelQuery, newFilterCondition).Group("mi.item_code, mi.item_name, mu.uom_code, mi.is_active")
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&response).Error
 
-	// Order(fmt.Sprintf("%s %s", pages.SortOf, pages.SortBy))
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

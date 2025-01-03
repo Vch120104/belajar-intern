@@ -1007,7 +1007,14 @@ func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWrite
 
 func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	filterCondition := map[string]string{}
+	filterCondition := map[string]string{
+		"mwl.warehouse_location_id":   queryValues.Get("warehouse_location_id"),
+		"mwl.warehouse_location_code": queryValues.Get("warehouse_location_code"),
+		"mwl.warehouse_location_name": queryValues.Get("warehouse_location_name"),
+		"mwm.company_id":              queryValues.Get("company_id"),
+		"mwm.warehouse_id":            queryValues.Get("warehouse_id"),
+		"mtr_location_item.item_id":   queryValues.Get("item_id"),
+	}
 
 	criteria := utils.BuildFilterCondition(filterCondition)
 
@@ -1016,6 +1023,10 @@ func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request 
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
+	}
+
+	if paginate.GetSortBy() == "" {
+		paginate.SortBy = "mwl.warehouse_location_id"
 	}
 
 	item, baseErr := r.LookupService.LocationItem(criteria, paginate)
@@ -1055,6 +1066,10 @@ func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *h
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
+	}
+
+	if paginate.GetSortBy() == "" {
+		paginate.SortBy = "item_id"
 	}
 
 	item, baseErr := r.LookupService.ItemLocUOM(criteria, paginate)
