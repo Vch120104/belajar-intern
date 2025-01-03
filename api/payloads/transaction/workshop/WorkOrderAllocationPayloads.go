@@ -188,14 +188,15 @@ type WorkOrderAllocationAssignTechnicianRequest struct {
 }
 
 type WorkOrderAllocationAssignTechnicianResponse struct {
-	CompanyId      int       `json:"company_id"`
-	CompanyName    string    `json:"company_name"`
-	TechnicianId   int       `json:"technician_id"`
-	TechnicianName string    `json:"technician_name"`
-	TechnicianNo   int       `json:"technician_no"`
-	ShiftCode      string    `json:"shift_code"`
-	ForemanId      int       `json:"foreman_id"`
-	ForemanName    string    `json:"foreman_name"`
-	ServiceDate    time.Time `json:"service_date"`
-	Attendance     bool      `json:"attendance"`
+	AssignTechnicianId int       `json:"assign_technician_id"`
+	CompanyId          int       `json:"company_id"`
+	CompanyName        string    `json:"company_name"`
+	TechnicianId       int       `json:"technician_id"`
+	TechnicianName     string    `json:"technician_name"`
+	TechnicianNo       int       `json:"technician_no"`
+	ShiftCode          string    `json:"shift_code"`
+	ForemanId          int       `json:"foreman_id"`
+	ForemanName        string    `json:"foreman_name"`
+	ServiceDate        time.Time `json:"service_date"`
+	Attendance         bool      `json:"attendance"`
 }
