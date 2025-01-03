@@ -131,8 +131,29 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order-allocation/allocate/{brand_id}/{work_order_system_number} [get]
+// @Router /v1/work-order-allocation/allocate/{brand_id}/{company_id} [get]
 func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"service_date": queryValues.Get("service_date"),
+		"brand_id":     queryValues.Get("brand_id"),
+		"company_id":   queryValues.Get("company_id"),
+	}
+
+	serviceDateStr := chi.URLParam(request, "service_date")
+	if serviceDateStr == "" {
+		payloads.NewHandleError(writer, "Service date is required", http.StatusBadRequest)
+		return
+	}
+
+	// Attempt to parse serviceDateStr to time.Time
+	serviceRequestDate, err := time.Parse("2006-01-02", serviceDateStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid date format", http.StatusBadRequest)
+		return
+	}
+
 	brandStrId := chi.URLParam(request, "brand_id")
 	brandId, err := strconv.Atoi(brandStrId)
 	if err != nil {
@@ -140,20 +161,38 @@ func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWrite
 		return
 	}
 
-	workorderStrId := chi.URLParam(request, "work_order_system_number")
-	workorderId, err := strconv.Atoi(workorderStrId)
+	companyStrId := chi.URLParam(request, "company_id")
+	companyId, err := strconv.Atoi(companyStrId)
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Work Order System Number", http.StatusBadRequest)
+		payloads.NewHandleError(writer, "Invalid company", http.StatusBadRequest)
 		return
 	}
 
-	woAssign, baseErr := r.WorkOrderAllocationService.GetAllocate(brandId, workorderId)
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, baseErr := r.WorkOrderAllocationService.GetAllocate(serviceRequestDate, brandId, companyId, criteria, paginate)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, woAssign, "Data retrieved successfully", http.StatusOK)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetAllocateDetail gets all allocated work orders detail

@@ -337,23 +337,43 @@ func isValidTimeColumn(columnName string) bool {
 	return validTimeColumns[columnName]
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, brandId int, woSysNum int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
-	var response transactionworkshoppayloads.WorkOrderAllocationResponse
+func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, date time.Time, brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionworkshoppayloads.WorkOrderAllocationGR
 
-	err := tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
-		Select("company_id, foreman_id, technician_id, shift_code").
-		Where("brand_id = ? AND work_order_system_number = ?", brandId, woSysNum).
-		First(&response).Error
+	baseModelQuery := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Joins("LEFT OUTER JOIN trx_work_order_detail ON trx_work_order.work_order_system_number = trx_work_order_detail.work_order_system_number").
+		Select("trx_work_order.work_order_system_number, trx_work_order.work_order_document_number").
+		Where("trx_work_order.company_id = ? AND trx_work_order.brand_id = ? AND CAST(trx_work_order.work_order_date AS DATE) = ?", companyId, brandId, date)
 
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Failed to retrieve Work Order Allocation",
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve  data from database",
 			Err:        err,
 		}
 	}
 
-	return response, nil
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	var results []map[string]interface{}
+	for _, response := range responses {
+		result := map[string]interface{}{
+			"work_order_system_number":   response.WorkOrderSystemNumber,
+			"work_order_document_number": response.WorkOrderDocumentNumber,
+		}
+
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+
+	return pages, nil
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date time.Time, techId int, request transactionworkshoppayloads.WorkOrderAllocationDetailRequest, foremanId int, companyId int) (transactionworkshopentities.WorkOrderAllocationDetail, *exceptions.BaseErrorResponse) {
