@@ -202,3 +202,8 @@ func IntSliceToSQLString(slice []int) string {
 	}
 	return strings.Join(strValues, ",")
 }
+
+// Float64SliceToSQLString mengubah []float64 menjadi string untuk SQL IN clause
+func ConvertCommaToPeriod(value string) string {
+	return strings.Replace(value, ",", ".", -1)
+}
