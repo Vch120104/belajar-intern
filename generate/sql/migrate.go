@@ -231,7 +231,7 @@ func Migrate() {
 	//&transactionsparepartentities.ItemClaimDetail{},
 	//&transactionsparepartentities.StockTransaction{},
 	//&transactionsparepartentities.GoodsReceiveDetail{},
-	//&transactionsparepartentities.GoodsReceive{},
+	//&tra  nsactionsparepartentities.GoodsReceive{},
 
 	//&masteritementities.ItemTransferStatus{},
 	//&transactionsparepartentities.ItemWarehouseTransferRequest{},
