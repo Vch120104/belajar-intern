@@ -66,6 +66,7 @@ type BomDetailTemplate struct {
 	BomDetailQty               float64   `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
 	BomDetailRemark            string    `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
 	BomDetailCostingPercentage float64   `json:"bom_detail_costing_percentage" parent_entity:"mtr_bom_detail"`
+	Validation                 string    `json:"validation"`
 }
 
 type BomDetailUpload struct {
