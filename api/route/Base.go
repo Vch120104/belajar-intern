@@ -1621,6 +1621,7 @@ func WorkOrderAllocationRouter(
 	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
 	router.Get("/allocate/{service_date}/{brand_id}/{company_id}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{service_date}/{brand_id}/{company_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocateByWorkOrderSystemNumber)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 

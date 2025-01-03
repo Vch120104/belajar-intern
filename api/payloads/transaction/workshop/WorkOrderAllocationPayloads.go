@@ -39,9 +39,9 @@ type WorkOrderAllocationGR struct {
 	WorkOrderDocumentNumber string `json:"work_order_document_number"`
 	WorkOrderDate           string `json:"work_order_date"`
 	ModelId                 int    `json:"model_id"`
-	ModelName               string `json:"model_name"`
+	ModelDescription        string `json:"model_description"`
 	VariantId               int    `json:"variant_id"`
-	VariantName             string `json:"variant_name"`
+	VariantDescription      string `json:"variant_description"`
 	VehicleId               int    `json:"vehicle_id"`
 	VehicleChassisNumber    string `json:"vehicle_chassis_number"`
 	VehicleTnkb             string `json:"vehicle_tnkb"`
@@ -73,15 +73,30 @@ type WorkOrderAllocationResponse struct {
 	ServiceAdvisorId        int     `json:"service_advisor_id"`
 	ServiceAdvisorName      string  `json:"service_advisor_name"`
 	ModelId                 int     `json:"model_id"`
-	ModelName               string  `json:"model_name"`
+	ModelName               string  `json:"model_description"`
 	VariantId               int     `json:"variant_id"`
-	VariantName             string  `json:"variant_name"`
+	VariantDescription      string  `json:"variant_description"`
 	VehicleId               int     `json:"vehicle_id"`
 	VehicleChassisNumber    string  `json:"vehicle_chassis_number"`
+	VehicleTnkb             string  `json:"vehicle_tnkb"`
 	CustomerId              int     `json:"customer_id"`
 	CustomerName            string  `json:"customer_name"`
 	CustomerBehavior        string  `json:"customer_behavior"`
 	Frt                     float64 `json:"frt"`
+}
+
+type WorkOrderDetailOperation struct {
+	OperationItemId          int       `json:"operation_item_id"`
+	OperationItemCode        string    `json:"operation_item_code"`
+	OperationItemDescription string    `json:"operation_item_description"`
+	Frt                      float64   `json:"frt"`
+	ServiceStatusId          int       `json:"service_status_id"`
+	ServiceStatus            string    `json:"service_status"`
+	ForemanId                int       `json:"foreman_id"`
+	ForemanName              string    `json:"foreman_name"`
+	TechnicianId             int       `json:"technician_id"`
+	TechnicianName           string    `json:"technician_name"`
+	StartTime                time.Time `json:"start_time"`
 }
 
 type WorkOrderAllocationDetailRequest struct {

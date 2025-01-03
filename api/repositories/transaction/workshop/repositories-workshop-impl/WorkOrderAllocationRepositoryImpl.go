@@ -6,6 +6,7 @@ import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"strconv"
@@ -337,13 +338,15 @@ func isValidTimeColumn(columnName string) bool {
 	return validTimeColumns[columnName]
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, date time.Time, brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionworkshoppayloads.WorkOrderAllocationGR
 
 	baseModelQuery := tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Joins("LEFT OUTER JOIN trx_work_order_detail ON trx_work_order.work_order_system_number = trx_work_order_detail.work_order_system_number").
-		Select("trx_work_order.work_order_system_number, trx_work_order.work_order_document_number").
-		Where("trx_work_order.company_id = ? AND trx_work_order.brand_id = ? AND CAST(trx_work_order.work_order_date AS DATE) = ?", companyId, brandId, date)
+		Joins("INNER JOIN trx_work_order_detail ON trx_work_order.work_order_system_number = trx_work_order_detail.work_order_system_number").
+		Select("trx_work_order.work_order_system_number, trx_work_order.work_order_document_number,trx_work_order.work_order_date, trx_work_order.model_id, trx_work_order.variant_id, trx_work_order.vehicle_id, trx_work_order.service_advisor_id ").
+		Where("trx_work_order.company_id = ? AND trx_work_order.brand_id = ? ", companyId, brandId).
+		Where("trx_work_order.work_order_status_id NOT IN (? , ?) ", utils.WoStatClosed, utils.WoStatDraft).
+		Where("trx_work_order_detail.service_status_id IN (?,?,?,?)", utils.SrvStatDraft, utils.SrvStatTransfer, utils.SrvStatReOrder, utils.SrvStatAutoRelease)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
@@ -363,9 +366,56 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, date time.T
 
 	var results []map[string]interface{}
 	for _, response := range responses {
+
+		ServiceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(response.ServiceAdvisorId)
+		if serviceAdvisorErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch service Advisor data from external service",
+				Err:        serviceAdvisorErr,
+			}
+		}
+
+		ModelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		if modelErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch model data from external service",
+				Err:        modelErr,
+			}
+		}
+
+		VariantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
+		if variantErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch variant data from external service",
+				Err:        variantErr,
+			}
+		}
+
+		// VehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(response.VehicleId)
+		// if vehicleErr != nil {
+		// 	return pages, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        vehicleErr,
+		// 	}
+		// }
+
 		result := map[string]interface{}{
 			"work_order_system_number":   response.WorkOrderSystemNumber,
 			"work_order_document_number": response.WorkOrderDocumentNumber,
+			"work_order_date":            response.WorkOrderDate,
+			"model_id":                   response.ModelId,
+			"model_description":          ModelResponse.ModelName,
+			"variant_id":                 response.VariantId,
+			"variant_description":        VariantResponse.VariantDescription,
+			"vehicle_id":                 response.VehicleId,
+			"vehicle_chassis_number":     "", //VehicleResponse.VehicleChassisNumber,
+			"vehicle_tnkb":               "", //VehicleResponse.VehicleRegistrationCertificateTNKB,
+			"service_advisor_id":         response.ServiceAdvisorId,
+			"service_advisor_name":       ServiceAdvisorResponse.EmployeeName,
 		}
 
 		results = append(results, result)
@@ -374,6 +424,117 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, date time.T
 	pages.Rows = results
 
 	return pages, nil
+}
+
+func (r *WorkOrderAllocationRepositoryImpl) GetAllocateByWorkOrderSystemNumber(tx *gorm.DB, date time.Time, brandId int, companyId int, workOrderSystemNumber int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+	var response transactionworkshoppayloads.WorkOrderAllocationResponse
+
+	// Get Work Order data
+	var workOrder transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Select("work_order_system_number, work_order_document_number, work_order_date, brand_id, model_id, variant_id, vehicle_id, service_advisor_id, foreman_id,customer_id").
+		Where("work_order_system_number = ? AND company_id = ? AND brand_id = ?", workOrderSystemNumber, companyId, brandId).
+		First(&workOrder).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Work Order not found",
+			Err:        err,
+		}
+	}
+
+	// Get Brand data
+	BrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(workOrder.BrandId)
+	if brandErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch brand data from external service",
+			Err:        brandErr,
+		}
+	}
+
+	// Get Model data
+	ModelResponse, modelErr := salesserviceapiutils.GetUnitModelById(workOrder.ModelId)
+	if modelErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch model data from external service",
+			Err:        modelErr,
+		}
+	}
+
+	// Get Variant data
+	VariantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(workOrder.VariantId)
+	if variantErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch variant data from external service",
+			Err:        variantErr,
+		}
+	}
+
+	// Get Service Advisor data
+	ServiceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(workOrder.ServiceAdvisor)
+	if serviceAdvisorErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch service Advisor data from external service",
+			Err:        serviceAdvisorErr,
+		}
+	}
+
+	// Get Foreman data
+	ForemanResponse, foremanErr := generalserviceapiutils.GetEmployeeById(workOrder.Foreman)
+	if foremanErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch foreman data from external service",
+			Err:        foremanErr,
+		}
+	}
+
+	// Get Customer Data
+	CustomerResponse, customerErr := generalserviceapiutils.GetCustomerMasterById(workOrder.CustomerId)
+	if customerErr != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch customer data from external service",
+			Err:        customerErr,
+		}
+	}
+
+	// Get Vehicle data
+	// VehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(workOrder.VehicleId)
+	// if vehicleErr != nil {
+	// 	return response, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to fetch vehicle data from external service",
+	// 		Err:        vehicleErr,
+	// 	}
+	// }
+
+	response = transactionworkshoppayloads.WorkOrderAllocationResponse{
+		WorkOrderSystemNumber:   workOrder.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber: workOrder.WorkOrderDocumentNumber,
+		BrandId:                 workOrder.BrandId,
+		BrandName:               BrandResponse.BrandName,
+		ModelId:                 workOrder.ModelId,
+		ModelName:               ModelResponse.ModelName,
+		VariantId:               workOrder.VariantId,
+		VariantDescription:      VariantResponse.VariantDescription,
+		VehicleId:               workOrder.VehicleId,
+		VehicleChassisNumber:    "", //VehicleResponse.VehicleChassisNumber,
+		VehicleTnkb:             "", //VehicleResponse.VehicleRegistrationCertificateTNKB,
+		ServiceAdvisorId:        workOrder.ServiceAdvisor,
+		ServiceAdvisorName:      ServiceAdvisorResponse.EmployeeName,
+		ForemanId:               workOrder.Foreman,
+		ForemanName:             ForemanResponse.EmployeeName,
+		CustomerId:              workOrder.CustomerId,
+		CustomerName:            CustomerResponse.CustomerName,
+	}
+
+	return response, nil
+
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date time.Time, techId int, request transactionworkshoppayloads.WorkOrderAllocationDetailRequest, foremanId int, companyId int) (transactionworkshopentities.WorkOrderAllocationDetail, *exceptions.BaseErrorResponse) {
@@ -532,11 +693,15 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocateDetail(tx *gorm.DB, filte
 	return pages, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
+// uspg_atWoAllocateGrid_Select
+// IF @Option = 2
+// --USE FOR : * SELECT DATA
+// --USE IN MODUL : AWS-004 PAGE 5 REQ: DANIEL 130109
+func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
 	var result transactionworkshoppayloads.WorkOrderAllocationHeaderResult
 
 	// Get shift start time and end time
-	shiftTimes, err := r.getShiftTimes(tx, companyCode, foremanId, techallocStartDate)
+	shiftTimes, err := r.getShiftTimes(tx, companyId, foremanId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -546,7 +711,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	}
 
 	// Get total time
-	totalTime, err := r.getTotalTime(tx, companyCode, shiftTimes.ShiftCode, techallocStartDate, shiftTimes.StartTime, shiftTimes.EndTime)
+	totalTime, err := r.getTotalTime(tx, companyId, shiftTimes.ShiftCode, techallocStartDate, shiftTimes.StartTime, shiftTimes.EndTime)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -556,7 +721,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	}
 
 	// Get used time
-	usedTime, err := r.getUsedTime(tx, companyCode, foremanId, techallocStartDate)
+	usedTime, err := r.getUsedTime(tx, companyId, foremanId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -569,7 +734,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	availTechTime := totalTime - usedTime
 
 	// Get unallocated operations
-	unallocatedOpr, err := r.getUnallocatedOpr(tx, companyCode, techallocStartDate)
+	unallocatedOpr, err := r.getUnallocatedOpr(tx, companyId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -579,7 +744,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	}
 
 	// Get auto-released operations
-	autoReleased, err := r.getAutoReleased(tx, companyCode, techallocStartDate)
+	autoReleased, err := r.getAutoReleased(tx, companyId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -589,7 +754,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	}
 
 	// Get book allocated time
-	bookAllocTime, err := r.getBookAllocTime(tx, companyCode, vehicleBrandId, techallocStartDate)
+	bookAllocTime, err := r.getBookAllocTime(tx, companyId, vehicleBrandId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1124,7 +1289,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getShiftEndTime(tx *gorm.DB, company
 	return endTime, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.ShiftTimes, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.ShiftTimes, error) {
 	var shiftTimes transactionworkshoppayloads.ShiftTimes
 
 	// Define day-specific conditions with SQL Server's boolean representation
@@ -1157,12 +1322,12 @@ func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyCo
 	// Build and execute the query
 	err := tx.Table("trx_assign_technician").
 		Joins("LEFT JOIN mtr_shift_schedule ON "+
-			"mtr_shift_schedule.COMPANY_ID = trx_assign_technician.COMPANY_ID AND "+
-			"trx_assign_technician.SHIFT_CODE = mtr_shift_schedule.SHIFT_CODE AND "+
+			"mtr_shift_schedule.company_id = trx_assign_technician.company_id AND "+
+			"trx_assign_technician.shift_code = mtr_shift_schedule.shift_code AND "+
 			condition).
-		Where("trx_assign_technician.SERVICE_DATE = ? AND trx_assign_technician.FOREMAN_ID = ? AND trx_assign_technician.COMPANY_ID = ?", techallocStartDateStr, foremanId, companyCode).
-		Select("mtr_shift_schedule.START_TIME, mtr_shift_schedule.END_TIME, trx_assign_technician.SHIFT_CODE").
-		Where("mtr_shift_schedule.EFFECTIVE_DATE = (SELECT TOP 1 EFFECTIVE_DATE FROM mtr_shift_schedule WHERE COMPANY_ID = trx_assign_technician.COMPANY_ID AND SHIFT_CODE = trx_assign_technician.SHIFT_CODE AND "+
+		Where("trx_assign_technician.SERVICE_DATE = ? AND trx_assign_technician.FOREMAN_ID = ? AND trx_assign_technician.company_id = ?", techallocStartDateStr, foremanId, companyId).
+		Select("mtr_shift_schedule.START_TIME, mtr_shift_schedule.END_TIME, trx_assign_technician.shift_code").
+		Where("mtr_shift_schedule.EFFECTIVE_DATE = (SELECT TOP 1 EFFECTIVE_DATE FROM mtr_shift_schedule WHERE company_id = trx_assign_technician.company_id AND shift_code = trx_assign_technician.shift_code AND "+
 			condition+" AND EFFECTIVE_DATE <= ? ORDER BY EFFECTIVE_DATE DESC)", techallocStartDateStr).
 		Scan(&result).Error
 
@@ -1194,7 +1359,7 @@ func timeToDecimalHours(t time.Time) float64 {
 	return hours + (minutes / 60)
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyCode string, shiftCode string, techallocStartDate time.Time, shiftStartTime float64, shiftEndTime float64) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyId int, shiftCode string, techallocStartDate time.Time, shiftStartTime float64, shiftEndTime float64) (float64, error) {
 	var totalTime float64
 
 	// Determine the day of the week and corresponding condition
@@ -1223,7 +1388,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyCod
 	// Fetch the shift schedule from the database
 	var shift masterentities.ShiftSchedule
 	err := tx.Table("mtr_shift_schedule").
-		Where("company_id = ? AND shift_code = ? AND effective_date <= ?", companyCode, shiftCode, techallocStartDate.Format("2006-01-02")).
+		Where("company_id = ? AND shift_code = ? AND effective_date <= ?", companyId, shiftCode, techallocStartDate.Format("2006-01-02")).
 		Where(dayCondition).
 		Order("effective_date DESC").
 		Limit(1).
@@ -1264,7 +1429,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyCod
 	return totalTime, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time) (float64, error) {
 	var usedTime float64
 
 	startDateStr := techallocStartDate.Format("2006-01-02")
@@ -1272,7 +1437,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyCode
 	err := tx.Model(&transactionworkshopentities.ServiceLog{}).
 		Select("SUM(actual_time) AS total_time").
 		Joins("LEFT JOIN ? AS WTA ON WTA.tech_alloc_system_number = S.technician_allocation_system_number", &transactionworkshopentities.WorkOrderAllocation{}).
-		Where("S.company_id = ? AND WTA.foreman_id = ? AND DATE(S.start_datetime) = ?", companyCode, foremanId, startDateStr).
+		Where("S.company_id = ? AND WTA.foreman_id = ? AND DATE(S.start_datetime) = ?", companyId, foremanId, startDateStr).
 		Scan(&usedTime).Error
 
 	if err != nil {
@@ -1282,7 +1447,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyCode
 	return usedTime, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, companyCode string, techallocStartDate time.Time) (int, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, companyId int, techallocStartDate time.Time) (int, error) {
 	var unallocatedOpr int64
 
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -1290,7 +1455,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, compa
 			&transactionworkshopentities.WorkOrder{},
 			"trx_work_order_detail.work_order_system_number",
 			"trx_work_order.work_order_system_number").
-		Where("trx_work_order.company_id = ?", companyCode).
+		Where("trx_work_order.company_id = ?", companyId).
 		Where("trx_work_order.work_order_status_id = ?", 0).
 		Where("trx_work_order.work_order_date = ?", techallocStartDate).
 		Count(&unallocatedOpr).Error
@@ -1302,7 +1467,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, compa
 	return int(unallocatedOpr), nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, companyCode string, techallocStartDate time.Time) (int, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, companyId int, techallocStartDate time.Time) (int, error) {
 	var autoReleased int64
 
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -1310,8 +1475,8 @@ func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, company
 			&transactionworkshopentities.WorkOrder{},
 			"trx_work_order_detail.work_order_system_number",
 			"trx_work_order.work_order_system_number").
-		Where("trx_work_order.company_id = ?", companyCode).
-		Where("COALESCE(trx_work_order.work_order_status, '') = ?", "SRV_STAT_AUTORELEASE").
+		Where("trx_work_order.company_id = ?", companyId).
+		Where("COALESCE(trx_work_order.work_order_status, '') = ?", utils.SrvStatAutoRelease).
 		Where("trx_work_order.work_order_date = ?", techallocStartDate).
 		Count(&autoReleased).
 		Error
@@ -1323,12 +1488,12 @@ func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, company
 	return int(autoReleased), nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getBookAllocTime(tx *gorm.DB, companyCode string, vehicleBrandId int, techallocStartDate time.Time) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getBookAllocTime(tx *gorm.DB, companyId int, vehicleBrandId int, techallocStartDate time.Time) (float64, error) {
 	var bookAllocTime float64
 
 	err := tx.Model(&transactionworkshopentities.BookingEstimationAllocation{}).
 		Select("SUM(bookalloc_total_hour)").
-		Where("company_code = ? AND vehicle_brand = ? AND bookalloc_date = ?", companyCode, vehicleBrandId, techallocStartDate).
+		Where("company_id = ? AND vehicle_brand = ? AND bookalloc_date = ?", companyId, vehicleBrandId, techallocStartDate).
 		Scan(&bookAllocTime).Error
 
 	if err != nil {
@@ -1356,7 +1521,7 @@ func (r *WorkOrderAllocationRepositoryImpl) CountAvailableShifts(tx *gorm.DB, co
 	}
 
 	if effectiveDate.IsZero() {
-		return 0, nil // Tidak ada tanggal efektif
+		return 0, nil
 	}
 
 	err = tx.Model(&masterentities.ShiftSchedule{}).
