@@ -330,6 +330,23 @@ func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, qty float64) (mas
 }
 
 func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.BomMasterNewRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
+	// Date validation
+	valid, errA := utils.DateTodayOrLater(request.EffectiveDate)
+	if errA != nil {
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Server error",
+			Err:        errA,
+		}
+	}
+	if !valid {
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Date must be today or later",
+			Err:        fmt.Errorf("date must be today or later"),
+		}
+	}
+
 	entities := masteritementities.Bom{
 		IsActive:      true,
 		Qty:           request.Qty,

@@ -606,15 +606,27 @@ func (s *BomServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayload
 		// Effective date
 		row[1] = strings.TrimSpace(row[1])
 		row[1] = strings.ReplaceAll(row[1], "/", "-")
-		effectiveDate, errA := time.Parse("1-2-06 15:04", row[1])
+		split := strings.Split(row[1], " ")
+		row[1] = split[0]
+		//if strings.Contains(row[1], " ") {effectiveDate, errA = time.Parse("1-2-06 15:04", row[1])}
+		effectiveDate, errA := time.Parse("1-2-06", row[1])
+
 		if errA != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid effective date format",
 			}
 		}
-		if effectiveDate.Unix() < time.Now().Unix() {
-			validation_text += "Effective date must be later than current date. "
+		valid, errB := utils.DateTodayOrLater(effectiveDate)
+		if errB != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Server error",
+				Err:        errB,
+			}
+		}
+		if !valid {
+			validation_text += "Date must be today or later. "
 		}
 
 		// Bom qty

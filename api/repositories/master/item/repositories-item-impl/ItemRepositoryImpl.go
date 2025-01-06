@@ -249,7 +249,7 @@ func (r *ItemRepositoryImpl) GetItemInventoryByCode(tx *gorm.DB, itemCode string
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return responses, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Message:    "item not foundasdadsasd",
+				Message:    "item not found",
 				Err:        err,
 			}
 		}

@@ -202,3 +202,17 @@ func IntSliceToSQLString(slice []int) string {
 	}
 	return strings.Join(strValues, ",")
 }
+
+// Check if a date is today or later. Returns false if date is yesterday or older.
+func DateTodayOrLater(toDate time.Time) (bool, error) {
+	y, m, d := time.Now().Date()
+	tdy := strconv.Itoa(int(m)) + "-" + strconv.Itoa(d) + "-" + strconv.Itoa(y)
+	today, err := time.Parse("1-2-2006", tdy)
+	if err != nil {
+		return false, err
+	}
+	if toDate.Before(time.Now()) && toDate != today {
+		return false, nil
+	}
+	return true, nil
+}
