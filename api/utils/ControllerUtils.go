@@ -203,6 +203,11 @@ func IntSliceToSQLString(slice []int) string {
 	return strings.Join(strValues, ",")
 }
 
+// Float64SliceToSQLString mengubah []float64 menjadi string untuk SQL IN clause
+func ConvertCommaToPeriod(value string) string {
+	return strings.Replace(value, ",", ".", -1)
+}
+
 // Check if a date is today or later. Returns false if date is yesterday or older.
 func DateTodayOrLater(toDate time.Time) (bool, error) {
 	y, m, d := time.Now().Date()

@@ -66,7 +66,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, 
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyCode string, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyId int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -91,7 +91,7 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 		}
 	}()
 
-	results, repoErr := s.WorkOrderAllocationRepository.GetWorkOrderAllocationHeaderData(tx, companyCode, foremanId, techallocStartDate, vehicleBrandId)
+	results, repoErr := s.WorkOrderAllocationRepository.GetWorkOrderAllocationHeaderData(tx, companyId, foremanId, techallocStartDate, vehicleBrandId)
 	if repoErr != nil {
 		return results, repoErr
 	}
@@ -99,7 +99,7 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, woSysNum int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -123,9 +123,9 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, woSysNum int) 
 			}
 		}
 	}()
-	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, brandId, woSysNum)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, brandId, companyId, filterCondition, pages)
 	if repoErr != nil {
-		return results, repoErr
+		return pages, repoErr
 	}
 
 	return results, nil
@@ -329,4 +329,36 @@ func (s *WorkOrderAllocationServiceImpl) SaveAllocateDetail(date time.Time, tech
 	}
 
 	return entity, nil
+}
+
+func (s *WorkOrderAllocationServiceImpl) GetAllocateByWorkOrderSystemNumber(date time.Time, brandId int, companyId int, workOrderSystemNumber int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, repoErr := s.WorkOrderAllocationRepository.GetAllocateByWorkOrderSystemNumber(tx, date, brandId, companyId, workOrderSystemNumber)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
 }
