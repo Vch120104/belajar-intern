@@ -25,6 +25,7 @@ type BomDetailListResponse struct { // View multiple bom detail
 	BomDetailId       int     `json:"bom_detail_id"`
 	IsActive          bool    `json:"is_active"`
 	Seq               int     `json:"seq"`
+	ItemId            int     `json:"item_id"`
 	ItemClassName     string  `json:"item_class_name"`
 	ItemCode          string  `json:"item_code"`
 	ItemName          string  `json:"item_name"`
@@ -32,6 +33,11 @@ type BomDetailListResponse struct { // View multiple bom detail
 	UomCode           string  `json:"uom_code" parent_entity:"mtr_uom"`
 	CostingPercentage float64 `json:"costing_percentage"`
 	Remark            string  `json:"remark"`
+}
+
+type BomMaxSeqResponse struct {
+	Curr int `json:"curr"`
+	Next int `json:"next"`
 }
 
 type BomDetailRequest struct {

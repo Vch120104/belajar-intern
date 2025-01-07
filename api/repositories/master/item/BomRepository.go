@@ -25,7 +25,7 @@ type BomRepository interface {
 	GetBomDetailByMasterUn(tx *gorm.DB, id int, effectiveDate time.Time, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetBomDetailById(tx *gorm.DB, id int) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	GetBomDetailTemplate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]masteritempayloads.BomDetailTemplate, *exceptions.BaseErrorResponse)
-	GetBomDetailMaxSeq(tx *gorm.DB, id int) (int, *exceptions.BaseErrorResponse)
+	GetBomDetailMaxSeq(tx *gorm.DB, id int) (masteritempayloads.BomMaxSeqResponse, *exceptions.BaseErrorResponse)
 	SaveBomDetail(*gorm.DB, masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	DeleteByIds(*gorm.DB, []int) (bool, *exceptions.BaseErrorResponse)
 }
