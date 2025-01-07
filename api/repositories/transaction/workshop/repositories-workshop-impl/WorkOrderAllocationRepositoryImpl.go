@@ -15,7 +15,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 
-	"after-sales/api/utils"
+	utils "after-sales/api/utils"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -35,7 +35,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 	var pages pagination.Pagination
 	pages.Rows = []map[string]interface{}{}
 
-	// Fetch technicians
 	var assignTechnicians []transactionworkshopentities.AssignTechnician
 	if err := tx.Model(&transactionworkshopentities.AssignTechnician{}).
 		Select("technician_id, shift_code").
@@ -48,13 +47,11 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 		}
 	}
 
-	// Extract TechnicianIds
 	var technicianIds []int
 	for _, assignTech := range assignTechnicians {
 		technicianIds = append(technicianIds, assignTech.TechnicianId)
 	}
 
-	// Delete existing data for the fetched technicians
 	if err := tx.Where("technician_id IN (?)", technicianIds).Delete(&transactionworkshopentities.WorkOrderAllocationGrid{}).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -63,7 +60,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 		}
 	}
 
-	// Fetch technician names from external service
 	technicianNames := make(map[int]string)
 	for _, assignTech := range assignTechnicians {
 		technicianResponse, technicianErr := generalserviceapiutils.GetEmployeeById(assignTech.TechnicianId)
@@ -77,7 +73,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 		technicianNames[assignTech.TechnicianId] = technicianResponse.EmployeeName
 	}
 
-	// Insert data into WorkOrderAllocationGrid table
 	for _, assignTech := range assignTechnicians {
 		workordergrid := transactionworkshopentities.WorkOrderAllocationGrid{
 			ShiftCode:      assignTech.ShiftCode,
@@ -94,7 +89,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 		}
 	}
 
-	// Fetch shift schedule for the first technician
 	var shiftSchedule masterentities.ShiftSchedule
 	if err := tx.Model(&masterentities.ShiftSchedule{}).
 		Select("start_time, end_time, rest_start_time, rest_end_time").
@@ -107,11 +101,10 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 		}
 	}
 
-	// Convert and validate times
-	startTimeStr := float64ToTimeString(shiftSchedule.StartTime)
-	endTimeStr := float64ToTimeString(shiftSchedule.EndTime)
-	restStartTimeStr := float64ToTimeString(shiftSchedule.RestStartTime)
-	restEndTimeStr := float64ToTimeString(shiftSchedule.RestEndTime)
+	startTimeStr := utils.Float64ToTimeString(shiftSchedule.StartTime)
+	endTimeStr := utils.Float64ToTimeString(shiftSchedule.EndTime)
+	restStartTimeStr := utils.Float64ToTimeString(shiftSchedule.RestStartTime)
+	restEndTimeStr := utils.Float64ToTimeString(shiftSchedule.RestEndTime)
 
 	startTimeFloat, _ := strconv.ParseFloat(startTimeStr, 64)
 	endTimeFloat, _ := strconv.ParseFloat(endTimeStr, 64)
@@ -136,13 +129,12 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 	defaultEndTime := 2100.0  // 21:00 in float format
 
 	for currentTime := defaultStartTime; currentTime <= defaultEndTime; currentTime += float64(timeWorkInterval) / 60.0 {
-		// Extract hours and minutes from current time
+
 		hours := int(currentTime) / 100
 		minutes := int(currentTime) % 100
-		timeColumn := fmt.Sprintf("time_allocation_%02d%02d", hours, minutes) // e.g., "time_allocation_0700"
+		timeColumn := fmt.Sprintf("time_allocation_%02d%02d", hours, minutes)
 
-		// Validate time column format
-		if !isValidTimeColumn(timeColumn) {
+		if !r.isValidTimeColumn(timeColumn) {
 			continue
 		}
 
@@ -156,7 +148,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 			} else if countCheckAvail == 0 {
 				allocate = -1 // Not available if no effective date or day is not active
 			} else {
-				// Logika alokasi waktu
 				if currentTime <= startTimeFloat {
 					allocate = -1 // Before working hours
 				} else if currentTime >= restStartTimeFloat && currentTime <= restEndTimeFloat {
@@ -178,7 +169,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 					}
 
 					if exists > 0 {
-						// Ambil data service logs
 						var serviceLogs []transactionworkshopentities.ServiceLog
 						err := tx.Model(&transactionworkshopentities.ServiceLog{}).
 							Where("company_id = ? AND technician_id = ? AND shift_code = ? AND DATE_FORMAT(start_datetime, '%d-%b-%Y') = ? AND DATE_FORMAT(start_datetime, '%H:%i:%s') <= ? AND ? < DATE_FORMAT(end_datetime, '%H:%i:%s')",
@@ -193,7 +183,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 							}
 						}
 
-						// Tentukan TECHALLOC_SYS_NO terbesar
 						var maxTechAllocSysNo int
 						for _, log := range serviceLogs {
 							if log.WorkOrderSystemNumber > maxTechAllocSysNo {
@@ -201,59 +190,52 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 							}
 						}
 
-						var woSysNo, servStatusId int
+						var WorkOrderSystemNumber, servStatusId int
 
-						// Cek status Pending
+						// Pending check
 						for _, log := range serviceLogs {
 							if log.WorkOrderSystemNumber == maxTechAllocSysNo && log.ServiceStatusId == utils.SrvStatPending {
-								woSysNo = log.WorkOrderSystemNumber
+								WorkOrderSystemNumber = log.WorkOrderSystemNumber
 								servStatusId = log.ServiceStatusId
 								break
 							}
 						}
 
-						// Cek status Stop atau Transfer jika tidak ada Pending
-						if woSysNo == 0 {
+						// Cek status Stop or Transfer if no Pending
+						if WorkOrderSystemNumber == 0 {
 							for _, log := range serviceLogs {
 								if log.WorkOrderSystemNumber == maxTechAllocSysNo &&
 									(log.ServiceStatusId == utils.SrvStatStop || log.ServiceStatusId == utils.SrvStatTransfer) {
-									woSysNo = log.WorkOrderSystemNumber
+									WorkOrderSystemNumber = log.WorkOrderSystemNumber
 									servStatusId = log.ServiceStatusId
 									break
 								}
 							}
 						}
 
-						// Jika masih tidak ditemukan, ambil WorkOrder dengan TECHALLOC_SYS_NO terbesar
-						if woSysNo == 0 {
+						if WorkOrderSystemNumber == 0 {
 							for _, log := range serviceLogs {
 								if log.WorkOrderSystemNumber == maxTechAllocSysNo {
-									woSysNo = log.WorkOrderSystemNumber
+									WorkOrderSystemNumber = log.WorkOrderSystemNumber
 									servStatusId = log.ServiceStatusId
 									break
 								}
 							}
 						}
 
-						// Sesuaikan dengan proses status alokasi lainnya seperti yang ada pada SQL
-						if woSysNo != 0 {
+						if WorkOrderSystemNumber != 0 {
 							switch servStatusId {
 							case utils.SrvStatStart:
-								allocate = 1*100000000000000 + int64(woSysNo) // Format alokasi sesuai aturan
+								allocate = int64(WorkOrderSystemNumber) // 1
 							case utils.SrvStatDraft:
-								allocate = 3*100000000000000 + int64(woSysNo)
+								allocate = int64(WorkOrderSystemNumber) //3
 							case utils.SrvStatStop, utils.SrvStatQcPass:
-								allocate = 4*100000000000000 + int64(woSysNo)
+								allocate = int64(WorkOrderSystemNumber) // 4
 							case utils.SrvStatTransfer:
-								allocate = 5*100000000000000 + int64(woSysNo)
+								allocate = int64(WorkOrderSystemNumber) // 5
 							default:
 								allocate = 0
 							}
-						}
-
-						// Verifikasi waktu shift dan rest
-						if restStartTimeFloat <= currentTime && currentTime < restEndTimeFloat && servStatusId != utils.SrvStatStop {
-							allocate = -2
 						}
 
 					}
@@ -299,43 +281,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 	pages.TotalRows = int64(len(rows))
 
 	return pages, nil
-}
-
-// float64ToTimeString converts float64 to HHMM time string
-func float64ToTimeString(f float64) string {
-	hours := int(f)
-	minutes := int((f - float64(hours)) * 100)
-	if hours < 0 || hours > 23 || minutes < 0 || minutes >= 60 {
-		return "" // Handle invalid time values
-	}
-	return fmt.Sprintf("%02d%02d", hours, minutes)
-}
-
-// isValidTimeColumn checks if the given time column is valid
-func isValidTimeColumn(columnName string) bool {
-	validTimeColumns := map[string]bool{
-		"time_allocation_0700": true, "time_allocation_0715": true, "time_allocation_0730": true,
-		"time_allocation_0745": true, "time_allocation_0800": true, "time_allocation_0815": true,
-		"time_allocation_0830": true, "time_allocation_0845": true, "time_allocation_0900": true,
-		"time_allocation_0915": true, "time_allocation_0930": true, "time_allocation_0945": true,
-		"time_allocation_1000": true, "time_allocation_1015": true, "time_allocation_1030": true,
-		"time_allocation_1045": true, "time_allocation_1100": true, "time_allocation_1115": true,
-		"time_allocation_1130": true, "time_allocation_1145": true, "time_allocation_1200": true,
-		"time_allocation_1215": true, "time_allocation_1230": true, "time_allocation_1245": true,
-		"time_allocation_1300": true, "time_allocation_1315": true, "time_allocation_1330": true,
-		"time_allocation_1345": true, "time_allocation_1400": true, "time_allocation_1415": true,
-		"time_allocation_1430": true, "time_allocation_1445": true, "time_allocation_1500": true,
-		"time_allocation_1515": true, "time_allocation_1530": true, "time_allocation_1545": true,
-		"time_allocation_1600": true, "time_allocation_1615": true, "time_allocation_1630": true,
-		"time_allocation_1645": true, "time_allocation_1700": true, "time_allocation_1715": true,
-		"time_allocation_1730": true, "time_allocation_1745": true, "time_allocation_1800": true,
-		"time_allocation_1815": true, "time_allocation_1830": true, "time_allocation_1845": true,
-		"time_allocation_1900": true, "time_allocation_1915": true, "time_allocation_1930": true,
-		"time_allocation_1945": true, "time_allocation_2000": true, "time_allocation_2015": true,
-		"time_allocation_2030": true, "time_allocation_2045": true, "time_allocation_2100": true,
-	}
-
-	return validTimeColumns[columnName]
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
@@ -551,9 +496,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date
 		}
 	}
 
-	// Iterate over each technician and process accordingly
 	for _, tech := range assignTechnicians {
-		// Count service logs
 		var count int64
 		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
 			Where("company_id = ? AND technician_id = ? AND shift_schedule_id = ? AND CAST(start_datetime AS DATE) = ?",
@@ -582,7 +525,6 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date
 			}
 		}
 
-		// If no allocation found, insert into WorkOrderAllocationDetail
 		if count == 0 {
 			err = tx.Create(&transactionworkshopentities.WorkOrderAllocationDetail{
 				TechnicianId:          request.TechnicianId,
@@ -599,10 +541,8 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date
 				}
 			}
 		} else {
-			// Insert into WorkOrderAllocationDetail with details
 			var serviceLogs []transactionworkshopentities.ServiceLog
 			err = tx.Model(&transactionworkshopentities.ServiceLog{}).
-				Joins("INNER JOIN comGenVariable B ON service_log.service_status_id = B.value AND B.variable LIKE ?", "SRV_STAT_%").
 				Where("company_id = ? AND technician_id = ? AND shift_schedule_id = ? AND CAST(start_datetime AS DATE) = ?",
 					companyId, tech.TechnicianId, tech.ShiftCode, date).
 				Where("technician_allocation_system_number IN (?)",
@@ -918,22 +858,20 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 	}
 
 	// Update wtBookAlloc table
-	// Commented out, ensure it's correctly implemented if needed.
-	// if err := tx.Model(&transactionworkshopentities.BookingEstimationAllocation{}).
-	// 	Where("bookalloc_date = ? AND shift_code = ? AND bookalloc_technician = ?",
-	// 		request.ServiceDate, request.ShiftCode, request.TechnicianId).
-	// 	Update("assign_technician", gorm.Expr("?", request.TechnicianId)).Error; err != nil {
-	// 	return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to update wtBookAlloc",
-	// 		Err:        err,
-	// 	}
-	// }
+	if err := tx.Model(&transactionworkshopentities.BookingAllocation{}).
+		Where("booking_allocation_date = ? AND shift_code = ? AND booking_allocation_technician = ?",
+			request.ServiceDate, request.ShiftCode, request.TechnicianId).
+		Update("technician_id", gorm.Expr("?", request.TechnicianId)).Error; err != nil {
+		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update Booking Allocation",
+			Err:        err,
+		}
+	}
 
 	// uspg_atWoTechAllocAvailable_Insert
 	// IF @Option = 2
 	// --USE IN MODUL : AMS-054 /Assign Technician General Repair
-
 	// Calculate duration in hours
 	durationBeforeRest := (restStartTime - startTime) / 60
 	durationAfterRest := (endTime - restEndTime) / 60
@@ -1076,7 +1014,6 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	// Retrieve the old shift code
 	if err := tx.Model(&transactionworkshopentities.AssignTechnician{}).
 		Select("shift_code").
 		Where("foreman_id = ? AND service_date = ? AND technician_id = ?", request.ForemanId, date, request.TechnicianId).
@@ -1088,7 +1025,6 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 		}
 	}
 
-	// Check if there is a conflicting assignment
 	var conflictingAssignTech transactionworkshopentities.AssignTechnician
 	if err := tx.Where("foreman_id = ? AND service_date = ? AND technician_id <> ? AND shift_code = ? AND company_id = ?",
 		request.ForemanId, date, request.TechnicianId, request.ShiftCode, request.CompanyId).First(&conflictingAssignTech).Error; err == nil {
@@ -1099,7 +1035,6 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 		}
 	}
 
-	// Check if the technician already has an allocation
 	var existingTechAlloc transactionworkshopentities.WorkOrderAllocationAvailable
 	if err := tx.Where("company_id = ? AND foreman_id = ? AND technician_id = ? AND CONVERT(VARCHAR, tech_alloc_start_date, 106) = CONVERT(VARCHAR, ?, 106)",
 		request.CompanyId, request.ForemanId, request.TechnicianId, date).First(&existingTechAlloc).Error; err == nil {
@@ -1110,7 +1045,6 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 		}
 	}
 
-	// Update the existing record
 	var entity transactionworkshopentities.AssignTechnician
 	if err := tx.Where("assign_technician_id = ? AND foreman_id = ? AND service_date = ?", id, techId, date).First(&entity).Error; err != nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
@@ -1132,7 +1066,6 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 		}
 	}
 
-	// Delete old work order tech allocation availability
 	if err := tx.Where("company_id = ? AND CONVERT(date, service_date_time) = ? AND technician_id = ? AND shift_code = ?",
 		request.CompanyId, date, request.TechnicianId, shiftCodeOld).Delete(&transactionworkshopentities.WorkOrderAllocationAvailable{}).Error; err != nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
@@ -1343,8 +1276,8 @@ func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyId
 	}
 
 	// Convert time.Time to float64 decimal hours
-	startTimeDecimal := timeToDecimalHours(result.StartTime)
-	endTimeDecimal := timeToDecimalHours(result.EndTime)
+	startTimeDecimal := utils.TimeToDecimalHours(result.StartTime)
+	endTimeDecimal := utils.TimeToDecimalHours(result.EndTime)
 
 	shiftTimes = transactionworkshoppayloads.ShiftTimes{
 		StartTime: startTimeDecimal,
@@ -1353,13 +1286,6 @@ func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyId
 	}
 
 	return shiftTimes, nil
-}
-
-// Converts time.Time to float64 representing decimal hours
-func timeToDecimalHours(t time.Time) float64 {
-	hours := float64(t.Hour())
-	minutes := float64(t.Minute())
-	return hours + (minutes / 60)
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyId int, shiftCode string, techallocStartDate time.Time, shiftStartTime float64, shiftEndTime float64) (float64, error) {
@@ -1505,7 +1431,7 @@ func (r *WorkOrderAllocationRepositoryImpl) CountAvailableShifts(tx *gorm.DB, co
 	dayOfWeek := servDate.Weekday()
 	var effectiveDate time.Time
 	err := tx.Model(&masterentities.ShiftSchedule{}).
-		Where("company_id = ? AND shift_code = ? AND effective_date <= ? AND "+getDayColumn(dayOfWeek)+" = ?",
+		Where("company_id = ? AND shift_code = ? AND effective_date <= ? AND "+r.getDayColumn(dayOfWeek)+" = ?",
 			companyId, shiftCode, servDate, true).
 		Order("effective_date DESC").
 		Select("effective_date").
@@ -1521,7 +1447,7 @@ func (r *WorkOrderAllocationRepositoryImpl) CountAvailableShifts(tx *gorm.DB, co
 	}
 
 	err = tx.Model(&masterentities.ShiftSchedule{}).
-		Where("company_id = ? AND shift_code = ? AND effective_date = ? AND "+getDayColumn(dayOfWeek)+" = ? AND is_active = ?",
+		Where("company_id = ? AND shift_code = ? AND effective_date = ? AND "+r.getDayColumn(dayOfWeek)+" = ? AND is_active = ?",
 			companyId, shiftCode, effectiveDate, true, true).
 		Count(&countAvail).
 		Error
@@ -1534,7 +1460,7 @@ func (r *WorkOrderAllocationRepositoryImpl) CountAvailableShifts(tx *gorm.DB, co
 }
 
 // Helper function to return the day of the week
-func getDayColumn(dayOfWeek time.Weekday) string {
+func (r *WorkOrderAllocationRepositoryImpl) getDayColumn(dayOfWeek time.Weekday) string {
 	switch dayOfWeek {
 	case time.Sunday:
 		return "sunday"
@@ -1553,4 +1479,31 @@ func getDayColumn(dayOfWeek time.Weekday) string {
 	default:
 		return ""
 	}
+}
+
+// isValidTimeColumn checks if the given time column is valid
+func (r *WorkOrderAllocationRepositoryImpl) isValidTimeColumn(columnName string) bool {
+	validTimeColumns := map[string]bool{
+		"time_allocation_0700": true, "time_allocation_0715": true, "time_allocation_0730": true,
+		"time_allocation_0745": true, "time_allocation_0800": true, "time_allocation_0815": true,
+		"time_allocation_0830": true, "time_allocation_0845": true, "time_allocation_0900": true,
+		"time_allocation_0915": true, "time_allocation_0930": true, "time_allocation_0945": true,
+		"time_allocation_1000": true, "time_allocation_1015": true, "time_allocation_1030": true,
+		"time_allocation_1045": true, "time_allocation_1100": true, "time_allocation_1115": true,
+		"time_allocation_1130": true, "time_allocation_1145": true, "time_allocation_1200": true,
+		"time_allocation_1215": true, "time_allocation_1230": true, "time_allocation_1245": true,
+		"time_allocation_1300": true, "time_allocation_1315": true, "time_allocation_1330": true,
+		"time_allocation_1345": true, "time_allocation_1400": true, "time_allocation_1415": true,
+		"time_allocation_1430": true, "time_allocation_1445": true, "time_allocation_1500": true,
+		"time_allocation_1515": true, "time_allocation_1530": true, "time_allocation_1545": true,
+		"time_allocation_1600": true, "time_allocation_1615": true, "time_allocation_1630": true,
+		"time_allocation_1645": true, "time_allocation_1700": true, "time_allocation_1715": true,
+		"time_allocation_1730": true, "time_allocation_1745": true, "time_allocation_1800": true,
+		"time_allocation_1815": true, "time_allocation_1830": true, "time_allocation_1845": true,
+		"time_allocation_1900": true, "time_allocation_1915": true, "time_allocation_1930": true,
+		"time_allocation_1945": true, "time_allocation_2000": true, "time_allocation_2015": true,
+		"time_allocation_2030": true, "time_allocation_2045": true, "time_allocation_2100": true,
+	}
+
+	return validTimeColumns[columnName]
 }
