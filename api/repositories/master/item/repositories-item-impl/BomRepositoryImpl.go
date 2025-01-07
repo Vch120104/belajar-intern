@@ -153,6 +153,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterId(tx *gorm.DB, bomId int, pages
 			bom.is_active,
 			seq,
 			class.item_class_name,
+			item.item_id,
 			item.item_code,
 			item.item_name,
 			qty,
@@ -207,6 +208,7 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effe
 			bom.is_active,
 			seq,
 			class.item_class_name,
+			item.item_id,
 			item.item_code,
 			item.item_name,
 			bom.qty,
@@ -460,7 +462,7 @@ func (r *BomRepositoryImpl) GetBomDetailTemplate(tx *gorm.DB, filters []utils.Fi
 	return responses, nil
 }
 
-func (*BomRepositoryImpl) GetBomDetailMaxSeq(tx *gorm.DB, id int) (int, *exceptions.BaseErrorResponse) {
+func (*BomRepositoryImpl) GetBomDetailMaxSeq(tx *gorm.DB, id int) (masteritempayloads.BomMaxSeqResponse, *exceptions.BaseErrorResponse) {
 	var maxSeq int
 
 	err := tx.Model(&masteritementities.BomDetail{}).
@@ -469,14 +471,19 @@ func (*BomRepositoryImpl) GetBomDetailMaxSeq(tx *gorm.DB, id int) (int, *excepti
 		Row().
 		Scan(&maxSeq)
 	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
+		return masteritempayloads.BomMaxSeqResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Error fetching BOM detail record",
 			Err:        err,
 		}
 	}
 
-	return maxSeq, nil
+	resp := masteritempayloads.BomMaxSeqResponse{
+		Curr: maxSeq,
+		Next: maxSeq + 1,
+	}
+
+	return resp, nil
 }
 
 func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
@@ -505,7 +512,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	// Find next BomDetailSeq
 	var newBomDetailSeq int
 	if request.Seq == 0 {
-		newBomDetailSeq, errB := r.GetBomDetailMaxSeq(tx, request.BomId)
+		resp, errB := r.GetBomDetailMaxSeq(tx, request.BomId)
 		if errB != nil {
 			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -513,7 +520,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 				Err:        errB,
 			}
 		}
-		newBomDetailSeq++ // Tambahkan 1 pada nilai maksimum untuk mendapatkan nilai BomDetailSeq yang baru
+		newBomDetailSeq = resp.Next
 	} else {
 		newBomDetailSeq = request.Seq
 	}

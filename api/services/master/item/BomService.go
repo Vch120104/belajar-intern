@@ -24,7 +24,7 @@ type BomService interface {
 	GetBomDetailByMasterId(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetBomDetailByMasterUn(id int, effectiveDate time.Time, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetBomDetailById(id int) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
-	GetBomDetailMaxSeq(id int) (int, *exceptions.BaseErrorResponse)
+	GetBomDetailMaxSeq(id int) (masteritempayloads.BomMaxSeqResponse, *exceptions.BaseErrorResponse)
 
 	SaveBomDetail(request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse)

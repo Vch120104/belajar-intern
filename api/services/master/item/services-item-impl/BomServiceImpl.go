@@ -232,7 +232,7 @@ func (s *BomServiceImpl) GetBomDetailById(id int) (masteritementities.BomDetail,
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailMaxSeq(id int) (int, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailMaxSeq(id int) (masteritempayloads.BomMaxSeqResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -259,7 +259,7 @@ func (s *BomServiceImpl) GetBomDetailMaxSeq(id int) (int, *exceptions.BaseErrorR
 
 	results, err := s.BomRepository.GetBomDetailMaxSeq(tx, id)
 	if err != nil {
-		return 0, err
+		return masteritempayloads.BomMaxSeqResponse{}, err
 	}
 
 	return results, nil
