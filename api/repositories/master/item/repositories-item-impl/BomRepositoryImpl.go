@@ -256,24 +256,34 @@ func (r *BomRepositoryImpl) GetBomDetailByMasterUn(tx *gorm.DB, itemId int, effe
 	return pages, nil
 }
 
-func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.BomDetail{}
+func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) (masteritempayloads.BomDetailResponse, *exceptions.BaseErrorResponse) {
+	payload := masteritempayloads.BomDetailResponse{}
 
 	// Fetch the BOM Master record
-	err := tx.Model(&entities).
-		Where(masteritementities.BomDetail{
-			BomDetailId: id,
-		}).
-		First(&entities).Error
+	err := tx.Table("mtr_bom_detail detail").
+		Select(`
+			detail.is_active,
+			detail.bom_detail_id,
+			detail.bom_id,
+			detail.seq,
+			detail.item_id,
+			item.item_class_id,
+			detail.qty,
+			detail.remark,
+			detail.costing_percentage
+		`).
+		Joins("INNER JOIN mtr_item item on item.item_id = detail.item_id").
+		Where("detail.bom_detail_id = ?", id).
+		First(&payload).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+			return masteritempayloads.BomDetailResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Data not found",
 				Err:        err,
 			}
 		}
-		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+		return masteritempayloads.BomDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch BOM detail record",
 			Err:        err,
@@ -282,14 +292,14 @@ func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) (masteritement
 
 	// If empty, do error
 	if id == 0 {
-		return masteritementities.BomDetail{}, &exceptions.BaseErrorResponse{
+		return masteritempayloads.BomDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Data not found",
 			Err:        err,
 		}
 	}
 
-	return entities, nil
+	return payload, nil
 }
 
 func (*BomRepositoryImpl) UpdateBomMaster(tx *gorm.DB, id int, qty float64) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
