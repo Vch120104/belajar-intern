@@ -206,6 +206,7 @@ type WorkOrderAllocationHeaderResult struct {
 	UnallocatedOperation    int     `json:"unallocated_operation"`
 	AutoReleasedOperation   int     `json:"auto_released"`
 	BookAllocatedTime       float64 `json:"book_allocated_time"`
+	CurrentTime             string  `json:"current_time"`
 }
 
 type WorkOrderAllocationAssignTechnicianRequest struct {

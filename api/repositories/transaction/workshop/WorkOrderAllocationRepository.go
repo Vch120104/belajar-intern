@@ -13,7 +13,7 @@ import (
 
 type WorkOrderAllocationRepository interface {
 	GetAll(tx *gorm.DB, companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse)
+	GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse)
 	GetAllocate(tx *gorm.DB, brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllocateByWorkOrderSystemNumber(tx *gorm.DB, date time.Time, brandId int, companyId int, workOrderSystemNumber int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse)
 	GetAllocateDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)

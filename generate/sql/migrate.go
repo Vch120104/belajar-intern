@@ -188,6 +188,7 @@ func Migrate() {
 	// &transactionworkshopentities.ServiceRequest{},
 	// &transactionworkshopentities.ServiceRequestDetail{},
 	// &transactionworkshopentities.ServiceRequestMasterStatus{},
+	// &transactionworkshopentities.BookingAllocation{},
 	// &transactionworkshopentities.BookingEstimation{},
 	// &transactionworkshopentities.BookingEstimationAllocation{},
 	// &transactionworkshopentities.BookingEstimationRequest{},

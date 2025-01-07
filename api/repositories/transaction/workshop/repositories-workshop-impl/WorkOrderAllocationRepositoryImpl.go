@@ -693,11 +693,11 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocateDetail(tx *gorm.DB, filte
 	return pages, nil
 }
 
-// uspg_atWoAllocateGrid_Select
+// uspg_atWoTechAlloc_Select
 // IF @Option = 2
 // --USE FOR : * SELECT DATA
 // --USE IN MODUL : AWS-004 PAGE 5 REQ: DANIEL 130109
-func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyId int, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
 	var result transactionworkshoppayloads.WorkOrderAllocationHeaderResult
 
 	// Get shift start time and end time
@@ -754,7 +754,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	}
 
 	// Get book allocated time
-	bookAllocTime, err := r.getBookAllocTime(tx, companyId, vehicleBrandId, techallocStartDate)
+	bookAllocTime, err := r.getBookAllocTime(tx, companyId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -763,8 +763,11 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 		}
 	}
 
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+
 	result = transactionworkshoppayloads.WorkOrderAllocationHeaderResult{
 		TotalTechnicianTime:     totalTime,
+		CurrentTime:             currentTime,
 		UsedTechnicianTime:      usedTime,
 		AvailableTechnicianTime: availTechTime,
 		UnallocatedOperation:    unallocatedOpr,
@@ -1434,10 +1437,10 @@ func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyId i
 
 	startDateStr := techallocStartDate.Format("2006-01-02")
 
-	err := tx.Model(&transactionworkshopentities.ServiceLog{}).
-		Select("SUM(actual_time) AS total_time").
-		Joins("LEFT JOIN ? AS WTA ON WTA.tech_alloc_system_number = S.technician_allocation_system_number", &transactionworkshopentities.WorkOrderAllocation{}).
-		Where("S.company_id = ? AND WTA.foreman_id = ? AND DATE(S.start_datetime) = ?", companyId, foremanId, startDateStr).
+	err := tx.Table("trx_service_log AS S").
+		Select("COALESCE(SUM(S.actual_time), 0) AS total_time").
+		Joins("LEFT JOIN trx_work_order_allocation AS WTA ON WTA.technician_allocation_system_number = S.technician_allocation_system_number").
+		Where("S.company_id = ? AND WTA.foreman_id = ? AND CAST(S.start_datetime AS DATE) = ?", companyId, foremanId, startDateStr).
 		Scan(&usedTime).Error
 
 	if err != nil {
@@ -1450,12 +1453,8 @@ func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyId i
 func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, companyId int, techallocStartDate time.Time) (int, error) {
 	var unallocatedOpr int64
 
-	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Joins("LEFT JOIN ? ON ? = ?",
-			&transactionworkshopentities.WorkOrder{},
-			"trx_work_order_detail.work_order_system_number",
-			"trx_work_order.work_order_system_number").
-		Where("trx_work_order.company_id = ?", companyId).
+	err := tx.Table("trx_work_order_detail").
+		Joins("LEFT JOIN trx_work_order ON trx_work_order.work_order_system_number = trx_work_order_detail.work_order_system_number").Where("trx_work_order.company_id = ?", companyId).
 		Where("trx_work_order.work_order_status_id = ?", 0).
 		Where("trx_work_order.work_order_date = ?", techallocStartDate).
 		Count(&unallocatedOpr).Error
@@ -1471,12 +1470,9 @@ func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, company
 	var autoReleased int64
 
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Joins("LEFT JOIN ? ON ? = ?",
-			&transactionworkshopentities.WorkOrder{},
-			"trx_work_order_detail.work_order_system_number",
-			"trx_work_order.work_order_system_number").
+		Joins("LEFT JOIN trx_work_order ON trx_work_order_detail.work_order_system_number = trx_work_order.work_order_system_number").
 		Where("trx_work_order.company_id = ?", companyId).
-		Where("COALESCE(trx_work_order.work_order_status, '') = ?", utils.SrvStatAutoRelease).
+		Where("COALESCE(trx_work_order_detail.service_status_id, '') = ?", utils.SrvStatAutoRelease).
 		Where("trx_work_order.work_order_date = ?", techallocStartDate).
 		Count(&autoReleased).
 		Error
@@ -1488,12 +1484,12 @@ func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, company
 	return int(autoReleased), nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getBookAllocTime(tx *gorm.DB, companyId int, vehicleBrandId int, techallocStartDate time.Time) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getBookAllocTime(tx *gorm.DB, companyId int, techallocStartDate time.Time) (float64, error) {
 	var bookAllocTime float64
 
-	err := tx.Model(&transactionworkshopentities.BookingEstimationAllocation{}).
-		Select("SUM(bookalloc_total_hour)").
-		Where("company_id = ? AND vehicle_brand = ? AND bookalloc_date = ?", companyId, vehicleBrandId, techallocStartDate).
+	err := tx.Model(&transactionworkshopentities.BookingAllocation{}).
+		Select("COALESCE(SUM(booking_allocation_total_hour),0)").
+		Where("company_id = ? AND booking_allocation_date = ?", companyId, techallocStartDate).
 		Scan(&bookAllocTime).Error
 
 	if err != nil {

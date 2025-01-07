@@ -468,7 +468,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 		return
 	}
 
-	techallocStartDateStr := chi.URLParam(request, "techalloc_start_date")
+	techallocStartDateStr := chi.URLParam(request, "service_date")
 	if techallocStartDateStr == "" {
 		payloads.NewHandleError(writer, "Techalloc Start Date is required", http.StatusBadRequest)
 		return
@@ -481,13 +481,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 		return
 	}
 
-	vehicleBrandId, err := strconv.Atoi(chi.URLParam(request, "brand_id"))
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Vehicle Brand ID", http.StatusBadRequest)
-		return
-	}
-
-	data, baseErr := r.WorkOrderAllocationService.GetWorkOrderAllocationHeaderData(companyId, foremanId, techallocStartDate, vehicleBrandId)
+	data, baseErr := r.WorkOrderAllocationService.GetWorkOrderAllocationHeaderData(companyId, foremanId, techallocStartDate)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
