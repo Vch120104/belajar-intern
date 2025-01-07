@@ -788,7 +788,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAssignTechnician(tx *gorm.DB, fil
 // uspg_atAssignTech_Insert
 // IF @Option = 0
 // --USE IN MODUL : AMS-054 /Assign Technician General Repair
-func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, date time.Time, techId int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
 
 	var (
 		startTime, endTime, restStartTime, restEndTime float64
@@ -798,29 +798,29 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 	cpcCodeDefault := "00002"
 	refTypeAvailDefault := "ASSIGN"
 
-	startTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, date, false)
+	startTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, false)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	endTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, date, false)
+	endTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, false)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	restStartTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, date, true)
+	restStartTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, true)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	restEndTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, date, true)
+	restEndTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, true)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
 	var existingAssignTech transactionworkshopentities.AssignTechnician
 	if err := tx.Where("foreman_id = ? AND service_date = ? AND technician_id = ? AND company_id = ?",
-		request.ForemanId, date, request.TechnicianId, request.CompanyId).First(&existingAssignTech).Error; err == nil {
+		request.ForemanId, request.ServiceDate, request.TechnicianId, request.CompanyId).First(&existingAssignTech).Error; err == nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "Data Technician already exists",
@@ -830,7 +830,7 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 
 	var conflictingAssignTech transactionworkshopentities.AssignTechnician
 	if err := tx.Where("foreman_id = ? AND service_date = ? AND technician_id <> ? AND shift_code = ? AND company_id = ?",
-		request.ForemanId, date, request.TechnicianId, request.ShiftCode, request.CompanyId).First(&conflictingAssignTech).Error; err == nil {
+		request.ForemanId, request.ServiceDate, request.TechnicianId, request.ShiftCode, request.CompanyId).First(&conflictingAssignTech).Error; err == nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "Assign Technician is not valid",
@@ -839,7 +839,7 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 	}
 
 	entity := transactionworkshopentities.AssignTechnician{
-		ServiceDate:  date,
+		ServiceDate:  request.ServiceDate,
 		CompanyId:    request.CompanyId,
 		ForemanId:    request.ForemanId,
 		TechnicianId: request.TechnicianId,
@@ -880,7 +880,7 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 	if restStartTime > startTime {
 		if err := tx.Create(&transactionworkshopentities.WorkOrderAllocationAvailable{
 			CompanyId:             request.CompanyId,
-			ServiceDateTime:       date,
+			ServiceDateTime:       request.ServiceDate,
 			ForemanId:             request.ForemanId,
 			TechnicianId:          request.TechnicianId,
 			ShiftCode:             request.ShiftCode,
@@ -905,7 +905,7 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 	if restEndTime < endTime {
 		if err := tx.Create(&transactionworkshopentities.WorkOrderAllocationAvailable{
 			CompanyId:             request.CompanyId,
-			ServiceDateTime:       date,
+			ServiceDateTime:       request.ServiceDate,
 			ForemanId:             request.ForemanId,
 			TechnicianId:          request.TechnicianId,
 			ShiftCode:             request.ShiftCode,
@@ -982,7 +982,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAssignTechnicianById(tx *gorm.DB,
 // uspg_atAssignTech_Update
 // IF @Option = 0
 // --USE IN MODUL : AMS-054 /Assign Technician General Repair
-func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, date time.Time, techId int, id int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
 
 	// Declare variables
 	var (
@@ -993,30 +993,30 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 	refTypeAvailDefault := "ASSIGN"
 
 	// Get start and end times for the shift
-	startTime, err := r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, date, false)
+	startTime, err := r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, false)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	endTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, date, false)
+	endTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, false)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
 	// Get rest start and end times for the shift
-	restStartTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, date, true)
+	restStartTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, true)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	restEndTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, date, true)
+	restEndTime, err = r.getShiftEndTime(tx, request.CompanyId, request.ShiftCode, request.ServiceDate, true)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
 	if err := tx.Model(&transactionworkshopentities.AssignTechnician{}).
 		Select("shift_code").
-		Where("foreman_id = ? AND service_date = ? AND technician_id = ?", request.ForemanId, date, request.TechnicianId).
+		Where("foreman_id = ? AND service_date = ? AND technician_id = ?", request.ForemanId, request.ServiceDate, request.TechnicianId).
 		First(&shiftCodeOld).Error; err != nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -1027,7 +1027,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 
 	var conflictingAssignTech transactionworkshopentities.AssignTechnician
 	if err := tx.Where("foreman_id = ? AND service_date = ? AND technician_id <> ? AND shift_code = ? AND company_id = ?",
-		request.ForemanId, date, request.TechnicianId, request.ShiftCode, request.CompanyId).First(&conflictingAssignTech).Error; err == nil {
+		request.ForemanId, request.ServiceDate, request.TechnicianId, request.ShiftCode, request.CompanyId).First(&conflictingAssignTech).Error; err == nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "Assign Technician is not valid",
@@ -1037,7 +1037,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 
 	var existingTechAlloc transactionworkshopentities.WorkOrderAllocationAvailable
 	if err := tx.Where("company_id = ? AND foreman_id = ? AND technician_id = ? AND CONVERT(VARCHAR, tech_alloc_start_date, 106) = CONVERT(VARCHAR, ?, 106)",
-		request.CompanyId, request.ForemanId, request.TechnicianId, date).First(&existingTechAlloc).Error; err == nil {
+		request.CompanyId, request.ForemanId, request.TechnicianId, request.ServiceDate).First(&existingTechAlloc).Error; err == nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "This Technician already has allocation",
@@ -1046,7 +1046,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 	}
 
 	var entity transactionworkshopentities.AssignTechnician
-	if err := tx.Where("assign_technician_id = ? AND foreman_id = ? AND service_date = ?", id, techId, date).First(&entity).Error; err != nil {
+	if err := tx.Where("assign_technician_id = ? AND foreman_id = ? AND service_date = ?", id, request.ForemanId, request.ServiceDate).First(&entity).Error; err != nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Data not found",
@@ -1067,7 +1067,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 	}
 
 	if err := tx.Where("company_id = ? AND CONVERT(date, service_date_time) = ? AND technician_id = ? AND shift_code = ?",
-		request.CompanyId, date, request.TechnicianId, shiftCodeOld).Delete(&transactionworkshopentities.WorkOrderAllocationAvailable{}).Error; err != nil {
+		request.CompanyId, request.ServiceDate, request.TechnicianId, shiftCodeOld).Delete(&transactionworkshopentities.WorkOrderAllocationAvailable{}).Error; err != nil {
 		return transactionworkshopentities.AssignTechnician{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to delete old work order tech allocation availability",
@@ -1083,7 +1083,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 	if restStartTime > startTime {
 		if err := tx.Create(&transactionworkshopentities.WorkOrderAllocationAvailable{
 			CompanyId:             request.CompanyId,
-			ServiceDateTime:       date,
+			ServiceDateTime:       request.ServiceDate,
 			ForemanId:             request.ForemanId,
 			TechnicianId:          request.TechnicianId,
 			ShiftCode:             request.ShiftCode,
@@ -1108,7 +1108,7 @@ func (r *WorkOrderAllocationRepositoryImpl) SaveAssignTechnician(tx *gorm.DB, da
 	if restEndTime < endTime {
 		if err := tx.Create(&transactionworkshopentities.WorkOrderAllocationAvailable{
 			CompanyId:             request.CompanyId,
-			ServiceDateTime:       date,
+			ServiceDateTime:       request.ServiceDate,
 			ForemanId:             request.ForemanId,
 			TechnicianId:          request.TechnicianId,
 			ShiftCode:             request.ShiftCode,

@@ -343,33 +343,11 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnicianById(writer http.R
 // @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
-// @Param service_date query string true "Service Request Date"
-// @Param foreman_id query int true "Foreman ID"
 // @Param request body transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest true "Request body"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order-allocation/assign-technician/{service_date}/{foreman_id} [post]
+// @Router /v1/work-order-allocation/assign-technician/ [post]
 func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.ResponseWriter, request *http.Request) {
-	serviceDateStr := chi.URLParam(request, "service_date")
-	if serviceDateStr == "" {
-		payloads.NewHandleError(writer, "Service date is required", http.StatusBadRequest)
-		return
-	}
-
-	// Attempt to parse serviceDateStr to time.Time
-	serviceRequestDate, err := time.Parse(time.RFC3339, serviceDateStr)
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid date format", http.StatusBadRequest)
-		return
-	}
-
-	technicianStrId := chi.URLParam(request, "foreman_id")
-	technicianId, err := strconv.Atoi(technicianStrId)
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Foreman ID", http.StatusBadRequest)
-		return
-	}
-
 	var req transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest
 	helper.ReadFromRequestBody(request, &req)
 	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
@@ -378,7 +356,7 @@ func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.Respo
 	}
 
 	// Pass the parsed date to your service
-	entity, baseErr := r.WorkOrderAllocationService.NewAssignTechnician(serviceRequestDate, technicianId, req)
+	entity, baseErr := r.WorkOrderAllocationService.NewAssignTechnician(req)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
@@ -393,33 +371,12 @@ func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.Respo
 // @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
-// @Param service_date query string true "Service Request Date"
-// @Param technician_id query int true "Technician ID"
 // @Param assign_technician_id query int true "Assign Technician ID"
 // @Param request body transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest true "Request body"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order-allocation/assign-technician/{service_date}/{technician_id}/{assign_technician_id} [put]
 func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.ResponseWriter, request *http.Request) {
-	serviceDateStr := chi.URLParam(request, "service_date")
-	if serviceDateStr == "" {
-		payloads.NewHandleError(writer, "Service date is required", http.StatusBadRequest)
-		return
-	}
-
-	// Attempt to parse serviceDateStr to time.Time
-	serviceRequestDate, err := time.Parse(time.RFC3339, serviceDateStr)
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid date format", http.StatusBadRequest)
-		return
-	}
-
-	technicianStrId := chi.URLParam(request, "foreman_id")
-	technicianId, err := strconv.Atoi(technicianStrId)
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Foreman ID", http.StatusBadRequest)
-		return
-	}
 
 	AssignStrId := chi.URLParam(request, "assign_technician_id")
 	AssignId, err := strconv.Atoi(AssignStrId)
@@ -435,7 +392,7 @@ func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.Resp
 		return
 	}
 
-	entity, baseErr := r.WorkOrderAllocationService.SaveAssignTechnician(serviceRequestDate, technicianId, AssignId, req)
+	entity, baseErr := r.WorkOrderAllocationService.SaveAssignTechnician(AssignId, req)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return

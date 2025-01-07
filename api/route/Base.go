@@ -1628,8 +1628,8 @@ func WorkOrderAllocationRouter(
 	// assign technician to work order
 	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
 	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
-	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
-	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
+	router.Post("/assign-technician/", WorkOrderAllocationController.NewAssignTechnician)
+	router.Put("/assign-technician/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
 
 	return router
 }
