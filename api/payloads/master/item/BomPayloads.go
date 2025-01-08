@@ -47,6 +47,11 @@ type BomDetailResponse struct {
 	CostingPercentage float64 `gorm:"column:costing_percentage;size:30;not null" json:"costing_percentage"`
 }
 
+type BomPercentageResponse struct {
+	Total      float64 `json:"total"`
+	IsComplete bool    `json:"is_complete"`
+}
+
 type BomMaxSeqResponse struct {
 	Curr int `json:"curr"`
 	Next int `json:"next"`

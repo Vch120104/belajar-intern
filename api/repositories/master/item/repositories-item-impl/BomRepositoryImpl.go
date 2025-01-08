@@ -377,7 +377,7 @@ func (*BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.
 	return entities, nil
 }
 
-func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloads.BomMasterNewRequest) (int, *exceptions.BaseErrorResponse) {
+func (*BomRepositoryImpl) UpdateOrCreateBom(tx *gorm.DB, request masteritempayloads.BomMasterNewRequest) (int, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Bom{
 		IsActive:      true,
 		EffectiveDate: request.EffectiveDate,
@@ -396,7 +396,7 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 			Err:        errA,
 		}
 	}
-	if check == 0 { // Create because null
+	if check == 0 { // Create (because not found)
 		err := tx.Create(&entities).Error
 		if err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -409,6 +409,7 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 		return entities.BomId, nil
 	}
 
+	// Update
 	var bomId int
 	err := tx.Model(&masteritementities.Bom{}).
 		Where(entities).
@@ -427,6 +428,20 @@ func (*BomRepositoryImpl) FirstOrCreateBom(tx *gorm.DB, request masteritempayloa
 			Err:        err,
 		}
 	}
+
+	err = tx.Model(&entities).Select("qty").
+		Where("bom_id = ?", bomId).
+		Updates(masteritementities.Bom{
+			Qty: request.Qty,
+		}).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error updating BOM",
+			Err:        err,
+		}
+	}
+
 	return bomId, nil
 }
 
@@ -614,4 +629,34 @@ func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptio
 	}
 
 	return true, nil
+}
+
+// Check if percentage goes above 100%
+func (r *BomRepositoryImpl) GetBomTotalPercentage(tx *gorm.DB, id int) (masteritempayloads.BomPercentageResponse, *exceptions.BaseErrorResponse) {
+	var curBomPercentage float64
+	errC := tx.Model(&masteritementities.BomDetail{}).
+		Select("COALESCE(SUM(costing_percentage), 0) aa").
+		Where("bom_id = ?", id).
+		Pluck("aa", &curBomPercentage).Error
+	if errC != nil {
+		return masteritempayloads.BomPercentageResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching BOM detail record",
+			Err:        errC,
+		}
+	}
+	if curBomPercentage > 100.0 {
+		return masteritempayloads.BomPercentageResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Total cost percentage exceeds 100%",
+			Err:        fmt.Errorf("total cost percentage more than 100: %f", curBomPercentage),
+		}
+	}
+
+	payload := masteritempayloads.BomPercentageResponse{
+		Total:      curBomPercentage,
+		IsComplete: curBomPercentage == 100.0,
+	}
+
+	return payload, nil
 }
