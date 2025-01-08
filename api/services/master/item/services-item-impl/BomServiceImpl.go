@@ -201,7 +201,7 @@ func (s *BomServiceImpl) GetBomDetailByMasterUn(itemId int, effective_date time.
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailById(id int) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailById(id int) (masteritempayloads.BomDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
