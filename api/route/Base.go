@@ -538,6 +538,7 @@ func BomRouter(
 	// BOM master
 	router.Get("/", BomController.GetBomList)
 	router.Get("/{bom_id}", BomController.GetBomById)
+	router.Get("/total-percentage/{bom_id}", BomController.GetBomTotalPercentage)
 	router.Patch("/{bom_id}", BomController.ChangeStatusBomMaster)
 	router.Put("/{bom_id}", BomController.UpdateBomMaster)
 	router.Post("/", BomController.SaveBomMaster)

@@ -748,7 +748,7 @@ func (s *BomServiceImpl) ProcessDataUpload(request masteritempayloads.BomDetailU
 			EffectiveDate: k.EffectiveDate,
 			ItemId:        results.ItemId,
 		}
-		bomId, err := s.BomRepository.FirstOrCreateBom(tx, req)
+		bomId, err := s.BomRepository.UpdateOrCreateBom(tx, req)
 		if err != nil {
 			return []masteritementities.BomDetail{}, err
 		}
@@ -783,6 +783,38 @@ func (s *BomServiceImpl) ProcessDataUpload(request masteritempayloads.BomDetailU
 			return []masteritementities.BomDetail{}, err
 		}
 		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+func (s *BomServiceImpl) GetBomTotalPercentage(id int) (masteritempayloads.BomPercentageResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := s.BomRepository.GetBomTotalPercentage(tx, id)
+	if err != nil {
+		return results, err
 	}
 
 	return results, nil

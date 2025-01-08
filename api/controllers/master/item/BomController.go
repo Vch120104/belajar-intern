@@ -24,6 +24,7 @@ type BomController interface {
 	// Parent
 	GetBomList(writer http.ResponseWriter, request *http.Request)
 	GetBomById(writer http.ResponseWriter, request *http.Request)
+	GetBomTotalPercentage(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request)
 	UpdateBomMaster(writer http.ResponseWriter, request *http.Request)
 	SaveBomMaster(writer http.ResponseWriter, request *http.Request)
@@ -544,4 +545,20 @@ func (r *BomControllerImpl) ProcessDataUpload(writer http.ResponseWriter, reques
 	}
 
 	payloads.NewHandleSuccess(writer, create, "Create/Update Data Successfully!", http.StatusCreated)
+}
+
+func (r *BomControllerImpl) GetBomTotalPercentage(writer http.ResponseWriter, request *http.Request) {
+	bomId, errA := strconv.Atoi(chi.URLParam(request, "bom_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.BomService.GetBomTotalPercentage(bomId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
