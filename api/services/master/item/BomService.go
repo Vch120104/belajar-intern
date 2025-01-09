@@ -15,6 +15,7 @@ type BomService interface {
 	// Master
 	GetBomList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetBomById(id int) (masteritempayloads.BomResponse, *exceptions.BaseErrorResponse)
+	GetBomByUn(itemId int, effectiveDate time.Time) (masteritempayloads.BomResponse, *exceptions.BaseErrorResponse)
 	GetBomTotalPercentage(id int) (masteritempayloads.BomPercentageResponse, *exceptions.BaseErrorResponse)
 	SaveBomMaster(request masteritempayloads.BomMasterNewRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	UpdateBomMaster(id int, qty float64) (masteritementities.Bom, *exceptions.BaseErrorResponse)

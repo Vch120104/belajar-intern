@@ -104,6 +104,48 @@ func (*BomRepositoryImpl) GetBomById(tx *gorm.DB, id int) (masteritempayloads.Bo
 	return response, nil
 }
 
+func (*BomRepositoryImpl) GetBomByUn(tx *gorm.DB, itemId int, effectiveDate time.Time) (masteritempayloads.BomResponse, *exceptions.BaseErrorResponse) {
+	response := masteritempayloads.BomResponse{}
+
+	// Fetch the BOM Master record
+	err := tx.Table("mtr_bom bom").
+		Select(`
+			bom_id,
+			is_active,
+			item_id,
+			qty,
+			effective_date
+		`).
+		Where("item_id = ?", itemId).
+		Where("effective_date = ?", effectiveDate).
+		First(&response).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritempayloads.BomResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return masteritempayloads.BomResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch BOM Master record",
+			Err:        err,
+		}
+	}
+
+	// If id 0, do error
+	if itemId == 0 {
+		return masteritempayloads.BomResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
 func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.Bom
 
