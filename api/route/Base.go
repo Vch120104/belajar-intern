@@ -1295,8 +1295,8 @@ func FieldActionRouter(
 	router.Get("/header/by-id/{field_action_system_number}", FieldActionController.GetFieldActionHeaderById)
 	router.Get("/vehicle-detail/all/by-id/{field_action_system_number}", FieldActionController.GetAllFieldActionVehicleDetailById)
 	router.Get("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetFieldActionVehicleDetailById)
-	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemDetailById)
-	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}/{line_type_id}", FieldActionController.GetFieldActionVehicleItemDetailById)
+	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemOperationDetailById)
+	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_operation_system_number}", FieldActionController.GetFieldActionVehicleItemDetailById)
 	router.Post("/", FieldActionController.SaveFieldAction)
 	router.Post("/vehicle-detail/{field_action_system_number}", FieldActionController.PostFieldActionVehicleDetail)
 	router.Post("/multi-vehicle-detail/{field_action_system_number}", FieldActionController.PostMultipleVehicleDetail)
@@ -1304,7 +1304,7 @@ func FieldActionRouter(
 	router.Post("/all-item-detail/{field_action_system_number}", FieldActionController.PostVehicleItemIntoAllVehicleDetail)
 	router.Patch("/header/by-id/{field_action_system_number}", FieldActionController.ChangeStatusFieldAction)
 	router.Patch("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.ChangeStatusFieldActionVehicle)
-	router.Patch("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
+	router.Patch("/item-detail/by-id/{field_action_eligible_vehicle_item_operation_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
 
 	return router
 }
