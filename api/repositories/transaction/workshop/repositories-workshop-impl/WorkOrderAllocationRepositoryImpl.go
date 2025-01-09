@@ -5,10 +5,12 @@ import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -283,12 +285,191 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 	return pages, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var results []transactionworkshoppayloads.WorkOrderAllocationResponse
+func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pagination pagination.Pagination) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	baseModelQuery := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Select(`
+			company_id,
+			work_order_system_number,
+			work_order_document_number,
+			work_order_date,
+			model_id,
+			variant_id,
+			vehicle_id,
+			service_advisor_id,
+			foreman_id,
+			customer_id,
+			brand_id `).
+		Where("company_id = ? AND foreman_id = ? AND CAST(work_order_date AS DATE) = ? AND brand_id = ? AND work_order_system_number = ?", companyId, foremanId, date.Format("2006-01-02"), brandId, workOrderSystemNumber).
+		First(&entity).Error
+	if baseModelQuery != nil {
+		if errors.Is(baseModelQuery, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Work order not found",
+				Err:        baseModelQuery,
+			}
+		}
 
-	pages.Rows = results
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch work order data from the database",
+			Err:        baseModelQuery,
+		}
+	}
 
-	return pages, nil
+	brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
+	if brandErr != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch brand data from external service",
+			Err:        brandErr,
+		}
+	}
+
+	modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
+	if modelErr != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch model data from external service",
+			Err:        modelErr,
+		}
+	}
+
+	variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
+	if variantErr != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch variant data from external service",
+			Err:        variantErr,
+		}
+	}
+
+	// vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+	// if vehicleErr != nil {
+	// 	return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to fetch vehicle data from external service",
+	// 		Err:        vehicleErr,
+	// 	}
+	// }
+
+	serviceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(entity.ServiceAdvisor)
+	if serviceAdvisorErr != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch service advisor data from external service",
+			Err:        serviceAdvisorErr,
+		}
+	}
+
+	foremanResponse, foremanErr := generalserviceapiutils.GetEmployeeById(entity.Foreman)
+	if foremanErr != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch foreman data from external service",
+			Err:        foremanErr,
+		}
+	}
+
+	customerResponse, customerErr := generalserviceapiutils.GetCustomerMasterById(entity.CustomerId)
+	if customerErr != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch customer data from external service",
+			Err:        customerErr,
+		}
+	}
+
+	// Fetch workorder details count
+	var totalRows int64
+	errCount := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ?", entity.WorkOrderSystemNumber).
+		Count(&totalRows).Error
+	if errCount != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count work order details",
+			Err:        errCount,
+		}
+	}
+
+	// Fetch workorder details with pagination
+	var workorderDetails []transactionworkshoppayloads.WorkOrderDetailOperation
+	errWorkOrderDetails := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("operation_item_id,service_status_id,line_type_id").
+		Where("work_order_system_number = ?", entity.WorkOrderSystemNumber).
+		Offset(pagination.GetOffset()).
+		Limit(pagination.GetLimit()).
+		Find(&workorderDetails).Error
+	if errWorkOrderDetails != nil {
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order details from the database",
+			Err:        errWorkOrderDetails,
+		}
+	}
+
+	// fetch operation item name
+	for idx, detail := range workorderDetails {
+		var OperationItemCode string
+		var Description string
+
+		lineTypeResponse, linetypeErr := generalserviceapiutils.GetLineTypeById(detail.LineTypeId)
+		if linetypeErr != nil {
+			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve line type from the external API",
+				Err:        linetypeErr.Err,
+			}
+		}
+
+		operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, detail.OperationItemId)
+		if operationItemErr != nil {
+			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, operationItemErr
+		}
+
+		OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		if errResp != nil {
+			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, errResp
+		}
+
+		workorderDetails[idx].OperationItemCode = OperationItemCode
+		workorderDetails[idx].OperationItemDescription = Description
+	}
+
+	pagination.TotalRows = totalRows
+	pagination.TotalPages = int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
+
+	payload := transactionworkshoppayloads.WorkOrderAllocationResponse{
+		WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber: entity.WorkOrderDocumentNumber,
+		ModelId:                 entity.ModelId,
+		ModelName:               modelResponse.ModelName,
+		VariantId:               entity.VariantId,
+		VariantDescription:      variantResponse.VariantDescription,
+		VehicleId:               entity.VehicleId,
+		VehicleChassisNumber:    "vehicleResponse.Data.Master.VehicleChassisNumber",
+		//VehicleTnkb:             vehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB,
+		ServiceAdvisorId:   entity.ServiceAdvisor,
+		ServiceAdvisorName: serviceAdvisorResponse.EmployeeName,
+		ForemanId:          entity.Foreman,
+		ForemanName:        foremanResponse.EmployeeName,
+		CustomerId:         entity.CustomerId,
+		CustomerName:       customerResponse.CustomerName,
+		BrandId:            entity.BrandId,
+		BrandName:          brandResponse.BrandName,
+		ServiceRequestDate: entity.WorkOrderDate.Format("2006-01-02"),
+		WorkOrderAllocationDetails: transactionworkshoppayloads.WorkOrderAllocationDetailsResponse{
+			Page:       pagination.GetPage(),
+			Limit:      pagination.GetLimit(),
+			TotalPages: pagination.TotalPages,
+			TotalRows:  int(pagination.TotalRows),
+			Data:       workorderDetails,
+		},
+	}
+
+	return payload, nil
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) WorkOrderAllocationGR(tx *gorm.DB, companyId int, date time.Time, foremanId int, brandId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {

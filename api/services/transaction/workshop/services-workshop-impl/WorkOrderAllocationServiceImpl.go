@@ -99,7 +99,7 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocate(companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAllocate(companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -125,7 +125,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(companyId int, date time.Ti
 	}()
 	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, companyId, date, foremanId, brandId, workOrderSystemNumber, pages)
 	if repoErr != nil {
-		return pages, repoErr
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, repoErr
 	}
 
 	return results, nil

@@ -189,16 +189,7 @@ func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWrite
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
-		writer,
-		result.Rows,
-		"Get Data Successfully!",
-		http.StatusOK,
-		result.Limit,
-		result.Page,
-		int64(result.TotalRows),
-		result.TotalPages,
-	)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
 
 // GetAllocateDetail gets all allocated work orders detail

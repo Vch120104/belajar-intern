@@ -63,32 +63,42 @@ type WorkOrderAllocationRequest struct {
 }
 
 type WorkOrderAllocationResponse struct {
-	ServiceRequestDate      string  `json:"service_date"`
-	BrandId                 int     `json:"brand_id"`
-	BrandName               string  `json:"brand_name"`
-	WorkOrderSystemNumber   int     `json:"work_order_system_number"`
-	WorkOrderDocumentNumber string  `json:"work_order_document_number"`
-	ForemanId               int     `json:"foreman_id"`
-	ForemanName             string  `json:"foreman_name"`
-	ServiceAdvisorId        int     `json:"service_advisor_id"`
-	ServiceAdvisorName      string  `json:"service_advisor_name"`
-	ModelId                 int     `json:"model_id"`
-	ModelName               string  `json:"model_description"`
-	VariantId               int     `json:"variant_id"`
-	VariantDescription      string  `json:"variant_description"`
-	VehicleId               int     `json:"vehicle_id"`
-	VehicleChassisNumber    string  `json:"vehicle_chassis_number"`
-	VehicleTnkb             string  `json:"vehicle_tnkb"`
-	CustomerId              int     `json:"customer_id"`
-	CustomerName            string  `json:"customer_name"`
-	CustomerBehavior        string  `json:"customer_behavior"`
-	Frt                     float64 `json:"frt"`
+	ServiceRequestDate         string                             `json:"service_date"`
+	BrandId                    int                                `json:"brand_id"`
+	BrandName                  string                             `json:"brand_name"`
+	WorkOrderSystemNumber      int                                `json:"work_order_system_number"`
+	WorkOrderDocumentNumber    string                             `json:"work_order_document_number"`
+	ForemanId                  int                                `json:"foreman_id"`
+	ForemanName                string                             `json:"foreman_name"`
+	ServiceAdvisorId           int                                `json:"service_advisor_id"`
+	ServiceAdvisorName         string                             `json:"service_advisor_name"`
+	ModelId                    int                                `json:"model_id"`
+	ModelName                  string                             `json:"model_description"`
+	VariantId                  int                                `json:"variant_id"`
+	VariantDescription         string                             `json:"variant_description"`
+	VehicleId                  int                                `json:"vehicle_id"`
+	VehicleChassisNumber       string                             `json:"vehicle_chassis_number"`
+	VehicleTnkb                string                             `json:"vehicle_tnkb"`
+	CustomerId                 int                                `json:"customer_id"`
+	CustomerName               string                             `json:"customer_name"`
+	CustomerBehavior           string                             `json:"customer_behavior"`
+	Frt                        float64                            `json:"frt"`
+	WorkOrderAllocationDetails WorkOrderAllocationDetailsResponse `json:"work_order_allocation_details"`
+}
+
+type WorkOrderAllocationDetailsResponse struct {
+	Page       int                        `json:"page"`
+	Limit      int                        `json:"limit"`
+	TotalPages int                        `json:"total_pages"`
+	TotalRows  int                        `json:"total_rows"`
+	Data       []WorkOrderDetailOperation `json:"data"`
 }
 
 type WorkOrderDetailOperation struct {
 	OperationItemId          int       `json:"operation_item_id"`
 	OperationItemCode        string    `json:"operation_item_code"`
 	OperationItemDescription string    `json:"operation_item_description"`
+	LineTypeId               int       `json:"line_type_id"`
 	Frt                      float64   `json:"frt"`
 	ServiceStatusId          int       `json:"service_status_id"`
 	ServiceStatus            string    `json:"service_status"`
