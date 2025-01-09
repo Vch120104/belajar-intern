@@ -24,6 +24,7 @@ type BomController interface {
 	// Parent
 	GetBomList(writer http.ResponseWriter, request *http.Request)
 	GetBomById(writer http.ResponseWriter, request *http.Request)
+	GetBomByUn(writer http.ResponseWriter, request *http.Request)
 	GetBomTotalPercentage(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request)
 	UpdateBomMaster(writer http.ResponseWriter, request *http.Request)
@@ -125,6 +126,28 @@ func (r *BomControllerImpl) GetBomById(writer http.ResponseWriter, request *http
 	}
 
 	result, err := r.BomService.GetBomById(bomId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *BomControllerImpl) GetBomByUn(writer http.ResponseWriter, request *http.Request) {
+	itemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	effectiveDate, errB := time.Parse("2006-01-02T15:04:05.000Z", chi.URLParam(request, "effective_date"))
+	if errB != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.BomService.GetBomByUn(itemId, effectiveDate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
