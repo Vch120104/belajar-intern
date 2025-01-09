@@ -28,7 +28,7 @@ type FieldActionController interface {
 	GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request)
 	GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request)
 	GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request)
-	GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request)
+	GetAllFieldActionVehicleItemOperationDetailById(writer http.ResponseWriter, request *http.Request)
 	GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request)
 	PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request)
 	PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request)
@@ -86,12 +86,12 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.FieldActionService.GetAllFieldAction(filterCondition, pagination)
+	paginatedData, err := r.FieldActionService.GetAllFieldAction(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, pagination.Limit, pagination.Page, int64(paginatedData.TotalRows), paginatedData.TotalPages)
 }
 
 // @Summary Save Field Action
@@ -241,7 +241,7 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/field-action/vehicle-item/all/{field_action_eligible_vehicle_system_number} [get]
-func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
+func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemOperationDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	FieldActionVehicleDetailId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
@@ -263,13 +263,13 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 
 	// filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, totalpage, totalrows, err := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
+	result, err := r.FieldActionService.GetAllFieldActionVehicleItemOperationDetailById(FieldActionVehicleDetailId, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, totalrows, totalpage, int64(totalrows), totalpage)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get All Field Action Vehicle Item Detail By Id
@@ -291,13 +291,13 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer h
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
-	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
+	// LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 
-	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId, LineTypeId)
+	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -317,7 +317,7 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer h
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/field-action/vehicle-item/{field_action_eligible_vehicle_system_number} [post]
 func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masterpayloads.FieldActionItemDetailResponse
+	var formRequest masterpayloads.FieldActionEligibleVehicleItemOperationRequest
 	FIeldActionVehicleDetailId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
@@ -336,7 +336,7 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http
 		return
 	}
 
-	if formRequest.FieldActionEligibleVehicleItemSystemNumber == 0 {
+	if formRequest.FieldActionEligibleVehicleItemOperationSystemNumber == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -443,7 +443,7 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 // @Router /v1/field-action/all-item-detail/{field_action_system_number} [post]
 func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	// queryValues := request.URL.Query()
-	var formRequest masterpayloads.FieldActionItemDetailResponse
+	var formRequest masterpayloads.FieldActionEligibleVehicleItemOperationRequest
 
 	FieldActionHeaderId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 	if errA != nil {
@@ -464,7 +464,7 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 		return
 	}
 
-	if formRequest.FieldActionEligibleVehicleItemSystemNumber == 0 {
+	if formRequest.FieldActionEligibleVehicleItemOperationSystemNumber == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"

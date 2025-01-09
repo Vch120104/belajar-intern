@@ -9,7 +9,7 @@ type FieldActionEligibleVehicleItemOperation struct {
 	FieldActionEligibleVehicle                          FieldActionEligibleVehicle `gorm:"foreignKey:FieldActionEligibleVehicleSystemNumber;references:FieldActionEligibleVehicleSystemNumber;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	ItemOperationId                                     int                        `gorm:"column:item_operation_id;not null;size:30"        json:"item_operation_id"`
 	FieldActionFrt                                      float64                    `gorm:"column:field_action_frt;not null"        json:"field_action_frt"`
-	ItemOperation                                       ItemOperation              `gorm:"foreignKey:ItemOperationId;references:ItemOperationId"`
+	ItemOperation                                       MappingItemOperation       `gorm:"foreignKey:ItemOperationId;references:ItemOperationId"`
 }
 
 func (*FieldActionEligibleVehicleItemOperation) TableName() string {

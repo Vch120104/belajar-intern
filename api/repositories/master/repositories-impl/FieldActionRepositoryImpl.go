@@ -23,7 +23,7 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 	return &FieldActionRepositoryImpl{}
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.FieldActionResponse
 	entities := masterentities.FieldAction{}
 	JoinTable := tx.Model(&entities).
@@ -33,55 +33,21 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 	whereQuery := utils.ApplyFilter(JoinTable, filterCondition)
 	err := whereQuery.Scopes(pagination.Paginate(&pages, JoinTable)).Order("mtr_field_action.field_action_system_number").Scan(&responses).Error
 
-	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, JoinTable)).Order("fa.field_action_system_number").Scan(&responses).Error
-
-	responseMaps := make([]map[string]interface{}, 0)
-	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"is_active":                    response.IsActive,
-			"field_action_system_number":   response.FieldActionSystemNumber,
-			"approval_status_id":           response.ApprovalStatusId,
-			"brand_id":                     response.BrandId,
-			"field_action_document_number": response.FieldActionDocumentNumber,
-			"field_action_name":            response.FieldActionName,
-			"field_action_period_from":     response.FieldActionPeriodFrom,
-			"field_action_period_to":       response.FieldActionPeriodTo,
-			"is_never_expired":             response.IsNeverExpired,
-			"remark_popup":                 response.RemarkPopup,
-			"is_critical":                  response.IsCritical,
-			"remark_invoice":               response.RemarkInvoice,
-			"vehicle_id":                   response.VehicleId,
+	if len(responses) == 0 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
-		responseMaps = append(responseMaps, responseMap)
 	}
-
-	// if err != nil {
-	// 	return pages, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
-
-	// if len(responses) == 0 {
-	// 	return pages, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
-	// pages.Rows = responses
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = responses
+	return pages, nil
 }
 
 func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -191,158 +157,85 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB,
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemOperationDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemOperationDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masterentities.FieldActionEligibleVehicleItemOperation{}
 	payloads := []masterpayloads.FieldActionEligibleVehicleItemOperationResp{}
 	// combinedpayloads := make([]map[string]interface{}, 0)
 	// tableStruct := masterpayloads.FieldActionItemDetailResponse{}
 
 	// baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masterentities.FieldActionEligibleVehicle{FieldActionEligibleVehicleSystemNumber: Id})
-	err := tx.Model(&entities).Select("mtr_field_action_eligible_vehicle_item_operation.*,mtr_item.*,mtr_operation_code.*").
+	baseModelQuery := tx.Model(&entities).Select("mtr_field_action_eligible_vehicle_item_operation.*,mtr_item.*,mtr_operation_code.*").
 		Joins("JOIN mtr_mapping_item_operation ON mtr_mapping_item_operation.item_operation_id=mtr_field_action_eligible_vehicle_item_operation.item_operation_id").
+		Joins("INNER JOIN mtr_item ON mtr_item.item_id=mtr_field_action_eligible_vehicle_item_operation.item_id").
+		Joins("JOIN mtr_operation_code ON mtr_operation_code.operation_id=mtr_field_action_eligible_vehicle_item_operation.operation_id").
 		Where(masterentities.FieldActionEligibleVehicleItemOperation{
 			FieldActionEligibleVehicleSystemNumber: Id,
-		}).
-		Scan(&payloads).Error
+		})
 
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+	// filterQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Scan(&payloads).Rows()
+
+	if len(payloads) == 0 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	for _, it := range payloadsitem {
-		combinedpayloads = append(combinedpayloads, map[string]interface{}{
-			"is_active": it.IsActive,
-			"field_action_eligible_vehicle_item_system_number": it.FieldActionEligibleVehicleItemSystemNumber,
-			"field_action_eligible_vehicle_system_number":      it.FieldActionEligibleVehicleSystemNumber,
-			"line_type_id": it.LineTypeId,
-			"field_action_eligible_vehicle_line_number": it.FieldActionEligibleVehicleItemLineNumber,
-			"item_id":          it.ItemId,
-			"item_name":        it.ItemName,
-			"field_action_frt": it.FieldActionFrt,
-		})
-	}
 
-	err2 := tx.Model(&entitiesoperation).
-		Where("field_action_eligible_vehicle_system_number =?", Id).Joins("JOIN mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_field_action_eligible_vehicle_operation.operation_model_mapping_id").Select("mtr_field_action_eligible_vehicle_operation.*,mtr_operation_model_mapping.*").
-		Scan(&payloadsoperation).Error
-
-	if err2 != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err2,
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
-	for _, it := range payloadsoperation {
-		combinedpayloads = append(combinedpayloads, map[string]interface{}{
-			"is_active": it.IsActive,
-			"field_action_eligible_vehicle_item_system_number": it.FieldActionEligibleVehicleItemSystemNumber,
-			"field_action_eligible_vehicle_system_number":      it.FieldActionEligibleVehicleSystemNumber,
-			"line_type_id": it.LineTypeId,
-			"field_action_eligible_vehicle_line_number": it.FieldActionEligibleVehicleItemLineNumber,
-			"operation_id":     it.OperationModelMappingId,
-			"operation_name":   it.OperationName,
-			"field_action_frt": it.FieldActionFrt,
-		})
-	}
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(combinedpayloads, &pages)
-	return dataPaginate, totalPages, totalRows, nil
+
+	defer rows.Close()
+
+	pages.Rows = payloads
+
+	return pages, nil
+
+	// dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(payloads, &pages)
+	// return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetFieldActionVehicleItemDetailById(tx *gorm.DB, Id int, LineTypeId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	entitiesitem := masterentities.FieldActionEligibleVehicleItem{}
-	entitiesoperation := masterentities.FieldActionEligibleVehicleOperation{}
-	responseitem := masterpayloads.FieldActionEligibleVehicleItem{}
-	responseoperation := masterpayloads.FieldActionEligibleVehicleOperation{}
-	if LineTypeId == 5 {
-		err := tx.Model(&entitiesoperation).
-			Where(masterentities.FieldActionEligibleVehicleOperation{
-				FieldActionEligibleVehicleOperationSystemNumber: Id,
-			}).Joins("JOIN mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id = mtr_field_action_eligible_vehicle_operation.operation_model_mapping_id").Select("mtr_field_action_eligible_vehicle_operation.*,mtr_operation_model_mapping.*").
-			First(&responseoperation).Error
+func (r *FieldActionRepositoryImpl) GetFieldActionVehicleItemDetailById(tx *gorm.DB, Id int) (masterpayloads.FieldActionEligibleVehicleItemOperationResp, *exceptions.BaseErrorResponse) {
+	entities := masterentities.FieldActionEligibleVehicleItemOperation{}
+	response := masterpayloads.FieldActionEligibleVehicleItemOperationResp{}
 
-		if err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		responsepayloads := map[string]interface{}{
-			"is_active": responseoperation.IsActive,
-			"field_action_eligible_vehicle_item_system_number": responseoperation.FieldActionEligibleVehicleItemSystemNumber,
-			"field_action_eligible_vehicle_system_number":      responseoperation.FieldActionEligibleVehicleSystemNumber,
-			"line_type_id": responseoperation.LineTypeId,
-			"field_action_eligible_vehicle_line_number": responseoperation.FieldActionEligibleVehicleItemLineNumber,
-			"operation_id":     responseoperation.OperationModelMappingId,
-			"operation_name":   responseoperation.OperationName,
-			"field_action_frt": responseoperation.FieldActionFrt,
-		}
-		return responsepayloads, nil
-	} else {
-		err := tx.Model(&entitiesitem).
-			Where(masterentities.FieldActionEligibleVehicleItem{
-				FieldActionEligibleVehicleItemSystemNumber: Id,
-			}).Joins("JOIN mtr_item on mtr_item.item_id = mtr_field_action_eligible_vehicle_item.item_id").Select("mtr_field_action_eligible_vehicle_item.*,mtr_item.*").
-			First(&responseitem).Error
+	err := tx.Model(&entities).Select("mtr_field_action_eligible_vehicle_item_operation.*,mtr_item.*,mtr_operation_code.*").
+		Joins("JOIN mtr_mapping_item_operation ON mtr_mapping_item_operation.item_operation_id=mtr_field_action_eligible_vehicle_item_operation.item_operation_id").
+		Joins("INNER JOIN mtr_item ON mtr_item.item_id=mtr_field_action_eligible_vehicle_item_operation.item_id").
+		Joins("JOIN mtr_operation_code ON mtr_operation_code.operation_id=mtr_field_action_eligible_vehicle_item_operation.operation_id").
+		Where(masterentities.FieldActionEligibleVehicleItemOperation{
+			FieldActionEligibleVehicleItemOperationSystemNumber: Id,
+		}).
+		First(&response).Error
 
-		responsepayloads := map[string]interface{}{
-			"is_active": responseitem.IsActive,
-			"field_action_eligible_vehicle_item_system_number": responseitem.FieldActionEligibleVehicleItemSystemNumber,
-			"field_action_eligible_vehicle_system_number":      responseitem.FieldActionEligibleVehicleSystemNumber,
-			"line_type_id": responseitem.LineTypeId,
-			"field_action_eligible_vehicle_line_number": responseitem.FieldActionEligibleVehicleItemLineNumber,
-			"item_id":          responseitem.ItemId,
-			"item_name":        responseitem.ItemName,
-			"field_action_frt": responseitem.FieldActionFrt,
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
-		if err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		return responsepayloads, nil
 	}
+	return response, nil
 
 }
 
-func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB, req masterpayloads.FieldActionItemDetailResponse, id int) (bool, *exceptions.BaseErrorResponse) {
-	if req.LineTypeId == 5 {
-		entities := masterentities.FieldActionEligibleVehicleOperation{
-			FieldActionEligibleVehicleOperationSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
-			FieldActionEligibleVehicleSystemNumber:          id,
-			LineTypeId:                                      req.LineTypeId,
-			FieldActionEligibleVehicleItemLineNumber:        req.FieldActionEligibleVehicleItemLineNumber,
-			OperationModelMappingId:                         req.ItemOperationCode,
-			FieldActionFrt:                                  req.FieldActionFrt,
-		}
+func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB, req masterpayloads.FieldActionEligibleVehicleItemOperationRequest, id int) (bool, *exceptions.BaseErrorResponse) {
 
-		err := tx.Save(&entities).Error
+	entities := masterentities.FieldActionEligibleVehicleItemOperation{
+		FieldActionEligibleVehicleItemOperationSystemNumber: req.FieldActionEligibleVehicleItemOperationSystemNumber,
+		FieldActionEligibleVehicleSystemNumber:              id,
+		FieldActionFrt:                                      req.FieldActionFrt,
+	}
 
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-	} else {
-		entities := masterentities.FieldActionEligibleVehicleItem{
-			FieldActionEligibleVehicleItemSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
-			FieldActionEligibleVehicleSystemNumber:     id,
-			LineTypeId:                                 req.LineTypeId,
-			FieldActionEligibleVehicleItemLineNumber:   req.FieldActionEligibleVehicleItemLineNumber,
-			ItemId:                                     req.ItemOperationCode,
-			FieldActionFrt:                             req.FieldActionFrt,
-		}
+	err := tx.Save(&entities).Error
 
-		err := tx.Save(&entities).Error
-
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 
@@ -425,7 +318,7 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 
 }
 
-func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm.DB, headerId int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptions.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm.DB, headerId int, req masterpayloads.FieldActionEligibleVehicleItemOperationRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	// var entities masterentities.FieldActionEligibleVehicleItem
 	var headerEntities masterentities.FieldActionEligibleVehicle
@@ -436,43 +329,21 @@ func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm
 	tx.Model(&headerEntities).Where("field_action_system_number = ?", headerId).Scan(&listId)
 
 	for _, value := range listId {
-		if req.LineTypeId == 5 {
-			entities := masterentities.FieldActionEligibleVehicleOperation{
-				FieldActionEligibleVehicleOperationSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
-				FieldActionEligibleVehicleSystemNumber:          value.FieldActionSystemNumber,
-				LineTypeId:                                      req.LineTypeId,
-				FieldActionEligibleVehicleItemLineNumber:        req.FieldActionEligibleVehicleItemLineNumber,
-				OperationModelMappingId:                         req.ItemOperationCode,
-				FieldActionFrt:                                  req.FieldActionFrt,
-			}
+		entities := masterentities.FieldActionEligibleVehicleItemOperation{
+			FieldActionEligibleVehicleItemOperationSystemNumber: req.FieldActionEligibleVehicleItemOperationSystemNumber,
+			FieldActionEligibleVehicleSystemNumber:              value.FieldActionSystemNumber,
+			FieldActionFrt:                                      req.FieldActionFrt,
+		}
 
-			err := tx.Save(&entities).Error
+		err := tx.Save(&entities).Error
 
-			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
-			}
-		} else {
-			entities := masterentities.FieldActionEligibleVehicleItem{
-				FieldActionEligibleVehicleItemSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
-				FieldActionEligibleVehicleSystemNumber:     value.FieldActionSystemNumber,
-				LineTypeId:                                 req.LineTypeId,
-				FieldActionEligibleVehicleItemLineNumber:   req.FieldActionEligibleVehicleItemLineNumber,
-				ItemId:                                     req.ItemOperationCode,
-				FieldActionFrt:                             req.FieldActionFrt,
-			}
-
-			err := tx.Save(&entities).Error
-
-			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
 			}
 		}
+
 	}
 
 	return true, nil
@@ -544,7 +415,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, 
 }
 
 func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicleItem(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entities masterentities.FieldActionEligibleVehicleItem
+	var entities masterentities.FieldActionEligibleVehicleItemOperation
 
 	result := tx.Model(&entities).
 		Where("field_action_eligible_vehicle_item_system_number = ?", id).

@@ -33,7 +33,7 @@ func StartFieldActionService(FieldActionRepo masterrepository.FieldActionReposit
 	}
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -60,9 +60,9 @@ func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.Filte
 	results, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
 
 	if err != nil {
-		return results, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -193,7 +193,7 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (master
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemOperationDetailById(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -217,15 +217,15 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, 
 			}
 		}
 	}()
-	result, totalpage, totalrows, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, pages)
+	result, err := s.FieldActionRepo.GetAllFieldActionVehicleItemOperationDetailById(tx, Id, pages)
 
 	if err != nil {
-		return result, totalpage, totalrows, err
+		return result, err
 	}
-	return result, totalpage, totalrows, nil
+	return result, nil
 }
 
-func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int, linetypeid int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int) (masterpayloads.FieldActionEligibleVehicleItemOperationResp, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -249,7 +249,7 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int, lin
 			}
 		}
 	}()
-	results, err := s.FieldActionRepo.GetFieldActionVehicleItemDetailById(tx, Id, linetypeid)
+	results, err := s.FieldActionRepo.GetFieldActionVehicleItemDetailById(tx, Id)
 
 	if err != nil {
 		return results, err
@@ -257,7 +257,7 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int, lin
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req masterpayloads.FieldActionEligibleVehicleItemOperationRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -353,7 +353,7 @@ func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id stri
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId int, req masterpayloads.FieldActionEligibleVehicleItemOperationRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 

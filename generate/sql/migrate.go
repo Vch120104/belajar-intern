@@ -132,9 +132,8 @@ func Migrate() {
 	//&masterentities.DeductionList{},
 	//&masterentities.DeductionDetail{},
 	//&masterentities.FieldAction{},
-	//&masterentities.FieldActionEligibleVehicleItem{},
-	//&masterentities.FieldActionEligibleVehicleOperation{},
 	//&masterentities.FieldActionEligibleVehicle{},
+	//&masterentities.FieldActionEligibleVehicleItemOperation{}
 	//&masteritementities.DiscountPercent{},
 	//&masterentities.Agreement{},
 	//&masterentities.AgreementDiscount{},

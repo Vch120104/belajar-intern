@@ -110,3 +110,12 @@ type FieldActionEligibleVehicleItemOperationResp struct {
 	OperationName                                       string  `json:"operation_name"`
 	FieldActionFrt                                      float64 `json:"field_action_frt"`
 }
+
+type FieldActionEligibleVehicleItemOperationRequest struct {
+	IsActive                                            bool    `json:"is_active"`
+	FieldActionEligibleVehicleItemOperationSystemNumber int     `json:"field_action_eligible_vehicle_item_operation_system_number"`
+	FieldActionEligibleVehicleSystemNumber              int     `json:"field_action_eligible_vehicle_system_number"`
+	LineTypeId                                          int     `json:"line_type_id"`
+	ItemOperationId                                     int     `json:"item_operation_id"`
+	FieldActionFrt                                      float64 `json:"field_action_frt"`
+}
