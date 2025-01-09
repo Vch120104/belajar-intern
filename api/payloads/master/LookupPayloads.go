@@ -115,3 +115,12 @@ type LocationItemResponse struct {
 	WarehouseLocationCode string `json:"warehouse_location_code"`
 	WarehouseLocationName string `json:"warehouse_location_name"`
 }
+
+type ItemLocUOMResponse struct {
+	ItemId            int    `json:"item_id"`
+	ItemCode          string `json:"item_code"`
+	ItemName          string `json:"item_name"`
+	UomCode           string `json:"uom_code"`
+	QuantityAvailable int    `json:"quantity_available"`
+	IsActive          bool   `json:"is_active"`
+}

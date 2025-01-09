@@ -9,7 +9,6 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"log"
 	"strconv"
 	"time"
 
@@ -26,6 +25,7 @@ type WorkOrderAllocationController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetWorkOrderAllocationHeaderData(writer http.ResponseWriter, request *http.Request)
 	GetAllocate(writer http.ResponseWriter, request *http.Request)
+	GetAllocateByWorkOrderSystemNumber(writer http.ResponseWriter, request *http.Request)
 	GetAllocateDetail(writer http.ResponseWriter, request *http.Request)
 	SaveAllocateDetail(writer http.ResponseWriter, request *http.Request)
 
@@ -131,8 +131,15 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order-allocation/allocate/{brand_id}/{work_order_system_number} [get]
+// @Router /v1/work-order-allocation/allocate/{brand_id}/{company_id} [get]
 func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"brand_id":   queryValues.Get("brand_id"),
+		"company_id": queryValues.Get("company_id"),
+	}
+
 	brandStrId := chi.URLParam(request, "brand_id")
 	brandId, err := strconv.Atoi(brandStrId)
 	if err != nil {
@@ -140,20 +147,38 @@ func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWrite
 		return
 	}
 
-	workorderStrId := chi.URLParam(request, "work_order_system_number")
-	workorderId, err := strconv.Atoi(workorderStrId)
+	companyStrId := chi.URLParam(request, "company_id")
+	companyId, err := strconv.Atoi(companyStrId)
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Work Order System Number", http.StatusBadRequest)
+		payloads.NewHandleError(writer, "Invalid company", http.StatusBadRequest)
 		return
 	}
 
-	woAssign, baseErr := r.WorkOrderAllocationService.GetAllocate(brandId, workorderId)
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, baseErr := r.WorkOrderAllocationService.GetAllocate(brandId, companyId, criteria, paginate)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, woAssign, "Data retrieved successfully", http.StatusOK)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // GetAllocateDetail gets all allocated work orders detail
@@ -225,8 +250,10 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnician(writer http.Respo
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"service_date": queryValues.Get("service_date"),
-		"foreman_id":   queryValues.Get("foreman_id"),
+		"technician_id": queryValues.Get("technician_id"),
+		"company_id":    queryValues.Get("company_id"),
+		"service_date":  queryValues.Get("service_date"),
+		"foreman_id":    queryValues.Get("foreman_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -427,46 +454,40 @@ func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.Resp
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order-allocation/header-data [get]
 func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writer http.ResponseWriter, request *http.Request) {
-	queryParams := request.URL.Query()
 
-	companyCode := queryParams.Get("company_id")
-	foremanID := queryParams.Get("foreman_id")
-	serviceDate := queryParams.Get("service_date")
-	brandID := queryParams.Get("brand_id")
-
-	log.Printf("Received Query Params - company_id: %s, foreman_id: %s, service_date: %s, brand_id: %s", companyCode, foremanID, serviceDate, brandID)
-
-	foremanId, err := strconv.Atoi(foremanID)
+	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
 	if err != nil {
-		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
-			Message:    "Invalid foreman ID",
-			Err:        err,
-			StatusCode: http.StatusBadRequest,
-		})
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
 		return
 	}
 
-	techallocStartDate, err := time.Parse("2006-01-02", serviceDate)
+	foremanIdStr := chi.URLParam(request, "foreman_id")
+	foremanId, err := strconv.Atoi(foremanIdStr)
 	if err != nil {
-		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
-			Message:    "Invalid start date",
-			Err:        err,
-			StatusCode: http.StatusBadRequest,
-		})
+		payloads.NewHandleError(writer, "Invalid Foreman ID", http.StatusBadRequest)
 		return
 	}
 
-	vehicleBrandId, err := strconv.Atoi(brandID)
-	if err != nil {
-		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
-			Message:    "Invalid vehicle brand ID",
-			Err:        err,
-			StatusCode: http.StatusBadRequest,
-		})
+	techallocStartDateStr := chi.URLParam(request, "techalloc_start_date")
+	if techallocStartDateStr == "" {
+		payloads.NewHandleError(writer, "Techalloc Start Date is required", http.StatusBadRequest)
 		return
 	}
 
-	data, baseErr := r.WorkOrderAllocationService.GetWorkOrderAllocationHeaderData(companyCode, foremanId, techallocStartDate, vehicleBrandId)
+	// Parse string menjadi time.Time
+	techallocStartDate, err := time.Parse("2006-01-02", techallocStartDateStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Techalloc Start Date format", http.StatusBadRequest)
+		return
+	}
+
+	vehicleBrandId, err := strconv.Atoi(chi.URLParam(request, "brand_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Vehicle Brand ID", http.StatusBadRequest)
+		return
+	}
+
+	data, baseErr := r.WorkOrderAllocationService.GetWorkOrderAllocationHeaderData(companyId, foremanId, techallocStartDate, vehicleBrandId)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
@@ -536,4 +557,75 @@ func (r *WorkOrderAllocationControllerImp) SaveAllocateDetail(writer http.Respon
 	}
 
 	payloads.NewHandleSuccess(writer, entity, "Save Allocate Detail Successfully", http.StatusOK)
+}
+
+// GetAllocateByWorkOrderSystemNumber gets allocated work order by system number
+// @Summary Get allocated work order by system number
+// @Description Get allocated work order by system number
+// @Tags Transaction : Workshop Work Order Allocation
+// @Accept json
+// @Produce json
+// @Param service_date query string true "Service Request Date"
+// @Param foreman_id query int true "Foreman ID"
+// @Param work_order_system_number query int true "Work Order System Number"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object}  payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order-allocation/allocate-detail/{service_date}/{foreman_id}/{work_order_system_number} [get]
+func (r *WorkOrderAllocationControllerImp) GetAllocateByWorkOrderSystemNumber(writer http.ResponseWriter, request *http.Request) {
+
+	// Ambil parameter service_date
+	serviceDateStr := chi.URLParam(request, "service_date")
+	if serviceDateStr == "" {
+		payloads.NewHandleError(writer, "Service date is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse serviceDateStr ke time.Time
+	serviceRequestDate, err := time.Parse("2006-01-02", serviceDateStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid date format", http.StatusBadRequest)
+		return
+	}
+
+	// Ambil parameter brand_id
+	brandStrId := chi.URLParam(request, "brand_id")
+	brandId, err := strconv.Atoi(brandStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Brand ID", http.StatusBadRequest)
+		return
+	}
+
+	// Ambil parameter company_id
+	companyStrId := chi.URLParam(request, "company_id")
+	companyId, err := strconv.Atoi(companyStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
+		return
+	}
+
+	// Ambil parameter work_order_system_number
+	workOrderSystemNumberStr := chi.URLParam(request, "work_order_system_number")
+	workOrderSystemNumber, err := strconv.Atoi(workOrderSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Work Order System Number", http.StatusBadRequest)
+		return
+	}
+
+	// Panggil service untuk mengambil data
+	result, baseErr := r.WorkOrderAllocationService.GetAllocateByWorkOrderSystemNumber(serviceRequestDate, brandId, companyId, workOrderSystemNumber)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(
+		writer,
+		result,
+		"Get Data Successfully!",
+		http.StatusOK,
+	)
 }

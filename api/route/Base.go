@@ -225,6 +225,7 @@ func ItemRouter(
 
 	router.Get("/", itemController.GetAllItemSearch)
 	router.Get("/inventory", itemController.GetAllItemInventory)
+	router.Get("/inventory/by-code", itemController.GetItemInventoryByCode)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
@@ -537,6 +538,8 @@ func BomRouter(
 	// BOM master
 	router.Get("/", BomController.GetBomList)
 	router.Get("/{bom_id}", BomController.GetBomById)
+	router.Get("/{item_id}/{effective_date}", BomController.GetBomByUn)
+	router.Get("/total-percentage/{bom_id}", BomController.GetBomTotalPercentage)
 	router.Patch("/{bom_id}", BomController.ChangeStatusBomMaster)
 	router.Put("/{bom_id}", BomController.UpdateBomMaster)
 	router.Post("/", BomController.SaveBomMaster)
@@ -1619,7 +1622,8 @@ func WorkOrderAllocationRouter(
 	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
 	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
-	router.Get("/allocate/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{service_date}/{brand_id}/{company_id}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{service_date}/{brand_id}/{company_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocateByWorkOrderSystemNumber)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 
@@ -1959,6 +1963,7 @@ func LookupRouter(
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
 	router.Get("/location-item", LookupController.LocationItem)
+	router.Get("/item-loc-uom", LookupController.ItemLocUOM)
 
 	return router
 }

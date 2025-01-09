@@ -25,6 +25,7 @@ type BomDetailListResponse struct { // View multiple bom detail
 	BomDetailId       int     `json:"bom_detail_id"`
 	IsActive          bool    `json:"is_active"`
 	Seq               int     `json:"seq"`
+	ItemId            int     `json:"item_id"`
 	ItemClassName     string  `json:"item_class_name"`
 	ItemCode          string  `json:"item_code"`
 	ItemName          string  `json:"item_name"`
@@ -32,6 +33,28 @@ type BomDetailListResponse struct { // View multiple bom detail
 	UomCode           string  `json:"uom_code" parent_entity:"mtr_uom"`
 	CostingPercentage float64 `json:"costing_percentage"`
 	Remark            string  `json:"remark"`
+}
+
+type BomDetailResponse struct {
+	IsActive          bool    `gorm:"column:is_active;size:1;not null" json:"is_active"` // Naturally, this will always be `true`
+	BomDetailId       int     `gorm:"column:bom_detail_id;size:30;not null;primaryKey" json:"bom_detail_id"`
+	BomId             int     `gorm:"column:bom_id;size:30;not null;index:,unique,composite:un" json:"bom_id"`
+	Seq               int     `gorm:"column:seq;size:30;not null" json:"seq"`
+	ItemId            int     `gorm:"column:item_id;size:30;not null;index:,unique,composite:un" json:"item_id"`
+	ItemClassId       int     `gorm:"column:item_class_id;size:30;not null" json:"item_class_id"`
+	Qty               float64 `gorm:"column:qty;size:30;not null" json:"qty"`
+	Remark            string  `gorm:"column:remark;size:512" json:"remark"`
+	CostingPercentage float64 `gorm:"column:costing_percentage;size:30;not null" json:"costing_percentage"`
+}
+
+type BomPercentageResponse struct {
+	Total      float64 `json:"total"`
+	IsComplete bool    `json:"is_complete"`
+}
+
+type BomMaxSeqResponse struct {
+	Curr int `json:"curr"`
+	Next int `json:"next"`
 }
 
 type BomDetailRequest struct {
@@ -66,6 +89,7 @@ type BomDetailTemplate struct {
 	BomDetailQty               float64   `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
 	BomDetailRemark            string    `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
 	BomDetailCostingPercentage float64   `json:"bom_detail_costing_percentage" parent_entity:"mtr_bom_detail"`
+	Validation                 string    `json:"validation"`
 }
 
 type BomDetailUpload struct {

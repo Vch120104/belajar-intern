@@ -15,7 +15,8 @@ type BomService interface {
 	// Master
 	GetBomList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetBomById(id int) (masteritempayloads.BomResponse, *exceptions.BaseErrorResponse)
-
+	GetBomByUn(itemId int, effectiveDate time.Time) (masteritempayloads.BomResponse, *exceptions.BaseErrorResponse)
+	GetBomTotalPercentage(id int) (masteritempayloads.BomPercentageResponse, *exceptions.BaseErrorResponse)
 	SaveBomMaster(request masteritempayloads.BomMasterNewRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	UpdateBomMaster(id int, qty float64) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	ChangeStatusBomMaster(id int) (masteritementities.Bom, *exceptions.BaseErrorResponse)
@@ -23,8 +24,8 @@ type BomService interface {
 	// Detail
 	GetBomDetailByMasterId(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetBomDetailByMasterUn(id int, effectiveDate time.Time, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetBomDetailById(id int) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
-	GetBomDetailMaxSeq(id int) (int, *exceptions.BaseErrorResponse)
+	GetBomDetailById(id int) (masteritempayloads.BomDetailResponse, *exceptions.BaseErrorResponse)
+	GetBomDetailMaxSeq(id int) (masteritempayloads.BomMaxSeqResponse, *exceptions.BaseErrorResponse)
 
 	SaveBomDetail(request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse)

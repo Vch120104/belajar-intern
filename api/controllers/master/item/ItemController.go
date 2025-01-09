@@ -20,6 +20,7 @@ import (
 type ItemController interface {
 	GetAllItemLookup(writer http.ResponseWriter, request *http.Request)
 	GetAllItemInventory(writer http.ResponseWriter, request *http.Request)
+	GetItemInventoryByCode(writer http.ResponseWriter, request *http.Request)
 	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request)
 	GetItembyId(writer http.ResponseWriter, request *http.Request)
 	GetItemByCode(writer http.ResponseWriter, request *http.Request)
@@ -133,6 +134,19 @@ func (r *ItemControllerImpl) GetAllItemInventory(writer http.ResponseWriter, req
 	}
 
 	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
+}
+
+func (r *ItemControllerImpl) GetItemInventoryByCode(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	itemCode := queryValues.Get("item_code")
+
+	result, err := r.itemservice.GetItemInventoryByCode(itemCode)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // GetItembyId implements ItemController.
