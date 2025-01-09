@@ -112,8 +112,8 @@ func (r *QualityControlBodyshopRepositoryImpl) GetAll(tx *gorm.DB, filterConditi
 		convertedResponses = append(convertedResponses, transactionbodyshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-			VehicleCode:             vehicleResponses.VehicleChassisNumber,
-			VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
+			VehicleCode:             vehicleResponses.Data.Master.VehicleChassisNumber,
+			VehicleTnkb:             vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 			CustomerName:            customerResponses.CustomerName,
 			WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
 			VarianCode:              variantResponses.VariantCode,
@@ -278,8 +278,8 @@ func (r *QualityControlBodyshopRepositoryImpl) GetById(tx *gorm.DB, id int, filt
 		WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
 		ModelName:               modelResponses.ModelName,
 		VariantDescription:      variantResponses.VariantDescription,
-		VehicleCode:             vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
+		VehicleCode:             vehicleResponses.Data.Master.VehicleChassisNumber,
+		VehicleTnkb:             vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 		CustomerName:            customerResponses.CustomerName,
 		QualityControlDetails: transactionbodyshoppayloads.QualityControlDetailsResponse{
 			Page:       pages.GetPage(),
@@ -373,7 +373,7 @@ func (r *QualityControlBodyshopRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet
 		Select("ISNULL(MAX(technician_allocation_system_number), 0)").
 		Where("work_order_system_number = ?", id).
 		Where("work_order_line = ?", lineTypeOperation).
-		Where("brand_id = ?", vehicleResponses.VehicleBrandID).
+		Where("brand_id = ?", vehicleResponses.Data.Master.VehicleBrandID).
 		Where("company_id = ?", details.CompanyId).
 		Where("operation_code = ?", details.OprItemCode).
 		Scan(&techAllocSysNo).Error

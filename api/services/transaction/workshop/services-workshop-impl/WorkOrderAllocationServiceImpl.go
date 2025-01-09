@@ -99,7 +99,7 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAllocate(companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -123,7 +123,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, companyId int,
 			}
 		}
 	}()
-	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, brandId, companyId, filterCondition, pages)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, companyId, date, foremanId, brandId, workOrderSystemNumber, pages)
 	if repoErr != nil {
 		return pages, repoErr
 	}
@@ -331,7 +331,7 @@ func (s *WorkOrderAllocationServiceImpl) SaveAllocateDetail(date time.Time, tech
 	return entity, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocateByWorkOrderSystemNumber(date time.Time, brandId int, companyId int, workOrderSystemNumber int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) WorkOrderAllocationGR(companyId int, date time.Time, foremanId int, brandId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -355,7 +355,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocateByWorkOrderSystemNumber(date
 			}
 		}
 	}()
-	results, repoErr := s.WorkOrderAllocationRepository.GetAllocateByWorkOrderSystemNumber(tx, date, brandId, companyId, workOrderSystemNumber)
+	results, repoErr := s.WorkOrderAllocationRepository.WorkOrderAllocationGR(tx, companyId, date, foremanId, brandId, filterCondition, pages)
 	if repoErr != nil {
 		return results, repoErr
 	}

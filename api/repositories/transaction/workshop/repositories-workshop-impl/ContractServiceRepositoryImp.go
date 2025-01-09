@@ -88,9 +88,9 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			"model_id":                         modelResponse.ModelId,
 			"model_name":                       modelResponse.ModelName,
 			"model_code":                       modelResponse.ModelCode,
-			"vehicle_id":                       vehicleResponse.VehicleID,
-			"vehicle_tnkb":                     vehicleResponse.VehicleRegistrationCertificateTNKB,
-			"vehicle_code":                     vehicleResponse.VehicleChassisNumber,
+			"vehicle_id":                       vehicleResponse.Data.Master.VehicleID,
+			"vehicle_tnkb":                     vehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB,
+			"vehicle_code":                     vehicleResponse.Data.Master.VehicleChassisNumber,
 			"contract_service_status_id":       response.ContractServiceStatusId,
 		}
 

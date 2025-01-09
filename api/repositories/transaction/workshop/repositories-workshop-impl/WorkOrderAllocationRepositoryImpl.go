@@ -283,45 +283,44 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyId int, f
 	return pages, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var results []transactionworkshoppayloads.WorkOrderAllocationResponse
+
+	pages.Rows = results
+
+	return pages, nil
+}
+
+func (r *WorkOrderAllocationRepositoryImpl) WorkOrderAllocationGR(tx *gorm.DB, companyId int, date time.Time, foremanId int, brandId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	var entities []transactionworkshopentities.WorkOrder
 	var responses []transactionworkshoppayloads.WorkOrderAllocationGR
 
-	baseModelQuery := tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Joins("INNER JOIN trx_work_order_detail ON trx_work_order.work_order_system_number = trx_work_order_detail.work_order_system_number").
-		Select("trx_work_order.work_order_system_number, trx_work_order.work_order_document_number,trx_work_order.work_order_date, trx_work_order.model_id, trx_work_order.variant_id, trx_work_order.vehicle_id, trx_work_order.service_advisor_id ").
-		Where("trx_work_order.company_id = ? AND trx_work_order.brand_id = ? ", companyId, brandId).
-		Where("trx_work_order.work_order_status_id NOT IN (? , ?) ", utils.WoStatClosed, utils.WoStatDraft).
-		Where("trx_work_order_detail.service_status_id IN (?,?,?,?)", utils.SrvStatDraft, utils.SrvStatTransfer, utils.SrvStatReOrder, utils.SrvStatAutoRelease)
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			company_id,
+			work_order_system_number,
+			work_order_document_number,
+			work_order_date,
+			model_id,
+			variant_id,
+			vehicle_id,
+			service_advisor_id
+		`).
+		Where("company_id = ? AND foreman_id = ? AND CAST(work_order_date AS DATE) = ? AND brand_id = ?", companyId, foremanId, date.Format("2006-01-02"), brandId)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve  data from database",
 			Err:        err,
 		}
 	}
 
-	if len(responses) == 0 {
-		pages.Rows = []map[string]interface{}{}
-		return pages, nil
-	}
-
-	var results []map[string]interface{}
-	for _, response := range responses {
-
-		ServiceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(response.ServiceAdvisorId)
-		if serviceAdvisorErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch service Advisor data from external service",
-				Err:        serviceAdvisorErr,
-			}
-		}
-
-		ModelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+	// Get model, variant, vehicle, and service advisor data
+	for idx, response := range responses {
+		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
 		if modelErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -330,7 +329,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, brandId int
 			}
 		}
 
-		VariantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
+		variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(response.VariantId)
 		if variantErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -339,147 +338,34 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, brandId int
 			}
 		}
 
-		// VehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(response.VehicleId)
-		// if vehicleErr != nil {
-		// 	return pages, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to fetch vehicle data from external service",
-		// 		Err:        vehicleErr,
-		// 	}
-		// }
-
-		result := map[string]interface{}{
-			"work_order_system_number":   response.WorkOrderSystemNumber,
-			"work_order_document_number": response.WorkOrderDocumentNumber,
-			"work_order_date":            response.WorkOrderDate,
-			"model_id":                   response.ModelId,
-			"model_description":          ModelResponse.ModelName,
-			"variant_id":                 response.VariantId,
-			"variant_description":        VariantResponse.VariantDescription,
-			"vehicle_id":                 response.VehicleId,
-			"vehicle_chassis_number":     "", //VehicleResponse.VehicleChassisNumber,
-			"vehicle_tnkb":               "", //VehicleResponse.VehicleRegistrationCertificateTNKB,
-			"service_advisor_id":         response.ServiceAdvisorId,
-			"service_advisor_name":       ServiceAdvisorResponse.EmployeeName,
+		vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(response.VehicleId)
+		if vehicleErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch vehicle data from external service",
+				Err:        vehicleErr,
+			}
 		}
 
-		results = append(results, result)
+		serviceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(response.ServiceAdvisorId)
+		if serviceAdvisorErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch service advisor data from external service",
+				Err:        serviceAdvisorErr,
+			}
+		}
+
+		responses[idx].ModelDescription = modelResponse.ModelName
+		responses[idx].VariantDescription = variantResponse.VariantDescription
+		responses[idx].VehicleChassisNumber = vehicleResponse.Data.Master.VehicleChassisNumber
+		//responses[idx].VehicleTnkb = vehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB
+		responses[idx].ServiceAdvisorName = serviceAdvisorResponse.EmployeeName
 	}
 
-	pages.Rows = results
+	pages.Rows = responses
 
 	return pages, nil
-}
-
-func (r *WorkOrderAllocationRepositoryImpl) GetAllocateByWorkOrderSystemNumber(tx *gorm.DB, date time.Time, brandId int, companyId int, workOrderSystemNumber int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
-	var response transactionworkshoppayloads.WorkOrderAllocationResponse
-
-	// Get Work Order data
-	var workOrder transactionworkshopentities.WorkOrder
-	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Select("work_order_system_number, work_order_document_number, work_order_date, brand_id, model_id, variant_id, vehicle_id, service_advisor_id, foreman_id,customer_id").
-		Where("work_order_system_number = ? AND company_id = ? AND brand_id = ?", workOrderSystemNumber, companyId, brandId).
-		First(&workOrder).Error
-	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Work Order not found",
-			Err:        err,
-		}
-	}
-
-	// Get Brand data
-	BrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(workOrder.BrandId)
-	if brandErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch brand data from external service",
-			Err:        brandErr,
-		}
-	}
-
-	// Get Model data
-	ModelResponse, modelErr := salesserviceapiutils.GetUnitModelById(workOrder.ModelId)
-	if modelErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch model data from external service",
-			Err:        modelErr,
-		}
-	}
-
-	// Get Variant data
-	VariantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(workOrder.VariantId)
-	if variantErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch variant data from external service",
-			Err:        variantErr,
-		}
-	}
-
-	// Get Service Advisor data
-	ServiceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(workOrder.ServiceAdvisor)
-	if serviceAdvisorErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch service Advisor data from external service",
-			Err:        serviceAdvisorErr,
-		}
-	}
-
-	// Get Foreman data
-	ForemanResponse, foremanErr := generalserviceapiutils.GetEmployeeById(workOrder.Foreman)
-	if foremanErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch foreman data from external service",
-			Err:        foremanErr,
-		}
-	}
-
-	// Get Customer Data
-	CustomerResponse, customerErr := generalserviceapiutils.GetCustomerMasterById(workOrder.CustomerId)
-	if customerErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch customer data from external service",
-			Err:        customerErr,
-		}
-	}
-
-	// Get Vehicle data
-	// VehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(workOrder.VehicleId)
-	// if vehicleErr != nil {
-	// 	return response, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to fetch vehicle data from external service",
-	// 		Err:        vehicleErr,
-	// 	}
-	// }
-
-	response = transactionworkshoppayloads.WorkOrderAllocationResponse{
-		WorkOrderSystemNumber:   workOrder.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber: workOrder.WorkOrderDocumentNumber,
-		BrandId:                 workOrder.BrandId,
-		BrandName:               BrandResponse.BrandName,
-		ModelId:                 workOrder.ModelId,
-		ModelName:               ModelResponse.ModelName,
-		VariantId:               workOrder.VariantId,
-		VariantDescription:      VariantResponse.VariantDescription,
-		VehicleId:               workOrder.VehicleId,
-		VehicleChassisNumber:    "", //VehicleResponse.VehicleChassisNumber,
-		VehicleTnkb:             "", //VehicleResponse.VehicleRegistrationCertificateTNKB,
-		ServiceAdvisorId:        workOrder.ServiceAdvisor,
-		ServiceAdvisorName:      ServiceAdvisorResponse.EmployeeName,
-		ForemanId:               workOrder.Foreman,
-		ForemanName:             ForemanResponse.EmployeeName,
-		CustomerId:              workOrder.CustomerId,
-		CustomerName:            CustomerResponse.CustomerName,
-	}
-
-	return response, nil
-
 }
 
 func (r *WorkOrderAllocationRepositoryImpl) SaveAllocateDetail(tx *gorm.DB, date time.Time, techId int, request transactionworkshoppayloads.WorkOrderAllocationDetailRequest, foremanId int, companyId int) (transactionworkshopentities.WorkOrderAllocationDetail, *exceptions.BaseErrorResponse) {
