@@ -16,8 +16,6 @@ import (
 	"time"
 )
 
-const customTimeLayout = "2006-01-02T15:04:05.999999"
-
 type VehicleParams struct {
 	Page                               int    `json:"page"`
 	Limit                              int    `json:"limit"`
@@ -276,17 +274,10 @@ func GetAllVehicle(params VehicleParams) ([]VehicleListResponse, *exceptions.Bas
 	return getVehicle, nil
 }
 
-func parseCustomTime(timeStr string) (time.Time, error) {
-	t, err := time.Parse(customTimeLayout, timeStr)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return t, nil
-}
-
 func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 	var vehicleData VehicleResponse
 	url := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(id)
+	fmt.Println(url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -294,7 +285,7 @@ func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 		message := "Failed to retrieve vehicle due to an external service error"
 		if errors.Is(err, utils.ErrServiceUnavailable) {
 			status = http.StatusServiceUnavailable
-			message = "brand service is temporarily unavailable"
+			message = "Brand service is temporarily unavailable"
 		}
 		return vehicleData, &exceptions.BaseErrorResponse{
 			StatusCode: status,
@@ -313,6 +304,7 @@ func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 	}
 
 	body, err := io.ReadAll(resp.Body)
+	fmt.Println(string(body))
 	if err != nil {
 		return vehicleData, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -332,44 +324,51 @@ func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 
 	log.Printf("Full Vehicle Data: %+v", vehicleData)
 
+	// Parsing tanggal dengan validasi nilai kosong
 	fieldsToParse := []struct {
-		name    string
-		timeStr string
+		name string
+		time *time.Time
 	}{
 		// Master Fields
-		{"vehicle_handover_document_date", vehicleData.Data.Master.VehicleHandoverDocumentDate.Format(customTimeLayout)},
-		{"vehicle_last_service_date", vehicleData.Data.Master.VehicleLastServiceDate.Format(customTimeLayout)},
+		{"vehicle_handover_document_date", &vehicleData.Data.Master.VehicleHandoverDocumentDate},
+		{"vehicle_last_service_date", &vehicleData.Data.Master.VehicleLastServiceDate},
 
 		// STNK Fields
-		{"vehicle_registration_certificate_valid_date", vehicleData.Data.STNK.VehicleRegistrationCertificateValidDate.Format(customTimeLayout)},
-		{"vehicle_bpkb_date", vehicleData.Data.STNK.VehicleBPKBDate.Format(customTimeLayout)},
+		{"vehicle_registration_certificate_valid_date", &vehicleData.Data.STNK.VehicleRegistrationCertificateValidDate},
+		{"vehicle_bpkb_date", &vehicleData.Data.STNK.VehicleBPKBDate},
 
 		// Contract Service Fields
-		{"contract_service_date", vehicleData.Data.ContractService.ContractServiceDate.Format(customTimeLayout)},
+		{"contract_service_date", &vehicleData.Data.ContractService.ContractServiceDate},
 
 		// Receiving Fields
-		{"vehicle_wrs_date", vehicleData.Data.Receiving.VehicleWRSDate.Format(customTimeLayout)},
-		{"vehicle_sj_date", vehicleData.Data.Receiving.VehicleSJDate.Format(customTimeLayout)},
+		{"vehicle_wrs_date", &vehicleData.Data.Receiving.VehicleWRSDate},
+		{"vehicle_sj_date", &vehicleData.Data.Receiving.VehicleSJDate},
 
 		// Last Status Fields
-		{"vehicle_sales_order_date", vehicleData.Data.LastStatus.VehicleSalesOrderDate.Format(customTimeLayout)},
-		{"vehicle_last_stnk_date", vehicleData.Data.LastStatus.VehicleLastSTNKDate.Format(customTimeLayout)},
-		{"vehicle_last_bpkb_date", vehicleData.Data.LastStatus.VehicleLastBPKBDate.Format(customTimeLayout)},
-		{"bpk_date", vehicleData.Data.LastStatus.BPKDate.Format(customTimeLayout)},
+		{"vehicle_sales_order_date", &vehicleData.Data.LastStatus.VehicleSalesOrderDate},
+		{"vehicle_last_stnk_date", &vehicleData.Data.LastStatus.VehicleLastSTNKDate},
+		{"vehicle_last_bpkb_date", &vehicleData.Data.LastStatus.VehicleLastBPKBDate},
+		{"bpk_date", &vehicleData.Data.LastStatus.BPKDate},
 
 		// Purchase Fields
-		{"vehicle_purchase_date", vehicleData.Data.Purchase.VehiclePurchaseDate.Format(customTimeLayout)},
+		{"vehicle_purchase_date", &vehicleData.Data.Purchase.VehiclePurchaseDate},
 
 		// Insurance Fields
-		{"insurance_end_date", vehicleData.Data.Insurance.InsuranceEndDate},
+		//{"insurance_end_date", &vehicleData.Data.Insurance.InsuranceEndDate},
 	}
 
 	for _, field := range fieldsToParse {
-		parsedTime, err := parseCustomTime(field.timeStr)
-		if err != nil {
-			log.Printf("Error parsing %s: %v", field.name, err)
+		if field.time != nil && !field.time.IsZero() {
+			// Attempt to parse the time
+			parsedTime, err := parseCustomTimeWithTimezone(field.time.String())
+			if err != nil {
+				log.Printf("Error parsing %s: %v", field.name, err)
+			} else {
+				// Now parsedTime is in UTC as time.Time
+				log.Printf("Parsed %s: %v", field.name, parsedTime)
+			}
 		} else {
-			log.Printf("Parsed %s: %v", field.name, parsedTime)
+			log.Printf("Skipped parsing %s because the value is empty", field.name)
 		}
 	}
 
@@ -380,4 +379,33 @@ func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 	}
 
 	return vehicleData, nil
+}
+
+// Updated parseCustomTime to handle time string with missing timezone
+func parseCustomTimeWithTimezone(timeStr string) (time.Time, error) {
+	// Check if the time string already contains a timezone (Z or a numeric offset)
+	if !strings.ContainsAny(timeStr, "Z+-") {
+		// If not, append 'Z' for UTC timezone
+		timeStr += "Z"
+	}
+
+	// Define possible layouts
+	layouts := []string{
+		"2006-01-02T15:04:05.999999Z07:00", // With microseconds and timezone
+		"2006-01-02T15:04:05Z07:00",        // Without microseconds, but with timezone
+		"2006-01-02T15:04:05.999999",       // Without timezone
+		"2006-01-02T15:04:05",              // Without microseconds or timezone
+	}
+
+	// Try parsing with each layout
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, timeStr)
+		if err == nil {
+			// Return the time in UTC format as a time.Time object
+			return t.UTC(), nil
+		}
+	}
+
+	// Return error if no matching format found
+	return time.Time{}, fmt.Errorf("unable to parse time: %s", timeStr)
 }

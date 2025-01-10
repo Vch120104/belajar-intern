@@ -1619,8 +1619,8 @@ func WorkOrderAllocationRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
-	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/{company_id}/{service_date}/{foreman_id}", WorkOrderAllocationController.GetAll)
+	router.Get("/header-data/{company_id}/{service_date}/{foreman_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
 	router.Get("/allocate/{company_id}/{service_date}/{foreman_id}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
 	router.Get("/allocate/{company_id}/{service_date}/{foreman_id}/{brand_id}", WorkOrderAllocationController.WorkOrderAllocationGR)

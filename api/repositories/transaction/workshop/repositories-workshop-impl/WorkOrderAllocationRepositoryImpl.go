@@ -519,14 +519,14 @@ func (r *WorkOrderAllocationRepositoryImpl) WorkOrderAllocationGR(tx *gorm.DB, c
 			}
 		}
 
-		vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(response.VehicleId)
-		if vehicleErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        vehicleErr,
-			}
-		}
+		// vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(response.VehicleId)
+		// if vehicleErr != nil {
+		// 	return pages, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        vehicleErr,
+		// 	}
+		// }
 
 		serviceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(response.ServiceAdvisorId)
 		if serviceAdvisorErr != nil {
@@ -539,8 +539,8 @@ func (r *WorkOrderAllocationRepositoryImpl) WorkOrderAllocationGR(tx *gorm.DB, c
 
 		responses[idx].ModelDescription = modelResponse.ModelName
 		responses[idx].VariantDescription = variantResponse.VariantDescription
-		responses[idx].VehicleChassisNumber = vehicleResponse.Data.Master.VehicleChassisNumber
-		//responses[idx].VehicleTnkb = vehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB
+		responses[idx].VehicleChassisNumber = "vehicleResponse.Data.Master.VehicleChassisNumber"
+		responses[idx].VehicleTnkb = "vehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB"
 		responses[idx].ServiceAdvisorName = serviceAdvisorResponse.EmployeeName
 	}
 

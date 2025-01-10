@@ -35,18 +35,18 @@ type WorkOrderAllocationAssignResponse struct {
 }
 
 type WorkOrderAllocationGR struct {
-	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
-	WorkOrderDocumentNumber string `json:"work_order_document_number"`
-	WorkOrderDate           string `json:"work_order_date"`
-	ModelId                 int    `json:"model_id"`
-	ModelDescription        string `json:"model_description"`
-	VariantId               int    `json:"variant_id"`
-	VariantDescription      string `json:"variant_description"`
-	VehicleId               int    `json:"vehicle_id"`
-	VehicleChassisNumber    string `json:"vehicle_chassis_number"`
-	VehicleTnkb             string `json:"vehicle_tnkb"`
-	ServiceAdvisorId        int    `json:"service_advisor_id"`
-	ServiceAdvisorName      string `json:"service_advisor_name"`
+	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
+	WorkOrderDate           time.Time `json:"work_order_date"`
+	ModelId                 int       `json:"model_id"`
+	ModelDescription        string    `json:"model_description"`
+	VariantId               int       `json:"variant_id"`
+	VariantDescription      string    `json:"variant_description"`
+	VehicleId               int       `json:"vehicle_id"`
+	VehicleChassisNumber    string    `json:"vehicle_chassis_number"`
+	VehicleTnkb             string    `json:"vehicle_tnkb"`
+	ServiceAdvisorId        int       `json:"service_advisor_id"`
+	ServiceAdvisorName      string    `json:"service_advisor_name"`
 }
 
 type WorkOrderAllocationRequest struct {
