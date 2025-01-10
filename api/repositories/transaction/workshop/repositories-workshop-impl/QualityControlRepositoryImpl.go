@@ -498,7 +498,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Select("ISNULL(MAX(technician_allocation_system_number), 0)").
 		Where("work_order_system_number = ?", id).
 		Where("work_order_line = ?", lineTypeOperation).
-		Where("brand_id = ?", vehicleResponses.VehicleBrandID).
+		Where("brand_id = ?", vehicleResponses.Data.Master.VehicleBrandID).
 		Where("company_id = ?", details.CompanyId).
 		Where("operation_code = ?", details.OprItemCode).
 		Scan(&techAllocSysNo).Error

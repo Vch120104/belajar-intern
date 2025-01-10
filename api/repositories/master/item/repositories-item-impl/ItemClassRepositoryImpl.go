@@ -43,49 +43,53 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 	entities := masteritementities.ItemClass{}
 	response := masteritempayloads.ItemClassResponse{}
 
-	err := tx.Model(&entities).Select("mtr_item_class.*").
-		Where(masteritementities.ItemClass{
-			ItemClassCode: itemClassCode,
-		}).
-		First(&response).Error
-
+	err := tx.Model(&entities).
+		Select("is_active", "item_class_id", "item_class_code", "item_class_name", "item_group_id", "line_type_id").
+		Where(masteritementities.ItemClass{ItemClassCode: itemClassCode}).First(&response).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "item class not found",
+				Err:        err,
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(response.LineTypeId)
-	if lineErr != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: lineErr.StatusCode,
-			Err:        lineErr.Err,
+	if response.LineTypeId != 0 {
+		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(response.LineTypeId)
+		if lineErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: lineErr.StatusCode,
+				Message:    "Error fetching line type data",
+				Err:        lineErr.Err,
+			}
 		}
+
+		response.LineTypeCode = lineTypeResponse.LineTypeCode
+		response.LineTypeName = lineTypeResponse.LineTypeName
+	} else {
+		response.LineTypeName = ""
+		response.LineTypeCode = ""
 	}
 
-	lineTypePayload := masteritempayloads.LineTypeResponse{
-		LineTypeId:   lineTypeResponse.LineTypeId,
-		LineTypeCode: lineTypeResponse.LineTypeCode,
-		LineTypeName: lineTypeResponse.LineTypeName,
-	}
-
-	joinedData, errdf := utils.DataFrameInnerJoin(
-		[]masteritempayloads.ItemClassResponse{response},
-		[]masteritempayloads.LineTypeResponse{lineTypePayload},
-		"LineTypeId")
-
-	if errdf != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errdf,
+	if response.ItemGroupId != 0 {
+		itemGroupResponse, groupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+		if groupErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: groupErr.StatusCode,
+				Message:    "Error fetching item group data",
+				Err:        groupErr.Err,
+			}
 		}
-	}
 
-	if value, ok := joinedData[0]["LineTypeName_1"]; ok {
-		if v, ok := value.(string); ok {
-			response.LineTypeName = v
-		}
+		response.ItemGroupName = itemGroupResponse.ItemGroupName
+	} else {
+		response.ItemGroupName = ""
 	}
 
 	return response, nil

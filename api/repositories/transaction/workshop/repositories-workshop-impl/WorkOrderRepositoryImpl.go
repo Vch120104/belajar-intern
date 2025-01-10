@@ -3498,7 +3498,7 @@ func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, request transactionwor
 		BookingSystemNumber:     request.BookingSystemNumber,
 		EstimationSystemNumber:  request.EstimationSystemNumber,
 		ServiceSite:             "OD - Service On Dealer",
-		VehicleChassisNumber:    vehicleResponses.VehicleChassisNumber,
+		VehicleChassisNumber:    vehicleResponses.Data.Master.VehicleChassisNumber,
 
 		// Provided values
 		BrandId:                  request.BrandId,
@@ -3714,8 +3714,8 @@ func (r *WorkOrderRepositoryImpl) GetAllBooking(tx *gorm.DB, filterCondition []u
 			WorkOrderTypeId:            workOrderReq.WorkOrderTypeId,
 			BrandId:                    workOrderReq.BrandId,
 			BrandName:                  getBrandResponse.BrandName,
-			VehicleCode:                vehicleResponses.VehicleChassisNumber,
-			VehicleTnkb:                vehicleResponses.VehicleRegistrationCertificateTNKB,
+			VehicleCode:                vehicleResponses.Data.Master.VehicleChassisNumber,
+			VehicleTnkb:                vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 			ModelId:                    workOrderReq.ModelId,
 			ModelName:                  getModelResponse.ModelName,
 			VehicleId:                  workOrderReq.VehicleId,
@@ -4085,8 +4085,8 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 		VariantId:                     entity.VariantId,
 		VariantDescription:            variantResponse.VariantDescription,
 		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,
+		VehicleCode:                   vehicleResponses.Data.Master.VehicleChassisNumber,
+		VehicleTnkb:                   vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 		CustomerId:                    entity.CustomerId,
 		BilltoCustomerId:              entity.BillableToId,
 		CampaignId:                    entity.CampaignId,
@@ -4329,8 +4329,8 @@ func (r *WorkOrderRepositoryImpl) GetAllAffiliated(tx *gorm.DB, filterCondition 
 			ServiceRequestDocumentNumber: getServiceRequestResponse.ServiceRequestDocumentNumber,
 			BrandId:                      workOrderReq.BrandId,
 			BrandName:                    getBrandResponse.BrandName,
-			VehicleCode:                  getVehicleResponse.VehicleChassisNumber,
-			VehicleTnkb:                  getVehicleResponse.VehicleRegistrationCertificateTNKB,
+			VehicleCode:                  getVehicleResponse.Data.Master.VehicleChassisNumber,
+			VehicleTnkb:                  getVehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB,
 			ModelId:                      workOrderReq.ModelId,
 			ModelName:                    getModelResponse.ModelName,
 			VehicleId:                    workOrderReq.VehicleId,
@@ -4507,8 +4507,8 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 		VariantId:                     entity.VariantId,
 		VariantDescription:            variantResponse.VariantDescription,
 		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,
+		VehicleCode:                   vehicleResponses.Data.Master.VehicleChassisNumber,
+		VehicleTnkb:                   vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 		CustomerId:                    entity.CustomerId,
 		BilltoCustomerId:              entity.BillableToId,
 		CampaignId:                    entity.CampaignId,
@@ -4881,7 +4881,7 @@ func (s *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idw
 		}
 	}
 
-	vehicleChassisNo = vehicleResponses.VehicleChassisNumber
+	vehicleChassisNo = vehicleResponses.Data.Master.VehicleChassisNumber
 
 	// Check if the vehicle is in the grey market by looking up the vehicle chassis number
 	err = tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").

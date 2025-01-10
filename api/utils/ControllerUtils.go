@@ -221,3 +221,20 @@ func DateTodayOrLater(toDate time.Time) (bool, error) {
 	}
 	return true, nil
 }
+
+// float64ToTimeString converts float64 to HHMM time string
+func Float64ToTimeString(f float64) string {
+	hours := int(f)
+	minutes := int((f - float64(hours)) * 100)
+	if hours < 0 || hours > 23 || minutes < 0 || minutes >= 60 {
+		return ""
+	}
+	return fmt.Sprintf("%02d%02d", hours, minutes)
+}
+
+// Converts time.Time to float64 representing decimal hours
+func TimeToDecimalHours(t time.Time) float64 {
+	hours := float64(t.Hour())
+	minutes := float64(t.Minute())
+	return hours + (minutes / 60)
+}

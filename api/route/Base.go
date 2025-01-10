@@ -1619,19 +1619,19 @@ func WorkOrderAllocationRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
-	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/{company_id}/{service_date}/{foreman_id}", WorkOrderAllocationController.GetAll)
+	router.Get("/header-data/{company_id}/{service_date}/{foreman_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
-	router.Get("/allocate/{service_date}/{brand_id}/{company_id}", WorkOrderAllocationController.GetAllocate)
-	router.Get("/allocate/{service_date}/{brand_id}/{company_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocateByWorkOrderSystemNumber)
+	router.Get("/allocate/{company_id}/{service_date}/{foreman_id}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{company_id}/{service_date}/{foreman_id}/{brand_id}", WorkOrderAllocationController.WorkOrderAllocationGR)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 
 	// assign technician to work order
 	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
 	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
-	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
-	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
+	router.Post("/assign-technician", WorkOrderAllocationController.NewAssignTechnician)
+	router.Put("/assign-technician/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
 
 	return router
 }

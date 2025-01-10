@@ -66,7 +66,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, 
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyId int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyId int, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -91,7 +91,7 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 		}
 	}()
 
-	results, repoErr := s.WorkOrderAllocationRepository.GetWorkOrderAllocationHeaderData(tx, companyId, foremanId, techallocStartDate, vehicleBrandId)
+	results, repoErr := s.WorkOrderAllocationRepository.GetWorkOrderAllocationHeaderData(tx, companyId, foremanId, techallocStartDate)
 	if repoErr != nil {
 		return results, repoErr
 	}
@@ -99,7 +99,7 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAllocate(companyId int, date time.Time, foremanId int, brandId int, workOrderSystemNumber int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -123,9 +123,9 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, companyId int,
 			}
 		}
 	}()
-	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, brandId, companyId, filterCondition, pages)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, companyId, date, foremanId, brandId, workOrderSystemNumber, pages)
 	if repoErr != nil {
-		return pages, repoErr
+		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, repoErr
 	}
 
 	return results, nil
@@ -199,7 +199,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []u
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) NewAssignTechnician(date time.Time, techId int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) NewAssignTechnician(request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -224,7 +224,7 @@ func (s *WorkOrderAllocationServiceImpl) NewAssignTechnician(date time.Time, tec
 		}
 	}()
 
-	entity, err := s.WorkOrderAllocationRepository.NewAssignTechnician(tx, date, techId, request)
+	entity, err := s.WorkOrderAllocationRepository.NewAssignTechnician(tx, request)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
@@ -266,7 +266,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAssignTechnicianById(date time.Time,
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) SaveAssignTechnician(date time.Time, techId int, id int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) SaveAssignTechnician(id int, request transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest) (transactionworkshopentities.AssignTechnician, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -290,7 +290,7 @@ func (s *WorkOrderAllocationServiceImpl) SaveAssignTechnician(date time.Time, te
 			}
 		}
 	}()
-	entity, err := s.WorkOrderAllocationRepository.SaveAssignTechnician(tx, date, techId, id, request)
+	entity, err := s.WorkOrderAllocationRepository.SaveAssignTechnician(tx, id, request)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
@@ -331,7 +331,7 @@ func (s *WorkOrderAllocationServiceImpl) SaveAllocateDetail(date time.Time, tech
 	return entity, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocateByWorkOrderSystemNumber(date time.Time, brandId int, companyId int, workOrderSystemNumber int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) WorkOrderAllocationGR(companyId int, date time.Time, foremanId int, brandId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -355,7 +355,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocateByWorkOrderSystemNumber(date
 			}
 		}
 	}()
-	results, repoErr := s.WorkOrderAllocationRepository.GetAllocateByWorkOrderSystemNumber(tx, date, brandId, companyId, workOrderSystemNumber)
+	results, repoErr := s.WorkOrderAllocationRepository.WorkOrderAllocationGR(tx, companyId, date, foremanId, brandId, filterCondition, pages)
 	if repoErr != nil {
 		return results, repoErr
 	}

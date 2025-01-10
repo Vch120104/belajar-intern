@@ -1568,9 +1568,29 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
-		currentTime = time.Now()
-		year, month = currentTime.Year(), int(currentTime.Month() - 1)
+		year        string
+		month       string
 	)
+
+	// fetch data last mtr_location_stock
+
+	var mtrLocationStock masterentities.LocationStock
+	err := tx.Table("mtr_location_stock").
+		Where("company_id = ?", companyCode).
+		Order("period_year DESC, period_month DESC").
+		Offset(0).
+		Limit(1).
+		Find(&mtrLocationStock).Error
+	if err != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch data last mtr_location_stock",
+			Err:        err,
+		}
+	}
+
+	year = mtrLocationStock.PeriodYear
+	month = mtrLocationStock.PeriodMonth
 
 	// Fetch item type from external service
 	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
