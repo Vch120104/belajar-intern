@@ -146,7 +146,7 @@ type WorkOrderResponseDetail struct {
 	ModelId                 int       `json:"model_id"`
 	ModelName               string    `json:"model_name"`
 	VariantId               int       `json:"variant_id"`
-	VariantName             string    `json:"variant_name"`
+	VariantDescription      string    `json:"variant_description"`
 	ServiceSite             string    `json:"servicesite"`
 	VehicleId               int       `json:"vehicle_id"`
 	VehicleCode             string    `json:"vehicle_code"`
@@ -566,7 +566,7 @@ type WorkOrderBookingResponse struct {
 	ModelId                         int                             `json:"model_id"`
 	ModelName                       string                          `json:"model_name"`
 	VariantId                       int                             `json:"variant_id"`
-	VariantName                     string                          `json:"variant_name"`
+	VariantDescription              string                          `json:"variant_description"`
 	ServiceSite                     string                          `json:"service_site"`
 	VehicleId                       int                             `json:"vehicle_id"`
 	VehicleCode                     string                          `json:"vehicle_chassis_number"`
@@ -733,7 +733,7 @@ type WorkOrderAffiliateResponse struct {
 	ModelId                       int                             `json:"model_id"`
 	ModelName                     string                          `json:"model_name"`
 	VariantId                     int                             `json:"variant_id"`
-	VariantName                   string                          `json:"variant_name"`
+	VariantDescription            string                          `json:"variant_description"`
 	ServiceSite                   string                          `json:"service_site"`
 	VehicleId                     int                             `json:"vehicle_id"`
 	VehicleCode                   string                          `json:"vehicle_chassis_number"`

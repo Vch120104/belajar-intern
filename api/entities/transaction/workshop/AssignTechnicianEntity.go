@@ -12,6 +12,7 @@ type AssignTechnician struct {
 	CpcCode            string    `gorm:"column:cpc_code" json:"cpc_code"`
 	ShiftCode          string    `gorm:"column:shift_code" json:"shift_code"`
 	TechnicianId       int       `gorm:"column:technician_id;size:30" json:"technician_id"`
+	TechnicianNo       int       `gorm:"column:technician_no;size:30" json:"technician_no"`
 	CreateDate         time.Time `gorm:"column:create_date" json:"create_date"`
 	CreateBy           int       `gorm:"column:create_by;size:30" json:"create_by"`
 	ChangeDate         time.Time `gorm:"column:change_date" json:"change_date"`

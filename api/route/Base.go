@@ -77,6 +77,7 @@ func ItemClassRouter(
 	//test
 	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
 	router.Get("/drop-down/by-group-id/{item_group_id}", itemClassController.GetItemClassDropDownbyGroupId)
+	router.Get("/mfg/drop-down", itemClassController.GetItemClassMfgDropdown)
 	router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
 	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
@@ -223,6 +224,8 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemController.GetAllItemSearch)
+	router.Get("/inventory", itemController.GetAllItemInventory)
+	router.Get("/inventory/by-code", itemController.GetItemInventoryByCode)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
@@ -532,23 +535,32 @@ func BomRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	//bom master
-	router.Get("/", BomController.GetBomMasterList)
-	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
+	// BOM master
+	router.Get("/", BomController.GetBomList)
+	router.Get("/{bom_id}", BomController.GetBomById)
+	router.Get("/{item_id}/{effective_date}", BomController.GetBomByUn)
+	router.Get("/total-percentage/{bom_id}", BomController.GetBomTotalPercentage)
+	router.Patch("/{bom_id}", BomController.ChangeStatusBomMaster)
+	router.Put("/{bom_id}", BomController.UpdateBomMaster)
 	router.Post("/", BomController.SaveBomMaster)
-	router.Put("/{bom_master_id}", BomController.UpdateBomMaster)
-	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
-	//bom detail
-	router.Get("/detail", BomController.GetBomDetailList)
+	// BOM detail
+	router.Get("/detail/master/{bom_id}", BomController.GetBomDetailByMasterId)
+	router.Get("/detail/master/{item_id}/{effective_date}", BomController.GetBomDetailByMasterUn)
 	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
-	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
-	router.Post("/detail", BomController.SaveBomDetail)
-	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
+	router.Get("/detail/max-seq/{bom_id}", BomController.GetBomDetailMaxSeq)
+	router.Put("/detail", BomController.SaveBomDetail)
+	router.Delete("/detail/{bom_detail_ids}", BomController.DeleteBomDetail)
+	// BOM detail (unfinished/unused)
+	//router.Get("/detail", BomController.GetBomDetailList)
+	//router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
 
-	//bom lookup
-	router.Get("/popup-item", BomController.GetBomItemList)
+	// BOM Excels
 	router.Get("/download-template", BomController.DownloadTemplate)
+	router.Post("/upload", BomController.Upload)
+	router.Post("/process", BomController.ProcessDataUpload)
+	//bom lookup (unfinished/unused)
+	//router.Get("/popup-item", BomController.GetBomItemList)
 
 	return router
 }
@@ -1283,8 +1295,8 @@ func FieldActionRouter(
 	router.Get("/header/by-id/{field_action_system_number}", FieldActionController.GetFieldActionHeaderById)
 	router.Get("/vehicle-detail/all/by-id/{field_action_system_number}", FieldActionController.GetAllFieldActionVehicleDetailById)
 	router.Get("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetFieldActionVehicleDetailById)
-	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemDetailById)
-	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}/{line_type_id}", FieldActionController.GetFieldActionVehicleItemDetailById)
+	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemOperationDetailById)
+	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_operation_system_number}", FieldActionController.GetFieldActionVehicleItemDetailById)
 	router.Post("/", FieldActionController.SaveFieldAction)
 	router.Post("/vehicle-detail/{field_action_system_number}", FieldActionController.PostFieldActionVehicleDetail)
 	router.Post("/multi-vehicle-detail/{field_action_system_number}", FieldActionController.PostMultipleVehicleDetail)
@@ -1292,7 +1304,7 @@ func FieldActionRouter(
 	router.Post("/all-item-detail/{field_action_system_number}", FieldActionController.PostVehicleItemIntoAllVehicleDetail)
 	router.Patch("/header/by-id/{field_action_system_number}", FieldActionController.ChangeStatusFieldAction)
 	router.Patch("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.ChangeStatusFieldActionVehicle)
-	router.Patch("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
+	router.Patch("/item-detail/by-id/{field_action_eligible_vehicle_item_operation_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
 
 	return router
 }
@@ -1607,18 +1619,19 @@ func WorkOrderAllocationRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
-	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/{company_id}/{service_date}/{foreman_id}", WorkOrderAllocationController.GetAll)
+	router.Get("/header-data/{company_id}/{service_date}/{foreman_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
-	router.Get("/allocate/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{company_id}/{service_date}/{foreman_id}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{company_id}/{service_date}/{foreman_id}/{brand_id}", WorkOrderAllocationController.WorkOrderAllocationGR)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 
 	// assign technician to work order
 	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
 	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
-	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
-	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
+	router.Post("/assign-technician", WorkOrderAllocationController.NewAssignTechnician)
+	router.Put("/assign-technician/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
 
 	return router
 }
@@ -1949,6 +1962,8 @@ func LookupRouter(
 	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
 	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
+	router.Get("/location-item", LookupController.LocationItem)
+	router.Get("/item-loc-uom", LookupController.ItemLocUOM)
 
 	return router
 }

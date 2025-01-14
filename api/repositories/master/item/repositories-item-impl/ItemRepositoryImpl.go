@@ -192,6 +192,77 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 	return pages, nil
 }
 
+func (r *ItemRepositoryImpl) GetAllItemInventory(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	responses := []masteritempayloads.ItemInventory{}
+
+	baseQuery := tx.Table("mtr_item AS itm").
+		Select(`
+			itm.item_id,
+			itm.is_active,
+			itm.item_code,
+			itm.item_name,
+			cls.item_class_name,
+			grp.item_group_code,
+			cls.item_class_code,
+			uom.uom_code`).
+		Joins("INNER JOIN mtr_item_group grp on itm.item_group_id = grp.item_group_id").
+		Joins("INNER JOIN mtr_item_class cls on itm.item_class_id = cls.item_class_id").
+		Joins("INNER JOIN mtr_uom uom on itm.unit_of_measurement_stock_id = uom.uom_id").
+		Where("grp.item_group_code = 'IN'")
+
+	baseQuery = utils.ApplyFilter(baseQuery, filter)
+
+	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
+
+	if err := paginatedQuery.Scan(&responses).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching item record",
+			Err:        err,
+		}
+	}
+
+	pages.Rows = responses
+	return pages, nil
+}
+
+func (r *ItemRepositoryImpl) GetItemInventoryByCode(tx *gorm.DB, itemCode string) (masteritempayloads.ItemInventory, *exceptions.BaseErrorResponse) {
+	responses := masteritempayloads.ItemInventory{}
+
+	err := tx.Table("mtr_item AS itm").
+		Select(`
+			itm.item_id,
+			itm.is_active,
+			itm.item_code,
+			itm.item_name,
+			cls.item_class_name,
+			grp.item_group_code,
+			cls.item_class_code,
+			uom.uom_code`).
+		Joins("INNER JOIN mtr_item_group grp on itm.item_group_id = grp.item_group_id").
+		Joins("INNER JOIN mtr_item_class cls on itm.item_class_id = cls.item_class_id").
+		Joins("INNER JOIN mtr_uom uom on itm.unit_of_measurement_stock_id = uom.uom_id").
+		Where("grp.item_group_code = 'IN'").
+		Where("itm.item_code = ?", itemCode).
+		First(&responses).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return responses, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "item not found",
+				Err:        err,
+			}
+		}
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching item record",
+			Err:        err,
+		}
+	}
+
+	return responses, nil
+}
+
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
 
 	panic("unimplemented")
