@@ -9,12 +9,12 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
+	//"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
 	"gorm.io/gorm"
 )
 
