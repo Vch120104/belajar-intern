@@ -1715,6 +1715,7 @@ func ClaimSupplierRouter(
 	router.Post("/submit/{claim_system_number}", ClaimSupplierController.SubmitItemClaim)
 	return router
 }
+
 func QualityControlRouter(
 	QualityControlController transactionworkshopcontroller.QualityControlController,
 ) chi.Router {
@@ -2013,12 +2014,27 @@ func ItemQueryAllCompanyRouter(
 	return router
 }
 
+func AtpmClaimRegistrationRouter(
+	atpmClaimRegistrationController transactionworkshopcontroller.AtpmClaimRegistrationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", atpmClaimRegistrationController.GetAll)
+	router.Get("/{claim_system_number}", atpmClaimRegistrationController.GetById)
+
+	return router
+}
+
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
-	// Izinkan akses ke Swagger di /aftersales-service/docs
-	router.Get("/aftersales-service/docs/v1/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server
+	// akses ke Swagger di /aftersales-service/docs
+	router.Get("/docs/v1/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/v1/doc.json"),
 	))
 
 	return router
