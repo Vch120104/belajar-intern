@@ -1,6 +1,7 @@
 package aftersalesserviceapiutils
 
 import (
+	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/utils"
@@ -15,7 +16,7 @@ func GetAvailableItemLocationStock(payload masterwarehousepayloads.GetAvailableQ
 	formattedTime := payload.PeriodDate.UTC().Format("2006-01-02T15:04:05.000Z")
 	url := fmt.Sprintf("%slocation-stock/available_quantity?company_id=%s&warehouse_id=%s&location_id=%s&warehouse_group_id=%s&item_id=%s&uom_id=%s&period_date=%s",
 		//config.EnvConfigs.AfterSalesServiceUrl,
-		"https://testing-backendims.indomobil.co.id/aftersales-service/v1/",
+		config.EnvConfigs.AfterSalesServiceUrl,
 		strconv.Itoa(payload.CompanyId),
 		strconv.Itoa(payload.WarehouseId),
 		strconv.Itoa(payload.LocationId),
