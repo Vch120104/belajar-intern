@@ -23,6 +23,8 @@ type AtpmClaimRegistrationController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	New(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	Submit(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transactionworkshopservice.AtpmClaimRegistrationService) AtpmClaimRegistrationController {
@@ -129,7 +131,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetById(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
-// @Param body body payloads.AtpmClaimRegistrationRequest true "Atpm Claim Registration Request"
+// @Param body body transactionworkshoppayloads.AtpmClaimRegistrationRequest true "Atpm Claim Registration Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/atpm-claim-registration [post]
@@ -149,4 +151,68 @@ func (r *AtpmClaimRegistrationControllerImpl) New(writer http.ResponseWriter, re
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Data has been created successfully!", http.StatusCreated)
+}
+
+// Save updates atpm claim registration
+// @Summary Update ATPM Claim Registration
+// @Description Update atpm claim registration
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_system_number path string true "ATPM Claim Registration ID"
+// @Param body body transactionworkshoppayloads.AtpmClaimRegistrationRequestSave true "Atpm Claim Registration Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/{claim_system_number} [put]
+func (r *AtpmClaimRegistrationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
+
+	claimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	claimSystemNumber, err := strconv.Atoi(claimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	var req transactionworkshoppayloads.AtpmClaimRegistrationRequestSave
+	helper.ReadFromRequestBody(request, &req)
+	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.Save(claimSystemNumber, req)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Data has been updated successfully!", http.StatusOK)
+}
+
+// Submit submits atpm claim registration
+// @Summary Submit ATPM Claim Registration
+// @Description Submit atpm claim registration
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_system_number path string true "ATPM Claim Registration ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/submit/{claim_system_number} [post]
+func (r *AtpmClaimRegistrationControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
+
+	claimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	claimSystemNumber, err := strconv.Atoi(claimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.Submit(claimSystemNumber)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Data has been submitted successfully!", http.StatusOK)
 }

@@ -8,6 +8,7 @@ type AtpmClaimVehicleAttachmentType struct {
 	AttachmentTypeCode        string `gorm:"column:attachment_type_code;size:30" json:"attachment_type_code"`
 	AttachmentTypeDescription string `gorm:"column:attachment_type_description;size:255" json:"attachment_type_description"`
 	ClaimType                 string `gorm:"column:claim_type;size:30" json:"claim_type"`
+	AtpmCode                  string `gorm:"column:atpm_code;size:30" json:"atpm_code"`
 	Mandatory                 bool   `gorm:"column:mandatory" json:"mandatory"`
 	MaxFileSize               int    `gorm:"column:max_file_size;size:30" json:"max_file_size"`
 	IsActive                  bool   `gorm:"column:is_active" json:"is_active"`

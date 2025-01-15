@@ -2026,6 +2026,8 @@ func AtpmClaimRegistrationRouter(
 	router.Get("/", atpmClaimRegistrationController.GetAll)
 	router.Get("/{claim_system_number}", atpmClaimRegistrationController.GetById)
 	router.Post("/", atpmClaimRegistrationController.New)
+	router.Put("/{claim_system_number}", atpmClaimRegistrationController.Save)
+	router.Post("/submit/{claim_system_number}", atpmClaimRegistrationController.Submit)
 
 	return router
 }

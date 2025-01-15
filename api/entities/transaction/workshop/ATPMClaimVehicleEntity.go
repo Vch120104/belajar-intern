@@ -11,8 +11,8 @@ type AtpmClaimVehicle struct {
 	ClaimDate               time.Time `gorm:"column:claim_date" json:"claim_date"`
 	ClaimStatusId           int       `gorm:"column:claim_status_id;size:30" json:"claim_status_id"`
 	BrandId                 int       `gorm:"column:brand_id;size:30" json:"brand_id"`
-	ClaimFrom               time.Time `gorm:"column:claim_from" json:"claim_from"`
-	ClaimTo                 time.Time `gorm:"column:claim_to" json:"claim_to"`
+	ClaimFrom               string    `gorm:"column:claim_from" json:"claim_from"`
+	ClaimTo                 string    `gorm:"column:claim_to" json:"claim_to"`
 	ClaimTypeId             int       `gorm:"column:claim_type_id;size:30" json:"claim_type_id"`
 	Countermeasure          string    `gorm:"column:countermeasure" json:"countermeasure"`
 	WorkOrderSystemNumber   int       `gorm:"column:work_order_system_number;size:30" json:"work_order_system_number"`

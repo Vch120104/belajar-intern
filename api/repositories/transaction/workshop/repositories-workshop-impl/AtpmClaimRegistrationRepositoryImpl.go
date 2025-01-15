@@ -11,6 +11,7 @@ import (
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -221,18 +222,47 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 	return response, nil
 }
 
+// uspg_atAtpmVehicleClaim0_Insert
+// IF @Option = 0
 func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+	// Get approval draft from external service
+	approvalDraft, approvalDraftErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if approvalDraftErr != nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalDraftErr.StatusCode,
+			Message:    "Failed to fetch approval draft data from external service",
+			Err:        approvalDraftErr.Err,
+		}
+	}
+
+	var existingEntity transactionworkshopentities.AtpmClaimVehicle
+	if err := tx.Where("claim_system_number = ?", request.ClaimSystemNumber).
+		First(&existingEntity).Error; err == nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Data already exists",
+			Err:        errors.New("duplicate entry"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check existing data",
+			Err:        err,
+		}
+	}
+
 	entity := transactionworkshopentities.AtpmClaimVehicle{
 		CompanyId:            request.CompanyId,
 		BrandId:              request.BrandId,
 		ClaimTypeId:          request.ClaimTypeId,
+		ClaimStatusId:        approvalDraft.ApprovalStatusId,
 		CustomerComplaint:    request.CustomerComplaint,
 		TechnicianDiagnostic: request.TechnicianDiagnostic,
 		Countermeasure:       request.Countermeasure,
 		ClaimDate:            request.ClaimDate,
 		RepairEndDate:        request.RepairEndDate,
 
-		// other data
+		// Other data
 		Fuel:       request.Fuel,
 		CustomerId: request.CustomerId,
 		Vdn:        request.VDN,
@@ -245,7 +275,434 @@ func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transacti
 		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to create data",
-			Err:        tx.Error,
+			Err:        err,
+		}
+	}
+
+	// logic ClaimTypeId = FSI (1)
+	if request.ClaimTypeId == 1 {
+
+		// Subquery untuk mendapatkan TOTAL_AFTER_DISCOUNT
+		subQuery := tx.Model(&transactionworkshopentities.AtpmWarranty{}).
+			Select("COALESCE(total_after_discount, 0)").
+			Where("brand_id = ? AND model_id = ? AND variant_id = ? AND fsp_category_id = ? AND effective_date = (?)",
+				request.BrandId, request.ModelId, request.VariantId, request.FspCategoryId,
+				tx.Model(&transactionworkshopentities.AtpmWarranty{}).
+					Select("MAX(effective_date)").
+					Where("brand_id = ? AND model_id = ? AND variant_id = ? AND fsp_category_id = ? AND effective_date <= ?",
+						request.BrandId, request.ModelId, request.VariantId, request.FspCategoryId, request.ClaimDate),
+			)
+
+		// Update FspAmountClaimStandard dengan hasil subquery
+		if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+			Where("claim_system_number = ?", request.ClaimSystemNumber).
+			Update("fsp_amount_claim_standard", subQuery).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update FSP amount",
+				Err:        err,
+			}
+		}
+	}
+	return entity, nil
+}
+
+// uspg_atAtpmVehicleClaim0_Update
+// IF @Option = 0 / 2
+func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request transactionworkshoppayloads.AtpmClaimRegistrationRequestSave) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.AtpmClaimVehicle
+
+	approvalDraft, approvalDraftErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if approvalDraftErr != nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalDraftErr.StatusCode,
+			Message:    "Failed to fetch approval draft data from external service",
+			Err:        approvalDraftErr.Err,
+		}
+	}
+
+	err := tx.Where("claim_system_number = ?", id).First(&entity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch data",
+			Err:        err,
+		}
+	}
+
+	if entity.ClaimStatusId != approvalDraft.ApprovalStatusId {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusForbidden,
+			Message:    "Update header failed, claim document is already submitted",
+			Err:        errors.New("update header failed, claim document is already submitted"),
+		}
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		updateData := map[string]interface{}{
+			"symptom_code": request.SymptomCode,
+			"trouble_code": request.TroubleCode,
+		}
+
+		if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+			Where("claim_system_number = ?", id).
+			Updates(updateData).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update SymptomCode and TroubleCode",
+				Err:        err,
+			}
+		}
+
+		if err := tx.Where("claim_system_number = ?", id).First(&entity).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch updated data",
+				Err:        err,
+			}
+		}
+
+		return entity, nil
+	}
+
+	entity.CustomerComplaint = request.CustomerComplaint
+	entity.TechnicianDiagnostic = request.TechnicianDiagnostic
+	entity.Countermeasure = request.Countermeasure
+	entity.RepairEndDate = request.RepairEndDate
+	entity.Fuel = request.Fuel
+	entity.CustomerId = request.CustomerId
+	entity.Vdn = request.VDN
+	entity.ClaimHeader = request.ClaimHeader
+
+	if err := tx.Save(&entity).Error; err != nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update data",
+			Err:        err,
+		}
+	}
+
+	return entity, nil
+}
+
+// uspg_atAtpmVehicleClaim0_Update
+// IF @Option = 1
+func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.AtpmClaimVehicle
+	var entitywo transactionworkshopentities.WorkOrderDetail
+
+	// Step 1: Retrieve claim details
+	if err := tx.Where("claim_system_number = ?", id).First(&entity).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch data",
+			Err:        err,
+		}
+	}
+
+	// Step 2: Validate claim status and draft
+	approvalDraft, approvalDraftErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if approvalDraftErr != nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalDraftErr.StatusCode,
+			Message:    "Failed to fetch approval draft data from external service",
+			Err:        approvalDraftErr.Err,
+		}
+	}
+
+	if entity.ClaimStatusId != approvalDraft.ApprovalStatusId {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusForbidden,
+			Message:    "Claim document is already submitted",
+			Err:        errors.New("claim document is already submitted"),
+		}
+	}
+
+	// Step 3: Validate mandatory attachments in AtpmClaimVehicleAttachmentType
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicleAttachmentType{}).
+		Joins("INNER JOIN trx_atpm_claim_vehicle ON trx_atpm_claim_vehicle.claim_to = trx_atpm_claim_vehicle_attachment_type.atpm_code").
+		Joins("LEFT JOIN trx_atpm_claim_vehicle_detail ON trx_atpm_claim_vehicle_detail.claim_system_number = trx_atpm_claim_vehicle.claim_system_number").
+		Where("trx_atpm_claim_vehicle_attachment_type.mandatory = 1").
+		Where("trx_atpm_claim_vehicle.claim_system_number = ?", id).
+		Where("trx_atpm_claim_vehicle_detail.claim_system_number IS NULL").
+		Find(&transactionworkshopentities.AtpmClaimVehicleAttachmentType{}).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusPreconditionFailed,
+				Message:    "Mandatory attachments are not complete",
+				Err:        err,
+			}
+		}
+	}
+
+	// Step 4: Check existence of Use DMS
+	// Req RPS/07/21/00336
+	var useDmsExist int
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_company_reference AS ref").
+		Select("COUNT(1)").
+		Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.trx_atpm_claim_vehicle AS atpm ON atpm.claim_from = ref.company_id").
+		Where("atpm.claim_system_number = ? AND ref.use_dms = 1", id).
+		Scan(&useDmsExist).Error; err != nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check use DMS",
+			Err:        err,
+		}
+	}
+
+	if useDmsExist > 0 {
+		var count int64
+
+		// Check WO detail is not QC Passed)
+		if err := tx.Table("trx_work_order_detail AS w2").
+			Select("COUNT(1)").
+			Joins("LEFT JOIN trx_service_log sl ON sl.work_order_system_number = w2.work_order_system_number AND sl.operation_item_id = w2.operation_item_id AND ISNULL(sl.service_status_id, '') IN (?, ?, ?)", utils.SrvStatStop, utils.SrvStatQcPass, utils.SrvStatTransfer).
+			Joins("INNER JOIN trx_atpm_claim_vehicle_detail cl ON w2.work_order_system_number = cl.work_order_system_number").
+			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN('F', 'W') AND ISNULL(w2.BYPASS, '') <> '1' AND ISNULL(sl.service_status_id, '') = ''", id).
+			Count(&count).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to check if WO detail is not QC Passed",
+				Err:        err,
+			}
+		}
+
+		if count > 0 {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "WO detail is not QC Passed",
+			}
+		}
+
+		// Check claim without item/service detail)
+		var existsClaim bool
+		if err := tx.Table("trx_atpm_claim_vehicle_detail").
+			Select("1").
+			Where("claim_system_number = ? AND line_type_id = '2'", id).
+			Limit(1).
+			Scan(&existsClaim).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to check if claim has details",
+				Err:        err,
+			}
+		}
+
+		if !existsClaim {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Claim does not have item or service details",
+			}
+		}
+
+		var woDate, claimDate time.Time
+		if err := tx.Table("trx_atpm_claim_vehicle A").
+			Select("A.work_order_date, A.claim_date").
+			Joins("INNER JOIN trx_work_order B ON A.work_order_system_number = B.work_order_system_number").
+			Where("A.claim_system_number = ?", id).
+			First(&woDate).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch work order and claim dates",
+				Err:        err,
+			}
+		}
+
+		// Check if the claim date is more than 10 days after QC passed date for claims after the cutoff date
+		if woDate.After(time.Date(2021, 10, 8, 0, 0, 0, 0, time.UTC)) {
+			if claimDate.Sub(woDate).Hours()/24 > 10 {
+				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "Claim Date More than 10 days from QC Passed date",
+				}
+			}
+		}
+
+		// Check for the QC Passed Date in WO details
+		var startDate time.Time
+		if err := tx.Table("trx_work_order_detail w2").
+			Select("w2.quality_control_pass_datetime").
+			Joins("INNER JOIN trx_atpm_claim_vehicle_detail cl ON w2.work_order_system_number = cl.work_order_system_number").
+			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN ('F', 'W')", id).
+			Order("w2.quality_control_pass_datetime DESC").
+			Limit(1).
+			Scan(&startDate).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to check WO QC passed date",
+				Err:        err,
+			}
+		}
+
+		// If no QC passed date
+		if startDate.IsZero() {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "WO detail is not QC Passed",
+			}
+		}
+
+		// Check claim date is more than 10 days after the QC Passed Date
+		if claimDate.Sub(startDate).Hours()/24 > 10 {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Claim Date More than 10 days from QC Passed date",
+			}
+		}
+
+		var exists bool
+		var billingCustCodeExists bool
+		var servBookNo string
+
+		// Check if the vehicle has a service book number
+		if servBookNo == "" {
+			if err := tx.Table("trx_atpm_claim_vehicle_detail A").
+				Joins("INNER JOIN trx_work_order_detail B ON A.claim_system_number = B.claim_system_number").
+				Where("A.claim_system_number = ? AND B.transaction_type_id IN ('F', 'W')", id).
+				Limit(1).
+				Scan(&exists).Error; err != nil {
+				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check if vehicle has service book number",
+					Err:        err,
+				}
+			}
+
+			if exists {
+				if entity.CompanyId != 0 {
+					if err := tx.Table("dms_microservices_general_dev.dbo.mtr_company").
+						Where("company_id = ?", entity.CompanyId).
+						Limit(1).
+						Scan(&billingCustCodeExists).Error; err != nil {
+						return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to check if Billing Customer Code exists",
+							Err:        err,
+						}
+					}
+				}
+
+				if entity.CompanyId != 0 && !billingCustCodeExists {
+					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Message:    "This Vehicle has no Service Book No...",
+					}
+				}
+			}
+		} else {
+
+			var exists bool
+
+			if servBookNo == "" {
+				if err := tx.Table("trx_atpm_claim_vehicle_detail A").
+					Joins("INNER JOIN trx_work_order_detail B ON A.work_order_system_number = B.work_order_system_number AND A.WO_LINE_NO = B.WO_OPR_ITEM_LINE").
+					Where("A.claim_system_number = ? AND B.transaction_type_id IN ('F', 'W')", id).
+					Limit(1).
+					Scan(&exists).Error; err != nil {
+					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to check if service book number exists",
+						Err:        err,
+					}
+				}
+
+				if exists {
+					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Message:    "This Vehicle has no Service Book No...",
+					}
+				}
+			}
+
+		}
+
+	}
+
+	if entity.ClaimFrom == "151" {
+		var exists bool
+		if err := tx.Table("trx_atpm_claim_vehicle A").
+			Joins("INNER JOIN trx_atpm_claim_vehicle_detail B ON A.claim_system_number = B.claim_system_number").
+			Joins("INNER JOIN trx_work_order_detail C ON B.work_order_system_number = C.work_order_system_number AND B.WO_LINE_NO = C.WO_OPR_ITEM_LINE").
+			Where("A.claim_system_number = ? AND (ISNULL(C.ATPM_CLAIM_NO,'') <> '' AND ISNULL(A.CLAIM_NO,'') <> ISNULL(C.ATPM_CLAIM_NO,''))", id).
+			Limit(1).
+			Scan(&exists).Error; err != nil {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to check if referenced WO detail is already claimed",
+				Err:        err,
+			}
+		}
+
+		if exists {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Referenced WO detail is already claimed",
+			}
+		} else {
+			if err := tx.Table("trx_work_order_detail C").
+				Joins("INNER JOIN trx_atpm_claim_vehicle_detail B ON A.claim_system_number = B.claim_system_number").
+				Joins("INNER JOIN trx_atpm_claim_vehicle A ON A.claim_system_number = B.claim_system_number").
+				Where("A.claim_system_number = ?", id).
+				Update("C.ATPM_CLAIM_NO", entitywo.AtpmClaimNumber).
+				Update("C.ATPM_CLAIM_DATE", entitywo.AtpmClaimDate).
+				Update("C.claim_system_number", id).Error; err != nil {
+				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update work order details with claim info",
+					Err:        err,
+				}
+			}
+		}
+	}
+
+	if entitywo.AtpmClaimNumber == "" {
+		// Call to external procedure (Dummy document number update)
+		// Generate Dummy Document Number (Claim Doc No)
+		// Call dbo.uspg_gmSrcDoc1_Update here
+		// TODO: Implement logic for dbo.uspg_gmSrcDoc1_Update
+		// @Option = 0, -- int (specifies the option)
+		// @COMPANY_CODE = @Claim_To, -- varchar (company code of the claim)
+		// @TRANSACTION_DATE = @Change_Datetime, -- datetime (date of the transaction)
+		// @SOURCE_CODE = @Src_Doc_Type, -- varchar (source document type)
+		// @VEHICLE_BRAND = @Vehicle_Brand, -- varchar (brand of the vehicle)
+		// @PROFIT_CENTER_CODE = '', -- varchar (profit center code, currently empty)
+		// @TRANSACTION_CODE = '', -- varchar (transaction code, currently empty)
+		// @BANK_ACC_CODE = '', -- varchar (bank account code, currently empty)
+		// @Change_User_Id = @Change_User_Id, -- varchar (ID of the user making the change)
+		// @Last_Doc_No = @CLAIM_NO OUTPUT -- varchar (outputs the last document number)
+		// --End Generate Dummy Document Number--
+		var lastDocNo string
+		// if err := tx.Exec("EXEC uspg_gmSrcDoc1_Update @Option = 0, @COMPANY_CODE = ?, @TRANSACTION_DATE = ?, @SOURCE_CODE = ?, @VEHICLE_BRAND = ?, @PROFIT_CENTER_CODE = ?, @TRANSACTION_CODE = ?, @BANK_ACC_CODE = ?, @Change_User_Id = ?, @Last_Doc_No = ?",
+		// 	claimTo, changeDatetime, SrcDocType, vehicleBrand, "", "", "", changeUserId, &lastDocNo).Error; err != nil {
+		// 	return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to update dummy document number",
+		// 		Err:        err,
+		// 	}
+		// }
+
+		// Set CLAIM_NO to the last document number
+		entity.ClaimNumber = lastDocNo
+	}
+
+	if entitywo.AtpmClaimNumber == "" {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Document Master Is not Valid",
 		}
 	}
 
