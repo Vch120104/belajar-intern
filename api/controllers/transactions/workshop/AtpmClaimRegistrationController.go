@@ -2,10 +2,13 @@ package transactionworkshopcontroller
 
 import (
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -19,6 +22,7 @@ type AtpmClaimRegistrationControllerImpl struct {
 type AtpmClaimRegistrationController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
+	New(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transactionworkshopservice.AtpmClaimRegistrationService) AtpmClaimRegistrationController {
@@ -117,4 +121,32 @@ func (r *AtpmClaimRegistrationControllerImpl) GetById(writer http.ResponseWriter
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// New creates new atpm claim registration
+// @Summary Create New ATPM Claim Registration
+// @Description Create new atpm claim registration
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param body body payloads.AtpmClaimRegistrationRequest true "Atpm Claim Registration Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration [post]
+func (r *AtpmClaimRegistrationControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
+
+	var req transactionworkshoppayloads.AtpmClaimRegistrationRequest
+	helper.ReadFromRequestBody(request, &req)
+	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.New(req)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Data has been created successfully!", http.StatusCreated)
 }

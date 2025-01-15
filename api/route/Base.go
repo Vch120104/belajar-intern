@@ -2025,6 +2025,7 @@ func AtpmClaimRegistrationRouter(
 
 	router.Get("/", atpmClaimRegistrationController.GetAll)
 	router.Get("/{claim_system_number}", atpmClaimRegistrationController.GetById)
+	router.Post("/", atpmClaimRegistrationController.New)
 
 	return router
 }

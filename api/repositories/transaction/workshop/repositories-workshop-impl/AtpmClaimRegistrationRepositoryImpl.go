@@ -220,3 +220,21 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 
 	return response, nil
 }
+
+func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+	entity := transactionworkshopentities.AtpmClaimVehicle{
+		ClaimSystemNumber: request.ClaimSystemNumber,
+		CompanyId:         request.CompanyId,
+		BrandId:           request.BrandId,
+	}
+
+	if err := tx.Create(&entity).Error; err != nil {
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to create data",
+			Err:        tx.Error,
+		}
+	}
+
+	return entity, nil
+}

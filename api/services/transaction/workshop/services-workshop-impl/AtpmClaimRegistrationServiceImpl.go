@@ -1,6 +1,7 @@
 package transactionworkshopserviceimpl
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -89,6 +90,39 @@ func (s *AtpmClaimRegistrationServiceImpl) GetById(id int, pages pagination.Pagi
 	}()
 
 	result, repoErr := s.AtpmClaimRegistrationRepository.GetById(tx, id, pages)
+	if repoErr != nil {
+		return result, repoErr
+	}
+
+	return result, nil
+}
+
+func (s *AtpmClaimRegistrationServiceImpl) New(request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	result, repoErr := s.AtpmClaimRegistrationRepository.New(tx, request)
 	if repoErr != nil {
 		return result, repoErr
 	}

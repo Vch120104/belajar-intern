@@ -2,6 +2,12 @@ package transactionworkshoppayloads
 
 import "time"
 
+type AtpmClaimRegistrationRequest struct {
+	ClaimSystemNumber int `json:"claim_system_number"`
+	CompanyId         int `json:"company_id"`
+	BrandId           int `json:"brand_id"`
+}
+
 type AtpmClaimRegistrationResponse struct {
 	ClaimSystemNumber       int       `json:"claim_system_number"`
 	CompanyId               int       `json:"company_id"`
