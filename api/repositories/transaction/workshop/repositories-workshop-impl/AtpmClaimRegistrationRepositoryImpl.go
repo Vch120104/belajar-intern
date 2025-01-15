@@ -223,9 +223,22 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 
 func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
 	entity := transactionworkshopentities.AtpmClaimVehicle{
-		ClaimSystemNumber: request.ClaimSystemNumber,
-		CompanyId:         request.CompanyId,
-		BrandId:           request.BrandId,
+		CompanyId:            request.CompanyId,
+		BrandId:              request.BrandId,
+		ClaimTypeId:          request.ClaimTypeId,
+		CustomerComplaint:    request.CustomerComplaint,
+		TechnicianDiagnostic: request.TechnicianDiagnostic,
+		Countermeasure:       request.Countermeasure,
+		ClaimDate:            request.ClaimDate,
+		RepairEndDate:        request.RepairEndDate,
+
+		// other data
+		Fuel:       request.Fuel,
+		CustomerId: request.CustomerId,
+		Vdn:        request.VDN,
+
+		// Claim Header, Symptom, Trouble Code
+		ClaimHeader: request.ClaimHeader,
 	}
 
 	if err := tx.Create(&entity).Error; err != nil {
