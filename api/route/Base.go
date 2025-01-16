@@ -2028,6 +2028,7 @@ func AtpmClaimRegistrationRouter(
 	router.Post("/", atpmClaimRegistrationController.New)
 	router.Put("/{claim_system_number}", atpmClaimRegistrationController.Save)
 	router.Post("/submit/{claim_system_number}", atpmClaimRegistrationController.Submit)
+	router.Delete("/void/{claim_system_number}", atpmClaimRegistrationController.Void)
 
 	return router
 }

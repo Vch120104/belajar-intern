@@ -394,20 +394,20 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request 
 
 // uspg_atAtpmVehicleClaim0_Update
 // IF @Option = 1
-func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.AtpmClaimVehicle
 	var entitywo transactionworkshopentities.WorkOrderDetail
 
 	// Step 1: Retrieve claim details
 	if err := tx.Where("claim_system_number = ?", id).First(&entity).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Data not found",
 				Err:        err,
 			}
 		}
-		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch data",
 			Err:        err,
@@ -417,7 +417,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 	// Step 2: Validate claim status and draft
 	approvalDraft, approvalDraftErr := generalserviceapiutils.GetApprovalStatusByCode("10")
 	if approvalDraftErr != nil {
-		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: approvalDraftErr.StatusCode,
 			Message:    "Failed to fetch approval draft data from external service",
 			Err:        approvalDraftErr.Err,
@@ -425,7 +425,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 	}
 
 	if entity.ClaimStatusId != approvalDraft.ApprovalStatusId {
-		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusForbidden,
 			Message:    "Claim document is already submitted",
 			Err:        errors.New("claim document is already submitted"),
@@ -441,7 +441,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		Where("trx_atpm_claim_vehicle_detail.claim_system_number IS NULL").
 		Find(&transactionworkshopentities.AtpmClaimVehicleAttachmentType{}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusPreconditionFailed,
 				Message:    "Mandatory attachments are not complete",
 				Err:        err,
@@ -457,7 +457,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.trx_atpm_claim_vehicle AS atpm ON atpm.claim_from = ref.company_id").
 		Where("atpm.claim_system_number = ? AND ref.use_dms = 1", id).
 		Scan(&useDmsExist).Error; err != nil {
-		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to check use DMS",
 			Err:        err,
@@ -474,7 +474,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Joins("INNER JOIN trx_atpm_claim_vehicle_detail cl ON w2.work_order_system_number = cl.work_order_system_number").
 			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN ('8', '10') AND ISNULL(w2.BYPASS, '') <> '1' AND ISNULL(sl.service_status_id, '') = ''", id). // 8 = F Free Service, 10 = W Warranty
 			Count(&count).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to check if WO detail is not QC Passed",
 				Err:        err,
@@ -482,7 +482,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		}
 
 		if count > 0 {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "WO detail is not QC Passed",
 			}
@@ -495,7 +495,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Where("claim_system_number = ? AND line_type_id = '2'", id).
 			Limit(1).
 			Scan(&existsClaim).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to check if claim has details",
 				Err:        err,
@@ -503,7 +503,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		}
 
 		if !existsClaim {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Claim does not have item or service details",
 			}
@@ -515,7 +515,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Joins("INNER JOIN trx_work_order B ON A.work_order_system_number = B.work_order_system_number").
 			Where("A.claim_system_number = ?", id).
 			First(&woDate).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch work order and claim dates",
 				Err:        err,
@@ -525,7 +525,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		// Check if the claim date is more than 10 days after QC passed date for claims after the cutoff date
 		if woDate.After(time.Date(2021, 10, 8, 0, 0, 0, 0, time.UTC)) {
 			if claimDate.Sub(woDate).Hours()/24 > 10 {
-				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusBadRequest,
 					Message:    "Claim Date More than 10 days from QC Passed date",
 				}
@@ -541,7 +541,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Order("w2.quality_control_pass_datetime DESC").
 			Limit(1).
 			Scan(&startDate).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to check WO QC passed date",
 				Err:        err,
@@ -550,7 +550,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 
 		// If no QC passed date
 		if startDate.IsZero() {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "WO detail is not QC Passed",
 			}
@@ -558,7 +558,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 
 		// Check claim date is more than 10 days after the QC Passed Date
 		if claimDate.Sub(startDate).Hours()/24 > 10 {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Claim Date More than 10 days from QC Passed date",
 			}
@@ -575,7 +575,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 				Where("A.claim_system_number = ? AND B.transaction_type_id IN ('8', '10')", id). // 8 = F Free Service, 10 = W Warranty
 				Limit(1).
 				Scan(&exists).Error; err != nil {
-				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Message:    "Failed to check if vehicle has service book number",
 					Err:        err,
@@ -588,7 +588,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 						Where("company_id = ?", entity.CompanyId).
 						Limit(1).
 						Scan(&billingCustCodeExists).Error; err != nil {
-						return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+						return false, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
 							Message:    "Failed to check if Billing Customer Code exists",
 							Err:        err,
@@ -597,7 +597,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 				}
 
 				if entity.CompanyId != 0 && !billingCustCodeExists {
-					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
 						Message:    "This Vehicle has no Service Book No...",
 					}
@@ -613,7 +613,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 					Where("A.claim_system_number = ? AND B.transaction_type_id IN ('8', '10')", id). // 8 = F Free Service, 10 = W Warranty
 					Limit(1).
 					Scan(&exists).Error; err != nil {
-					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
 						Message:    "Failed to check if service book number exists",
 						Err:        err,
@@ -621,7 +621,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 				}
 
 				if exists {
-					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
 						Message:    "This Vehicle has no Service Book No...",
 					}
@@ -640,7 +640,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Where("A.claim_system_number = ? AND (ISNULL(C.atpm_claim_number,'') <> '' AND ISNULL(A.claim_number,'') <> ISNULL(C.atpm_claim_number,''))", id).
 			Limit(1).
 			Scan(&exists).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to check if referenced WO detail is already claimed",
 				Err:        err,
@@ -648,7 +648,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		}
 
 		if exists {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Referenced WO detail is already claimed",
 			}
@@ -660,7 +660,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 				Update("C.atpm_claim_number", entitywo.AtpmClaimNumber).
 				Update("C.atpm_claim_date", entitywo.AtpmClaimDate).
 				Update("C.claim_system_number", id).Error; err != nil {
-				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Message:    "Failed to update work order details with claim info",
 					Err:        err,
@@ -700,7 +700,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 	}
 
 	if entitywo.AtpmClaimNumber == "" {
-		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Document Master Is not Valid",
 		}
@@ -730,5 +730,70 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 
 	// 4. Update atpm.atAtpmVehicleClaim0
 
-	return entity, nil
+	return true, nil
+}
+
+// uspg_atAtpmVehicleClaim0_Delete
+// IF @Option = 0
+func (r *AtpmClaimRegistrationRepositoryImpl) Void(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+
+	var claim struct {
+		ClaimStatusId int
+		ClaimNumber   string
+	}
+
+	err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Select("claim_status_id, claim_number").
+		Where("claim_system_number = ? AND claim_status_id IN (?)", id, 1). // 1 = Draft
+		Limit(1).
+		Scan(&claim).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check claim status",
+			Err:        err,
+		}
+	}
+
+	if claim.ClaimStatusId != 1 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Void ATPM Claim failed, claim document is already submitted",
+			Err:        errors.New("claim document is already submitted"),
+		}
+	}
+
+	if claim.ClaimNumber == "" {
+		if err := tx.Where("claim_system_number = ?", id).
+			Delete(&transactionworkshopentities.AtpmClaimVehicleDetail{}).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to delete from trx_atpm_claim_vehicle_detail",
+				Err:        err,
+			}
+		}
+
+		if err := tx.Where("claim_system_number = ?", id).
+			Delete(&transactionworkshopentities.AtpmClaimVehicle{}).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to delete from trx_atpm_claim_vehicle",
+				Err:        err,
+			}
+		}
+	} else {
+		if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+			Where("claim_system_number = ?", id).
+			Update("claim_status_id", 4).Error; // 4 = Canceled
+		err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update claim status to canceled",
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
 }

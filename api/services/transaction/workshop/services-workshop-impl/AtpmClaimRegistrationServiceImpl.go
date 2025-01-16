@@ -163,7 +163,7 @@ func (s *AtpmClaimRegistrationServiceImpl) Save(id int, request transactionworks
 	return result, nil
 }
 
-func (s *AtpmClaimRegistrationServiceImpl) Submit(id int) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+func (s *AtpmClaimRegistrationServiceImpl) Submit(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -188,10 +188,43 @@ func (s *AtpmClaimRegistrationServiceImpl) Submit(id int) (transactionworkshopen
 		}
 	}()
 
-	result, repoErr := s.AtpmClaimRegistrationRepository.Submit(tx, id)
+	_, repoErr := s.AtpmClaimRegistrationRepository.Submit(tx, id)
 	if repoErr != nil {
-		return result, repoErr
+		return false, repoErr
 	}
 
-	return result, nil
+	return true, nil
+}
+
+func (s *AtpmClaimRegistrationServiceImpl) Void(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	_, repoErr := s.AtpmClaimRegistrationRepository.Void(tx, id)
+	if repoErr != nil {
+		return false, repoErr
+	}
+
+	return true, nil
 }

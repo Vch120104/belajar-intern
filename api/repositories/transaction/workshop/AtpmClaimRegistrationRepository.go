@@ -15,5 +15,6 @@ type AtpmClaimRegistrationRepository interface {
 	GetById(tx *gorm.DB, id int, pages pagination.Pagination) (transactionworkshoppayloads.AtpmClaimRegistrationResponse, *exceptions.BaseErrorResponse)
 	New(tx *gorm.DB, request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
 	Save(tx *gorm.DB, id int, request transactionworkshoppayloads.AtpmClaimRegistrationRequestSave) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
-	Submit(tx *gorm.DB, id int) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
+	Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+	Void(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 }

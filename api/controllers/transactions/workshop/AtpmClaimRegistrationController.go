@@ -25,6 +25,7 @@ type AtpmClaimRegistrationController interface {
 	New(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Submit(writer http.ResponseWriter, request *http.Request)
+	Void(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transactionworkshopservice.AtpmClaimRegistrationService) AtpmClaimRegistrationController {
@@ -215,4 +216,32 @@ func (r *AtpmClaimRegistrationControllerImpl) Submit(writer http.ResponseWriter,
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Data has been submitted successfully!", http.StatusOK)
+}
+
+// Void voids atpm claim registration
+// @Summary Void ATPM Claim Registration
+// @Description Void atpm claim registration
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_system_number path int true "ATPM Claim Registration ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/void/{claim_system_number} [delete]
+func (r *AtpmClaimRegistrationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
+
+	claimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	claimSystemNumber, err := strconv.Atoi(claimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.Void(claimSystemNumber)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Data has been voided successfully!", http.StatusOK)
 }

@@ -13,5 +13,6 @@ type AtpmClaimRegistrationService interface {
 	GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.AtpmClaimRegistrationResponse, *exceptions.BaseErrorResponse)
 	New(request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
 	Save(id int, request transactionworkshoppayloads.AtpmClaimRegistrationRequestSave) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
-	Submit(id int) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
+	Submit(id int) (bool, *exceptions.BaseErrorResponse)
+	Void(id int) (bool, *exceptions.BaseErrorResponse)
 }
