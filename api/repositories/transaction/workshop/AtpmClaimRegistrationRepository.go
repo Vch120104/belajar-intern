@@ -17,4 +17,5 @@ type AtpmClaimRegistrationRepository interface {
 	Save(tx *gorm.DB, id int, request transactionworkshoppayloads.AtpmClaimRegistrationRequestSave) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
 	Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 	Void(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+	GetAllServiceHistory(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

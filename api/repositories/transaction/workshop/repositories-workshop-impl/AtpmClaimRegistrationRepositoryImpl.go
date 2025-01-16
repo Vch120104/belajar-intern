@@ -797,3 +797,82 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Void(tx *gorm.DB, id int) (bool, *
 
 	return true, nil
 }
+
+// uspg_atAtpmVehicleClaim0_Select
+// IF @Option = 6
+func (r *AtpmClaimRegistrationRepositoryImpl) GetAllServiceHistory(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	var results []map[string]interface{}
+
+	// Fetch approval status by code
+	approvalStatus, approvalStatusErr := generalserviceapiutils.GetApprovalStatusByCode("20")
+	if approvalStatusErr != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalStatusErr.StatusCode,
+			Message:    "Failed to fetch approval status data from external service",
+			Err:        approvalStatusErr.Err,
+		}
+	}
+
+	baseQuery := tx.Table("trx_work_order A").
+		Select("DISTINCT A.work_order_date, A.service_mileage, A.work_order_document_number, C.account_receivable_work_order_document_number, C.total_after_vat_amount, A.company_id, E.work_order_service_request_line").
+		Joins("INNER JOIN trx_work_order_detail B ON A.work_order_system_number = B.work_order_system_number").
+		Joins("LEFT JOIN dms_microservices_finance_dev.dbo.trx_account_receivable_work_order C ON B.invoice_system_number = C.invoice_receipt_system_number AND C.account_receivable_work_order_approval_status_id = ?", approvalStatus.ApprovalStatusId).
+		Joins("LEFT JOIN trx_work_order_service_request E ON E.work_order_system_number = A.work_order_system_number").
+		Where("B.job_type_id = ?", 7). // 7 = Periodical Maintenance
+		Order("A.work_order_date DESC").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset())
+
+	tx = utils.ApplyFilter(baseQuery, filterCondition)
+
+	if result := tx.Scopes(pagination.Paginate(&pages, tx)).Find(&results); result.RowsAffected == 0 {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        nil,
+		}
+	}
+
+	if len(results) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	for _, entity := range results {
+
+		companyId, ok := entity["company_id"].(int)
+		if !ok {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Invalid company_id type",
+				Err:        nil,
+			}
+		}
+
+		companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(companyId)
+		if companyErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: companyErr.StatusCode,
+				Message:    "Failed to fetch company data from internal service",
+				Err:        companyErr.Err,
+			}
+		}
+
+		result := map[string]interface{}{
+			"work_order_date":                               entity["work_order_date"],
+			"service_mileage":                               entity["service_mileage"],
+			"work_order_document_number":                    entity["work_order_document_number"],
+			"account_receivable_work_order_document_number": entity["account_receivable_work_order_document_number"],
+			"total_after_vat_amount":                        entity["total_after_vat_amount"],
+			"company_id":                                    entity["company_id"],
+			"company_name":                                  companyResponses.CompanyName,
+			"work_order_service_request_line":               entity["work_order_service_request_line"],
+		}
+
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+	return pages, nil
+}

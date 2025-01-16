@@ -15,4 +15,5 @@ type AtpmClaimRegistrationService interface {
 	Save(id int, request transactionworkshoppayloads.AtpmClaimRegistrationRequestSave) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse)
 	Submit(id int) (bool, *exceptions.BaseErrorResponse)
 	Void(id int) (bool, *exceptions.BaseErrorResponse)
+	GetAllServiceHistory(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

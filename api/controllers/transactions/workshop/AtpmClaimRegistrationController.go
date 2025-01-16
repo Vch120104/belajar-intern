@@ -26,6 +26,8 @@ type AtpmClaimRegistrationController interface {
 	Save(writer http.ResponseWriter, request *http.Request)
 	Submit(writer http.ResponseWriter, request *http.Request)
 	Void(writer http.ResponseWriter, request *http.Request)
+
+	GetAllServiceHistory(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transactionworkshopservice.AtpmClaimRegistrationService) AtpmClaimRegistrationController {
@@ -244,4 +246,53 @@ func (r *AtpmClaimRegistrationControllerImpl) Void(writer http.ResponseWriter, r
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Data has been voided successfully!", http.StatusOK)
+}
+
+// GetAllServiceHistory gets all service history
+// @Summary Get All Service History
+// @Description Retrieve all service history with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_system_number path int true "ATPM Claim Registration ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/service-history [get]
+func (r *AtpmClaimRegistrationControllerImpl) GetAllServiceHistory(writer http.ResponseWriter, request *http.Request) {
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_atpm_claim_vehicle.claim_system_number": queryValues.Get("claim_system_number"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, err := r.AtpmClaimRegistrationService.GetAllServiceHistory(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
