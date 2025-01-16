@@ -472,7 +472,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Select("COUNT(1)").
 			Joins("LEFT JOIN trx_service_log sl ON sl.work_order_system_number = w2.work_order_system_number AND sl.operation_item_id = w2.operation_item_id AND ISNULL(sl.service_status_id, '') IN (?, ?, ?)", utils.SrvStatStop, utils.SrvStatQcPass, utils.SrvStatTransfer).
 			Joins("INNER JOIN trx_atpm_claim_vehicle_detail cl ON w2.work_order_system_number = cl.work_order_system_number").
-			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN('F', 'W') AND ISNULL(w2.BYPASS, '') <> '1' AND ISNULL(sl.service_status_id, '') = ''", id).
+			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN ('8', '10') AND ISNULL(w2.BYPASS, '') <> '1' AND ISNULL(sl.service_status_id, '') = ''", id). // 8 = F Free Service, 10 = W Warranty
 			Count(&count).Error; err != nil {
 			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -537,7 +537,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		if err := tx.Table("trx_work_order_detail w2").
 			Select("w2.quality_control_pass_datetime").
 			Joins("INNER JOIN trx_atpm_claim_vehicle_detail cl ON w2.work_order_system_number = cl.work_order_system_number").
-			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN ('F', 'W')", id).
+			Where("cl.claim_system_number = ? AND w2.line_type_id = 2 AND w2.transaction_type_id IN ('8', '10')", id). // 8 = F Free Service, 10 = W Warranty
 			Order("w2.quality_control_pass_datetime DESC").
 			Limit(1).
 			Scan(&startDate).Error; err != nil {
@@ -572,7 +572,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		if servBookNo == "" {
 			if err := tx.Table("trx_atpm_claim_vehicle_detail A").
 				Joins("INNER JOIN trx_work_order_detail B ON A.claim_system_number = B.claim_system_number").
-				Where("A.claim_system_number = ? AND B.transaction_type_id IN ('F', 'W')", id).
+				Where("A.claim_system_number = ? AND B.transaction_type_id IN ('8', '10')", id). // 8 = F Free Service, 10 = W Warranty
 				Limit(1).
 				Scan(&exists).Error; err != nil {
 				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
@@ -609,8 +609,8 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 
 			if servBookNo == "" {
 				if err := tx.Table("trx_atpm_claim_vehicle_detail A").
-					Joins("INNER JOIN trx_work_order_detail B ON A.work_order_system_number = B.work_order_system_number AND A.WO_LINE_NO = B.WO_OPR_ITEM_LINE").
-					Where("A.claim_system_number = ? AND B.transaction_type_id IN ('F', 'W')", id).
+					Joins("INNER JOIN trx_work_order_detail B ON A.work_order_system_number = B.work_order_system_number AND A.work_order_line_number = B.work_order_operation_item_line").
+					Where("A.claim_system_number = ? AND B.transaction_type_id IN ('8', '10')", id). // 8 = F Free Service, 10 = W Warranty
 					Limit(1).
 					Scan(&exists).Error; err != nil {
 					return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
@@ -636,8 +636,8 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 		var exists bool
 		if err := tx.Table("trx_atpm_claim_vehicle A").
 			Joins("INNER JOIN trx_atpm_claim_vehicle_detail B ON A.claim_system_number = B.claim_system_number").
-			Joins("INNER JOIN trx_work_order_detail C ON B.work_order_system_number = C.work_order_system_number AND B.WO_LINE_NO = C.WO_OPR_ITEM_LINE").
-			Where("A.claim_system_number = ? AND (ISNULL(C.ATPM_CLAIM_NO,'') <> '' AND ISNULL(A.CLAIM_NO,'') <> ISNULL(C.ATPM_CLAIM_NO,''))", id).
+			Joins("INNER JOIN trx_work_order_detail C ON B.work_order_system_number = C.work_order_system_number AND B.work_order_line_number = C.work_order_operation_item_line").
+			Where("A.claim_system_number = ? AND (ISNULL(C.atpm_claim_number,'') <> '' AND ISNULL(A.claim_number,'') <> ISNULL(C.atpm_claim_number,''))", id).
 			Limit(1).
 			Scan(&exists).Error; err != nil {
 			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
@@ -657,8 +657,8 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 				Joins("INNER JOIN trx_atpm_claim_vehicle_detail B ON A.claim_system_number = B.claim_system_number").
 				Joins("INNER JOIN trx_atpm_claim_vehicle A ON A.claim_system_number = B.claim_system_number").
 				Where("A.claim_system_number = ?", id).
-				Update("C.ATPM_CLAIM_NO", entitywo.AtpmClaimNumber).
-				Update("C.ATPM_CLAIM_DATE", entitywo.AtpmClaimDate).
+				Update("C.atpm_claim_number", entitywo.AtpmClaimNumber).
+				Update("C.atpm_claim_date", entitywo.AtpmClaimDate).
 				Update("C.claim_system_number", id).Error; err != nil {
 				return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -705,6 +705,30 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (trans
 			Message:    "Document Master Is not Valid",
 		}
 	}
+
+	//--ADD APPROVAL_REQ HERE
+	// 1. Generate Approval Code
+
+	// 2. Generate Approval Request Remark
+
+	// 3. Call usp_comApprovalReq_Insert
+	// Generate Approval Request
+	// Call usp_comApprovalReq_Insert stored procedure
+	// TODO: Implement logic for usp_comApprovalReq_Insert
+	// @Company_Code = claimTo
+	// @Approval_Code = apvCode
+	// @Src_Doc_Type = srcDocType
+	// @Src_Sys_No = claimSysNo
+	// @Module_Code = 'GR'
+	// @Src_Doc_Date = claimDate
+	// @Src_Doc_Amount = totalAfterDisc
+	// @Req_Remark = apvReqRemark
+	// @Req_No = apvReqNo OUTPUT
+	// @Change_No = 0
+	// @Creation_User_Id = changeUserId
+	// @Change_User_Id = changeUserId
+
+	// 4. Update atpm.atAtpmVehicleClaim0
 
 	return entity, nil
 }
