@@ -364,16 +364,16 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 		priceCodeId         int
 	)
 
-	priceListCodeUrl := config.EnvConfigs.AfterSalesServiceUrl + "price-list/by-code/A"
-	preiceListCodePayloads := masterpayloads.GetPriceListCodeResponse{}
-	if err := utils.Get(priceListCodeUrl, &preiceListCodePayloads, nil); err != nil || preiceListCodePayloads.PriceListCodeId == 0 {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching price list code: A",
-			Err:        errors.New("error fetching default price list code"),
-		}
-	}
-	defaultPriceCodeId = preiceListCodePayloads.PriceListCodeId
+	// priceListCodeUrl := config.EnvConfigs.AfterSalesServiceUrl + "price-list/by-code/1"
+	// preiceListCodePayloads := masterpayloads.GetPriceListCodeResponse{}
+	// if err := utils.Get(priceListCodeUrl, &preiceListCodePayloads, nil); err != nil || preiceListCodePayloads.PriceListCodeId == 0 {
+	// 	return 0, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "error fetching price list code: A",
+	// 		Err:        errors.New("error fetching default price list code"),
+	// 	}
+	// }
+	defaultPriceCodeId = 1
 
 	// Set markup percentage based on company ID
 	markupPercentage = 0
@@ -403,7 +403,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 	case utils.LinetypePackage:
 		// Package price logic
 		if err := tx.Model(&masterentities.PackageMaster{}).
-			Where("package_code = ?", oprItemCode).
+			Where("package_id = ?", oprItemCode).
 			Select("package_price").
 			Scan(&price).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -2073,455 +2073,169 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
-func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr string, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var results []map[string]interface{}
+func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr string, companyId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	const (
-		ItmGrpInventory   = 1 // "IN"
-		PurchaseTypeGoods = "G"
-	)
+	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	type Period struct {
-		PeriodYear  string `gorm:"column:PERIOD_YEAR"`
-		PeriodMonth string `gorm:"column:PERIOD_MONTH"`
-	}
+	switch linetypeStr {
+	case "0":
+		baseQuery = baseQuery.Table("mtr_package A").
+			Select("A.package_id, A.package_code, A.package_name, "+
+				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
+				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
+				"A.model_id, A.brand_id, A.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
+			Order("A.package_id")
 
-	var (
-		defaultPriceCode = "A"
-		ItmCls           string
-		year, month      string
-		period           Period
-		companyCode      = 151
-		closingModul     = 10
-		yearNow          = time.Now().Format("2006")
-		monthNow         = time.Now().Format("01")
-	)
+	case "1":
+		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
+			Select("omm.operation_id AS operation_id, "+
+				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+				"MAX(ofrt.frt_hour) AS frt_hour, "+
+				"oe.operation_entries_code AS operation_entries_code, oe.operation_entries_description AS operation_entries_description, "+
+				"ok.operation_key_code AS operation_key_code, ok.operation_key_description AS operation_key_description").
+			Joins("INNER JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+			Joins("LEFT OUTER JOIN mtr_operation_code AS oc ON omm.operation_id = oc.operation_id").
+			Joins("LEFT OUTER JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
+			Joins("LEFT OUTER JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
+			Where("omm.is_active = ?", true).
+			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
+				"oe.operation_entries_code, oe.operation_entries_description, " +
+				"ok.operation_key_code, ok.operation_key_description").
+			Order("omm.operation_id")
 
-	result := tx.Table("dms_microservices_finance_dev.dbo.mtr_closing_period_company").
-		Select("TOP 1 period_year, period_month").
-		Where("company_id = ? AND closing_module_detail_id = ? AND period_year <= ? AND period_month <= ? AND is_period_closed = '0'", companyCode, closingModul, yearNow, monthNow).
-		Order("period_year DESC, period_month DESC").
-		Scan(&period)
-
-	if result.Error != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to get period , please check closing period company",
-			Err:        result.Error,
+	default:
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid line type",
+			Err:        errors.New("invalid line type"),
 		}
 	}
 
-	year = period.PeriodYear
-	month = period.PeriodMonth
-
-	fmt.Println("Period Year:", year)
-	fmt.Println("Period Month:", month)
-
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	baseQuery := tx.Table("")
-
-	filterStrings := []string{}
-	filterValues := []interface{}{}
 	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
+		if linetypeStr == "0" {
+			switch filter.ColumnField {
+			case "package_id":
+				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
+			case "package_code":
+				baseQuery = baseQuery.Where("A.package_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "package_name":
+				baseQuery = baseQuery.Where("A.package_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "profit_center_name":
+				baseQuery = baseQuery.Where("B.profit_center_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_code":
+				baseQuery = baseQuery.Where("C.model_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_description":
+				baseQuery = baseQuery.Where("C.model_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "package_price":
+				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
+			case "model_id":
+				baseQuery = baseQuery.Where("A.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("A.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
+			}
+		} else if linetypeStr == "1" {
+			switch filter.ColumnField {
+			case "operation_id":
+				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
+			case "operation_code":
+				baseQuery = baseQuery.Where("oc.operation_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_name":
+				baseQuery = baseQuery.Where("oc.operation_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "frt_hour":
+				baseQuery = baseQuery.Where("ofrt.frt_hour = ?", filter.ColumnValue)
+			case "operation_entries_code":
+				baseQuery = baseQuery.Where("oe.operation_entries_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_entries_description":
+				baseQuery = baseQuery.Where("oe.operation_entries_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_key_code":
+				baseQuery = baseQuery.Where("ok.operation_key_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_key_description":
+				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("omm.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("omm.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
+			}
 
-	price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
-	switch linetypeStr {
-	case utils.LinetypePackage:
-		combinedDetailsSubQuery := `
-				(
-					SELECT package_id, frt_quantity, is_active 
-					FROM mtr_package_master_detail
-					WHERE is_active = 1
-					UNION ALL
-					SELECT package_id, frt_quantity, is_active 
-					FROM mtr_package_master_detail
-					WHERE is_active = 1
-				) AS CombinedDetails
-			`
-
-		baseQuery = baseQuery.Table("mtr_package A").
-			Select(`
-				A.package_code AS package_code, 
-				A.package_name AS package_name, 
-				SUM(CombinedDetails.frt_quantity) AS frt, 
-				B.profit_center_id AS profit_center, 
-				C.model_code AS model_code, 
-				C.model_description AS description, 
-				A.package_price AS price
-			`).
-			Joins("LEFT JOIN "+combinedDetailsSubQuery+" ON A.package_id = CombinedDetails.package_id").
-			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
-			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", 1).
-			Where(filterQuery, filterValues...).
-			Group("A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
-
-	case utils.LinetypeOperation:
-		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
-			Select(`
-        oc.operation_code AS operation_code, 
-        oc.operation_name AS operation_name, 
-        ofrt.frt_hour AS frt_hour, 
-        oe.operation_entries_code AS operation_entries_code, 
-        oe.operation_entries_description AS operation_entries_description, 
-        ok.operation_key_code AS operation_key_code, 
-        ok.operation_key_description AS operation_key_description,
-		? as PRICE
-    `, price).
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
-			Where("oc.is_active = ? ", 1).
-			Where(filterQuery, filterValues...)
-
-	case utils.LinetypeSparepart:
-		ItmCls = "1"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				A.item_code AS item_code,
-				A.item_name AS item_name,
-				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-						WHERE A.item_id = V.item_id 
-						AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ? 
-						AND V.whs_group = ?), 0) AS available_qty,
-				A.item_level_1_id AS item_level_1,
-				A.item_level_2_id AS item_level_2,
-				A.item_level_3_id AS item_level_3,
-				A.item_level_4_id AS item_level_4,
-				CASE 
-					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type_id
-							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-								WHERE is_active = 1 
-								AND brand_id = B.brand_id 
-								AND effective_date <= GETDATE()
-								AND item_id = A.item_id
-								AND currency_id = ? 
-								AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-								AND price_list_code_id = ?
-								ORDER BY effective_date DESC)
-							ELSE
-								(SELECT CASE ISNULL(price_current, 0)
-										WHEN 0 THEN price_begin 
-										ELSE price_current END AS HPP
-								FROM mtr_group_stock 
-								WHERE period_year = ? 
-								AND period_month = ? 
-								AND item_code = A.item_code 
-								AND company_id = ?  
-								AND whs_group = ?)
-						END
-					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-						WHERE is_active = 1 
-						AND brand_id = B.brand_id 
-						AND effective_date <= GETDATE()
-						AND item_id = A.item_id 
-						AND currency_id = ? 
-						AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-						AND price_list_code_id = ?
-						ORDER BY effective_date DESC)
-				END AS PRICE
-			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
-				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
-				currencyId, companyId, defaultPriceCode). // Parameters for the final ELSE condition.
-			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
-			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
-			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
-			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where(filterQuery, filterValues...)
-
-	case utils.LinetypeOil:
-		ItmCls = "2"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				A.item_code AS item_code, 
-				A.item_name AS item_name, 
-				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-				        WHERE A.item_id = V.item_id 
-				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4,
-				CASE 
-					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type_id
-							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-								WHERE is_active = 1 
-								AND brand_id = B.brand_id 
-								AND effective_date <= GETDATE()
-								AND item_id = A.item_id
-								AND currency_id = ? 
-								AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-								AND price_list_code_id = ?
-								ORDER BY effective_date DESC)
-							ELSE
-								(SELECT CASE ISNULL(price_current, 0)
-										WHEN 0 THEN price_begin 
-										ELSE price_current END AS HPP
-								FROM mtr_group_stock 
-								WHERE period_year = ? 
-								AND period_month = ? 
-								AND item_code = A.item_code 
-								AND company_id = ?  
-								AND whs_group = ?)
-						END
-					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-						WHERE is_active = 1 
-						AND brand_id = B.brand_id 
-						AND effective_date <= GETDATE()
-						AND item_id = A.item_id 
-						AND currency_id = ? 
-						AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-						AND price_list_code_id = ?
-						ORDER BY effective_date DESC)
-				END AS PRICE
-			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
-				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
-				currencyId, companyId, defaultPriceCode).
-			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
-			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
-			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
-			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where(filterQuery, filterValues...)
-
-	case utils.LinetypeMaterial:
-		ItmCls = "3"
-		ItmClsSublet := "2"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				DISTINCT A.item_code AS item_code, 
-				A.item_name AS item_name, 
-				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-				        WHERE A.item_id = V.item_id 
-				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4,
-				CASE 
-					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type
-							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-								WHERE is_active = 1 
-								AND brand_id = B.brand_id 
-								AND effective_date <= GETDATE()
-								AND item_id = A.item_id
-								AND currency_id = ? 
-								AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-								AND price_list_code_id = ?
-								ORDER BY effective_date DESC)
-							ELSE
-								(SELECT CASE ISNULL(price_current, 0)
-										WHEN 0 THEN price_begin 
-										ELSE price_current END AS HPP
-								FROM mtr_group_stock 
-								WHERE period_year = ? 
-								AND period_month = ? 
-								AND item_code = A.item_code 
-								AND company_id = ?  
-								AND whs_group = ?)
-						END
-					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-						WHERE is_active = 1 
-						AND brand_id = B.brand_id 
-						AND effective_date <= GETDATE()
-						AND item_id = A.item_id 
-						AND currency_id = ? 
-						AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-						AND price_list_code_id = ?
-						ORDER BY effective_date DESC)
-				END AS PRICE
-			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
-				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
-				currencyId, companyId, defaultPriceCode).
-			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
-			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
-			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
-			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
-			Where(filterQuery, filterValues...).
-			Order("A.item_code")
-
-	case utils.LinetypeFee:
-		ItmCls = "4"
-		ItmGrpOutsideJob := 4
-		PurchaseTypeServices := "S"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				DISTINCT A.item_code AS item_code, 
-				A.item_name AS item_name, 
-				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-				        WHERE A.item_id = V.item_id 
-				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4,
-				CASE 
-					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type_id
-							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-								WHERE is_active = 1 
-								AND brand_id = B.brand_id 
-								AND effective_date <= GETDATE()
-								AND item_id = A.item_id
-								AND currency_id = ? 
-								AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-								AND price_list_code_id = ?
-								ORDER BY effective_date DESC)
-							ELSE
-								(SELECT CASE ISNULL(price_current, 0)
-										WHEN 0 THEN price_begin 
-										ELSE price_current END AS HPP
-								FROM mtr_group_stock 
-								WHERE period_year = ? 
-								AND period_month = ? 
-								AND item_code = A.item_code 
-								AND company_id = ?  
-								AND whs_group = ?)
-						END
-					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-						WHERE is_active = 1 
-						AND brand_id = B.brand_id 
-						AND effective_date <= GETDATE()
-						AND item_id = A.item_id 
-						AND currency_id = ? 
-						AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-						AND price_list_code_id = ?
-						ORDER BY effective_date DESC)
-				END AS PRICE
-			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
-				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
-				currencyId, companyId, defaultPriceCode).
-			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
-			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
-			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
-			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
-			Where(filterQuery, filterValues...).
-			Order("A.item_code")
-
-	case utils.LinetypeAccesories:
-		ItmCls = "5"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				DISTINCT A.item_code AS item_code, 
-				A.item_name AS item_name, 
-				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
-				        WHERE A.item_id = V.item_id 
-				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4,
-				CASE 
-					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type_id
-							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-								WHERE is_active = 1 
-								AND brand_id = B.brand_id 
-								AND effective_date <= GETDATE()
-								AND item_id = A.item_id
-								AND currency_id = ? 
-								AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-								AND price_list_code_id = ?
-								ORDER BY effective_date DESC)
-							ELSE
-								(SELECT CASE ISNULL(price_current, 0)
-										WHEN 0 THEN price_begin 
-										ELSE price_current END AS HPP
-								FROM mtr_group_stock 
-								WHERE period_year = ? 
-								AND period_month = ? 
-								AND item_code = A.item_code 
-								AND company_id = ?  
-								AND whs_group = ?)
-						END
-					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
-						WHERE is_active = 1 
-						AND brand_id = B.brand_id 
-						AND effective_date <= GETDATE()
-						AND item_id = A.item_id 
-						AND currency_id = ? 
-						AND company_id = (CASE A.COMMON_PRICELIST WHEN '1' THEN 0 ELSE ? END)
-						AND price_list_code_id = ?
-						ORDER BY effective_date DESC)
-				END AS PRICE
-			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
-				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
-				currencyId, companyId, defaultPriceCode).
-			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
-			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
-			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
-			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
-			Where(filterQuery, filterValues...).
-			Order("A.item_code")
-
-	default:
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Invalid linetype ID",
-			Err:        errors.New("invalid linetype ID"),
+		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+			switch filter.ColumnField {
+			case "item_id":
+				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
+			case "item_code":
+				baseQuery = baseQuery.Where("A.item_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_name":
+				baseQuery = baseQuery.Where("A.item_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "available_qty":
+				baseQuery = baseQuery.Where("available_qty = ?", filter.ColumnValue)
+			case "item_level_1_code":
+				baseQuery = baseQuery.Where("mil1.item_level_1_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_2_code":
+				baseQuery = baseQuery.Where("mil2.item_level_2_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_3_code":
+				baseQuery = baseQuery.Where("mil3.item_level_3_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_4_code":
+				baseQuery = baseQuery.Where("mil4.item_level_4_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("B.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("B.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("B.variant_id = ?", filter.ColumnValue)
+			}
 		}
 	}
 
 	var totalRows int64
 	if err := baseQuery.Count(&totalRows).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count rows",
-			Err:        err,
-		}
-	}
-
-	offset := (paginate.Page - 1) * paginate.Limit
-	if err := baseQuery.Offset(offset).Limit(paginate.Limit).Find(&results).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve data",
+			Message:    "Failed to count total rows",
 			Err:        err,
 		}
 	}
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
-	return results, int(totalRows), totalPages, nil
+	paginateFunc := pagination.Paginate(&paginate, baseQuery)
+	baseQuery = baseQuery.Scopes(paginateFunc)
+
+	results := []map[string]interface{}{}
+	if err := baseQuery.Find(&results).Error; err != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch data",
+			Err:        err,
+		}
+	}
+
+	if linetypeStr == "1" {
+		for i := range results {
+			result := results[i]
+
+			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, 1, 2, 1, 2, 1, 11, 6, "")
+			if err != nil {
+				return pagination.Pagination{}, err
+			}
+
+			result["price"] = price
+		}
+	}
+
+	paginate.Rows = results
+	paginate.TotalRows = totalRows
+	paginate.TotalPages = totalPages
+
+	return paginate, nil
 }
 
 // usp_comLookUp
