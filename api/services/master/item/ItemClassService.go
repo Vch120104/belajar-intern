@@ -15,4 +15,5 @@ type ItemClassService interface {
 	SaveItemClass(req masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusItemClass(Id int) (bool, *exceptions.BaseErrorResponse)
 	GetItemClassDropDownbyGroupId(groupId int) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse)
+	GetItemClassMfgDropdown() ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse)
 }

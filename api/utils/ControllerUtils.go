@@ -185,6 +185,14 @@ func NotInSlice(item string, slice []string) bool {
 	}
 	return true
 }
+func NotInList(list []int, value int) bool {
+	for _, v := range list {
+		if v == value {
+			return false
+		}
+	}
+	return true
+}
 
 // IntSliceToSQLString mengubah []int menjadi string untuk SQL IN clause
 func IntSliceToSQLString(slice []int) string {
@@ -193,4 +201,40 @@ func IntSliceToSQLString(slice []int) string {
 		strValues[i] = fmt.Sprintf("%d", val)
 	}
 	return strings.Join(strValues, ",")
+}
+
+// Float64SliceToSQLString mengubah []float64 menjadi string untuk SQL IN clause
+func ConvertCommaToPeriod(value string) string {
+	return strings.Replace(value, ",", ".", -1)
+}
+
+// Check if a date is today or later. Returns false if date is yesterday or older.
+func DateTodayOrLater(toDate time.Time) (bool, error) {
+	y, m, d := time.Now().Date()
+	tdy := strconv.Itoa(int(m)) + "-" + strconv.Itoa(d) + "-" + strconv.Itoa(y)
+	today, err := time.Parse("1-2-2006", tdy)
+	if err != nil {
+		return false, err
+	}
+	if toDate.Before(time.Now()) && toDate != today {
+		return false, nil
+	}
+	return true, nil
+}
+
+// float64ToTimeString converts float64 to HHMM time string
+func Float64ToTimeString(f float64) string {
+	hours := int(f)
+	minutes := int((f - float64(hours)) * 100)
+	if hours < 0 || hours > 23 || minutes < 0 || minutes >= 60 {
+		return ""
+	}
+	return fmt.Sprintf("%02d%02d", hours, minutes)
+}
+
+// Converts time.Time to float64 representing decimal hours
+func TimeToDecimalHours(t time.Time) float64 {
+	hours := float64(t.Hour())
+	minutes := float64(t.Minute())
+	return hours + (minutes / 60)
 }

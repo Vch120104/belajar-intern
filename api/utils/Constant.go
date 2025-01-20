@@ -26,16 +26,16 @@ var WoStatCancel int = 7  // 60 Cancel
 var WoStatClosed int = 8  // 70 Close
 
 // Linetype Status
-var LinetypePackage int = 0            // 0 Package BodyShop
-var LinetypeOperation int = 1          // 1 Operation
-var LinetypeSparepart int = 2          // 2 Sparepart
-var LinetypeOil int = 3                // 3 Oil
-var LinetypeMaterial int = 4           // 4 Material
-var LinetypeFee int = 5                // 5 Fee
-var LinetypeAccesories int = 6         // 6 Accesories
-var LinetypeConsumableMaterial int = 7 // 7 Consumable Material
-var LinetypeSublet int = 8             // 8 Sublet
-var LinetypeSouvenir int = 9           // 9 Souvenir
+var LinetypePackage string = "0"            // 0 Package BodyShop
+var LinetypeOperation string = "1"          // 1 Operation
+var LinetypeSparepart string = "2"          // 2 Sparepart
+var LinetypeOil string = "3"                // 3 Oil
+var LinetypeMaterial string = "4"           // 4 Material
+var LinetypeFee string = "5"                // 5 Fee
+var LinetypeAccesories string = "6"         // 6 Accesories
+var LinetypeConsumableMaterial string = "7" // 7 Consumable Material
+var LinetypeSublet string = "8"             // 8 Sublet
+var LinetypeSouvenir string = "9"           // 9 Souvenir
 
 // Transaction Type Bill Code SO WO
 type TrxType struct {
@@ -122,6 +122,22 @@ var GetDataFailed string = "Get Data Failed"
 var CreateDataFailed string = "Create Data Successfully"
 var UpdateDataFailed string = "Update Data Failed"
 var DeleteDataFailed string = "Delete Data Failed"
+
+// approval code
+var ApprovalCancelledCode string = "80"   // Cancelled
+var ApprovalClosedCode string = "99"      // Closed
+var ApprovalCompleteCode string = "30"    // Complete
+var ApprovalDraftCode string = "10"       // Draft
+var ApprovalNewCode string = "0"          // New
+var ApprovalOutstandingCode string = "5"  // Outstanding
+var ApprovalReadyCode string = "11"       // Ready
+var ApprovalWaitApproveCode string = "15" // Wait Approve
+var ApprovalApprovedCode string = "20"    // Approved
+var ApprovalTestDataCode string = "120"   // Test Data
+var ApprovalWaitVerifyCode string = "12"  // Wait Verify
+var ApprovalWaitCancelCode string = "25"  // Wait Cancel
+var ApprovalConfirmedCode string = "21"   // Confirmed
+var ApprovalReplacedCode string = "31"    // Replaced
 
 // Error
 var CannotSendEmail string = "Cannot Send Email"

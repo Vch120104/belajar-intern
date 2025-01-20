@@ -22,4 +22,6 @@ type PackageMasterRepository interface {
 	DeactivateMultiIdPackageMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	ActivateMultiIdPackageMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	CopyToOtherModel(*gorm.DB, int, string, int) (int, *exceptions.BaseErrorResponse)
+	GetPackageLatestId(tx *gorm.DB) (masterpayloads.LatestPackageAndLineTypeResponse, *exceptions.BaseErrorResponse)
+	SavePackageToMappingItemOperation(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 }

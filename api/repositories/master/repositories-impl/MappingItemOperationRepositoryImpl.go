@@ -21,7 +21,26 @@ func StartItemOperationRepositoryImpl() masterrepository.ItemOperationRepository
 
 func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.ItemOperationPost
-	var entities masterentities.ItemOperation
+	var entities masterentities.MappingItemOperation
+
+	query := tx.Model(&entities).Select("mtr_item_operation.*").Table("mtr_item_operation")
+	WhereQuery := utils.ApplyFilter(query, filterCondition)
+
+	err := WhereQuery.Scopes(pagination.Paginate(&pages, query)).Scan(&responses).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	pages.Rows = responses
+	return pages, nil
+}
+
+func (r *ItemOperationRepositoryImpl) GetAllItemOperationLineType(tx *gorm.DB, lineTypeId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []masterpayloads.ItemOperationPost
+	var entities masterentities.MappingItemOperation
 
 	query := tx.Model(&entities).Select("mtr_item_operation.*").Table("mtr_item_operation")
 	WhereQuery := utils.ApplyFilter(query, filterCondition)
@@ -51,14 +70,17 @@ func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) 
 	return responses, nil
 }
 
-func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
-	entities := masterentities.ItemOperation{
-		ItemOperationModelMappingId: req.ItemOperationModelMappingId,
-		LineTypeId:                  req.LineTypeId,
+func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterpayloads.ItemOperationPost) (masterentities.MappingItemOperation, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: req.ItemOperationId,
+		LineTypeId:      req.LineTypeId,
+		ItemId:          req.ItemId,
+		OperationId:     req.OperationId,
+		PackageId:       req.PackageId,
 	}
 	err := tx.Save(&entities).Error
 	if err != nil {
-		return masterentities.ItemOperation{}, &exceptions.BaseErrorResponse{
+		return masterentities.MappingItemOperation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
@@ -67,8 +89,8 @@ func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterp
 }
 
 func (r *ItemOperationRepositoryImpl) DeleteItemOperation(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity masterentities.ItemOperation
-	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id = ?", id).Delete(&entity).Error
+	var entity masterentities.MappingItemOperation
+	err := tx.Model(masterentities.MappingItemOperation{}).Where("item_operation_id = ?", id).Delete(&entity).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -78,14 +100,17 @@ func (r *ItemOperationRepositoryImpl) DeleteItemOperation(tx *gorm.DB, id int) (
 	return true, nil
 }
 
-func (r *ItemOperationRepositoryImpl) UpdateItemOperation(tx *gorm.DB, id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
-	entities := masterentities.ItemOperation{
-		ItemOperationModelMappingId: req.ItemOperationModelMappingId,
-		LineTypeId:                  req.LineTypeId,
+func (r *ItemOperationRepositoryImpl) UpdateItemOperation(tx *gorm.DB, id int, req masterpayloads.ItemOperationPost) (masterentities.MappingItemOperation, *exceptions.BaseErrorResponse) {
+	entities := masterentities.MappingItemOperation{
+		ItemOperationId: req.ItemOperationId,
+		LineTypeId:      req.LineTypeId,
+		ItemId:          req.ItemId,
+		OperationId:     req.OperationId,
+		PackageId:       req.PackageId,
 	}
-	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id=?", id).Updates(&entities).Error
+	err := tx.Model(masterentities.MappingItemOperation{}).Where("item_operation_id=?", id).Updates(&entities).Error
 	if err != nil {
-		return masterentities.ItemOperation{}, &exceptions.BaseErrorResponse{
+		return masterentities.MappingItemOperation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}

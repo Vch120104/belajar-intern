@@ -25,10 +25,10 @@ type ItemOperationController interface {
 }
 
 type ItemOperationControllerImpl struct {
-	ItemOperationService masterservice.ItemOperationService
+	ItemOperationService masterservice.MappingItemOperationService
 }
 
-func NewItemOperationController(ItemOperationService masterservice.ItemOperationService) ItemOperationController {
+func NewItemOperationController(ItemOperationService masterservice.MappingItemOperationService) ItemOperationController {
 	return &ItemOperationControllerImpl{
 		ItemOperationService: ItemOperationService,
 	}
@@ -42,6 +42,7 @@ func (r *ItemOperationControllerImpl) GetAllItemOperation(writer http.ResponseWr
 		"mtr_item_operation.item_id":           queryValues.Get("item_id"),
 		"mtr_item_operation.operation_id":      queryValues.Get("operation_id"),
 		"mtr_item_operation.line_type_id":      queryValues.Get("line_type_id"),
+		"mtr_item_operation.package_id":        queryValues.Get("package_id"),
 	}
 
 	paginate := pagination.Pagination{

@@ -24,7 +24,7 @@ type PurchaseRequestRepository interface {
 	InsertPurchaseRequestDetail(*gorm.DB, transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse)
 	GetAllItemTypePrRequest(*gorm.DB, []utils.FilterCondition, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPurchaseRequestItemPr(*gorm.DB, int, int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
-	GetByCodePurchaseRequestItemPr(*gorm.DB, int, string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
+	GetByCodePurchaseRequestItemPr(*gorm.DB, int, string, int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
 	VoidPurchaseRequestDetailMultiId(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	GenerateDocumentNumber(tx *gorm.DB, id int) (string, *exceptions.BaseErrorResponse)
 }

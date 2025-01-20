@@ -98,6 +98,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 	filter := map[string]string{
 		"mtr_warehouse_master.warehouse_name":      queryValues.Get("warehouse_name"),
 		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
+		"mtr_warehouse_master.warehouse_group_id":  queryValues.Get("warehouse_group_id"),
 		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
 		"mtr_warehouse_master.is_active":           queryValues.Get("is_active"),
 		"mtr_warehouse_master.company_id":          queryValues.Get("company_id"),
@@ -385,12 +386,12 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 	queryValues := request.URL.Query()
 
 	filter := map[string]string{
-		"mtr_warehouse_authorize.warehouse_authorize_id": queryValues.Get("warehouse_authorize_id"),
-		"mtr_warehouse_authorize.employee_id":            queryValues.Get("employee_id"),
-		"mtr_user_details.user_id":                       queryValues.Get("user_id"),
-		"mtr_user_details.employee_name":                 queryValues.Get("employee_name"),
-		"mtr_warehouse_authorize.company_id":             queryValues.Get("company_id"),
-		"mtr_warehouse_authorize.warehouse_id":           queryValues.Get("warehouse_id"),
+		"mtr_warehouse_authorize.warehouse_authorize_id":                     queryValues.Get("warehouse_authorize_id"),
+		"mtr_warehouse_authorize.employee_id":                                queryValues.Get("employee_id"),
+		"dms_microservices_general_dev.dbo.mtr_user_details.employee_name":   queryValues.Get("employee_name"),
+		"dms_microservices_general_dev.dbo.mtr_user_company_access.username": queryValues.Get("username"),
+		"mtr_warehouse_authorize.company_id":                                 queryValues.Get("company_id"),
+		"mtr_warehouse_authorize.warehouse_id":                               queryValues.Get("warehouse_id"),
 	}
 
 	pagination := pagination.Pagination{

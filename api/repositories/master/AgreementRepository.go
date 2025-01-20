@@ -11,7 +11,7 @@ import (
 )
 
 type AgreementRepository interface {
-	GetAgreementById(*gorm.DB, int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
+	GetAgreementById(*gorm.DB, int) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	GetAgreementByCode(*gorm.DB, string) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	SaveAgreement(*gorm.DB, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	UpdateAgreement(*gorm.DB, int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
@@ -32,4 +32,10 @@ type AgreementRepository interface {
 	GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetDiscountGroupAgreementByHeaderId(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetDiscountItemAgreementByHeaderId(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetDiscountValueAgreementByHeaderId(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	DeleteMultiIdDiscountGroup(tx *gorm.DB, id int, ids []int) (bool, *exceptions.BaseErrorResponse)
+	DeleteMultiIdItemDiscount(tx *gorm.DB, id int, ids []int) (bool, *exceptions.BaseErrorResponse)
+	DeleteMultiIdDiscountValue(tx *gorm.DB, id int, ids []int) (bool, *exceptions.BaseErrorResponse)
 }

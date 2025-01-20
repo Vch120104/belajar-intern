@@ -108,10 +108,10 @@ type PurchaseRequestItemResponse struct {
 	ItemName string `json:"item_name"`
 }
 type UomItemResponses struct {
-	SourceConvertion *float64 `json:"source_convertion"`
-	TargetConvertion *float64 `json:"target_convertion"`
-	SourceUomId      *float64 `json:"source_uom_id"`
-	TargetUomId      *float64 `json:"target_uom_id"`
+	SourceConvertion float64 `json:"source_convertion"`
+	TargetConvertion float64 `json:"target_convertion"`
+	SourceUomId      float64 `json:"source_uom_id"`
+	TargetUomId      float64 `json:"target_uom_id"`
 }
 type PurchaseRequestOrderTypeResponse struct {
 	OrderTypeId   int    `json:"order_type_id"`

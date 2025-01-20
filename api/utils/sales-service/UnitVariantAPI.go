@@ -13,9 +13,24 @@ import (
 )
 
 type UnitVariantResponse struct {
+	VariantDescription string `json:"variant_description"`
 	VariantId          int    `json:"variant_id"`
 	VariantCode        string `json:"variant_code"`
-	VariantName        string `json:"variant_name"`
+}
+
+type UnitVariantParamResponse struct {
+	StatusCode int         `json:"status_code"`
+	Message    string      `json:"message"`
+	Page       int         `json:"page"`
+	Limit      int         `json:"limit"`
+	TotalPages int         `json:"total_pages"`
+	TotalRows  int         `json:"total_rows"`
+	Data       UnitVariant `json:"data"`
+}
+
+type UnitVariant struct {
+	VariantId          int    `json:"variant_id"`
+	VariantCode        string `json:"variant_code"`
 	VariantDescription string `json:"variant_description"`
 }
 
@@ -47,8 +62,8 @@ type UnitVariantParams struct {
 	SortOf             string `json:"sort_of"`
 }
 
-func GetAllUnitVariant(params UnitVariantParams) ([]UnitVariantResponse, *exceptions.BaseErrorResponse) {
-	var getUnitVariant []UnitVariantResponse
+func GetAllUnitVariant(params UnitVariantParams) ([]UnitVariantParamResponse, *exceptions.BaseErrorResponse) {
+	var getUnitVariant []UnitVariantParamResponse
 	if params.Limit == 0 {
 		params.Limit = 1000000
 	}
@@ -91,25 +106,36 @@ func GetAllUnitVariant(params UnitVariantParams) ([]UnitVariantResponse, *except
 }
 
 func GetUnitVariantById(id int) (UnitVariantResponse, *exceptions.BaseErrorResponse) {
-	var response UnitVariantResponse
+	var unitVariantResponse UnitVariantResponse
+
+	if id <= 0 {
+		return unitVariantResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid variant ID provided",
+			Err:        errors.New("invalid variant ID provided"),
+		}
+	}
+
 	url := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(id)
-	err := utils.CallAPI("GET", url, nil, &response)
+
+	err := utils.CallAPI("GET", url, nil, &unitVariantResponse)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve unit variant due to an external service error"
 
 		if errors.Is(err, utils.ErrServiceUnavailable) {
 			status = http.StatusServiceUnavailable
-			message = "unit variant service is temporarily unavailable"
+			message = "Unit variant service is temporarily unavailable"
 		}
 
-		return response, &exceptions.BaseErrorResponse{
+		return unitVariantResponse, &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting unit variant by ID"),
 		}
 	}
-	return response, nil
+
+	return unitVariantResponse, nil
 }
 
 func GetUnitVariantByMultiId(ids []int) ([]UnitVariantMultiIdResponse, *exceptions.BaseErrorResponse) {

@@ -179,7 +179,7 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch color data from external service
-		colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(payload.BrandId)
+		colourResponses, colourErr := salesserviceapiutils.GetUnitColorById(payload.BrandId)
 		if colourErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: colourErr.StatusCode,
@@ -225,11 +225,11 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			"service_request_by":              payload.ServiceRequestBy,
 			"service_company_name":            companyResponses.CompanyName,
 			"brand_name":                      brandResponses.BrandName,
-			"model_code_description":          modelResponses.ModelName,
-			"variant_code_description":        variantResponses.VariantName,
-			"colour_name":                     colourResponses[0].VariantColourName,
-			"chassis_no":                      vehicleResponses.VehicleChassisNumber,
-			"no_polisi":                       vehicleResponses.VehicleRegistrationCertificateTNKB,
+			"model_description":               modelResponses.ModelName,
+			"variant_description":             variantResponses.VariantDescription,
+			"colour_name":                     colourResponses.Data.ColourCommercialName,
+			"chassis_no":                      vehicleResponses.Data.Master.VehicleChassisNumber,
+			"no_polisi":                       vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 			"status":                          StatusResponses.ServiceRequestStatusDescription,
 			"work_order_system_number":        payload.WorkOrderSystemNumber,
 			"booking_system_number":           payload.BookingSystemNumber,
@@ -296,7 +296,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	// Fetch data colour from external API
-	colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(entity.BrandId)
+	colourResponses, colourErr := salesserviceapiutils.GetUnitColorById(entity.BrandId)
 	if colourErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -465,11 +465,11 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ReferenceDocDate:             referenceDocResponses.ReferenceDocDate,
 		BrandName:                    brandResponse.BrandName,
 		ModelName:                    modelResponse.ModelName,
-		VariantName:                  variantResponse.VariantName,
-		VariantColourName:            colourResponses[0].VariantColourName,
+		VariantDescription:           variantResponse.VariantDescription,
+		VariantColourName:            colourResponses.Data.ColourCommercialName,
 		VehicleId:                    entity.VehicleId,
-		VehicleCode:                  vehicleResponses.VehicleChassisNumber,
-		VehicleTnkb:                  vehicleResponses.VehicleRegistrationCertificateTNKB,
+		VehicleCode:                  vehicleResponses.Data.Master.VehicleChassisNumber,
+		VehicleTnkb:                  vehicleResponses.Data.STNK.VehicleRegistrationCertificateTNKB,
 		ServiceRemark:                entity.ServiceRemark,
 		ServiceCompanyId:             entity.ServiceCompanyId,
 		ServiceCompanyName:           servicecompanyResponses.CompanyName,
