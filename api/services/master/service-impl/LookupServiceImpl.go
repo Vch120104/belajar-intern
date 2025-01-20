@@ -944,3 +944,36 @@ func (s *LookupServiceImpl) ItemLocUOM(filterCondition []utils.FilterCondition, 
 
 	return lookup, nil
 }
+
+func (s *LookupServiceImpl) ItemOprCodeWithPriceByID(linetypeStr string, companyId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPriceByID(tx, linetypeStr, companyId, oprItemId, pages, filterCondition)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}

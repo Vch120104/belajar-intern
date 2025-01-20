@@ -1944,6 +1944,7 @@ func LookupRouter(
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}", LookupController.ItemOprCodeWithPrice)
+	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/by-id/{id}", LookupController.ItemOprCodeWithPriceByID)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
 	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)

@@ -22,6 +22,7 @@ type LookupController interface {
 	GetLineTypeByReferenceType(writer http.ResponseWriter, request *http.Request)
 	GetCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
+	ItemOprCodeWithPriceByID(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
 	GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request)
 	GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request)
@@ -1091,4 +1092,52 @@ func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *h
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	linetypeStr := chi.URLParam(request, "linetype_code")
+	if linetypeStr == "" {
+		payloads.NewHandleError(writer, "Invalid Line Type Code", http.StatusBadRequest)
+		return
+	}
+
+	companyIdstr := queryValues.Get("company_id")
+	if companyIdstr == "" {
+		companyIdstr = "0"
+	}
+
+	companyId, _ := strconv.Atoi(companyIdstr)
+
+	itemStrId := chi.URLParam(request, "item_id")
+	itemId, err := strconv.Atoi(itemStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Item ID", http.StatusBadRequest)
+		return
+	}
+
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, baseErr := r.LookupService.ItemOprCodeWithPriceByID(linetypeStr, companyId, itemId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+	)
 }

@@ -557,7 +557,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 			}
 		} else {
 			if err := tx.Model(&masteritementities.ItemPriceList{}).
-				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
+				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 					brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 				Order("effective_date DESC").
 				Limit(1).
@@ -2075,6 +2075,22 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
 func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr string, companyId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
+	var (
+		currentTime = time.Now()
+		year, month = currentTime.Year(), int(currentTime.Month() - 1)
+	)
+
+	// Fetch item type from external service
+	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
+	if itemTypeErr != nil {
+		return pagination.Pagination{}, itemTypeErr
+	}
+
+	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
+	if itemTypeErr != nil {
+		return pagination.Pagination{}, itemTypeErr
+	}
+
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
 	switch linetypeStr {
@@ -2109,6 +2125,325 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
+	case "2":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "SP"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?",
+				itemGrpFetch.ItemGroupId,
+				itemTypeFetchGoods.ItemTypeId,
+				itemClassResp.ItemClassId,
+				true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "3":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "OL"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+			A.item_id AS item_id, 
+			A.item_code AS item_code, 
+			A.item_name AS item_name,
+			B.brand_id AS brand_id,
+			B.model_id AS model_id,
+			B.variant_id AS variant_id,
+			COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+			A.item_level_1_id AS item_level_1,
+			mil1.item_level_1_code AS item_level_1_code, 
+			A.item_level_2_id AS item_level_2,
+			mil2.item_level_2_code AS item_level_2_code, 
+			A.item_level_3_id AS item_level_3,
+			mil3.item_level_3_code AS item_level_3_code, 
+			A.item_level_4_id AS item_level_4,
+			mil4.item_level_4_code AS item_level_4_code
+					`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "4":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "MT"
+		// fetch item class from external service
+		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "SB"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "5":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "WF"
+		// Fetch item group from external service
+		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		} // "OJ"
+
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
+						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "6":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "AC"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name,
+							B.brand_id AS brand_id,
+							B.model_id AS model_id,
+							B.variant_id AS variant_id,
+							COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "7":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "CM"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
+						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+								`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "9":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "SV"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
 	default:
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -2209,33 +2544,681 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 	paginateFunc := pagination.Paginate(&paginate, baseQuery)
 	baseQuery = baseQuery.Scopes(paginateFunc)
 
-	results := []map[string]interface{}{}
-	if err := baseQuery.Find(&results).Error; err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch data",
-			Err:        err,
-		}
+	type LineType0Response struct {
+		Description      string  `json:"description"`
+		FRT              float64 `json:"frt"`
+		ModelCode        string  `json:"model_code"`
+		PackageCode      string  `json:"package_code"`
+		PackageID        int     `json:"package_id"`
+		PackageName      string  `json:"package_name"`
+		Price            int     `json:"price"`
+		ProfitCenter     int     `json:"profit_center"`
+		ProfitCenterName string  `json:"profit_center_name"`
 	}
 
-	if linetypeStr == "1" {
-		for i := range results {
-			result := results[i]
+	type LineType1Response struct {
+		FrtHour                     float64 `json:"frt_hour"`
+		OperationCode               string  `json:"operation_code"`
+		OperationEntriesCode        *string `json:"operation_entries_code"`
+		OperationEntriesDescription *string `json:"operation_entries_description"`
+		OperationID                 int     `json:"operation_id"`
+		OperationKeyCode            *string `json:"operation_key_code"`
+		OperationKeyDescription     *string `json:"operation_key_description"`
+		OperationName               string  `json:"operation_name"`
+		Price                       float64 `json:"price"`
+	}
 
-			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, 1, 2, 1, 2, 1, 11, 6, "")
+	type LineType2To9Response struct {
+		AvailableQty   int     `json:"available_qty"`
+		ItemCode       string  `json:"item_code"`
+		ItemID         int     `json:"item_id"`
+		ItemLevel1     int     `json:"item_level_1"`
+		ItemLevel1Code string  `json:"item_level_1_code"`
+		ItemLevel2     int     `json:"item_level_2"`
+		ItemLevel2Code string  `json:"item_level_2_code"`
+		ItemLevel3     int     `json:"item_level_3"`
+		ItemLevel3Code string  `json:"item_level_3_code"`
+		ItemLevel4     int     `json:"item_level_4"`
+		ItemLevel4Code string  `json:"item_level_4_code"`
+		ItemName       string  `json:"item_name"`
+		Price          float64 `json:"price"`
+	}
+
+	switch linetypeStr {
+	case "0":
+		var results []LineType0Response
+		if err := baseQuery.Find(&results).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+		paginate.Rows = results
+
+	case "1":
+		var results []LineType1Response
+		if err := baseQuery.Find(&results).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+
+		for i := range results {
+			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
-
-			result["price"] = price
+			results[i].Price = price
 		}
+		paginate.Rows = results
+
+	case "2", "3", "4", "5", "6", "7", "9":
+		var results []LineType2To9Response
+		if err := baseQuery.Find(&results).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+
+		for i := range results {
+			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
+			if err != nil {
+				return pagination.Pagination{}, err
+			}
+			results[i].Price = price
+		}
+		paginate.Rows = results
 	}
 
-	paginate.Rows = results
 	paginate.TotalRows = totalRows
 	paginate.TotalPages = totalPages
 
 	return paginate, nil
+
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
+func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr string, companyId int, OprItemCode int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	var (
+		currentTime = time.Now()
+		year, month = currentTime.Year(), int(currentTime.Month() - 1)
+	)
+
+	// Fetch item type from external service
+	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
+	if itemTypeErr != nil {
+		return pagination.Pagination{}, itemTypeErr
+	}
+
+	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
+	if itemTypeErr != nil {
+		return pagination.Pagination{}, itemTypeErr
+	}
+
+	baseQuery := tx.Session(&gorm.Session{NewDB: true})
+
+	switch linetypeStr {
+	case "0":
+		baseQuery = baseQuery.Table("mtr_package A").
+			Select("A.package_id, A.package_code, A.package_name, "+
+				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
+				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
+				"A.model_id, A.brand_id, A.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
+			Where("A.package_id = ?", OprItemCode).
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
+			Order("A.package_id")
+
+	case "1":
+		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
+			Select("omm.operation_id AS operation_id, "+
+				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+				"MAX(ofrt.frt_hour) AS frt_hour, "+
+				"oe.operation_entries_code AS operation_entries_code, oe.operation_entries_description AS operation_entries_description, "+
+				"ok.operation_key_code AS operation_key_code, ok.operation_key_description AS operation_key_description").
+			Joins("INNER JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+			Joins("LEFT OUTER JOIN mtr_operation_code AS oc ON omm.operation_id = oc.operation_id").
+			Joins("LEFT OUTER JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
+			Joins("LEFT OUTER JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
+			Where("omm.is_active = ?", true).
+			Where("omm.operation_id = ?", OprItemCode).
+			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
+				"oe.operation_entries_code, oe.operation_entries_description, " +
+				"ok.operation_key_code, ok.operation_key_description").
+			Order("omm.operation_id")
+
+	case "2":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "SP"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?",
+				itemGrpFetch.ItemGroupId,
+				itemTypeFetchGoods.ItemTypeId,
+				itemClassResp.ItemClassId,
+				true).
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "3":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "OL"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+			A.item_id AS item_id, 
+			A.item_code AS item_code, 
+			A.item_name AS item_name,
+			B.brand_id AS brand_id,
+			B.model_id AS model_id,
+			B.variant_id AS variant_id,
+			COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+			A.item_level_1_id AS item_level_1,
+			mil1.item_level_1_code AS item_level_1_code, 
+			A.item_level_2_id AS item_level_2,
+			mil2.item_level_2_code AS item_level_2_code, 
+			A.item_level_3_id AS item_level_3,
+			mil3.item_level_3_code AS item_level_3_code, 
+			A.item_level_4_id AS item_level_4,
+			mil4.item_level_4_code AS item_level_4_code
+					`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "4":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "MT"
+		// fetch item class from external service
+		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "SB"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "5":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "WF"
+		// Fetch item group from external service
+		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		} // "OJ"
+
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
+						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "6":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "AC"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name,
+							B.brand_id AS brand_id,
+							B.model_id AS model_id,
+							B.variant_id AS variant_id,
+							COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "7":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "CM"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
+						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+								`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+
+	case "9":
+		// Fetch item group from external service
+		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
+		if itmgrpErr != nil {
+			return pagination.Pagination{}, itmgrpErr
+		}
+		// fetch item class from external service
+		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
+		if itmClsErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch item class data from external service",
+				Err:        itmClsErr.Err,
+			}
+		} // "SV"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
+			Order("A.item_id")
+	default:
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid line type",
+			Err:        errors.New("invalid line type"),
+		}
+	}
+
+	for _, filter := range filters {
+		if linetypeStr == "0" {
+			switch filter.ColumnField {
+			case "package_id":
+				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
+			case "package_code":
+				baseQuery = baseQuery.Where("A.package_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "package_name":
+				baseQuery = baseQuery.Where("A.package_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "profit_center_name":
+				baseQuery = baseQuery.Where("B.profit_center_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_code":
+				baseQuery = baseQuery.Where("C.model_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_description":
+				baseQuery = baseQuery.Where("C.model_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "package_price":
+				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
+			case "model_id":
+				baseQuery = baseQuery.Where("A.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("A.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
+			}
+		} else if linetypeStr == "1" {
+			switch filter.ColumnField {
+			case "operation_id":
+				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
+			case "operation_code":
+				baseQuery = baseQuery.Where("oc.operation_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_name":
+				baseQuery = baseQuery.Where("oc.operation_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "frt_hour":
+				baseQuery = baseQuery.Where("ofrt.frt_hour = ?", filter.ColumnValue)
+			case "operation_entries_code":
+				baseQuery = baseQuery.Where("oe.operation_entries_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_entries_description":
+				baseQuery = baseQuery.Where("oe.operation_entries_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_key_code":
+				baseQuery = baseQuery.Where("ok.operation_key_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_key_description":
+				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("omm.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("omm.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
+			}
+
+		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+			switch filter.ColumnField {
+			case "item_id":
+				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
+			case "item_code":
+				baseQuery = baseQuery.Where("A.item_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_name":
+				baseQuery = baseQuery.Where("A.item_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "available_qty":
+				baseQuery = baseQuery.Where("available_qty = ?", filter.ColumnValue)
+			case "item_level_1_code":
+				baseQuery = baseQuery.Where("mil1.item_level_1_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_2_code":
+				baseQuery = baseQuery.Where("mil2.item_level_2_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_3_code":
+				baseQuery = baseQuery.Where("mil3.item_level_3_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_4_code":
+				baseQuery = baseQuery.Where("mil4.item_level_4_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("B.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("B.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("B.variant_id = ?", filter.ColumnValue)
+			}
+		}
+	}
+
+	var totalRows int64
+	if err := baseQuery.Count(&totalRows).Error; err != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total rows",
+			Err:        err,
+		}
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
+
+	paginateFunc := pagination.Paginate(&paginate, baseQuery)
+	baseQuery = baseQuery.Scopes(paginateFunc)
+
+	type LineType0Response struct {
+		Description      string  `json:"description"`
+		FRT              float64 `json:"frt"`
+		ModelCode        string  `json:"model_code"`
+		PackageCode      string  `json:"package_code"`
+		PackageID        int     `json:"package_id"`
+		PackageName      string  `json:"package_name"`
+		Price            int     `json:"price"`
+		ProfitCenter     int     `json:"profit_center"`
+		ProfitCenterName string  `json:"profit_center_name"`
+	}
+
+	type LineType1Response struct {
+		FrtHour                     float64 `json:"frt_hour"`
+		OperationCode               string  `json:"operation_code"`
+		OperationEntriesCode        *string `json:"operation_entries_code"`
+		OperationEntriesDescription *string `json:"operation_entries_description"`
+		OperationID                 int     `json:"operation_id"`
+		OperationKeyCode            *string `json:"operation_key_code"`
+		OperationKeyDescription     *string `json:"operation_key_description"`
+		OperationName               string  `json:"operation_name"`
+		Price                       float64 `json:"price"`
+	}
+
+	type LineType2To9Response struct {
+		AvailableQty   int     `json:"available_qty"`
+		ItemCode       string  `json:"item_code"`
+		ItemID         int     `json:"item_id"`
+		ItemLevel1     int     `json:"item_level_1"`
+		ItemLevel1Code string  `json:"item_level_1_code"`
+		ItemLevel2     int     `json:"item_level_2"`
+		ItemLevel2Code string  `json:"item_level_2_code"`
+		ItemLevel3     int     `json:"item_level_3"`
+		ItemLevel3Code string  `json:"item_level_3_code"`
+		ItemLevel4     int     `json:"item_level_4"`
+		ItemLevel4Code string  `json:"item_level_4_code"`
+		ItemName       string  `json:"item_name"`
+		Price          float64 `json:"price"`
+	}
+
+	switch linetypeStr {
+	case "0":
+		var results []LineType0Response
+		if err := baseQuery.Find(&results).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+		paginate.Rows = results
+
+	case "1":
+		var results []LineType1Response
+		if err := baseQuery.Find(&results).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+
+		for i := range results {
+			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
+			if err != nil {
+				return pagination.Pagination{}, err
+			}
+			results[i].Price = price
+		}
+		paginate.Rows = results
+
+	case "2", "3", "4", "5", "6", "7", "9":
+		var results []LineType2To9Response
+		if err := baseQuery.Find(&results).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+
+		for i := range results {
+			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
+			if err != nil {
+				return pagination.Pagination{}, err
+			}
+			results[i].Price = price
+		}
+		paginate.Rows = results
+	}
+
+	paginate.TotalRows = totalRows
+	paginate.TotalPages = totalPages
+
+	return paginate, nil
+
 }
 
 // usp_comLookUp
