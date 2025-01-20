@@ -4633,6 +4633,8 @@ func (r *LookupRepositoryImpl) LocationItem(tx *gorm.DB, filterCondition []utils
 	return pages, nil
 }
 
+// usp_comLookUp
+// IF @strEntity = 'ItemLocUOM'
 func (r *LookupRepositoryImpl) ItemLocUOM(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var newFilterCondition []utils.FilterCondition
 	var companyId int
