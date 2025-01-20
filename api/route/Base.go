@@ -1966,6 +1966,8 @@ func LookupRouter(
 	router.Get("/item-import/part-number", LookupController.GetPartNumberItemImport)
 	router.Get("/location-item", LookupController.LocationItem)
 	router.Get("/item-loc-uom", LookupController.ItemLocUOM)
+	router.Get("/item-loc-uom/by-id/{company_id}/{item_id}", LookupController.ItemLocUOMById)
+	router.Get("/item-loc-uom/by-code/{company_id}", LookupController.ItemLocUOMByCode)
 
 	return router
 }

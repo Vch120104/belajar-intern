@@ -44,6 +44,8 @@ type LookupController interface {
 	GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request)
 	LocationItem(writer http.ResponseWriter, request *http.Request)
 	ItemLocUOM(writer http.ResponseWriter, request *http.Request)
+	ItemLocUOMById(writer http.ResponseWriter, request *http.Request)
+	ItemLocUOMByCode(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -1092,6 +1094,38 @@ func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *h
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) ItemLocUOMById(writer http.ResponseWriter, request *http.Request) {
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	item, baseErr := r.LookupService.ItemLocUOMById(companyId, itemId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *LookupControllerImpl) ItemLocUOMByCode(writer http.ResponseWriter, request *http.Request) {
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	itemCode := request.URL.Query().Get("item_code")
+
+	item, baseErr := r.LookupService.ItemLocUOMByCode(companyId, itemCode)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
 }
 
 func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWriter, request *http.Request) {

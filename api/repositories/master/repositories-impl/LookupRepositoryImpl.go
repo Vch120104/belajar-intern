@@ -5330,6 +5330,8 @@ func (r *LookupRepositoryImpl) LocationItem(tx *gorm.DB, filterCondition []utils
 	return pages, nil
 }
 
+// usp_comLookUp
+// IF @strEntity = 'ItemLocUOM'
 func (r *LookupRepositoryImpl) ItemLocUOM(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var newFilterCondition []utils.FilterCondition
 	var companyId int
@@ -5406,4 +5408,152 @@ func (r *LookupRepositoryImpl) ItemLocUOM(tx *gorm.DB, filterCondition []utils.F
 	pages.Rows = response
 
 	return pages, nil
+}
+
+func (r *LookupRepositoryImpl) ItemLocUOMById(tx *gorm.DB, companyId int, itemId int) (masterpayloads.ItemLocUOMResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemLocation{}
+	response := masterpayloads.ItemLocUOMResponse{}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if periodError != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching current period company",
+			Err:        periodError.Err,
+		}
+	}
+
+	var periodYear string = periodResponse.PeriodYear
+	var periodMonth string = periodResponse.PeriodMonth
+
+	viewLocStock := tx.Table("mtr_location_stock mls").
+		Select(`
+			mls.item_inquiry_id,
+			mls.period_year,
+			mls.period_month,
+			mls.company_id,
+			mls.item_id,
+			mls.warehouse_group_id,
+			mls.warehouse_id,
+			mls.location_id,
+			(
+				ISNULL(quantity_sales, 0) +
+				ISNULL(quantity_transfer_out, 0) +
+				ISNULL(quantity_robbing_out, 0) +
+				ISNULL(quantity_assembly_out, 0) +
+				ISNULL(quantity_allocated, 0)
+			) AS quantity_available
+		`).
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.company_id = mls.company_id AND mwm.warehouse_id = mls.warehouse_id")
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`TOP 1
+			MIN(mi.item_id) item_id,
+			mi.item_code,
+			mi.item_name,
+			mu.uom_code,
+			SUM(ISNULL(vls.quantity_available, 0)) quantity_available,
+			mi.is_active
+		`).
+		Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_location_item.item_id").
+		Joins("LEFT JOIN mtr_uom mu ON mu.uom_id = mi.unit_of_measurement_stock_id").
+		Joins(`LEFT JOIN (?) vls ON vls.item_id = mi.item_id AND vls.warehouse_group_id = mtr_location_item.warehouse_group_id
+															AND vls.warehouse_id = mtr_location_item.warehouse_id
+															AND vls.location_id = mtr_location_item.warehouse_location_id
+															AND vls.period_year = ?
+															AND vls.period_month = ?`, viewLocStock, periodYear, periodMonth).
+		Group("mi.item_code, mi.item_name, mu.uom_code, mi.is_active").
+		Order("item_id")
+
+	err := baseModelQuery.Where("mi.item_id = ?", itemId).Scan(&response).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "data not found",
+				Err:        err,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fethcing lookup data 'ItemLocUOMById'",
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+func (r *LookupRepositoryImpl) ItemLocUOMByCode(tx *gorm.DB, companyId int, itemCode string) (masterpayloads.ItemLocUOMResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemLocation{}
+	response := masterpayloads.ItemLocUOMResponse{}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if periodError != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching current period company",
+			Err:        periodError.Err,
+		}
+	}
+
+	var periodYear string = periodResponse.PeriodYear
+	var periodMonth string = periodResponse.PeriodMonth
+
+	viewLocStock := tx.Table("mtr_location_stock mls").
+		Select(`
+			mls.item_inquiry_id,
+			mls.period_year,
+			mls.period_month,
+			mls.company_id,
+			mls.item_id,
+			mls.warehouse_group_id,
+			mls.warehouse_id,
+			mls.location_id,
+			(
+				ISNULL(quantity_sales, 0) +
+				ISNULL(quantity_transfer_out, 0) +
+				ISNULL(quantity_robbing_out, 0) +
+				ISNULL(quantity_assembly_out, 0) +
+				ISNULL(quantity_allocated, 0)
+			) AS quantity_available
+		`).
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.company_id = mls.company_id AND mwm.warehouse_id = mls.warehouse_id")
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`TOP 1
+			MIN(mi.item_id) item_id,
+			mi.item_code,
+			mi.item_name,
+			mu.uom_code,
+			SUM(ISNULL(vls.quantity_available, 0)) quantity_available,
+			mi.is_active
+		`).
+		Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_location_item.item_id").
+		Joins("LEFT JOIN mtr_uom mu ON mu.uom_id = mi.unit_of_measurement_stock_id").
+		Joins(`LEFT JOIN (?) vls ON vls.item_id = mi.item_id AND vls.warehouse_group_id = mtr_location_item.warehouse_group_id
+															AND vls.warehouse_id = mtr_location_item.warehouse_id
+															AND vls.location_id = mtr_location_item.warehouse_location_id
+															AND vls.period_year = ?
+															AND vls.period_month = ?`, viewLocStock, periodYear, periodMonth).
+		Group("mi.item_code, mi.item_name, mu.uom_code, mi.is_active").
+		Order("item_id")
+
+	err := baseModelQuery.Where("mi.item_code = ?", itemCode).Scan(&response).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "data not found",
+				Err:        err,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fethcing lookup data 'ItemLocUOMById'",
+			Err:        err,
+		}
+	}
+
+	return response, nil
 }
