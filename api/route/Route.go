@@ -473,6 +473,11 @@ func StartRouting(db *gorm.DB) {
 	ContractServiceDetailService := transactionworkshopserviceimpl.OpenContractServiceDetailServiceImpl(ContractServiceDetailRepository, db, rdb)
 	ContractServiceDetailController := transactionworkshopcontroller.NewContractServiceDetailController(ContractServiceDetailService)
 
+	//Atpm Claim Registration
+	AtpmClaimRegistrationRepository := transactionworkshoprepositoryimpl.OpenAtpmClaimRegistrationRepositoryImpl()
+	AtpmClaimRegistrationService := transactionworkshopserviceimpl.OpenAtpmClaimRegistrationServiceImpl(AtpmClaimRegistrationRepository, db, rdb)
+	AtpmClaimRegistrationController := transactionworkshopcontroller.NewAtpmClaimRegistrationController(AtpmClaimRegistrationService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -563,6 +568,8 @@ func StartRouting(db *gorm.DB) {
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
 	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
+	AtpmClaimRegistrationRouter := AtpmClaimRegistrationRouter(AtpmClaimRegistrationController)
+
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -654,6 +661,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/service-workshop", ServiceWorkshopRouter)
 		r.Mount("/contract-service", ContractServiceRouter)
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
+		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
 
 		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
@@ -678,7 +686,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/lookup", LookupRouter)
 	})
 	// Route untuk Swagger
-	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
+	r.Mount("/docs", httpSwagger.WrapHandler)
 	// Route untuk Prometheus metrics
 	r.Mount("/metrics", promhttp.Handler())
 

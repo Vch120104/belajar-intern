@@ -80,13 +80,13 @@ type WorkOrder struct {
 	LastApprovalBy                     int               `gorm:"column:last_approval_by_id;size:30;" json:"last_approval_by_id"`
 	LastApprovalDate                   *time.Time        `gorm:"column:last_approval_date;default:null" json:"last_approval_date"`
 	Remark                             string            `gorm:"column:remark;size:50;" json:"remark"`
-	Foreman                            int               `gorm:"column:foreman_id;size:30;" json:"foreman_id"`
+	ForemanId                          int               `gorm:"column:foreman_id;size:30;" json:"foreman_id"`
 	ProductionHead                     int               `gorm:"column:production_head_id;size:30;" json:"production_head_id"`
 	EstTime                            float64           `gorm:"column:estimate_time;default:null" json:"estimate_time"`
 	Notes                              string            `gorm:"column:notes;size:50;" json:"notes"`
 	Suggestion                         string            `gorm:"column:suggestion;size:50;" json:"suggestion"`
 	FSCouponNo                         string            `gorm:"column:fs_coupon_number;size:50;" json:"fs_coupon_number"`
-	ServiceAdvisor                     int               `gorm:"column:service_advisor_id;size:30;" json:"service_advisor_id"`
+	ServiceAdvisorId                   int               `gorm:"column:service_advisor_id;size:30;" json:"service_advisor_id"`
 	CPCcode                            string            `gorm:"column:cpc_code;size:5;" json:"cpc_code"`
 	IncentiveDate                      *time.Time        `gorm:"column:incentive_date;default:null" json:"incentive_date"`
 	WOCancelReason                     string            `gorm:"column:work_order_cancel_reason;size:50;" json:"work_order_cancel_reason"`

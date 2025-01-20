@@ -1715,6 +1715,7 @@ func ClaimSupplierRouter(
 	router.Post("/submit/{claim_system_number}", ClaimSupplierController.SubmitItemClaim)
 	return router
 }
+
 func QualityControlRouter(
 	QualityControlController transactionworkshopcontroller.QualityControlController,
 ) chi.Router {
@@ -1942,7 +1943,8 @@ func LookupRouter(
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
-	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
+	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}", LookupController.ItemOprCodeWithPrice)
+	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/by-id/{id}", LookupController.ItemOprCodeWithPriceByID)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
 	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
@@ -2015,12 +2017,34 @@ func ItemQueryAllCompanyRouter(
 	return router
 }
 
+func AtpmClaimRegistrationRouter(
+	atpmClaimRegistrationController transactionworkshopcontroller.AtpmClaimRegistrationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", atpmClaimRegistrationController.GetAll)
+	router.Get("/{claim_system_number}", atpmClaimRegistrationController.GetById)
+	router.Post("/", atpmClaimRegistrationController.New)
+	router.Put("/{claim_system_number}", atpmClaimRegistrationController.Save)
+	router.Post("/submit/{claim_system_number}", atpmClaimRegistrationController.Submit)
+	router.Delete("/void/{claim_system_number}", atpmClaimRegistrationController.Void)
+
+	router.Get("/service-history", atpmClaimRegistrationController.GetAllServiceHistory)
+	router.Get("/claim-history", atpmClaimRegistrationController.GetAllClaimHistory)
+
+	return router
+}
+
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
-	// Izinkan akses ke Swagger di /aftersales-service/docs
-	router.Get("/aftersales-service/docs/v1/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server
+	// akses ke Swagger di /aftersales-service/docs
+	router.Get("/docs/v1/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/v1/doc.json"),
 	))
 
 	return router

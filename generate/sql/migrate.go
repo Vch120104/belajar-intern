@@ -199,6 +199,10 @@ func Migrate() {
 	// &transactionworkshopentities.BookingEstimationOperationDetail{},
 	// &transactionworkshopentities.ContractService{},
 	// &transactionworkshopentities.ContractServiceDetail{},
+	// &transactionworkshopentities.AtpmClaimVehicle{},
+	// &transactionworkshopentities.AtpmClaimVehicleDetail{},
+	// &transactionworkshopentities.AtpmClaimVehicleAttachment{},
+	// &transactionworkshopentities.AtpmClaimVehicleAttachmentType{},
 
 	// Transaction Spare Part Purchase Request
 	// &transactionsparepartentities.PurchaseRequestEntities{},
