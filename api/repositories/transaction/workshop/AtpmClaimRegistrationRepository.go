@@ -18,4 +18,5 @@ type AtpmClaimRegistrationRepository interface {
 	Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 	Void(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 	GetAllServiceHistory(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllClaimHistory(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

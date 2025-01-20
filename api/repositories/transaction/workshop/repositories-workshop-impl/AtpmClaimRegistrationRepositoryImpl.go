@@ -91,18 +91,18 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 			}
 		}
 
-		vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
-		if vehicleErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: vehicleErr.StatusCode,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        vehicleErr.Err,
-			}
-		}
+		// vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+		// if vehicleErr != nil {
+		// 	return pages, &exceptions.BaseErrorResponse{
+		// 		StatusCode: vehicleErr.StatusCode,
+		// 		Message:    "Failed to fetch vehicle data from external service",
+		// 		Err:        vehicleErr.Err,
+		// 	}
+		// }
 
 		result := map[string]interface{}{
 			"vehicle_id":                 entity.VehicleId,
-			"vehicle_chassis_number":     vehicleResponse.Data.Master.VehicleChassisNumber,
+			"vehicle_chassis_number":     "vehicleResponse.Data.Master.VehicleChassisNumber",
 			"work_order_system_number":   entity.WorkOrderSystemNumber,
 			"work_order_document_number": entity.WorkOrderDocumentNumber,
 			"work_order_date":            entity.WorkOrderDate,
@@ -254,6 +254,8 @@ func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transacti
 	entity := transactionworkshopentities.AtpmClaimVehicle{
 		CompanyId:            request.CompanyId,
 		BrandId:              request.BrandId,
+		ModelId:              request.ModelId,
+		VariantId:            request.VariantId,
 		ClaimTypeId:          request.ClaimTypeId,
 		ClaimStatusId:        approvalDraft.ApprovalStatusId,
 		CustomerComplaint:    request.CustomerComplaint,
@@ -868,6 +870,81 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAllServiceHistory(tx *gorm.DB, 
 			"company_id":                                    entity["company_id"],
 			"company_name":                                  companyResponses.CompanyName,
 			"work_order_service_request_line":               entity["work_order_service_request_line"],
+		}
+
+		results = append(results, result)
+	}
+
+	pages.Rows = results
+	return pages, nil
+}
+
+// uspg_atAtpmVehicleClaim0_Select
+// IF @Option = 7
+func (r *AtpmClaimRegistrationRepositoryImpl) GetAllClaimHistory(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	var results []map[string]interface{}
+
+	// Fetch approval status by code
+	approvalStatus, approvalStatusErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if approvalStatusErr != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: approvalStatusErr.StatusCode,
+			Message:    "Failed to fetch approval status data from external service",
+			Err:        approvalStatusErr.Err,
+		}
+	}
+
+	baseQuery := tx.Table("trx_atpm_claim_vehicle A").
+		Select("A.claim_system_number, A.claim_number, A.claim_date, A.claim_status_id, A.company_id, A.pfp").
+		Joins("LEFT JOIN trx_atpm_claim_vehicle_detail B ON A.claim_system_number = B.claim_system_number").
+		Where("A.claim_status_id <> ?", approvalStatus.ApprovalStatusId).
+		Order("A.claim_date DESC").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset())
+
+	tx = utils.ApplyFilter(baseQuery, filterCondition)
+
+	if result := tx.Scopes(pagination.Paginate(&pages, tx)).Find(&results); result.RowsAffected == 0 {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        nil,
+		}
+	}
+
+	if len(results) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	for _, entity := range results {
+
+		companyId, ok := entity["company_id"].(int)
+		if !ok {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Invalid company_id type",
+				Err:        nil,
+			}
+		}
+
+		companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(companyId)
+		if companyErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: companyErr.StatusCode,
+				Message:    "Failed to fetch company data from internal service",
+				Err:        companyErr.Err,
+			}
+		}
+
+		result := map[string]interface{}{
+			"claim_system_number": entity["claim_system_number"],
+			"claim_number":        entity["claim_number"],
+			"claim_date":          entity["claim_date"],
+			"claim_status_id":     entity["claim_status_id"],
+			"company_id":          entity["company_id"],
+			"company_name":        companyResponses.CompanyName,
 		}
 
 		results = append(results, result)

@@ -2032,6 +2032,7 @@ func AtpmClaimRegistrationRouter(
 	router.Delete("/void/{claim_system_number}", atpmClaimRegistrationController.Void)
 
 	router.Get("/service-history", atpmClaimRegistrationController.GetAllServiceHistory)
+	router.Get("/claim-history", atpmClaimRegistrationController.GetAllClaimHistory)
 
 	return router
 }

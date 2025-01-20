@@ -16,4 +16,5 @@ type AtpmClaimRegistrationService interface {
 	Submit(id int) (bool, *exceptions.BaseErrorResponse)
 	Void(id int) (bool, *exceptions.BaseErrorResponse)
 	GetAllServiceHistory(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllClaimHistory(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }
