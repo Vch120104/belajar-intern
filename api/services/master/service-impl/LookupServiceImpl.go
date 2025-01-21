@@ -129,7 +129,7 @@ func (s *LookupServiceImpl) ItemOprCodeByID(linetypeStr string, oprItemId int, p
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeStr string, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeStr string, companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -154,12 +154,12 @@ func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeStr string, companyId i
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeStr, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeStr, companyId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
 func (s *LookupServiceImpl) GetVehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -940,6 +940,105 @@ func (s *LookupServiceImpl) ItemLocUOM(filterCondition []utils.FilterCondition, 
 	lookup, baseErr := s.LookupRepo.ItemLocUOM(tx, filterCondition, pages)
 	if baseErr != nil {
 		return pages, baseErr
+	}
+
+	return lookup, nil
+}
+
+func (s *LookupServiceImpl) ItemLocUOMById(companyId int, itemId int) (masterpayloads.ItemLocUOMResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.ItemLocUOMById(tx, companyId, itemId)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}
+
+func (s *LookupServiceImpl) ItemLocUOMByCode(companyId int, itemCode string) (masterpayloads.ItemLocUOMResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.ItemLocUOMByCode(tx, companyId, itemCode)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}
+
+func (s *LookupServiceImpl) ItemOprCodeWithPriceByID(linetypeStr string, companyId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPriceByID(tx, linetypeStr, companyId, oprItemId, pages, filterCondition)
+	if baseErr != nil {
+		return lookup, baseErr
 	}
 
 	return lookup, nil

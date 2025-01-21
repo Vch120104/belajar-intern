@@ -220,10 +220,14 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	}
 
 	// Validation: request date
-	currentDate := time.Now()
-	requestDate := request.WorkOrderArrivalTime.Truncate(24 * time.Hour)
-	if requestDate.Before(currentDate) || requestDate.After(currentDate) {
-		request.WorkOrderArrivalTime = currentDate
+	loc, _ := time.LoadLocation("Asia/Jakarta") // UTC+7
+	currentDate := time.Now().In(loc).Format("2006-01-02T15:04:05Z")
+	parsedTime, _ := time.Parse(time.RFC3339, currentDate)
+
+	requestDate := request.WorkOrderArrivalTime.In(loc).Truncate(24 * time.Hour)
+
+	if requestDate.Before(parsedTime.Truncate(24*time.Hour)) || requestDate.After(parsedTime.Truncate(24*time.Hour)) {
+		request.WorkOrderArrivalTime = parsedTime
 	}
 
 	// Check if the CompanyId is provided
@@ -273,9 +277,9 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		// page 1
 		WorkOrderDocumentNumber:    defaultWorkOrderDocumentNumber,
 		WorkOrderStatusId:          utils.WoStatDraft,
-		WorkOrderDate:              currentDate,
+		WorkOrderDate:              parsedTime,
 		CPCcode:                    defaultCPCcode,
-		ServiceAdvisor:             request.ServiceAdvisorId,
+		ServiceAdvisorId:           request.ServiceAdvisorId,
 		WorkOrderTypeId:            workOrderTypeId,
 		BookingSystemNumber:        request.BookingSystemNumber,
 		EstimationSystemNumber:     request.EstimationSystemNumber,
@@ -798,7 +802,7 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		WorkOrderTypeName:                  getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:                  entity.WorkOrderStatusId,
 		WorkOrderStatusName:                getWorkOrderStatusResponses.WorkOrderStatusName,
-		ServiceAdvisorId:                   entity.ServiceAdvisor,
+		ServiceAdvisorId:                   entity.ServiceAdvisorId,
 		BrandId:                            entity.BrandId,
 		BrandName:                          brandResponse.BrandName,
 		ModelId:                            entity.ModelId,
@@ -1894,10 +1898,14 @@ func (r *WorkOrderRepositoryImpl) AddRequest(tx *gorm.DB, workorderID int, reque
 		maxWonextLine++
 	}
 
+	loc, _ := time.LoadLocation("Asia/Jakarta") // UTC+7
+	currentDate := time.Now().In(loc).Format("2006-01-02T15:04:05Z")
+	parsedTime, _ := time.Parse(time.RFC3339, currentDate)
+
 	entities := transactionworkshopentities.WorkOrderService{
 		WorkOrderSystemNumber:       request.WorkOrderSystemNumber,
 		WorkOrderServiceRemark:      request.WorkOrderServiceRemark,
-		WorkOrderServiceDate:        time.Now(),
+		WorkOrderServiceDate:        parsedTime,
 		WorkOrderServiceRequestLine: maxWonextLine,
 	}
 
@@ -2092,12 +2100,14 @@ func (r *WorkOrderRepositoryImpl) UpdateVehicleService(tx *gorm.DB, workorderID 
 
 func (r *WorkOrderRepositoryImpl) AddVehicleService(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
 
-	CurrentDate := time.Now()
+	loc, _ := time.LoadLocation("Asia/Jakarta") // UTC+7
+	currentDate := time.Now().In(loc).Format("2006-01-02T15:04:05Z")
+	parsedTime, _ := time.Parse(time.RFC3339, currentDate)
 
 	entities := transactionworkshopentities.WorkOrderServiceVehicle{
 
 		WorkOrderSystemNumber:  request.WorkOrderSystemNumber,
-		WorkOrderVehicleDate:   CurrentDate,
+		WorkOrderVehicleDate:   parsedTime,
 		WorkOrderVehicleRemark: request.WorkOrderVehicleRemark,
 	}
 
@@ -2576,6 +2586,7 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		WorkOrderSystemNumber:               entity.WorkOrderSystemNumber,
 		LineTypeId:                          entity.LineTypeId,
 		LineTypeCode:                        lineTypeResponse.LineTypeCode,
+		LineTypeName:                        lineTypeResponse.LineTypeName,
 		TransactionTypeId:                   entity.TransactionTypeId,
 		TransactionTypeCode:                 transactionTypeResponse.WoTransactionTypeCode,
 		JobTypeId:                           entity.JobTypeId,
@@ -3493,7 +3504,7 @@ func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, request transactionwor
 		WorkOrderStatusId:       utils.WoStatDraft,
 		WorkOrderDate:           currentDate,
 		CPCcode:                 defaultCPCcode,
-		ServiceAdvisor:          defaultServiceAdvisorId,
+		ServiceAdvisorId:        defaultServiceAdvisorId,
 		WorkOrderTypeId:         workOrderTypeId,
 		BookingSystemNumber:     request.BookingSystemNumber,
 		EstimationSystemNumber:  request.EstimationSystemNumber,
@@ -4077,7 +4088,7 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:             entity.WorkOrderStatusId,
 		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
-		ServiceAdvisorId:              entity.ServiceAdvisor,
+		ServiceAdvisorId:              entity.ServiceAdvisorId,
 		BrandId:                       entity.BrandId,
 		BrandName:                     brandResponse.BrandName,
 		ModelId:                       entity.ModelId,
@@ -4498,7 +4509,7 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:             entity.WorkOrderStatusId,
 		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
-		ServiceAdvisorId:              entity.ServiceAdvisor,
+		ServiceAdvisorId:              entity.ServiceAdvisorId,
 		ServiceSite:                   entity.ServiceSite,
 		BrandId:                       entity.BrandId,
 		BrandName:                     brandResponse.BrandName,

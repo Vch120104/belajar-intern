@@ -28,6 +28,7 @@ type ServiceLog struct {
 	WorkOrderLine                    int       `gorm:"column:work_order_line;size:30;null" json:"work_order_line"`
 	WorkOrderDate                    string    `gorm:"column:work_order_date;null" json:"work_order_date"`
 	OperationItemCode                string    `gorm:"column:operation_item_code;size:30;null" json:"operation_item_code"`
+	OperationItemId                  int       `gorm:"column:operation_item_id;size:30;null" json:"operation_item_id"`
 	ShiftCode                        string    `gorm:"column:shift_code;size:30;null" json:"shift_code"`
 	Frt                              float64   `gorm:"column:frt;null" json:"frt"`
 	EmpGroupId                       int       `gorm:"column:emp_group_id;size:30;null" json:"emp_group_id"`

@@ -354,7 +354,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId i
 	// 	}
 	// }
 
-	serviceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(entity.ServiceAdvisor)
+	serviceAdvisorResponse, serviceAdvisorErr := generalserviceapiutils.GetEmployeeById(entity.ServiceAdvisorId)
 	if serviceAdvisorErr != nil {
 		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -363,7 +363,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId i
 		}
 	}
 
-	foremanResponse, foremanErr := generalserviceapiutils.GetEmployeeById(entity.Foreman)
+	foremanResponse, foremanErr := generalserviceapiutils.GetEmployeeById(entity.ForemanId)
 	if foremanErr != nil {
 		return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -451,9 +451,9 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId i
 		VehicleId:               entity.VehicleId,
 		VehicleChassisNumber:    "vehicleResponse.Data.Master.VehicleChassisNumber",
 		//VehicleTnkb:             vehicleResponse.Data.STNK.VehicleRegistrationCertificateTNKB,
-		ServiceAdvisorId:   entity.ServiceAdvisor,
+		ServiceAdvisorId:   entity.ServiceAdvisorId,
 		ServiceAdvisorName: serviceAdvisorResponse.EmployeeName,
-		ForemanId:          entity.Foreman,
+		ForemanId:          entity.ForemanId,
 		ForemanName:        foremanResponse.EmployeeName,
 		CustomerId:         entity.CustomerId,
 		CustomerName:       customerResponse.CustomerName,

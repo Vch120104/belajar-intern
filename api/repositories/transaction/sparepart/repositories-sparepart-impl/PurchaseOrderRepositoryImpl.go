@@ -106,14 +106,10 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 				Err:        err,
 			}
 		}
-		var SupplierResponse transactionsparepartpayloads.SupplierResponsesAPI
-		SupplierByIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(i.SupplierId)
-		if err := utils.Get(SupplierByIdUrl, &SupplierResponse, nil); err != nil {
-			return page, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Status data from external service",
-				Err:        err,
-			}
+		//var SupplierResponse transactionsparepartpayloads.SupplierResponsesAPI
+		SupplierResponse, SupplierResponseErr := generalserviceapiutils.GetSupplierMasterById(i.SupplierId)
+		if SupplierResponseErr != nil {
+			return page, SupplierResponseErr
 		}
 		var prEntities transactionsparepartentities.PurchaseRequestEntities
 		err = db.Model(&prEntities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: i.PurchaseRequestSystemNumber}).First(&prEntities).Error
@@ -429,7 +425,7 @@ func (repo *PurchaseOrderRepositoryImpl) UpdatePurchaseOrderHeader(db *gorm.DB, 
 			Err:        err,
 		}
 	}
-	//IF @PKP='Y'
+	//IF @PKP='Y'	//CompanyDetail, CompanyDetailErr := getcomp
 	//BEGIN
 	//IF LTRIM(RTRIM(ISNULL(@Supplier_Vat_Pkp_No,'')))<>LTRIM(RTRIM(ISNULL(@Company_Vat_Pkp_No,'')))
 	//BEGIN
@@ -1027,8 +1023,6 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 		var totalDiscount float64
 		var totalAmount float64
 		var pkptype bool
-		var CompanyVatPkpNo string
-		var SupplierVatPkpNo string
 		var SupplierId int
 		var totalVat float64
 		currentTime := time.Now().UTC()
@@ -1086,25 +1080,22 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 		//
 
 		//SET @Supplier_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmSupplier0 WHERE SUPPLIER_CODE = @SUPPLIER)
-		var SupplierResponse transactionsparepartpayloads.SupplierResponsesAPI
-		SupplierByIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(SupplierId)
-		if err := utils.Get(SupplierByIdUrl, &SupplierResponse, nil); err != nil {
-			fmt.Println(err.Error())
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusUnprocessableEntity,
-				Message:    "Failed to fetch Supplier Id from external service",
-				Err:        err,
-			}
+		SupplierResponse, SupplierResponseErr := generalserviceapiutils.GetSupplierMasterById(SupplierId)
+		if SupplierResponseErr != nil {
+			return false, SupplierResponseErr
 		}
-		pkptype = SupplierResponse.TaxSupplier.PkpType
-
+		pkptype = SupplierResponse.SupplierMasterVatResponse.PkpType
+		//get company vat
+		CompanyVat, CompanyVatErr := generalserviceapiutils.GetCompanyVat(poEntities.CompanyId)
+		if CompanyVatErr != nil {
+			return false, CompanyVatErr
+		}
 		if pkptype {
-			if SupplierVatPkpNo != CompanyVatPkpNo {
+			if SupplierResponse.SupplierMasterVatResponse.PkpNumber != CompanyVat.CompanyPkpNumber {
 				totalVat = (totalAmount - totalDiscount) * (taxRate / 100)
 			} else {
 				totalVat = 0
 			}
-
 		} else {
 			totalVat = 0
 		}
@@ -1112,8 +1103,10 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 
 		var totalAfterVat = totalAmount - totalDiscount + totalVat
 		var dpRequest float64
-		if SupplierResponse.MinimumDownPayment != nil && *SupplierResponse.MinimumDownPayment != 0 {
-			dpRequest = totalAfterVat * (*SupplierResponse.MinimumDownPayment / 100)
+		//if SupplierResponse.MinimumDownPayment != nil && *SupplierResponse.MinimumDownPayment != 0 {
+		//	dpRequest = totalAfterVat * (*SupplierResponse.MinimumDownPayment / 100)
+		if SupplierResponse.MinimumDownPayment != 0 {
+			dpRequest = totalAfterVat * (SupplierResponse.MinimumDownPayment / 100)
 		} else {
 			dpRequest = *poEntities.DpRequest
 		}
@@ -1421,18 +1414,22 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 		}
 	}
 	//SET @Supplier_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmSupplier0 WHERE SUPPLIER_CODE = @SUPPLIER)
-	var SupplierResponse transactionsparepartpayloads.SupplierResponsesAPI
-	SupplierByIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(SupplierId)
-	if err := utils.Get(SupplierByIdUrl, &SupplierResponse, nil); err != nil {
-		fmt.Println(err.Error())
-		return poDetailEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusUnprocessableEntity,
-			Message:    "Failed to fetch Supplier Id from external service",
-			Err:        err,
-		}
+	//var SupplierResponse transactionsparepartpayloads.SupplierResponsesAPI
+	//SupplierByIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(SupplierId)
+	//if err := utils.Get(SupplierByIdUrl, &SupplierResponse, nil); err != nil {
+	//	fmt.Println(err.Error())
+	//	return poDetailEntities, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusUnprocessableEntity,
+	//		Message:    "Failed to fetch Supplier Id from external service",
+	//		Err:        err,
+	//	}
+	//}
+	SupplierResponse, SupplierResponseErr := generalserviceapiutils.GetSupplierMasterById(SupplierId)
+	if SupplierResponseErr != nil {
+		return poDetailEntities, SupplierResponseErr
 	}
-	pkptype = SupplierResponse.TaxSupplier.PkpType
-	SupplierVatPkpNo = SupplierResponse.TaxSupplier.PkpNo
+	pkptype = SupplierResponse.SupplierMasterVatResponse.PkpType
+	SupplierVatPkpNo = SupplierResponse.SupplierMasterVatResponse.PkpNumber
 	//SET @Company_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmComp0 WHERE COMPANY_CODE = @Company_Code)
 	var CompanyDetailResponse transactionsparepartpayloads.CompanyDetailResponses
 	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(poEntities.CompanyId)
@@ -1496,8 +1493,10 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	//}
 	//dpRequest = SupplierResponse.MinimumDownPayment
 	var dpRequest float64
-	if SupplierResponse.MinimumDownPayment != nil && *SupplierResponse.MinimumDownPayment != 0 {
-		dpRequest = totalAfterVat * (*SupplierResponse.MinimumDownPayment / 100)
+	//if SupplierResponse.MinimumDownPayment != nil && *SupplierResponse.MinimumDownPayment != 0 {
+	//	dpRequest = totalAfterVat * (*SupplierResponse.MinimumDownPayment / 100)
+	if SupplierResponse.MinimumDownPayment != 0 {
+		dpRequest = totalAfterVat * (SupplierResponse.MinimumDownPayment / 100)
 	} else {
 		dpRequest = *poEntities.DpRequest
 	}
@@ -1682,15 +1681,16 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//tmpPoDate := time.Now()
 
 	//CEK APAKAH GRUP ITU IN ATAU OJ?
-	var ItemGroup transactionsparepartpayloads.PurchaseOrderItemGroupResponse
-	ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(payloads.ItemGroupId)
-	if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Item Group data from external service",
-			Err:        err,
-		}
-	}
+	//var ItemGroup transactionsparepartpayloads.PurchaseOrderItemGroupResponse
+	//ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(payloads.ItemGroupId)
+	//if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
+	//	return false, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Message:    "Failed to fetch Item Group data from external service",
+	//		Err:        err,
+	//	}
+	//}
+	//ItemGroup,ItemGroupErr := getitemgroup
 	//		SET @TAX_RATE = dbo.getTaxPercent(dbo.getVariableValue('TAX_TYPE_PPN'),dbo.getVariableValue('TAX_SERV_CODE_PPN'),@Change_Datetime)
 	//var PeriodResponse financeservice.OpenPeriodPayloadResponse
 	//PeriodResponse,periodErr := financeserviceapiutils.GetOpenPeriodByCompany(payloads.CompanyId,"SP")
@@ -1699,6 +1699,16 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//IF @Is_SP_PO = 1
 	//if purchase order is sparepart po
 	//make a variable to check isSparepartPo
+	ItemGroup := masteritementities.ItemGroup{}
+	err = db.Model(&ItemGroup).Where(masteritementities.ItemGroup{ItemGroupId: payloads.ItemGroupId}).
+		First(&ItemGroup).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get item group data",
+		}
+	}
 	var isSparepartPo bool = false
 	if ItemGroup.ItemGroupCode == "IN" || ItemGroup.ItemGroupCode == "OJ" {
 		isSparepartPo = true

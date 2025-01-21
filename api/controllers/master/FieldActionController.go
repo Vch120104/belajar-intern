@@ -292,10 +292,10 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer h
 		return
 	}
 	// LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
+	// if errA != nil {
+	// 	exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+	// 	return
+	// }
 
 	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId)
 	if err != nil {
