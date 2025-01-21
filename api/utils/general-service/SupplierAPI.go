@@ -34,6 +34,7 @@ type SupplierMasterResponse struct {
 	SupplierTypeId            int                       `json:"supplier_type_id"`
 	SupplierMasterVatResponse SupplierMasterVatResponse `json:"vat_supplier"`
 	ClientTypeId              int                       `json:"client_type_id"`
+	MinimumDownPayment        float64                   `json:"minimum_down_payment"`
 }
 
 type SupplierMasterParams struct {
