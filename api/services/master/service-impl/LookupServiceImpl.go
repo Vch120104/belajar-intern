@@ -2,7 +2,6 @@ package masterserviceimpl
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -162,7 +161,7 @@ func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeStr string, companyId i
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetVehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetVehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -187,15 +186,15 @@ func (s *LookupServiceImpl) GetVehicleUnitMaster(brandId int, modelId int, pages
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetVehicleUnitMaster(tx, brandId, modelId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.GetVehicleUnitMaster(tx, brandId, modelId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -220,15 +219,15 @@ func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.P
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetVehicleUnitByID(tx, vehicleID, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.GetVehicleUnitByID(tx, vehicleID, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -253,15 +252,15 @@ func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, 
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetVehicleUnitByChassisNumber(tx, chassisNumber, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.GetVehicleUnitByChassisNumber(tx, chassisNumber, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetCampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetCampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -286,27 +285,15 @@ func (s *LookupServiceImpl) GetCampaignMaster(companyId int, pages pagination.Pa
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetCampaignMaster(tx, companyId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.GetCampaignMaster(tx, companyId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) WorkOrderService(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx, nil)
-
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.WorkOrderService(tx, pages, filterCondition)
-	if baseErr != nil {
-		return nil, 0, 0, baseErr
-	}
-
-	return lookup, totalPages, totalRows, nil
-}
-
-func (s *LookupServiceImpl) CustomerByTypeAndAddress(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) WorkOrderService(pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -331,15 +318,15 @@ func (s *LookupServiceImpl) CustomerByTypeAndAddress(pages pagination.Pagination
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.CustomerByTypeAndAddress(tx, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.WorkOrderService(tx, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) CustomerByTypeAndAddressByID(customerId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) WorkOrderAtpmRegistration(pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -364,15 +351,15 @@ func (s *LookupServiceImpl) CustomerByTypeAndAddressByID(customerId int, pages p
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.CustomerByTypeAndAddressByID(tx, customerId, pages, filterCondition)
+	workOrder, baseErr := s.LookupRepo.WorkOrderAtpmRegistration(tx, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return workOrder, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return workOrder, nil
 }
 
-func (s *LookupServiceImpl) CustomerByTypeAndAddressByCode(customerCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) CustomerByTypeAndAddress(pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -397,12 +384,78 @@ func (s *LookupServiceImpl) CustomerByTypeAndAddressByCode(customerCode string, 
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.CustomerByTypeAndAddressByCode(tx, customerCode, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.CustomerByTypeAndAddress(tx, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
+}
+
+func (s *LookupServiceImpl) CustomerByTypeAndAddressByID(customerId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.CustomerByTypeAndAddressByID(tx, customerId, pages, filterCondition)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}
+
+func (s *LookupServiceImpl) CustomerByTypeAndAddressByCode(customerCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.CustomerByTypeAndAddressByCode(tx, customerCode, pages, filterCondition)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
 }
 
 func (s *LookupServiceImpl) GetOprItemPrice(linetypeStr string, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
@@ -603,7 +656,7 @@ func (s *LookupServiceImpl) ItemListTransPL(companyId int, filterCondition []uti
 	return item, nil
 }
 
-func (s *LookupServiceImpl) ReferenceTypeWorkOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ReferenceTypeWorkOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -628,15 +681,15 @@ func (s *LookupServiceImpl) ReferenceTypeWorkOrder(pages pagination.Pagination, 
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeWorkOrder(tx, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ReferenceTypeWorkOrder(tx, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ReferenceTypeWorkOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ReferenceTypeWorkOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -661,15 +714,15 @@ func (s *LookupServiceImpl) ReferenceTypeWorkOrderByID(referenceId int, pages pa
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeWorkOrderByID(tx, referenceId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ReferenceTypeWorkOrderByID(tx, referenceId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ReferenceTypeSalesOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ReferenceTypeSalesOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -694,15 +747,15 @@ func (s *LookupServiceImpl) ReferenceTypeSalesOrder(pages pagination.Pagination,
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeSalesOrder(tx, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ReferenceTypeSalesOrder(tx, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -727,19 +780,40 @@ func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages p
 		}
 	}()
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeSalesOrderByID(tx, referenceId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ReferenceTypeSalesOrderByID(tx, referenceId, pages, filterCondition)
 	if baseErr != nil {
-		return nil, 0, 0, baseErr
+		return lookup, baseErr
 	}
 
-	return lookup, totalPages, totalRows, nil
+	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetLineTypeByReferenceType(referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetLineTypeByReferenceType(referenceTypeId int, paginate pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx, nil)
+	var err *exceptions.BaseErrorResponse
 
-	lineType, baseErr := s.LookupRepo.GetLineTypeByReferenceType(tx, referenceTypeId)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lineType, baseErr := s.LookupRepo.GetLineTypeByReferenceType(tx, referenceTypeId, paginate)
 	if baseErr != nil {
 		return lineType, baseErr
 	}

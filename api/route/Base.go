@@ -1952,6 +1952,7 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
+	router.Get("/work-order-atpm-registration", LookupController.WorkOrderAtpmRegistration)
 	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
 	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
 	router.Get("/item-list-trans", LookupController.ItemListTrans)

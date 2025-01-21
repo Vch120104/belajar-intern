@@ -3,23 +3,24 @@ package transactionworkshoppayloads
 import "time"
 
 type AtpmClaimRegistrationRequest struct {
-	ClaimSystemNumber    int       `json:"claim_system_number"`
-	CompanyId            int       `json:"company_id"`
-	BrandId              int       `json:"brand_id"`
-	ModelId              int       `json:"model_id"`
-	VariantId            int       `json:"variant_id"`
-	FspCategoryId        int       `json:"fsp_category_id"`
-	ClaimTypeId          int       `json:"claim_type_id"`
-	WarrantyTypeId       int       `json:"warranty_type_id"`
-	CustomerComplaint    string    `json:"customer_complaint"`
-	TechnicianDiagnostic string    `json:"technician_diagnostic"`
-	Countermeasure       string    `json:"countermeasure"`
-	ClaimDate            time.Time `json:"claim_date"`
-	RepairEndDate        time.Time `json:"repair_end_date"`
-	Fuel                 float64   `json:"fuel"`
-	CustomerId           int       `json:"customer_id"`
-	VDN                  string    `json:"vdn"`
-	ClaimHeader          string    `json:"claim_header"`
+	ClaimSystemNumber     int       `json:"claim_system_number"`
+	CompanyId             int       `json:"company_id"`
+	BrandId               int       `json:"brand_id"`
+	ModelId               int       `json:"model_id"`
+	VariantId             int       `json:"variant_id"`
+	FspCategoryId         int       `json:"fsp_category_id"`
+	ClaimTypeId           int       `json:"claim_type_id"`
+	WarrantyTypeId        int       `json:"warranty_type_id"`
+	CustomerComplaint     string    `json:"customer_complaint"`
+	TechnicianDiagnostic  string    `json:"technician_diagnostic"`
+	Countermeasure        string    `json:"countermeasure"`
+	ClaimDate             time.Time `json:"claim_date"`
+	RepairEndDate         time.Time `json:"repair_end_date"`
+	Fuel                  float64   `json:"fuel"`
+	CustomerId            int       `json:"customer_id"`
+	VDN                   string    `json:"vdn"`
+	ClaimHeader           string    `json:"claim_header"`
+	WorkOrderSystemNumber int       `json:"work_order_system_number"`
 }
 
 type AtpmClaimRegistrationRequestSave struct {

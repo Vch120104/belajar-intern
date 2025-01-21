@@ -16,6 +16,9 @@ import (
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
+	"context"
+	"fmt"
+	"log"
 
 	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionbodyshopcontroller "after-sales/api/controllers/transactions/bodyshop"
@@ -41,6 +44,14 @@ import (
 func StartRouting(db *gorm.DB) {
 	// Initialize Redis client
 	rdb := config.InitRedis()
+
+	// Set a key-value pair
+	ctx := context.Background()
+	err := rdb.Set(ctx, "key", "value", 0).Err()
+	if err != nil {
+		log.Fatalf("could not set key: %v", err)
+	}
+	fmt.Println("Key set successfully")
 
 	/* Master */
 	// Unit Measurement
@@ -695,6 +706,6 @@ func StartRouting(db *gorm.DB) {
 		Handler: r,
 	}
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	helper.PanicIfError(err)
 }
