@@ -20,45 +20,48 @@ func OpenLicenseOwnerChangeRepositoryImpl() transactionworkshoprepository.Licens
 }
 
 // GetAll implements transactionworkshoprepository.LicenseOwncerChangeRepository.
-func (l *LicenseOwncerChangeRepository) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (l *LicenseOwncerChangeRepository) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.LicenseOwnerChange
 	combinePayloads := make([]map[string]interface{}, 0)
 
 	query := tx.Model(&transactionworkshopentities.LicenseOwnerChange{})
+	query = utils.ApplyFilter(query, filterCondition)
 
-	for _, condition := range filterCondition {
-		query = query.Where(condition.ColumnField+"= ?", condition.ColumnValue)
-	}
-
-	if err := query.Find(&entities).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+	err := query.Scopes(pagination.Paginate(&pages, query)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
 	for _, entity := range entities {
-		brandDetails, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
-		if brandErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        brandErr.Err,
+		brandDetails, errBrand := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
+		if errBrand != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errBrand.StatusCode,
+				Err:        errBrand.Err,
 			}
 		}
 
-		modelDetails, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
-		if modelErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        modelErr.Err,
+		modelDetails, errModel := salesserviceapiutils.GetUnitModelById(entity.ModelId)
+		if errModel != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errModel.StatusCode,
+				Err:        errModel.Err,
 			}
 		}
 
-		variantDetails, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VehicleId)
-		if variantErr != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        variantErr.Err,
+		variantDetails, errVariant := salesserviceapiutils.GetUnitVariantById(entity.VehicleId)
+		if errVariant != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: errVariant.StatusCode,
+				Err:        errVariant.Err,
 			}
 		}
 
@@ -84,8 +87,8 @@ func (l *LicenseOwncerChangeRepository) GetAll(tx *gorm.DB, filterCondition []ut
 		combinePayloads = append(combinePayloads, response)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(combinePayloads, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = combinePayloads
+	return pages, nil
 }
 
 // GetAllHistory implements transactionworkshoprepository.LicenseOwncerChangeRepository.
