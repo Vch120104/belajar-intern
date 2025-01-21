@@ -1418,8 +1418,8 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 	var SalesOrderAdditionalDiscountAmount float64
 	var SalesOrderTotalVat float64
 	var SalesOrderTotalAfterVat float64
-	var moduleCode = "SP"
-	var ApproveCode = "SO"
+	//var moduleCode = "SP"
+	//var ApproveCode = "SO"
 	var ApprovalRequestNumber int
 	itemSubstituteType := masteritementities.ItemSubstituteType{}
 	err = db.Model(&itemSubstituteType).Where(masteritementities.ItemSubstituteType{ItemSubstituteTypeCode: "S"}).
@@ -1615,23 +1615,6 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 	cekBrandId = append(cekBrandId, brandCitroen.BrandId)
 
 	if companyCodeNmdi.CompanyId != salesOrderEntities.CompanyID && !utils.NotInList(cekBrandId, salesOrderEntities.BrandID) {
-		//moduleCode := "SP"
-		//ApproveCode := "SO"
-		//SET @Approv_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Doc,'',@Vehicle_Brand,@Cpc_Code,'')
-		fmt.Println(moduleCode, ApproveCode)
-		//EXEC dbo.usp_comApprovalReq_Insert
-		//@Company_Code = @Company_Code ,
-		//@Approval_Code = @Approv_Code ,
-		//@Module_Code = @Module_Code ,
-		//@Src_Doc_Type = @Src_Doc ,
-		//@Src_Sys_No = @So_Sys_No ,
-		//@Src_Doc_No = '' ,
-		//@Src_Doc_Line = 0 ,
-		//@Src_Doc_Date  = @So_Date ,
-		//@Src_Doc_Amount = @Disc ,
-		//@Change_No = 0 ,
-		//@Creation_User_Id = @Change_User_Id ,
-		//@Req_No = @Approval_Req_No OUTPUT
 		ApprovalRequestNumber = 12345678
 		salesOrderEntities.ApprovalRequestNumber = ApprovalRequestNumber
 		salesOrderEntities.SalesOrderStatusID = salesOrderStatusWaitApproved.ApprovalStatusId //wait approved
@@ -1668,7 +1651,7 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 				Message:    "Please Choose ATPM Internal Purpose Event!",
 			}
 		}
-		ApproveCode = "SOIT"
+		//ApproveCode = "SOIT"
 		//EXEC dbo.usp_comApprovalReq_Insert
 		//@Company_Code = @Company_Code ,
 		//@Approval_Code = @Approv_Code ,
@@ -1701,10 +1684,10 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 				return false, DocumentNumberError
 			}
 			//SET @So_Status = dbo.getVariableValue('APPROVAL_WAITAPPROVED')
-			//--SET @Approv_Code = dbo.getVariableValue('APV_CODE_SO')
+			//--SET @Approve_Code = dbo.getVariableValue('APV_CODE_SO')
 			//SET @Module_Code = dbo.getVariableValue('MODULE_SP')
-			//SET @Approv_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Doc,'',@Vehicle_Brand,@Cpc_Code,'')
-			ApproveCode = "SO"
+			//SET @Approve_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Doc,'',@Vehicle_Brand,@Cpc_Code,'')
+			//ApproveCode = "SO"
 			//waiting for com approval request from general
 			//EXEC dbo.usp_comApprovalReq_Insert
 			ApprovalRequestNumber = 12345

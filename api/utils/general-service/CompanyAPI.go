@@ -43,6 +43,8 @@ type CompanyMasterResponse struct {
 	IsDistbutor bool   `json:"is_distributor"`
 	BizCategory string `json:"biz_category"`
 }
+type GetCompanyDetailById struct {
+}
 type GetCompanyByIdResponses struct {
 	CompanyName            string  `json:"company_name"`
 	RegionId               int     `json:"region_id"`
@@ -125,7 +127,7 @@ func GetAllCompany(params CompanyParams) ([]CompanyMasterDetailResponse, *except
 
 func GetCompanyVat(id int) (VatCompany, *exceptions.BaseErrorResponse) {
 	var getCompanyMaster VatCompany
-	url := config.EnvConfigs.GeneralServiceUrl + "company-vat-by-id/" + strconv.Itoa(id)
+	url := config.EnvConfigs.GeneralServiceUrl + "company-vat/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCompanyMaster)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502

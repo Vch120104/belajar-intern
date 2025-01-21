@@ -11,11 +11,11 @@ import (
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
-	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -1368,39 +1368,6 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 			//update variance
 			if resdb.QuantityVariance > 0 && resdb.StockKeeping {
 
-				//SELECT @QTY_ONHAND = ISNULL(SUM(ISNULL(VS.QTY_ON_HAND,0)),0),
-				//@QTY_INTRANSIT = ISNULL(SUM(ISNULL(VS.QTY_INTRANSIT,0)),0)
-				//FROM dbo.viewLocationStock VS
-				//LEFT JOIN dbo.gmLoc1 L ON L.WAREHOUSE_CODE = VS.WHS_CODE AND L.COMPANY_CODE = VS.COMPANY_CODE
-				//WHERE  PERIOD_YEAR = @Period_Year  AND PERIOD_MONTH = @Period_Month
-				//AND VS.COMPANY_CODE = @Company_Code AND ITEM_CODE = @CSR1_Item_Code
-				//AND	WHS_GROUP = @Whs_Group AND L.COSTING_TYPE <> @CostTypeNon
-				//err = db.Table("mtr_location_stock A").
-				//	Joins("INNER JOIN mtr_warehouse_master B ON A.company_id = B.company_id AND A.warehouse_id = b.warehouse_id").
-				//	Where(`
-				//	A.period_year = ?
-				//	AND period_month = ?
-				//	AND A.company_id = ?
-				//	AND A.item_id = ?
-				//	AND A.warehouse_group_id  = ?
-				//	AND B.warehouse_costing_type_id = ?
-				//	`, PeriodResponseSp.PeriodYear,
-				//		PeriodResponseSp.PeriodMonth,
-				//		GoodsReceiveEntities.CompanyId,
-				//		GoodsReceiveEntities.WarehouseGroupId,
-				//		CostingTypeNon.WarehouseCostingTypeId,
-				//	).
-				//	Select(`
-				//		select A.quantity_in_transit,
-				//		ISNULL(A.quantity_claim_in, 0) + ISNULL(A.quantity_robbing_out, 0) + ISNULL(A.quantity_assembly_out, 0)
-				//	`).Row().Scan(&resdb.QuantityInTransit, &resdb.QuantityOnHand)
-				//if err != nil {
-				//	return false, &exceptions.BaseErrorResponse{
-				//		StatusCode: http.StatusInternalServerError,
-				//		Message:    fmt.Sprintf("error occured when fetch quantity instransit and quantity on hand"),
-				//	}
-				//}
-
 				//validation if item group is inventory
 				//so get item group by code first
 				/*				ItemGroupInventoryId := 0
@@ -2034,7 +2001,7 @@ func GenerateDocumentNumber(tx *gorm.DB, id int) (string, *exceptions.BaseErrorR
 	}
 
 	var GoodsReceive transactionsparepartentities.GoodsReceive
-	var brandResponse transactionworkshoppayloads.BrandDocResponse
+	//var brandResponse transactionworkshoppayloads.BrandDocResponse
 
 	GoodsReceiveId := GoodsReceivesEntities.GoodsReceiveSystemNumber
 
@@ -2066,14 +2033,18 @@ func GenerateDocumentNumber(tx *gorm.DB, id int) (string, *exceptions.BaseErrorR
 	year := currentTime.Year() % 100 // Use last two digits of the year
 
 	// fetch data brand from external api
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(GoodsReceive.BrandId)
-	errUrl := utils.Get(brandUrl, &brandResponse, nil)
-	if errUrl != nil {
-		return "", &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrl,
-		}
+	brandResponse, brandResponseErr := salesserviceapiutils.GetUnitBrandById(GoodsReceive.BrandId)
+	if brandResponseErr != nil {
+		return "", brandResponseErr
 	}
+	//brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(GoodsReceive.BrandId)
+	//errUrl := utils.Get(brandUrl, &brandResponse, nil)
+	//if errUrl != nil {
+	//	return "", &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Err:        errUrl,
+	//	}
+	//}
 
 	// Check if BrandCode is not empty before using it
 	if brandResponse.BrandCode == "" {
