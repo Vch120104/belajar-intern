@@ -69,7 +69,7 @@ func (l *LicenseOwncerChangeRepository) GetAll(tx *gorm.DB, filterCondition []ut
 			"model_id":                entity.ModelId,
 			"model_name":              modelDetails.ModelName,
 			"variant_id":              variantDetails.VariantId,
-			"variant_name":            variantDetails.VariantName,
+			"variant_description":     variantDetails.VariantDescription,
 			"vehicle_id":              entity.VehicleId,
 			"change_date":             entity.ChangeDate,
 			"change_type":             entity.ChangeType,
@@ -102,7 +102,7 @@ func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber 
 		}
 	}
 
-	vehicleID := vehicleResponse.VehicleID
+	vehicleID := vehicleResponse.Data.Master.VehicleID
 
 	query := tx.Model(&transactionworkshopentities.LicenseOwnerChange{}).
 		Select("change_date, change_type, tnkb_old, tnkb_new, owner_name_old, owner_name_new").
