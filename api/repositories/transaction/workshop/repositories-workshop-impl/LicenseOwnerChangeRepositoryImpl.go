@@ -105,7 +105,7 @@ func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber 
 		}
 	}
 
-	vehicleID := vehicleResponse.Data.Master.VehicleID
+	vehicleID := vehicleResponse.VehicleId
 
 	query := tx.Model(&transactionworkshopentities.LicenseOwnerChange{}).
 		Select("change_date, change_type, vehicle_stnk_tnkb_old AS tnkb_old, vehicle_stnk_tnkb_new AS tnkb_new, vehicle_owner_name_old AS owner_name_old, vehicle_owner_name_new AS owner_name_new").

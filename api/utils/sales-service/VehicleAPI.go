@@ -170,6 +170,29 @@ type VehicleResponse struct {
 		Purchase        VehiclePurchase        `json:"purchase"`
 	} `json:"data"`
 }
+type VehicleGetByChassisResponse struct {
+	VehicleId                      int    `json:"vehicle_id"`
+	VehicleBrandId                 int    `json:"vehicle_brand_id"`
+	VehicleVariantId               int    `json:"vehicle_variant_id"`
+	VehicleColourId                int    `json:"vehicle_colour_id"`
+	VehicleModelId                 int    `json:"vehicle_model_id"`
+	BrandName                      string `json:"brand_name"`
+	ModelDescription               string `json:"model_description"`
+	VariantDescription             string `json:"variant_description"`
+	ColourDescription              string `json:"colour_description"`
+	VehicleEngineNumber            string `json:"vehicle_engine_number"`
+	SupplierName                   string `json:"supplier_name"`
+	UnitGoodsReceiveDocumentNumber string `json:"unit_goods_receive_document_number"`
+	UnitGoodsReceiveDate           string `json:"unit_goods_receive_date"`
+	AtpmDoNumber                   string `json:"atpm_do_number"`
+	AtpmDoDate                     string `json:"atpm_do_date"`
+	PurchaseOrderDocumentNumber    string `json:"purchase_order_document_number"`
+	VehicleChassisNumber           string `json:"vehicle_chassis_number"`
+}
+
+func NewVehicleGetByChassisResponse() *VehicleGetByChassisResponse {
+	return &VehicleGetByChassisResponse{}
+}
 
 type VehicleListResponse struct {
 	StatusCode int    `json:"status_code"`
@@ -214,9 +237,9 @@ func createVehicleURL(baseURL string, params VehicleParams) string {
 	return baseURL + "?" + queryParams
 }
 
-func GetVehicleByChassisNumber(chassis string) (VehicleResponse, *exceptions.BaseErrorResponse) {
-	var vehicleResponse VehicleResponse
-	url := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + chassis
+func GetVehicleByChassisNumber(chassis string) (VehicleGetByChassisResponse, *exceptions.BaseErrorResponse) {
+	var vehicleResponse []VehicleGetByChassisResponse
+	url := config.EnvConfigs.SalesServiceUrl + "vehicle-master-by-chassis-number/" + chassis
 	errVehicle := utils.CallAPI("GET", url, nil, &vehicleResponse)
 	if errVehicle != nil {
 		status := http.StatusBadGateway
@@ -225,13 +248,13 @@ func GetVehicleByChassisNumber(chassis string) (VehicleResponse, *exceptions.Bas
 			status = http.StatusServiceUnavailable
 			message = "vehicle service is temporarily unavailable"
 		}
-		return vehicleResponse, &exceptions.BaseErrorResponse{
+		return vehicleResponse[0], &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting vehicle by ID"),
 		}
 	}
-	return vehicleResponse, nil
+	return vehicleResponse[0], nil
 }
 
 func UpdateVehicle(id int, request VehicleUpdate) *exceptions.BaseErrorResponse {
