@@ -15,6 +15,7 @@ import (
 )
 
 type LookupController interface {
+	GetOprItemPrice(writer http.ResponseWriter, request *http.Request)
 	ItemOprCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByID(writer http.ResponseWriter, request *http.Request)
@@ -1327,6 +1328,91 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 	payloads.NewHandleSuccess(
 		writer,
 		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+	)
+}
+
+func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	linetypeId, err := strconv.Atoi(queryValues.Get("line_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Line Type Id", http.StatusBadRequest)
+		return
+	}
+
+	companyId, err := strconv.Atoi(queryValues.Get("company_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
+		return
+	}
+
+	oprItemCode, err := strconv.Atoi(queryValues.Get("opr_item_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Opr Item Id", http.StatusBadRequest)
+		return
+	}
+
+	brandId, err := strconv.Atoi(queryValues.Get("brand_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Brand Id", http.StatusBadRequest)
+		return
+	}
+
+	modelId, err := strconv.Atoi(queryValues.Get("model_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Model Id", http.StatusBadRequest)
+		return
+	}
+
+	jobTypeId, err := strconv.Atoi(queryValues.Get("job_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Job Type Id", http.StatusBadRequest)
+		return
+	}
+
+	variantId, err := strconv.Atoi(queryValues.Get("variant_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Variant Id", http.StatusBadRequest)
+		return
+	}
+
+	currencyId, err := strconv.Atoi(queryValues.Get("currency_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Currency Id", http.StatusBadRequest)
+		return
+	}
+
+	billCode, err := strconv.Atoi(queryValues.Get("bill_code"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Bill Code", http.StatusBadRequest)
+		return
+	}
+
+	whsGroup := queryValues.Get("whs_group")
+	if whsGroup == "" {
+		payloads.NewHandleError(writer, "Warehouse Group is required", http.StatusBadRequest)
+		return
+	}
+
+	// Memanggil service dengan parameter yang sesuai
+	price, baseErr := r.LookupService.GetOprItemPrice(
+		linetypeId, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup,
+	)
+
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(
+		writer,
+		map[string]float64{"price": price},
 		"Get Data Successfully!",
 		http.StatusOK,
 	)

@@ -458,7 +458,7 @@ func (s *LookupServiceImpl) CustomerByTypeAndAddressByCode(customerCode string, 
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetOprItemPrice(linetypeStr string, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetOprItemPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -483,7 +483,7 @@ func (s *LookupServiceImpl) GetOprItemPrice(linetypeStr string, companyId int, o
 		}
 	}()
 
-	price, baseErr := s.LookupRepo.GetOprItemPrice(tx, linetypeStr, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup)
+	price, baseErr := s.LookupRepo.GetOprItemPrice(tx, linetypeId, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup)
 	if baseErr != nil {
 		return 0.0, baseErr
 	}

@@ -1937,6 +1937,7 @@ func LookupRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
+	router.Get("/opr-item-price", LookupController.GetOprItemPrice)
 	router.Get("/item-opr-code/{linetype_code}", LookupController.ItemOprCode)
 	router.Get("/item-opr-code/{linetype_code}/by-code/*", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_code}/by-id/{item_id}", LookupController.ItemOprCodeByID)

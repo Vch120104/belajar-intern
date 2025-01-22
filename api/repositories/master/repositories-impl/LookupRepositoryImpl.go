@@ -1,7 +1,6 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
@@ -351,7 +350,7 @@ func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, linetypeStr string, b
 
 // dbo.getOprItemPrice
 // get price value base on line type in operation or item master
-func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
 	var (
 		price               float64
 		effDate             = time.Now()
@@ -363,17 +362,6 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 		priceCount          int64
 		priceCodeId         int
 	)
-
-	// priceListCodeUrl := config.EnvConfigs.AfterSalesServiceUrl + "price-list/by-code/1"
-	// preiceListCodePayloads := masterpayloads.GetPriceListCodeResponse{}
-	// if err := utils.Get(priceListCodeUrl, &preiceListCodePayloads, nil); err != nil || preiceListCodePayloads.PriceListCodeId == 0 {
-	// 	return 0, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "error fetching price list code: A",
-	// 		Err:        errors.New("error fetching default price list code"),
-	// 	}
-	// }
-	defaultPriceCodeId = 1
 
 	// Set markup percentage based on company ID
 	markupPercentage = 0
@@ -399,8 +387,8 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 		companyCodePrice = companyId
 	}
 
-	switch linetypeStr {
-	case utils.LinetypePackage:
+	switch linetypeId {
+	case 1:
 		// Package price logic
 		if err := tx.Model(&masterentities.PackageMaster{}).
 			Where("package_id = ?", oprItemCode).
@@ -413,7 +401,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 			}
 		}
 
-	case utils.LinetypeOperation:
+	case 2:
 		// Operation price logic
 		query := tx.Model(&masteroperationentities.LabourSellingPriceDetail{}).
 			Joins("JOIN mtr_labour_selling_price ON mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
@@ -435,6 +423,8 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 		}
 
 	default:
+		defaultPriceCodeId = 1
+		priceCodeId = 1
 		if err := tx.Model(&masteritementities.ItemPriceList{}).
 			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).Count(&priceCount).Error; err != nil {
@@ -459,14 +449,14 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 			// Get MODULE_SP
 			moduleSP := "SP"
 
-			currentPeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(companyId) + "&closing_module_detail_code" + moduleSP
-			currentPeriodPayloads := masterpayloads.GetCurrentPeriodResponse{}
-			if err := utils.Get(currentPeriodUrl, &currentPeriodPayloads, nil); err != nil {
+			currentPeriodPayloads, err := financeserviceapiutils.GetOpenPeriodByCompany(companyId, moduleSP)
+			if err != nil {
 				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        errors.New("failed to get period details"),
 				}
 			}
+
 			// Add additional validation for period month and period year
 			if !(currentPeriodPayloads.PeriodMonth <= month && currentPeriodPayloads.PeriodYear <= year) {
 				currentPeriodPayloads.PeriodMonth = ""
@@ -515,7 +505,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 			} else {
 				// Get price from amGroupStock for other items
 				if err := tx.Model(&masterentities.GroupStock{}).
-					Where("period_year = ? AND period_month = ? AND item_code = ? AND company_id = ? AND whs_group = ?",
+					Where("period_year = ? AND period_month = ? AND item_id = ? AND company_id = ? AND whs_group = ?",
 						periodYear, periodMonth, oprItemCode, companyId, whsGroup).
 					Select("CASE ISNULL(price_current, 0) WHEN 0 THEN price_begin ELSE price_current END AS hpp").
 					Pluck("hpp", &price).Error; err != nil {
@@ -572,7 +562,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeStr string, 
 	}
 
 	// Apply markup percentage if applicable
-	if linetypeStr == utils.LinetypeOperation && billCode == utils.TrxTypeWoInternal.ID {
+	if linetypeId == 2 && billCode == utils.TrxTypeWoInternal.ID {
 		price += price * markupPercentage / 100
 	}
 
@@ -2606,8 +2596,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			}
 		}
 
+		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
+		if linetypeErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching line type code",
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
@@ -2625,8 +2624,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			}
 		}
 
+		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
+		if linetypeErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching line type code",
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
@@ -3185,8 +3193,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			}
 		}
 
+		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
+		if linetypeErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching line type code",
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
@@ -3204,8 +3221,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			}
 		}
 
+		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
+		if linetypeErr != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching line type code",
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeStr, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
