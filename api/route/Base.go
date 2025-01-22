@@ -1698,6 +1698,22 @@ func ContractServiceDetailRouter(
 	return router
 }
 
+func LicenseOwnerChangeRouter(
+	LicenseOwnerChangeController transactionworkshopcontroller.LicenseOwnerChangeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", LicenseOwnerChangeController.GetAll)
+	router.Get("/history/{vehicle_chassis_number}", LicenseOwnerChangeController.GetHistoryByChassisNumber)
+
+	return router
+}
+
 func ClaimSupplierRouter(
 	ClaimSupplierController transactionsparepartcontroller.ClaimSupplierController,
 ) chi.Router {
