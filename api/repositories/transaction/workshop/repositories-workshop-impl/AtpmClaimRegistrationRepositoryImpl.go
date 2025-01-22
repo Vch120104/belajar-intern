@@ -979,3 +979,255 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAllClaimHistory(tx *gorm.DB, fi
 	pages.Rows = results
 	return pages, nil
 }
+
+// uspg_atAtpmVehicleClaim1_Select
+// IF @Option = 0
+func (r *AtpmClaimRegistrationRepositoryImpl) GetAllDetail(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var results []map[string]interface{}
+
+	baseQuery := tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+		Select(`
+		trx_atpm_claim_vehicle_detail.claim_system_number,
+		trx_atpm_claim_vehicle_detail.company_id,
+		trx_atpm_claim_vehicle_detail.claim_line_number,
+		trx_atpm_claim_vehicle_detail.work_order_system_number,
+		trx_atpm_claim_vehicle_detail.work_order_line_number,
+		trx_atpm_claim_vehicle_detail.line_type_id,
+		trx_atpm_claim_vehicle_detail.item_id,
+		CASE
+			WHEN COALESCE(trx_atpm_claim_vehicle_detail.line_type_id, 0) = 0 THEN E.package_name
+			WHEN COALESCE(trx_atpm_claim_vehicle_detail.line_type_id, 0) = 1 THEN D.operation_name
+			ELSE C.item_name
+		END AS item_name,
+		trx_atpm_claim_vehicle_detail.frt_quantity,
+		trx_atpm_claim_vehicle_detail.item_price,
+		trx_atpm_claim_vehicle_detail.discount_percent,
+		trx_atpm_claim_vehicle_detail.discount_amount,
+		trx_atpm_claim_vehicle_detail.total_after_discount,
+		trx_atpm_claim_vehicle_detail.recall_number,
+		COALESCE(trx_atpm_claim_vehicle_detail.part_request, 0) AS part_request,
+		COALESCE(trx_atpm_claim_vehicle_detail.incident_part_received, 0) AS incident_part_received
+	`).
+		Joins("LEFT JOIN mtr_item AS C ON trx_atpm_claim_vehicle_detail.item_id = C.item_id").
+		Joins("LEFT JOIN mtr_operation_code AS D ON trx_atpm_claim_vehicle_detail.item_id = D.operation_id").
+		Joins("LEFT JOIN mtr_package AS E ON trx_atpm_claim_vehicle_detail.item_id = E.package_id").
+		Where("trx_atpm_claim_vehicle_detail.claim_system_number = ?", id).
+		Order("trx_atpm_claim_vehicle_detail.claim_line_number ASC").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset())
+
+	tx = utils.ApplyFilter(baseQuery, filterCondition)
+
+	result := tx.Scopes(pagination.Paginate(&pages, tx)).Find(&results)
+	if result.Error != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve data",
+			Err:        result.Error,
+		}
+	}
+
+	if len(results) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	pages.Rows = results
+	return pages, nil
+}
+
+// uspg_atAtpmVehicleClaim1_Select
+// IF @Option = 1
+func (r *AtpmClaimRegistrationRepositoryImpl) GetDetailById(tx *gorm.DB, claimsysno int, detailid int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var results []map[string]interface{}
+	var workOrderSysNo int
+
+	if result := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Where("claim_system_number = ?", claimsysno).
+		Pluck("work_order_system_number", &workOrderSysNo); result.Error != nil || result.RowsAffected == 0 {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        result.Error,
+		}
+	}
+
+	baseQuery := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select(`
+			work_order_system_number,
+			work_order_operation_item_line,
+			line_type_id,
+			operation_item_id,
+			frt_quantity
+		`).
+		Where("work_order_system_number = ?", workOrderSysNo).
+		Order("work_order_operation_item_line ASC").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset())
+
+	// check claim type id in trx_atpm_claim_vehicle
+	var claimTypeId int
+	if result := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Where("claim_system_number = ?", claimsysno).
+		Pluck("claim_type_id", &claimTypeId); result.Error != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve data",
+			Err:        result.Error,
+		}
+	}
+
+	if claimTypeId == 3 { //CLAIMTYPE_PDI
+		baseQuery = baseQuery.Where("transaction_type_id = 10") // 10 = Warranty
+	} else if claimTypeId == 1 { //CLAIMTYPE_FREESERVICE
+		baseQuery = baseQuery.Where("transaction_type_id = 8") // 8 = Free Service
+	} else if claimTypeId == 5 { //CLAIMTYPE_WARRANTY
+		baseQuery = baseQuery.Where("transaction_type_id = 10") // 10 = Warranty
+	} else if claimTypeId == 6 { //CLAIMTYPE_WARRANTY_PART
+		baseQuery = baseQuery.Where("transaction_type_id = 10") // 10 = Warranty
+	}
+
+	result := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery)).Find(&results)
+	if result.Error != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve data",
+			Err:        result.Error,
+		}
+	}
+
+	if len(results) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	for i, row := range results {
+		lineTypeId, ok := row["line_type_id"].(int)
+		if !ok {
+			continue // Skip if line_type_id is not present or not an int
+		}
+
+		lineType, errResp := generalserviceapiutils.GetLineTypeById(lineTypeId)
+		if errResp != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve line type information",
+				Err:        errResp.Err,
+			}
+		}
+
+		results[i]["line_type_code"] = lineType.LineTypeCode
+	}
+
+	pages.Rows = results
+	return pages, nil
+}
+
+// uspg_atAtpmVehicleClaim1_Insert
+// IF @Option = 2
+func (r *AtpmClaimRegistrationRepositoryImpl) AddDetail(tx *gorm.DB, id int, request transactionworkshoppayloads.AtpmClaimDetailRequest) (transactionworkshopentities.AtpmClaimVehicleDetail, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.AtpmClaimVehicleDetail
+
+	// Check if claim system number exists
+	var claimExists bool
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Where("claim_system_number = ?", id).
+		Select("1").
+		Limit(1).
+		Scan(&claimExists).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check if claim system number exists",
+			Err:        err,
+		}
+	}
+
+	if !claimExists {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Claim system number not found",
+			Err:        nil,
+		}
+	}
+
+	// Get the next claim line number
+	var nextClaimLineNumber int
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+		Select("COALESCE(MAX(claim_line_number), 0) + 1").
+		Where("claim_system_number = ?", id).
+		Scan(&nextClaimLineNumber).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get next claim line number",
+			Err:        err,
+		}
+	}
+
+	// Fetch required work order details
+	var workOrder transactionworkshopentities.WorkOrderDetail
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_line_number = ? AND claim_system_number IS NULL",
+			request.WorkOrderSystemNumber, request.WorkOrderLineNumber).
+		First(&workOrder).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Work order details not found or already claimed",
+			Err:        err,
+		}
+	}
+
+	// Set entity values based on work order details
+	entity.ClaimSystemNumber = id
+	entity.ClaimLineNumber = nextClaimLineNumber
+	entity.WorkOrderSystemNumber = request.WorkOrderSystemNumber
+	entity.WorkOrderLineNumber = request.WorkOrderLineNumber
+	entity.LineTypeId = workOrder.LineTypeId
+	entity.ItemId = workOrder.OperationItemId
+	entity.FrtQuantity = workOrder.FrtQuantity
+	entity.DiscountPercent = request.DiscountPercent
+	entity.DiscountAmount = request.DiscountAmount
+	entity.ItemPrice = workOrder.OperationItemPrice
+	entity.TotalAfterDiscount = (workOrder.OperationItemPrice - request.DiscountAmount) * workOrder.FrtQuantity
+	entity.PartRequest = 0
+	entity.IncidentPartReceived = 0
+
+	if err := tx.Create(&entity).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to insert data",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_line_number = ?", request.WorkOrderSystemNumber, request.WorkOrderLineNumber).
+		Update("claim_system_number", id).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update work order with claim system number",
+			Err:        err,
+		}
+	}
+
+	// Update total calculations in ATPM claim
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Where("claim_system_number = ?", id).
+		Updates(map[string]interface{}{
+			"total_after_discount": tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+				Select("COALESCE(SUM(total_after_discount), 0)").Where("claim_system_number = ?", id),
+			"total_labour": tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+				Select("COALESCE(SUM(total_after_discount), 0)").Where("claim_system_number = ? AND line_type_id = 1", id),
+			"total_part": tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+				Select("COALESCE(SUM(total_after_discount), 0)").Where("claim_system_number = ? AND line_type_id <> 1", id),
+			"total_frt_qty": tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+				Select("COALESCE(SUM(frt_quantity), 0)").Where("claim_system_number = ? AND line_type_id = 1", id),
+		}).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update claim totals",
+			Err:        err,
+		}
+	}
+
+	return entity, nil
+}

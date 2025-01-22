@@ -221,7 +221,11 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 }
 
 func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request) {
-	linetypeStr := chi.URLParam(request, "linetype_id")
+	linetypeStr := chi.URLParam(request, "linetype_code")
+	if linetypeStr == "" {
+		payloads.NewHandleError(writer, "Invalid Line Type Code", http.StatusBadRequest)
+		return
+	}
 
 	companyStrId := chi.URLParam(request, "company_id")
 	companyId, err := strconv.Atoi(companyStrId)

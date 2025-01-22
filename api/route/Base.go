@@ -1943,8 +1943,8 @@ func LookupRouter(
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
-	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}", LookupController.ItemOprCodeWithPrice)
-	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/by-id/{id}", LookupController.ItemOprCodeWithPriceByID)
+	router.Get("/item-opr-code-with-price/{linetype_code}/{company_id}", LookupController.ItemOprCodeWithPrice)
+	router.Get("/item-opr-code-with-price/{linetype_code}/{company_id}/by-id/{id}", LookupController.ItemOprCodeWithPriceByID)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
 	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
@@ -2036,6 +2036,10 @@ func AtpmClaimRegistrationRouter(
 
 	router.Get("/service-history", atpmClaimRegistrationController.GetAllServiceHistory)
 	router.Get("/claim-history", atpmClaimRegistrationController.GetAllClaimHistory)
+
+	router.Get("/{claim_system_number}/detail", atpmClaimRegistrationController.GetAllDetail)
+	router.Get("/{claim_system_number}/detail/{claim_detail_system_number}", atpmClaimRegistrationController.GetDetailById)
+	router.Post("/{claim_system_number}/detail", atpmClaimRegistrationController.AddDetail)
 
 	return router
 }
