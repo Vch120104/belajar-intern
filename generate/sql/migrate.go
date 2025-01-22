@@ -203,6 +203,7 @@ func Migrate() {
 	// &transactionworkshopentities.AtpmClaimVehicleDetail{},
 	// &transactionworkshopentities.AtpmClaimVehicleAttachment{},
 	// &transactionworkshopentities.AtpmClaimVehicleAttachmentType{},
+	// &transactionworkshopentities.PrintGatePass{},
 
 	// Transaction Spare Part Purchase Request
 	// &transactionsparepartentities.PurchaseRequestEntities{},
