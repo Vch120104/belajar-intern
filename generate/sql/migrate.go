@@ -15,6 +15,7 @@ import (
 	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
 
@@ -226,6 +227,70 @@ func Migrate() {
 	// &transactionsparepartentities.ItemWarehouseTransferRequestDetail{},
 	// &transactionsparepartentities.SalesOrder{},
 	// &transactionsparepartentities.SalesOrderDetail{},
+		//&transactionjpcbentities.SettingTechnician{},
+		//&transactionjpcbentities.SettingTechnicianDetail{},
+		//&transactionjpcbentities.TechnicianAttendance{},
+		//&transactionjpcbentities.CarWash{},
+		//&transactionjpcbentities.BayMaster{},
+		//&transactionjpcbentities.CarWashPriority{},
+		//&transactionjpcbentities.CarWashStatus{},
+		//
+		//&transactionsparepartentities.SupplySlip{},
+		//&transactionsparepartentities.SupplySlipDetail{},
+		//&transactionsparepartpentities.SupplySlipReturn{},
+		//&transactionsparepartpentities.SupplySlipReturnDetail{},
+		//&transactionworkshopentities.WorkOrderMaster{},
+		//&transactionworkshopentities.WorkOrderMasterStatus{},
+		//&transactionworkshopentities.WorkOrderMasterType{},
+		//&transactionworkshopentities.WorkOrderMasterBillAbleto{},
+		//&transactionworkshopentities.WorkOrder{},
+		//&transactionworkshopentities.WorkOrderRequestDescription{},
+		//&transactionworkshopentities.WorkOrderDetail{},
+		//&transactionworkshopentities.WorkOrderHistory{},
+		//&transactionworkshopentities.WorkOrderHistoryRequest{},
+		//&transactionworkshopentities.WorkOrderHistoryDetail{},
+		//&transactionworkshopentities.WorkOrderService{},
+		//&transactionworkshopentities.WorkOrderServiceVehicle{},
+		//&transactionworkshopentities.ServiceRequest{},
+		//&transactionworkshopentities.ServiceRequestDetail{},
+		//&transactionworkshopentities.ServiceRequestMasterStatus{},
+		//&transactionworkshopentities.BookingEstimation{},
+		//&transactionworkshopentities.BookingEstimationAllocation{},
+		//&transactionworkshopentities.BookingEstimationRequest{},
+		//&transactionworkshopentities.BookingEstimationServiceReminder{},
+		//&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		// &transactionworkshopentities.BookingEstimationDetail{},
+		//&transactionworkshopentities.BookingEstimationItemDetail{},
+		//&transactionworkshopentities.BookingEstimationOperationDetail{},
+		//&transactionworkshopentities.BookingEstimationRequest{},
+		// &transactionworkshopentities.ContractService{},
+		// &transactionworkshopentities.ContractServiceDetail{},
+	// &transactionworkshopentities.LicenseOwnerChange{},
+		//
+		//&transactionworkshopentities.BookingEstimation{},
+		//&transactionworkshopentities.BookingEstimationAllocation{},
+		//&transactionworkshopentities.BookingEstimationRequest{},
+		//&transactionworkshopentities.BookingEstimationServiceReminder{},
+		//&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		//&transactionworkshopentities.BookingEstimationDetail{},
+		//
+		//&transactionsparepartentities.PurchaseRequestEntities{},
+		//&transactionsparepartentities.PurchaseRequestDetail{},
+		//
+
+		//&transactionsparepartentities.PurchaseRequestReferenceType{},
+		//&transactionsparepartentities.PurchaseOrderEntities{},
+		//&transactionsparepartentities.PurchaseOrderDetailEntities{},
+		//&transactionsparepartentities.PurchaseOrderDetailChangedItem{},
+		//
+		//&transactionsparepartentities.BinningStock{},
+		//&transactionsparepartentities.BinningStockDetail{},
+		//&transactionsparepartentities.PurchaseOrderLimit{},
+		//&transactionsparepartentities.ItemClaim{},
+		//&transactionsparepartentities.ItemClaimDetail{},
+		//&transactionsparepartentities.StockTransaction{},
+		//&transactionsparepartentities.GoodsReceiveDetail{},
+		// &transactionsparepartentities.GoodsReceive{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

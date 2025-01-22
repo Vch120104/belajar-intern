@@ -478,6 +478,11 @@ func StartRouting(db *gorm.DB) {
 	AtpmClaimRegistrationService := transactionworkshopserviceimpl.OpenAtpmClaimRegistrationServiceImpl(AtpmClaimRegistrationRepository, db, rdb)
 	AtpmClaimRegistrationController := transactionworkshopcontroller.NewAtpmClaimRegistrationController(AtpmClaimRegistrationService)
 
+	//License Owner Change
+	LicenseOwnerChangeRepository := transactionworkshoprepositoryimpl.OpenLicenseOwnerChangeRepositoryImpl()
+	LicenseOwnerChangeService := transactionworkshopserviceimpl.OpenLicenseOwnerChangeServiceImpl(LicenseOwnerChangeRepository, db, rdb)
+	LicenseOwnerChangeController := transactionworkshopcontroller.NewLicenseOwnerChangeController(LicenseOwnerChangeService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -567,6 +572,8 @@ func StartRouting(db *gorm.DB) {
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
+	LicenseOwnerChangeRouter := LicenseOwnerChangeRouter(LicenseOwnerChangeController)
+
 	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	AtpmClaimRegistrationRouter := AtpmClaimRegistrationRouter(AtpmClaimRegistrationController)
 
@@ -662,6 +669,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/contract-service", ContractServiceRouter)
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
 		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
+		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
 
 		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
