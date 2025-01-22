@@ -92,13 +92,13 @@ func (l *LicenseOwncerChangeRepository) GetAll(tx *gorm.DB, filterCondition []ut
 }
 
 // GetAllHistory implements transactionworkshoprepository.LicenseOwncerChangeRepository.
-func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber string, tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber string, tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.LicenseOwnerChange
 	combinePayloads := make([]map[string]interface{}, 0)
 
 	vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleByChassisNumber(chassisNumber)
 	if vehicleErr != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Invalid chassis number or vehicle not found",
 			Err:        vehicleErr.Err,
@@ -108,16 +108,24 @@ func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber 
 	vehicleID := vehicleResponse.Data.Master.VehicleID
 
 	query := tx.Model(&transactionworkshopentities.LicenseOwnerChange{}).
-		Select("change_date, change_type, tnkb_old, tnkb_new, owner_name_old, owner_name_new").
+		Select("change_date, change_type, vehicle_stnk_tnkb_old AS tnkb_old, vehicle_stnk_tnkb_new AS tnkb_new, vehicle_owner_name_old AS owner_name_old, vehicle_owner_name_new AS owner_name_new").
 		Where("vehicle_id = ?", vehicleID).
 		Order("change_date DESC")
 
-	if err := query.Find(&entities).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	query = utils.ApplyFilter(query, filterCondition)
+
+	err := query.Scopes(pagination.Paginate(&pages, query)).Find(&entities).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "No history data found for the given chassis number",
 			Err:        err,
 		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
 	for _, entity := range entities {
@@ -131,7 +139,6 @@ func (l *LicenseOwncerChangeRepository) GetHistoryByChassisNumber(chassisNumber 
 		}
 		combinePayloads = append(combinePayloads, response)
 	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(combinePayloads, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	pages.Rows = combinePayloads
+	return pages, nil
 }
