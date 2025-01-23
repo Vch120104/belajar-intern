@@ -262,14 +262,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 
 		// Build the response map
 		response := map[string]interface{}{
-			"is_active":                     detail.IsActive,
-			"package_detail_id":             detail.PackageDetailId,
-			"package_id":                    detail.PackageId,
-			"line_type_id":                  detail.LineTypeId,
-			"item_operation_id":             detail.ItemOperationId,
-			"frt_quantity":                  detail.FrtQuantity,
-			"workorder_transaction_type_id": detail.WorkorderTransactionTypeId,
-			"job_type_id":                   detail.JobTypeId,
+			"is_active":           detail.IsActive,
+			"package_detail_id":   detail.PackageDetailId,
+			"package_id":          detail.PackageId,
+			"line_type_id":        detail.LineTypeId,
+			"item_operation_id":   detail.ItemOperationId,
+			"frt_quantity":        detail.FrtQuantity,
+			"transaction_type_id": detail.TransactionTypeId,
+			"job_type_id":         detail.JobTypeId,
 		}
 
 		// Add item or operation data based on line type
@@ -534,7 +534,6 @@ func (r *PackageMasterRepositoryImpl) GetByCodePackageMaster(tx *gorm.DB, code s
 func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMaster{
 		IsActive:       req.IsActive,
-		ItemGroupId:    req.ItemGroupId,
 		PackageName:    req.PackageName,
 		PackageCode:    req.PackageCode,
 		BrandId:        req.BrandId,
@@ -599,13 +598,13 @@ func (r *PackageMasterRepositoryImpl) SavePackageToMappingItemOperation(tx *gorm
 
 func (r *PackageMasterRepositoryImpl) PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMasterDetail{
-		IsActive:                   req.IsActive,
-		PackageId:                  id,
-		LineTypeId:                 req.LineTypeId,
-		ItemOperationId:            req.ItemOperationId,
-		FrtQuantity:                req.FrtQuantity,
-		WorkorderTransactionTypeId: req.WorkorderTransactionTypeId,
-		JobTypeId:                  req.JobTypeId,
+		IsActive:          req.IsActive,
+		PackageId:         id,
+		LineTypeId:        req.LineTypeId,
+		ItemOperationId:   req.ItemOperationId,
+		FrtQuantity:       req.FrtQuantity,
+		TransactionTypeId: req.TransactionTypeId,
+		JobTypeId:         req.JobTypeId,
 	}
 	err := tx.Save(&entities).Error
 	if err != nil {
@@ -698,7 +697,6 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 	newEntity := masterentities.PackageMaster{
 		IsActive:       payloads.IsActive,
 		PackageCode:    code,
-		ItemGroupId:    payloads.ItemGroupId,
 		PackageName:    payloads.PackageName,
 		BrandId:        payloads.BrandId,
 		ModelId:        modelId,
@@ -730,13 +728,13 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 	}
 	for _, detail := range detailentities {
 		entities := masterentities.PackageMasterDetail{
-			IsActive:                   detail.IsActive,
-			PackageId:                  newEntity.PackageId,
-			LineTypeId:                 detail.LineTypeId,
-			ItemOperationId:            detail.ItemOperationId,
-			FrtQuantity:                detail.FrtQuantity,
-			WorkorderTransactionTypeId: detail.WorkorderTransactionTypeId,
-			JobTypeId:                  detail.JobTypeId,
+			IsActive:          detail.IsActive,
+			PackageId:         newEntity.PackageId,
+			LineTypeId:        detail.LineTypeId,
+			ItemOperationId:   detail.ItemOperationId,
+			FrtQuantity:       detail.FrtQuantity,
+			TransactionTypeId: detail.TransactionTypeId,
+			JobTypeId:         detail.JobTypeId,
 		}
 		err := tx.Save(&entities).Error
 		if err != nil {

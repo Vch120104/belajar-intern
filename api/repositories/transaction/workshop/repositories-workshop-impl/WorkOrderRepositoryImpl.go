@@ -2366,6 +2366,26 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			return pages, errResp
 		}
 
+		// fetch data item
+		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(workOrderReq.OperationItemId)
+		if itemErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve item data from the external API",
+				Err:        itemErr.Err,
+			}
+		}
+
+		// Fetch data UOM from external API
+		uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
+		if uomErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve UOM data from the external API",
+				Err:        uomErr.Err,
+			}
+		}
+
 		workOrderRes := transactionworkshoppayloads.WorkOrderDetailResponse{
 			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
 			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
@@ -2381,6 +2401,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			OperationItemId:                     workOrderReq.OperationItemId,
 			OperationItemCode:                   OperationItemCode,
 			Description:                         Description,
+			Uom:                                 uomItems.UomDescription,
 			OperationItemPrice:                  workOrderReq.OperationItemPrice,
 			OperationItemDiscountAmount:         workOrderReq.OperationItemDiscountAmount,
 			OperationItemDiscountRequestAmount:  workOrderReq.OperationItemDiscountRequestAmount,
@@ -2440,6 +2461,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			"operation_item_id":                      response.OperationItemId,
 			"operation_item_code":                    response.OperationItemCode,
 			"description":                            response.Description,
+			"uom":                                    response.Uom,
 			"operation_item_price":                   response.OperationItemPrice,
 			"operation_item_discount_amount":         response.OperationItemDiscountAmount,
 			"operation_item_discount_request_amount": response.OperationItemDiscountRequestAmount,
@@ -2581,6 +2603,26 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, errResp
 	}
 
+	// fetch data item
+	itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.OperationItemId)
+	if itemErr != nil {
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve item data from the external API",
+			Err:        itemErr.Err,
+		}
+	}
+
+	// Fetch data UOM from external API
+	uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
+	if uomErr != nil {
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve UOM data from the external API",
+			Err:        uomErr.Err,
+		}
+	}
+
 	payload := transactionworkshoppayloads.WorkOrderDetailResponse{
 		WorkOrderDetailId:                   entity.WorkOrderDetailId,
 		WorkOrderSystemNumber:               entity.WorkOrderSystemNumber,
@@ -2599,6 +2641,7 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		OperationItemId:                     entity.OperationItemId,
 		OperationItemCode:                   OperationItemCode,
 		Description:                         Description,
+		Uom:                                 uomItems.UomDescription,
 		OperationItemPrice:                  entity.OperationItemPrice,
 		OperationItemDiscountAmount:         entity.OperationItemDiscountAmount,
 		OperationItemDiscountRequestAmount:  entity.OperationItemDiscountRequestAmount,
@@ -5362,13 +5405,13 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									var oprItemPrice float64
 
 									// fetch linetype
-									linetypechecks, LinetypeErr := generalserviceapiutils.GetLineTypeById(detailentity.LineTypeId)
-									if LinetypeErr != nil {
-										return false, LinetypeErr
-									}
+									// linetypechecks, LinetypeErr := generalserviceapiutils.GetLineTypeById(detailentity.LineTypeId)
+									// if LinetypeErr != nil {
+									// 	return false, LinetypeErr
+									// }
 
 									// Fetch Opr_Item_Price
-									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, linetypechecks.LineTypeCode, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 									// Apply markup to the item price
 									oprItemPrice = oprItemPrice + 10.00 + (oprItemPrice * (5.00 / 100))
@@ -5418,7 +5461,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, linetypechecks.LineTypeCode, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -5440,7 +5483,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, linetypechecks.LineTypeCode, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -6698,17 +6741,17 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 		}
 
 		// fetch line type
-		linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
-		if linetypeErr != nil {
-			return entity, &exceptions.BaseErrorResponse{
-				StatusCode: linetypeErr.StatusCode,
-				Message:    "Failed to fetch line type",
-				Err:        linetypeErr.Err,
-			}
-		}
+		// linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
+		// if linetypeErr != nil {
+		// 	return entity, &exceptions.BaseErrorResponse{
+		// 		StatusCode: linetypeErr.StatusCode,
+		// 		Message:    "Failed to fetch line type",
+		// 		Err:        linetypeErr.Err,
+		// 	}
+		// }
 
 		// Fetch operation item price and discount percent
-		oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, linetypecheck.LineTypeCode, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+		oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
 		if err != nil {
 			return entity, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -7000,17 +7043,17 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 					markupPercentage := 0.0
 
 					// fetch linetype
-					linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
-					if linetypeErr != nil {
-						return entity, &exceptions.BaseErrorResponse{
-							StatusCode: linetypeErr.StatusCode,
-							Message:    "Failed to fetch line type",
-							Err:        linetypeErr.Err,
-						}
-					}
+					// linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
+					// if linetypeErr != nil {
+					// 	return entity, &exceptions.BaseErrorResponse{
+					// 		StatusCode: linetypeErr.StatusCode,
+					// 		Message:    "Failed to fetch line type",
+					// 		Err:        linetypeErr.Err,
+					// 	}
+					// }
 
 					// Fetch operation item price and discount percent
-					oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, linetypecheck.LineTypeCode, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
+					oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
 					if err != nil {
 						return entity, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -7169,17 +7212,17 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 						var markupAmount, markupPercentage float64
 
 						// fetch linetype
-						linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
-						if linetypeErr != nil {
-							return entity, &exceptions.BaseErrorResponse{
-								StatusCode: linetypeErr.StatusCode,
-								Message:    "Failed to fetch line type",
-								Err:        linetypeErr.Err,
-							}
-						}
+						// linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(csrLineTypeId)
+						// if linetypeErr != nil {
+						// 	return entity, &exceptions.BaseErrorResponse{
+						// 		StatusCode: linetypeErr.StatusCode,
+						// 		Message:    "Failed to fetch line type",
+						// 		Err:        linetypeErr.Err,
+						// 	}
+						// }
 
 						// Fetch operation item price and discount percent
-						oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, linetypecheck.LineTypeCode, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+						oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
 						if err != nil {
 							return entity, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -7515,13 +7558,13 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 			}
 
 			// fetch linetype
-			linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(recallRecord.LineTypeId)
-			if linetypeErr != nil {
-				return entity, linetypeErr
-			}
+			// linetypecheck, linetypeErr := generalserviceapiutils.GetLineTypeById(recallRecord.LineTypeId)
+			// if linetypeErr != nil {
+			// 	return entity, linetypeErr
+			// }
 
 			oprItemPrice, err := s.lookupRepo.GetOprItemPrice(
-				tx, linetypecheck.LineTypeCode, companyCode, vehicleBrand, recallRecord.OprItemId, agreementNo,
+				tx, recallRecord.LineTypeId, companyCode, vehicleBrand, recallRecord.OprItemId, agreementNo,
 				entity.JobTypeId, utils.TrxTypeWoWarranty.ID,
 				int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(variantCode),
 			)
@@ -8271,8 +8314,8 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							// Step 6: Fetch markup based on Company and Vehicle Brand
 							var markupAmount, markupPercentage float64
 
-							// Fetch operation item price and discount percent
-							oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, utils.LinetypeSublet, result.CompanyId, result.BrandId, recallRecord.OprItemId, agreementNo, utils.TrxTypeWoFreeService.ID, utils.TrxTypeWoFreeService.ID, int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(result.VariantId))
+							// Fetch operation item price and discount percent  utils.LinetypeSublet
+							oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, 9, result.CompanyId, result.BrandId, recallRecord.OprItemId, agreementNo, utils.TrxTypeWoFreeService.ID, utils.TrxTypeWoFreeService.ID, int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(result.VariantId))
 							if err != nil {
 								return entity, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,

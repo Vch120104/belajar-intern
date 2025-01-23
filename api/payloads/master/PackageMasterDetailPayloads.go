@@ -65,15 +65,15 @@ type CopyPackageToCampaignMaster struct {
 }
 
 type PackageMasterDetail struct {
-	IsActive                   bool    `json:"is_active"`
-	PackageDetailId            int     `json:"package_detail_id"`
-	PackageId                  int     `json:"package_id"`
-	FrtQuantity                float64 `json:"frt_quantity"`
-	JobTypeId                  int     `json:"job_type_id"`
-	LineTypeId                 int     `json:"line_type_id"`
-	ItemOperationId            int     `json:"item_operation_id"`
-	Sequence                   int     `json:"sequence"`
-	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id"`
+	IsActive          bool    `json:"is_active"`
+	PackageDetailId   int     `json:"package_detail_id"`
+	PackageId         int     `json:"package_id"`
+	FrtQuantity       float64 `json:"frt_quantity"`
+	JobTypeId         int     `json:"job_type_id"`
+	LineTypeId        int     `json:"line_type_id"`
+	ItemOperationId   int     `json:"item_operation_id"`
+	Sequence          int     `json:"sequence"`
+	TransactionTypeId int     `json:"transaction_type_id"`
 }
 
 type PackageMasterDetailItemCampaign struct {

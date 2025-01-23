@@ -29,6 +29,10 @@ type AtpmClaimRegistrationController interface {
 
 	GetAllServiceHistory(writer http.ResponseWriter, request *http.Request)
 	GetAllClaimHistory(writer http.ResponseWriter, request *http.Request)
+
+	GetAllDetail(writer http.ResponseWriter, request *http.Request)
+	GetDetailById(writer http.ResponseWriter, request *http.Request)
+	AddDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transactionworkshopservice.AtpmClaimRegistrationService) AtpmClaimRegistrationController {
@@ -345,4 +349,155 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllClaimHistory(writer http.Res
 		int64(result.TotalRows),
 		result.TotalPages,
 	)
+}
+
+// GetAllDetail gets all detail
+// @Summary Get All Detail
+// @Description Retrieve all detail with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_system_number path int true "ATPM Claim Registration ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/detail [get]
+func (r *AtpmClaimRegistrationControllerImpl) GetAllDetail(writer http.ResponseWriter, request *http.Request) {
+
+	ClaimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	ClaimSystemNumber, err := strconv.Atoi(ClaimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_atpm_claim_vehicle.claim_system_number": queryValues.Get("claim_system_number"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, baseErr := r.AtpmClaimRegistrationService.GetAllDetail(ClaimSystemNumber, criteria, paginate)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
+}
+
+// GetDetailById gets detail by id
+// @Summary Get Detail By ID
+// @Description Retrieve detail by id
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
+// @Param claim_system_number path int true "ATPM Claim ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/claim_system_number/detail/{claim_detail_system_number} [get]
+func (r *AtpmClaimRegistrationControllerImpl) GetDetailById(writer http.ResponseWriter, request *http.Request) {
+
+	ClaimDetailSystemNumberStr := chi.URLParam(request, "claim_detail_system_number")
+	ClaimDetailSystemNumber, err := strconv.Atoi(ClaimDetailSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim detail system number", http.StatusBadRequest)
+		return
+	}
+
+	ClaimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	ClaimSystemNumber, err := strconv.Atoi(ClaimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.GetDetailById(ClaimDetailSystemNumber, ClaimSystemNumber, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Atpm Claim Detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
+
+}
+
+// AddDetail adds new detail
+// @Summary Add New Detail
+// @Description Add new detail
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_system_number path int true "ATPM Claim Registration ID"
+// @Param body body transactionworkshoppayloads.AtpmClaimDetailRequest true "Atpm Claim Detail Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/claim_system_number/detail [post]
+func (r *AtpmClaimRegistrationControllerImpl) AddDetail(writer http.ResponseWriter, request *http.Request) {
+
+	ClaimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	ClaimSystemNumber, err := strconv.Atoi(ClaimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	var req transactionworkshoppayloads.AtpmClaimDetailRequest
+	helper.ReadFromRequestBody(request, &req)
+	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.AddDetail(ClaimSystemNumber, req)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Data has been created successfully!", http.StatusCreated)
 }

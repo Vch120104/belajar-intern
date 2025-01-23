@@ -11,6 +11,7 @@ type ServiceReceiptNew struct {
 	BrandId                      int       `json:"brand_id" parent_entity:"trx_service_request" `
 	ModelId                      int       `json:"model_id" parent_entity:"trx_service_request" `
 	VariantId                    int       `json:"variant_id" parent_entity:"trx_service_request" `
+	ColourId                     int       `json:"colour_id" parent_entity:"trx_service_request" `
 	VehicleId                    int       `json:"vehicle_id" parent_entity:"trx_service_request" `
 	BookingSystemNumber          int       `json:"booking_system_number" parent_entity:"trx_service_request" `
 	EstimationSystemNumber       int       `json:"estimation_system_number" parent_entity:"trx_service_request" `
@@ -108,7 +109,7 @@ type ServiceReceiptResponse struct {
 	ServiceRequestSystemNumber   int                           `json:"service_request_system_number"`
 	ServiceRequestDocumentNumber string                        `json:"service_request_document_number"`
 	ServiceRequestStatusName     string                        `json:"service_request_status_name"`
-	ServiceRequestDate           string                        `json:"service_request_date"`
+	ServiceRequestDate           time.Time                     `json:"service_request_date"`
 	ServiceRequestBy             string                        `json:"service_request_by"`
 	ServiceRequestStatusId       int                           `json:"service_request_status_id"`
 	BrandId                      int                           `json:"brand_id"`
@@ -139,9 +140,9 @@ type ServiceReceiptResponse struct {
 	ServiceRemark                string                        `json:"service_remark"`
 	ServiceCompanyId             int                           `json:"service_company_id"`
 	ServiceCompanyName           string                        `json:"service_company_name"`
-	ServiceDate                  string                        `json:"service_date"`
+	ServiceDate                  time.Time                     `json:"service_date"`
 	ReplyId                      int                           `json:"reply_id"`
-	ReplyDate                    string                        `json:"reply_date"`
+	ReplyDate                    time.Time                     `json:"reply_date"`
 	ReplyBy                      string                        `json:"reply_by"`
 	ReplyRemark                  string                        `json:"reply_remark"`
 	ServiceDetails               ServiceReceiptDetailsResponse `json:"service_details"`

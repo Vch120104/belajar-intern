@@ -11,6 +11,7 @@ type ServiceRequestNew struct {
 	BrandId                      int       `json:"brand_id" parent_entity:"trx_service_request" `
 	ModelId                      int       `json:"model_id" parent_entity:"trx_service_request" `
 	VariantId                    int       `json:"variant_id" parent_entity:"trx_service_request" `
+	ColourId                     int       `json:"colour_id" parent_entity:"trx_service_request" `
 	VehicleId                    int       `json:"vehicle_id" parent_entity:"trx_service_request" `
 	BookingSystemNumber          int       `json:"booking_system_number" parent_entity:"trx_service_request" `
 	EstimationSystemNumber       int       `json:"estimation_system_number" parent_entity:"trx_service_request" `
@@ -34,6 +35,7 @@ type ServiceRequestSaveRequest struct {
 	BrandId                    int       `json:"brand_id"`
 	ModelId                    int       `json:"model_id"`
 	VariantId                  int       `json:"variant_id"`
+	ColourId                   int       `json:"colour_id"`
 	VehicleId                  int       `json:"vehicle_id"`
 	BookingSystemNumber        int       `json:"booking_system_number"`
 	EstimationSystemNumber     int       `json:"estimation_system_number"`
@@ -107,10 +109,10 @@ type ServiceRequestGetallResponse struct {
 type ServiceRequestResponse struct {
 	ServiceRequestSystemNumber int `json:"service_request_system_number"`
 	//ServiceRequestStatusId       int                           `json:"service_request_status_id"`
-	ServiceRequestStatusName     string `json:"service_request_status_name"`
-	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
-	ServiceRequestDate           string `json:"service_request_date"`
-	ServiceTypeId                int    `json:"service_type_id"`
+	ServiceRequestStatusName     string    `json:"service_request_status_name"`
+	ServiceRequestDocumentNumber string    `json:"service_request_document_number"`
+	ServiceRequestDate           time.Time `json:"service_request_date"`
+	ServiceTypeId                int       `json:"service_type_id"`
 	//BrandId                      int                           `json:"brand_id"`
 	BrandName string `json:"brand_name"`
 	//ModelId                      int                           `json:"model_id"`
@@ -142,11 +144,11 @@ type ServiceRequestResponse struct {
 	ServiceRemark            string `json:"service_remark"`
 	//ReplyId                      int                           `json:"reply_id"`
 	ReplyBy            string                        `json:"reply_by"`
-	ReplyDate          string                        `json:"reply_date"`
+	ReplyDate          time.Time                     `json:"reply_date"`
 	ReplyRemark        string                        `json:"reply_remark"`
 	ServiceCompanyId   int                           `json:"service_company_id"`
 	ServiceCompanyName string                        `json:"service_company_name"`
-	ServiceDate        string                        `json:"service_date"`
+	ServiceDate        time.Time                     `json:"service_date"`
 	ServiceRequestBy   string                        `json:"service_request_by"`
 	ServiceDetails     ServiceRequestDetailsResponse `json:"service_details"`
 }
