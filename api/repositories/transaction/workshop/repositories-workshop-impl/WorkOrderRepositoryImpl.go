@@ -2366,6 +2366,26 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			return pages, errResp
 		}
 
+		// fetch data item
+		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(workOrderReq.OperationItemId)
+		if itemErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve item data from the external API",
+				Err:        itemErr.Err,
+			}
+		}
+
+		// Fetch data UOM from external API
+		uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
+		if uomErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve UOM data from the external API",
+				Err:        uomErr.Err,
+			}
+		}
+
 		workOrderRes := transactionworkshoppayloads.WorkOrderDetailResponse{
 			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
 			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
@@ -2381,6 +2401,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			OperationItemId:                     workOrderReq.OperationItemId,
 			OperationItemCode:                   OperationItemCode,
 			Description:                         Description,
+			Uom:                                 uomItems.UomDescription,
 			OperationItemPrice:                  workOrderReq.OperationItemPrice,
 			OperationItemDiscountAmount:         workOrderReq.OperationItemDiscountAmount,
 			OperationItemDiscountRequestAmount:  workOrderReq.OperationItemDiscountRequestAmount,
@@ -2440,6 +2461,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			"operation_item_id":                      response.OperationItemId,
 			"operation_item_code":                    response.OperationItemCode,
 			"description":                            response.Description,
+			"uom":                                    response.Uom,
 			"operation_item_price":                   response.OperationItemPrice,
 			"operation_item_discount_amount":         response.OperationItemDiscountAmount,
 			"operation_item_discount_request_amount": response.OperationItemDiscountRequestAmount,
@@ -2581,6 +2603,26 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, errResp
 	}
 
+	// fetch data item
+	itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.OperationItemId)
+	if itemErr != nil {
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve item data from the external API",
+			Err:        itemErr.Err,
+		}
+	}
+
+	// Fetch data UOM from external API
+	uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
+	if uomErr != nil {
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve UOM data from the external API",
+			Err:        uomErr.Err,
+		}
+	}
+
 	payload := transactionworkshoppayloads.WorkOrderDetailResponse{
 		WorkOrderDetailId:                   entity.WorkOrderDetailId,
 		WorkOrderSystemNumber:               entity.WorkOrderSystemNumber,
@@ -2599,6 +2641,7 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		OperationItemId:                     entity.OperationItemId,
 		OperationItemCode:                   OperationItemCode,
 		Description:                         Description,
+		Uom:                                 uomItems.UomDescription,
 		OperationItemPrice:                  entity.OperationItemPrice,
 		OperationItemDiscountAmount:         entity.OperationItemDiscountAmount,
 		OperationItemDiscountRequestAmount:  entity.OperationItemDiscountRequestAmount,

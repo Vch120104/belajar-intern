@@ -17,6 +17,14 @@ type QuantityConversionUomResponse struct {
 	QuantityConversion float64 `json:"quantity_conversion"`
 }
 
+type UomResponse struct {
+	UomId              int    `json:"uom_id"`
+	UomCode            string `json:"uom_code"`
+	UomDescription     string `json:"uom_description"`
+	UomTypeId          int    `json:"uom_type_id"`
+	UomTypeDescription string `json:"uom_type_description"`
+}
+
 //var UomBaseUrl string = config.EnvConfigs.AfterSalesServiceUrl + "unit-measurement/"
 
 func GetQuantityConversion(SourceType string, itemId int, quantity float64) (QuantityConversionUomResponse, *exceptions.BaseErrorResponse) {
@@ -39,4 +47,26 @@ func GetQuantityConversion(SourceType string, itemId int, quantity float64) (Qua
 		}
 	}
 	return response, nil
+}
+
+func GetUomById(id int) (UomResponse, *exceptions.BaseErrorResponse) {
+	var getUom UomResponse
+	url := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(id)
+	err := utils.CallAPI("GET", url, nil, &getUom)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve uom due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "uom service is temporarily unavailable"
+		}
+
+		return getUom, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting uom by ID"),
+		}
+	}
+	return getUom, nil
 }

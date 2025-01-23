@@ -16,9 +16,6 @@ import (
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
-	"context"
-	"fmt"
-	"log"
 
 	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionbodyshopcontroller "after-sales/api/controllers/transactions/bodyshop"
@@ -34,6 +31,7 @@ import (
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
 
+	"github.com/redis/go-redis/v9"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/go-chi/chi/v5"
@@ -41,17 +39,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func StartRouting(db *gorm.DB) {
-	// Initialize Redis client
-	rdb := config.InitRedis()
-
-	// Set a key-value pair
-	ctx := context.Background()
-	err := rdb.Set(ctx, "key", "value", 0).Err()
-	if err != nil {
-		log.Fatalf("could not set key: %v", err)
-	}
-	fmt.Println("Key set successfully")
+func StartRouting(db *gorm.DB, rdb *redis.Client) {
 
 	/* Master */
 	// Unit Measurement
@@ -682,7 +670,6 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
 		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
 
-		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
 		r.Mount("/quality-control-bodyshop", QualityControlBodyshopRouter)
@@ -695,7 +682,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/goods-receive", GoodsReceiveRouter)
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
-
+		r.Mount("/stock-transaction", StockTransactionRouter)
 		r.Mount("/binning-list", BinningListRouter)
 		r.Mount("/item-location-transfer", ItemLocationTransferRouter)
 		r.Mount("/item-inquiry", ItemInquiryRouter)
@@ -714,6 +701,6 @@ func StartRouting(db *gorm.DB) {
 		Handler: r,
 	}
 
-	err = server.ListenAndServe()
+	err := server.ListenAndServe()
 	helper.PanicIfError(err)
 }

@@ -4,6 +4,9 @@ import (
 	"after-sales/api/config"
 	route "after-sales/api/route"
 	migration "after-sales/generate/sql"
+	"context"
+	"fmt"
+	"log"
 	"os"
 )
 
@@ -35,8 +38,17 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
+		dbredis := config.InitRedis()
+
+		// Set a key-value pair
+		ctx := context.Background()
+		err := dbredis.Set(ctx, "key", "value", 0).Err()
+		if err != nil {
+			log.Fatalf("could not set key: %v", err)
+		}
+		fmt.Println("Key set successfully")
 
 		config.InitLogger(db)
-		route.StartRouting(db)
+		route.StartRouting(db, dbredis)
 	}
 }
