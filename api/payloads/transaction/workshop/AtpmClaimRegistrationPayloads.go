@@ -45,7 +45,7 @@ type AtpmClaimRegistrationResponse struct {
 	BrandName               string    `json:"brand_name"`
 	ClaimTo                 string    `json:"claim_to"`
 	ClaimTypeId             int       `json:"claim_type_id"`
-	ClaimTypeName           string    `json:"claim_type_name"`
+	ClaimTypeDescription    string    `json:"claim_type_description"`
 	ClaimNumber             string    `json:"claim_number"`
 	ClaimDate               time.Time `json:"claim_date"`
 	WorkOrderDocumentNumber string    `json:"work_order_document_number"`

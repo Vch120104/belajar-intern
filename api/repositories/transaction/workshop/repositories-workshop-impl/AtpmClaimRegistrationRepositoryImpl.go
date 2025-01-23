@@ -102,6 +102,16 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 		// 	}
 		// }
 
+		// fetch claim type
+		claimTypeResponse, claimTypeErr := generalserviceapiutils.GetClaimTypeById(entity.ClaimTypeId)
+		if claimTypeErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: claimTypeErr.StatusCode,
+				Message:    "Failed to fetch claim type data from internal service",
+				Err:        claimTypeErr.Err,
+			}
+		}
+
 		result := map[string]interface{}{
 			"vehicle_id":                 entity.VehicleId,
 			"vehicle_chassis_number":     "vehicleResponse.Data.Master.VehicleChassisNumber",
@@ -110,9 +120,11 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 			"work_order_date":            entity.WorkOrderDate,
 			"company_id":                 entity.CompanyId,
 			"company_name":               companyResponses.CompanyName,
+			"claim_system_number":        entity.ClaimSystemNumber,
 			"claim_number":               entity.ClaimNumber,
 			"claim_date":                 entity.ClaimDate,
 			"claim_type_id":              entity.ClaimTypeId,
+			"claim_type_description":     claimTypeResponse.ClaimTypeDescription,
 			"claim_status_id":            entity.ClaimStatusId,
 			"brand_id":                   entity.BrandId,
 			"brand_name":                 brandResponses.BrandName,
@@ -132,53 +144,42 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 }
 
 func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages pagination.Pagination) (transactionworkshoppayloads.AtpmClaimRegistrationResponse, *exceptions.BaseErrorResponse) {
+
 	var entity transactionworkshopentities.AtpmClaimVehicle
-
-	tx.Where("claim_system_number = ?", id).Find(&entity)
-
-	if tx.Error != nil {
-		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+	err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Where("claim_system_number = ?", id).
+		First(&entity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Data not found",
-				Err:        tx.Error,
+				Err:        err,
 			}
 		}
 		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get data",
-			Err:        tx.Error,
+			Err:        err,
 		}
 	}
 
 	// Get company data
 	companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(entity.CompanyId)
 	if companyErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: companyErr.StatusCode,
-			Message:    "Failed to fetch company data from internal service",
-			Err:        companyErr.Err,
-		}
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, companyErr
 	}
 
 	// Get brand data
 	brandResponses, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
 	if brandErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: brandErr.StatusCode,
-			Message:    "Failed to fetch brand data from external service",
-			Err:        brandErr.Err,
-		}
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, brandErr
 	}
 
 	// Get model data
 	modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
 	if modelErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: modelErr.StatusCode,
-			Message:    "Failed to fetch model data from external service",
-			Err:        modelErr.Err,
-		}
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, modelErr
 	}
 
 	// Get variant data
@@ -191,15 +192,17 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 		}
 	}
 
-	// Get vehicle data
-	vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
-	if vehicleErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: vehicleErr.StatusCode,
-			Message:    "Failed to fetch vehicle data from external service",
-			Err:        vehicleErr.Err,
-		}
+	// Claim Type
+	claimTypeResponse, claimTypeErr := generalserviceapiutils.GetClaimTypeById(entity.ClaimTypeId)
+	if claimTypeErr != nil {
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, claimTypeErr
 	}
+
+	// Get vehicle data
+	// vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+	// if vehicleErr != nil {
+	// 	return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, vehicleErr
+	// }
 
 	response := transactionworkshoppayloads.AtpmClaimRegistrationResponse{
 		ClaimSystemNumber:       entity.ClaimSystemNumber,
@@ -208,13 +211,14 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 		BrandId:                 entity.BrandId,
 		BrandName:               brandResponses.BrandName,
 		ClaimTypeId:             entity.ClaimTypeId,
+		ClaimTypeDescription:    claimTypeResponse.ClaimTypeDescription,
 		ClaimNumber:             entity.ClaimNumber,
 		ClaimDate:               entity.ClaimDate,
 		WorkOrderDocumentNumber: entity.WorkOrderDocumentNumber,
 		WorkOrderDate:           entity.WorkOrderDate,
 		VehicleId:               entity.VehicleId,
-		VehicleChassisNumber:    vehicleResponse.Data.Master.VehicleChassisNumber,
-		VehicleEngineNumber:     vehicleResponse.Data.Master.VehicleEngineNumber,
+		VehicleChassisNumber:    "vehicleResponse.Data.Master.VehicleChassisNumber",
+		VehicleEngineNumber:     "vehicleResponse.Data.Master.VehicleEngineNumber",
 		ModelId:                 entity.ModelId,
 		ModelDescription:        modelResponses.ModelName,
 		VariantId:               entity.VariantId,
