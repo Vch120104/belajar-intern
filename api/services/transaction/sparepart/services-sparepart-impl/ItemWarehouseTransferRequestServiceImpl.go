@@ -150,6 +150,17 @@ func (s *WhTransferRequestServiceImpl) ProcessUploadData(request transactionspar
 		}
 
 		request.TransferRequestSystemNumber = &getRes.TransferRequestSystemNumber
+	} else {
+		_, err := s.TransferRequestRepo.UpdateWhTransferRequest(tx, transactionsparepartpayloads.UpdateItemWarehouseTransferRequest{
+			TransferRequestById:    request.TransferRequestById,
+			RequestFromWarehouseId: &request.RequestFromWarehouseId,
+			RequestToWarehouseId:   &request.RequestToWarehouseId,
+			Purpose:                request.Purpose,
+		}, *request.TransferRequestSystemNumber)
+
+		if err != nil {
+			return []transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, err
+		}
 	}
 
 	var validation_text string
@@ -167,7 +178,7 @@ func (s *WhTransferRequestServiceImpl) ProcessUploadData(request transactionspar
 		get, err := s.TransferRequestRepo.InsertWhTransferRequestDetail(tx, transactionsparepartpayloads.InsertItemWarehouseTransferDetailRequest{
 			TransferRequestSystemNumberId: *request.TransferRequestSystemNumber,
 			ItemId:                        &item.ItemId,
-			RequestQuantity:               &detail.RequestQuantity,
+			RequestQuantity:               detail.RequestQuantity,
 		})
 
 		if err != nil {
@@ -251,7 +262,7 @@ func (s *WhTransferRequestServiceImpl) PreviewUploadData(rows [][]string) ([]tra
 		results = append(results, transactionsparepartpayloads.UploadPreviewItemWarehouseTransferRequestPayloads{
 			ItemCode:          row[0],
 			ItemName:          item.ItemName,
-			RequestQuantity:   int(reqQuantity),
+			RequestQuantity:   reqQuantity,
 			UnitOfMeasurement: uom.UomCode,
 		})
 	}

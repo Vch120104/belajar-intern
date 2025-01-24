@@ -84,7 +84,7 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequestDetail(
 	response.ItemId = *entities.ItemId
 	response.ItemCode = item.ItemCode
 	response.StockUom = uom.UomCode
-	response.Quantity = float64(*entities.RequestQuantity)
+	response.Quantity = entities.RequestQuantity
 
 	return response, nil
 }
@@ -94,7 +94,7 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequestDetail(
 func (*ItemWarehouseTransferRequestRepositoryImpl) UpdateWhTransferRequestDetail(tx *gorm.DB, request transactionsparepartpayloads.UpdateItemWarehouseTransferRequestDetailRequest, number int) (transactionsparepartentities.ItemWarehouseTransferRequestDetail, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.ItemWarehouseTransferRequest
 	var entitiesDetail transactionsparepartentities.ItemWarehouseTransferRequestDetail
-	fmt.Println(number)
+
 	errDetail := tx.Model(&entitiesDetail).Where(transactionsparepartentities.ItemWarehouseTransferRequestDetail{TransferRequestDetailSystemNumber: number}).
 		First(&entitiesDetail).Error
 	if errDetail != nil {
@@ -140,14 +140,14 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) UpdateWhTransferRequestDetail
 		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, errQuantity
 	}
 
-	if *request.RequestQuantity > int(getQuantity.QuantityAvailable) {
+	if request.RequestQuantity > getQuantity.QuantityAvailable {
 		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("qty for transfer request is not available"),
 		}
 	}
 
-	if request.RequestQuantity != nil {
+	if request.RequestQuantity != 0.0 {
 		entitiesDetail.RequestQuantity = request.RequestQuantity
 	}
 
@@ -223,6 +223,7 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetAllWhTransferRequest(tx *g
 			"wmf.warehouse_name request_from_warehouse_name",
 			"wmf.warehouse_group_id request_from_warehouse_group_id",
 			"wgf.warehouse_group_name request_from_warehouse_group_name",
+			"transfer_request_by_id",
 			"request_to_warehouse_id",
 			"wmt.warehouse_name request_to_warehouse_name",
 			"wmt.warehouse_group_id request_to_warehouse_group_id",
@@ -472,7 +473,7 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) InsertWhTransferRequestDetail
 		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, errQuantity
 	}
 
-	if *request.RequestQuantity > int(getQuantity.QuantityAvailable) {
+	if request.RequestQuantity > getQuantity.QuantityAvailable {
 		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("qty for transfer request is not available"),

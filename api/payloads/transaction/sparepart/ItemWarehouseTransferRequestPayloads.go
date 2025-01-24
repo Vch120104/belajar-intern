@@ -12,9 +12,9 @@ type InsertItemWarehouseTransferRequest struct {
 }
 
 type InsertItemWarehouseTransferDetailRequest struct {
-	TransferRequestSystemNumberId int  `json:"transfer_request_system_number" parent_entity:"trx_item_warehouse_transfer_request_detail"`
-	ItemId                        *int `json:"item_id" parent_entity:"trx_item_warehouse_transfer_request_detail"`
-	RequestQuantity               *int `json:"request_quantity" parent_entity:"trx_item_warehouse_transfer_request_detail"`
+	TransferRequestSystemNumberId int     `json:"transfer_request_system_number" parent_entity:"trx_item_warehouse_transfer_request_detail"`
+	ItemId                        *int    `json:"item_id" parent_entity:"trx_item_warehouse_transfer_request_detail"`
+	RequestQuantity               float64 `json:"request_quantity" parent_entity:"trx_item_warehouse_transfer_request_detail"`
 }
 
 type UpdateItemWarehouseTransferRequest struct {
@@ -25,15 +25,15 @@ type UpdateItemWarehouseTransferRequest struct {
 }
 
 type GetAllDetailItemWarehouseTransferRequestResponse struct {
-	TransferRequestDetailSystemNumber int    `json:"transfer_request_detail_system_number"`
-	TransferRequestSystemNumber       int    `json:"transfer_request_system_number"`
-	ItemId                            int    `json:"item_id"`
-	ItemCode                          string `json:"item_code"`
-	ItemName                          string `json:"item_name"`
-	UnitOfMeasurement                 string `json:"unit_of_measurement"`
-	RequestQuantity                   int    `json:"request_quantity"`
-	LocationIdFrom                    int    `json:"location_id_from"`
-	LocationIdTo                      int    `json:"location_id_to"`
+	TransferRequestDetailSystemNumber int     `json:"transfer_request_detail_system_number"`
+	TransferRequestSystemNumber       int     `json:"transfer_request_system_number"`
+	ItemId                            int     `json:"item_id"`
+	ItemCode                          string  `json:"item_code"`
+	ItemName                          string  `json:"item_name"`
+	UnitOfMeasurement                 string  `json:"unit_of_measurement"`
+	RequestQuantity                   float64 `json:"request_quantity"`
+	LocationIdFrom                    int     `json:"location_id_from"`
+	LocationIdTo                      int     `json:"location_id_to"`
 }
 
 type GetByIdItemWarehouseTransferRequestResponse struct {
@@ -88,7 +88,7 @@ type GetAllItemWarehouseTransferRequestResponse struct {
 }
 
 type UpdateItemWarehouseTransferRequestDetailRequest struct {
-	RequestQuantity *int `json:"request_quantity"`
+	RequestQuantity float64 `json:"request_quantity"`
 }
 
 type GetByIdItemWarehouseTransferRequestDetailResponse struct {
@@ -99,10 +99,10 @@ type GetByIdItemWarehouseTransferRequestDetailResponse struct {
 }
 
 type UploadPreviewItemWarehouseTransferRequestPayloads struct {
-	ItemCode          string `json:"item_code"`
-	ItemName          string `json:"item_name"`
-	RequestQuantity   int    `json:"request_quantity"`
-	UnitOfMeasurement string `json:"unit_of_Measurement"`
+	ItemCode          string  `json:"item_code"`
+	ItemName          string  `json:"item_name"`
+	RequestQuantity   float64 `json:"request_quantity"`
+	UnitOfMeasurement string  `json:"unit_of_Measurement"`
 }
 
 type UploadProcessItemWarehouseTransferRequestPayloads struct {
