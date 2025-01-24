@@ -393,3 +393,36 @@ func (s *AtpmClaimRegistrationServiceImpl) AddDetail(claimsysno int, request tra
 
 	return result, nil
 }
+
+func (s *AtpmClaimRegistrationServiceImpl) DeleteDetail(detailId int, claimsysno int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	_, repoErr := s.AtpmClaimRegistrationRepository.DeleteDetail(tx, detailId, claimsysno)
+	if repoErr != nil {
+		return false, repoErr
+	}
+
+	return true, nil
+}

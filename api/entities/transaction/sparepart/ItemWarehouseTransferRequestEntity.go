@@ -17,12 +17,12 @@ type ItemWarehouseTransferRequest struct {
 	TransferRequestById           *int       `gorm:"column:transfer_request_by_id;size:30;null" json:"transfer_request_by_id"`
 	RequestFromWarehouseId        int        `gorm:"column:request_from_warehouse_id;size:30;not null" json:"request_from_warehouse_id"`
 	RequestToWarehouseId          int        `gorm:"column:request_to_warehouse_id;size:30;not null" json:"request_to_warehouse_id"`
-	Purpose                       *string    `gorm:"column:purpose;size:512;null" json:"purpose"`
+	Purpose                       string     `gorm:"column:purpose;size:512;null" json:"purpose"`
 	TransferInSystemNumber        *int       `gorm:"column:transfer_in_system_number;size:30;null" json:"transfer_in_system_number"`
 	TransferOutSystemNumber       *int       `gorm:"column:transfer_out_system_number;size:30;null" json:"transfer_out_system_number"`
 	ApprovalById                  *int       `gorm:"column:approval_by_id;size:30;null" json:"approval_by_id"`
-	ApprovalDate                  *time.Time `gorm:"column:approval_date;null" json:"approval_date"`
-	ApprovalRemark                *string    `gorm:"column:approval_remark;size:256;null" json:"approval_remark"`
+	ApprovalDate                  time.Time  `gorm:"column:approval_date;null" json:"approval_date"`
+	ApprovalRemark                string     `gorm:"column:approval_remark;size:256;null" json:"approval_remark"`
 
 	TransferRequestStatus masteritementities.ItemTransferStatus   `gorm:"foreignKey:TransferRequestStatusId;references:item_transfer_status_id" json:"transfer_request_status"`
 	RequestFromWarehouse  masterwarehouseentities.WarehouseMaster `gorm:"foreignKey:RequestFromWarehouseId;references:warehouse_id" json:"request_from_warehouse"`

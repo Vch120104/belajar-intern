@@ -33,6 +33,7 @@ type AtpmClaimRegistrationController interface {
 	GetAllDetail(writer http.ResponseWriter, request *http.Request)
 	GetDetailById(writer http.ResponseWriter, request *http.Request)
 	AddDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transactionworkshopservice.AtpmClaimRegistrationService) AtpmClaimRegistrationController {
@@ -500,4 +501,40 @@ func (r *AtpmClaimRegistrationControllerImpl) AddDetail(writer http.ResponseWrit
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Data has been created successfully!", http.StatusCreated)
+}
+
+// DeleteDetail deletes detail
+// @Summary Delete Detail
+// @Description Delete detail
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop ATPM Claim Registration
+// @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
+// @Param claim_system_number path int true "ATPM Claim ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/atpm-claim-registration/claim_system_number/detail/{claim_detail_system_number} [delete]
+func (r *AtpmClaimRegistrationControllerImpl) DeleteDetail(writer http.ResponseWriter, request *http.Request) {
+
+	ClaimDetailSystemNumberStr := chi.URLParam(request, "claim_detail_system_number")
+	ClaimDetailSystemNumber, err := strconv.Atoi(ClaimDetailSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim detail system number", http.StatusBadRequest)
+		return
+	}
+
+	ClaimSystemNumberStr := chi.URLParam(request, "claim_system_number")
+	ClaimSystemNumber, err := strconv.Atoi(ClaimSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid claim system number", http.StatusBadRequest)
+		return
+	}
+
+	result, baseErr := r.AtpmClaimRegistrationService.DeleteDetail(ClaimDetailSystemNumber, ClaimSystemNumber)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Data has been deleted successfully!", http.StatusOK)
 }

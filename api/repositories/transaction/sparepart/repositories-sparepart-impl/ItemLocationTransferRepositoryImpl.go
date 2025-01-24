@@ -721,7 +721,7 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 		}
 	}
 
-	var quantityAvailable int
+	var quantityAvailable float64
 	errGetQuantityAvailable := tx.
 		Model(&masterentities.LocationStock{}).
 		Select(
@@ -761,7 +761,7 @@ func (r *ItemLocationTransferRepositoryImpl) InsertItemLocationTransferDetail(tx
 		}
 	}
 
-	if *request.RequestQuantity > quantityAvailable {
+	if request.RequestQuantity > quantityAvailable {
 		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("quantity for transfer request is not available"),
@@ -832,7 +832,7 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx
 		}
 	}
 
-	var quantityAvailable int
+	var quantityAvailable float64
 	errGetQuantityAvailable := tx.
 		Model(&masterentities.LocationStock{}).
 		Select(
@@ -872,7 +872,7 @@ func (r *ItemLocationTransferRepositoryImpl) UpdateItemLocationTransferDetail(tx
 		}
 	}
 
-	if *request.RequestQuantity > quantityAvailable {
+	if request.RequestQuantity > quantityAvailable {
 		return transactionsparepartpayloads.GetItemLocationTransferDetailByIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("quantity for transfer request is not available"),
