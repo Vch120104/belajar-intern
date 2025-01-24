@@ -20,4 +20,5 @@ type AtpmClaimRegistrationService interface {
 	GetAllDetail(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetDetailById(claimsysno int, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	AddDetail(id int, request transactionworkshoppayloads.AtpmClaimDetailRequest) (transactionworkshopentities.AtpmClaimVehicleDetail, *exceptions.BaseErrorResponse)
+	DeleteDetail(detailId int, claimsysno int) (bool, *exceptions.BaseErrorResponse)
 }

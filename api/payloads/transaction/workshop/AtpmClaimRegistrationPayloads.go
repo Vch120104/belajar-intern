@@ -87,14 +87,14 @@ type AtpmClaimRegistrationDetailResponse struct {
 }
 
 type AtpmClaimDetailRequest struct {
-	ClaimSystemNumber     int     `json:"claim_system_number"`
-	CompanyId             int     `json:"company_id"`
-	ClaimLineNumber       int     `json:"claim_line_number"`
-	WorkOrderSystemNumber int     `json:"work_order_system_number"`
-	WorkOrderLineNumber   int     `json:"work_order_line_number"`
-	LineTypeId            int     `json:"line_type_id"`
-	ItemOperationId       int     `json:"item_operation_id"`
-	FrtQuantity           float64 `json:"frt_quantity"`
-	DiscountPercent       float64 `json:"discount_percent"`
-	DiscountAmount        float64 `json:"discount_amount"`
+	ClaimSystemNumber          int     `json:"claim_system_number"`
+	CompanyId                  int     `json:"company_id"`
+	ClaimLineNumber            int     `json:"claim_line_number"`
+	WorkOrderSystemNumber      int     `json:"work_order_system_number"`
+	WorkOrderOperationItemLine int     `json:"work_order_operation_item_line"`
+	LineTypeId                 int     `json:"line_type_id"`
+	ItemOperationId            int     `json:"item_operation_id"`
+	FrtQuantity                float64 `json:"frt_quantity"`
+	DiscountPercent            float64 `json:"discount_percent"`
+	DiscountAmount             float64 `json:"discount_amount"`
 }
