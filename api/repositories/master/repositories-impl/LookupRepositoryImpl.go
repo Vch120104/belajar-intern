@@ -2063,7 +2063,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
-func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr string, companyId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var (
 		currentTime = time.Now()
@@ -2083,39 +2083,43 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
-		baseQuery = baseQuery.Table("mtr_package A").
-			Select("A.package_id, A.package_code, A.package_name, "+
+	switch linetypeId {
+	case 1:
+		baseQuery = baseQuery.Table("mtr_package").
+			Select("mtr_package.package_id, mtr_package.package_code, mtr_package.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
-				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
-				"A.model_id, A.brand_id, A.variant_id").
-			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
-			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
-			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", 1).
-			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
-				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
-			Order("A.package_id")
+				"mtr_package.profit_center_id as profit_center, dms_microservices_general_dev.dbo.mtr_profit_center.profit_center_name, dms_microservices_sales_dev.dbo.mtr_unit_model.model_code, dms_microservices_sales_dev.dbo.mtr_unit_model.model_description as description, mtr_package.package_price as price, "+
+				"mtr_package.model_id, mtr_package.brand_id, mtr_package.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON mtr_package.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center ON mtr_package.profit_center_id = dms_microservices_general_dev.dbo.mtr_profit_center.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model ON mtr_package.model_id = dms_microservices_sales_dev.dbo.mtr_unit_model.model_id").
+			Where("mtr_package.is_active = ?", 1)
 
-	case "1":
-		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
-			Select("omm.operation_id AS operation_id, "+
-				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
-				"MAX(ofrt.frt_hour) AS frt_hour, "+
-				"oe.operation_entries_code AS operation_entries_code, oe.operation_entries_description AS operation_entries_description, "+
-				"ok.operation_key_code AS operation_key_code, ok.operation_key_description AS operation_key_description").
-			Joins("INNER JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
-			Joins("LEFT OUTER JOIN mtr_operation_code AS oc ON omm.operation_id = oc.operation_id").
-			Joins("LEFT OUTER JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
-			Joins("LEFT OUTER JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
-			Where("omm.is_active = ?", true).
-			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
-				"oe.operation_entries_code, oe.operation_entries_description, " +
-				"ok.operation_key_code, ok.operation_key_description").
-			Order("omm.operation_id")
+		baseQuery = utils.ApplyFilter(baseQuery, filters)
 
-	case "2":
+		baseQuery = baseQuery.Group("mtr_package.package_id, mtr_package.package_code, mtr_package.package_name, mtr_package.profit_center_id, dms_microservices_general_dev.dbo.mtr_profit_center.profit_center_name, " +
+			"dms_microservices_sales_dev.dbo.mtr_unit_model.model_code, dms_microservices_sales_dev.dbo.mtr_unit_model.model_description, mtr_package.package_price, mtr_package.model_id, mtr_package.brand_id, mtr_package.variant_id").
+			Order("mtr_package.package_id")
+
+	case 2:
+		baseQuery = baseQuery.Table("mtr_operation_model_mapping").
+			Select("mtr_operation_model_mapping.operation_id AS operation_id, "+
+				"mtr_operation_code.operation_code AS operation_code, mtr_operation_code.operation_name AS operation_name, "+
+				"MAX(mtr_operation_frt.frt_hour) AS frt_hour, "+
+				"mtr_operation_entries.operation_entries_code AS operation_entries_code, mtr_operation_entries.operation_entries_description AS operation_entries_description, "+
+				"mtr_operation_key.operation_key_code AS operation_key_code, mtr_operation_key.operation_key_description AS operation_key_description").
+			Joins("INNER JOIN mtr_operation_frt ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_frt.operation_model_mapping_id").
+			Joins("LEFT OUTER JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id").
+			Joins("LEFT OUTER JOIN mtr_operation_entries ON mtr_operation_code.operation_entries_id = mtr_operation_entries.operation_entries_id").
+			Joins("LEFT OUTER JOIN mtr_operation_key ON mtr_operation_code.operation_key_id = mtr_operation_key.operation_key_id").
+			Where("mtr_operation_model_mapping.is_active = ?", true)
+		baseQuery = utils.ApplyFilter(baseQuery, filters)
+		baseQuery = baseQuery.Group("mtr_operation_model_mapping.operation_id, mtr_operation_code.operation_code, mtr_operation_code.operation_name, " +
+			"mtr_operation_entries.operation_entries_code, mtr_operation_entries.operation_entries_description, " +
+			"mtr_operation_key.operation_key_code, mtr_operation_key.operation_key_description").
+			Order("mtr_operation_model_mapping.operation_id")
+
+	case 3:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2162,7 +2166,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2205,7 +2209,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2257,7 +2261,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2306,7 +2310,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2349,7 +2353,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2392,7 +2396,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
 		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
 		if itmgrpErr != nil {
@@ -2443,30 +2447,32 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 	}
 
 	for _, filter := range filters {
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
-				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
+				baseQuery = baseQuery.Where("mtr_package.package_id = ?", filter.ColumnValue)
 			case "package_code":
-				baseQuery = baseQuery.Where("A.package_code LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("mtr_package.package_code LIKE ?", "%"+filter.ColumnValue+"%")
 			case "package_name":
-				baseQuery = baseQuery.Where("A.package_name LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("mtr_package.package_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "profit_center_id":
+				baseQuery = baseQuery.Where("mtr_package.profit_center_id = ?", filter.ColumnValue)
 			case "profit_center_name":
-				baseQuery = baseQuery.Where("B.profit_center_name LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("dms_microservices_general_dev.dbo.mtr_profit_center.profit_center_name LIKE ?", "%"+filter.ColumnValue+"%")
 			case "model_code":
-				baseQuery = baseQuery.Where("C.model_code LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("dms_microservices_sales_dev.dbo.mtr_unit_model.model_code LIKE ?", "%"+filter.ColumnValue+"%")
 			case "model_description":
-				baseQuery = baseQuery.Where("C.model_description LIKE ?", "%"+filter.ColumnValue+"%")
+				baseQuery = baseQuery.Where("dms_microservices_sales_dev.dbo.mtr_unit_model.model_description LIKE ?", "%"+filter.ColumnValue+"%")
 			case "package_price":
-				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
+				baseQuery = baseQuery.Where("mtr_package.package_price = ?", filter.ColumnValue)
 			case "model_id":
-				baseQuery = baseQuery.Where("A.model_id = ?", filter.ColumnValue)
+				baseQuery = baseQuery.Where("mtr_package.model_id = ?", filter.ColumnValue)
 			case "brand_id":
-				baseQuery = baseQuery.Where("A.brand_id = ?", filter.ColumnValue)
+				baseQuery = baseQuery.Where("mtr_package.brand_id = ?", filter.ColumnValue)
 			case "variant_id":
-				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
+				baseQuery = baseQuery.Where("mtr_package.variant_id = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -2492,7 +2498,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
 			}
 
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -2530,7 +2536,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 	}
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
-
 	paginateFunc := pagination.Paginate(&paginate, baseQuery)
 	baseQuery = baseQuery.Scopes(paginateFunc)
 
@@ -2541,7 +2546,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 		PackageCode      string  `json:"package_code"`
 		PackageID        int     `json:"package_id"`
 		PackageName      string  `json:"package_name"`
-		Price            int     `json:"price"`
+		Price            float64 `json:"price"`
 		ProfitCenter     int     `json:"profit_center"`
 		ProfitCenterName string  `json:"profit_center_name"`
 	}
@@ -2574,8 +2579,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 		Price          float64 `json:"price"`
 	}
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		var results []LineType0Response
 		if err := baseQuery.Find(&results).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
@@ -2586,7 +2591,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 		}
 		paginate.Rows = results
 
-	case "1":
+	case 2:
 		var results []LineType1Response
 		if err := baseQuery.Find(&results).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
@@ -2596,17 +2601,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			}
 		}
 
-		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
-		if linetypeErr != nil {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error fetching line type code",
-				Err:        linetypeErr.Err,
-			}
-		}
-
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId, companyId, results[i].OperationID, 0, 0, 0, 0, 11, 0, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
@@ -2614,7 +2610,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 		}
 		paginate.Rows = results
 
-	case "2", "3", "4", "5", "6", "7", "9":
+	case 3, 4, 5, 6, 7, 8, 9:
 		var results []LineType2To9Response
 		if err := baseQuery.Find(&results).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
@@ -2624,17 +2620,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeStr str
 			}
 		}
 
-		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
-		if linetypeErr != nil {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error fetching line type code",
-				Err:        linetypeErr.Err,
-			}
-		}
-
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId, companyId, results[i].ItemID, 0, 0, 0, 0, 11, 0, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
@@ -3141,6 +3128,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		Price            int     `json:"price"`
 		ProfitCenter     int     `json:"profit_center"`
 		ProfitCenterName string  `json:"profit_center_name"`
+		BrandId          int     `json:"brand_id"`
+		ModelId          int     `json:"model_id"`
 	}
 
 	type LineType1Response struct {
@@ -3153,6 +3142,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		OperationKeyDescription     *string `json:"operation_key_description"`
 		OperationName               string  `json:"operation_name"`
 		Price                       float64 `json:"price"`
+		BrandId                     int     `json:"brand_id"`
+		ModelId                     int     `json:"model_id"`
 	}
 
 	type LineType2To9Response struct {
@@ -3169,6 +3160,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		ItemLevel4Code string  `json:"item_level_4_code"`
 		ItemName       string  `json:"item_name"`
 		Price          float64 `json:"price"`
+		BrandId        int     `json:"brand_id"`
+		ModelId        int     `json:"model_id"`
 	}
 
 	switch linetypeStr {
@@ -3203,7 +3196,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		}
 
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, results[i].BrandId, results[i].ModelId, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}
@@ -3231,7 +3224,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		}
 
 		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, 2, 1, 2, 1, 11, 6, "")
+			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, results[i].BrandId, results[i].ModelId, 2, 1, 11, 6, "")
 			if err != nil {
 				return pagination.Pagination{}, err
 			}

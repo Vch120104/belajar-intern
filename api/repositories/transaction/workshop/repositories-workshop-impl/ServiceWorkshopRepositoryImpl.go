@@ -363,7 +363,7 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 
 	// ============================ Set variabel yang diperlukan dari alokasi teknisi
 	oprItemCode = woAlloc.OperationCode
-	woLine := woAlloc.WorkOrderLine
+	woLine := woAlloc.WorkOrderOperationItemLine
 	technicianId := woAlloc.TechnicianId
 	cpccode := woAlloc.ProfitCenterId
 	shiftcode := woAlloc.ShiftCode
@@ -1296,7 +1296,7 @@ func (r *ServiceWorkshopRepositoryImpl) PendingService(tx *gorm.DB, idAlloc int,
 
 	// ============================ Set variabel yang diperlukan dari alokasi teknisi
 	//oprItemCode = woAlloc.OperationCode
-	woLine = woAlloc.WorkOrderLine
+	woLine = woAlloc.WorkOrderOperationItemLine
 	//cpccode = woAlloc.ProfitCenterId
 	shiftcode = woAlloc.ShiftCode
 	technicianId := woAlloc.TechnicianId
@@ -1916,7 +1916,7 @@ func (r *ServiceWorkshopRepositoryImpl) TransferService(tx *gorm.DB, idAlloc int
 
 	// ============================ Set variabel yang diperlukan dari alokasi teknisi
 	oprItemCode = woAlloc.OperationCode
-	woLine := woAlloc.WorkOrderLine
+	woLine := woAlloc.WorkOrderOperationItemLine
 	cpccode := woAlloc.ProfitCenterId
 	shiftcode := woAlloc.ShiftCode
 	technicianId := woAlloc.TechnicianId
@@ -2697,7 +2697,7 @@ func (r *ServiceWorkshopRepositoryImpl) StopService(tx *gorm.DB, idAlloc int, id
 
 			var count int64
 			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-				Where("work_order_system_number = ? AND work_order_operation_item_line = ? AND service_status_id <> ?", idSysWo, woAlloc.WorkOrderLine, utils.SrvStatStop).
+				Where("work_order_system_number = ? AND work_order_operation_item_line = ? AND service_status_id <> ?", idSysWo, woAlloc.WorkOrderOperationItemLine, utils.SrvStatStop).
 				Count(&count).Error
 
 			if err != nil {
@@ -2710,7 +2710,7 @@ func (r *ServiceWorkshopRepositoryImpl) StopService(tx *gorm.DB, idAlloc int, id
 
 			if count == 0 {
 				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-					Where("work_order_system_number = ? AND work_order_operation_item_line = ?", idSysWo, woAlloc.WorkOrderLine).
+					Where("work_order_system_number = ? AND work_order_operation_item_line = ?", idSysWo, woAlloc.WorkOrderOperationItemLine).
 					Updates(map[string]interface{}{
 						"service_status_id": utils.SrvStatStop,
 					}).Error
