@@ -1947,6 +1947,7 @@ func ItemWarehouseTransferRequestRouter(
 	itemWarehouseTransferRequestController transactionsparepartcontroller.ItemWarehouseTransferRequestController,
 ) chi.Router {
 	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
