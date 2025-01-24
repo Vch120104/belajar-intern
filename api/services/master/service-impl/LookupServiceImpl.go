@@ -128,7 +128,7 @@ func (s *LookupServiceImpl) ItemOprCodeByID(linetypeStr string, oprItemId int, p
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeStr string, companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -153,7 +153,7 @@ func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeStr string, companyId i
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeStr, companyId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeId, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup, pages, filterCondition)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
