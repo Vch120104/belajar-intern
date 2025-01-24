@@ -402,6 +402,11 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
 	StockTransactionController := transactionsparepartcontroller.StartStockTransactionControllerImpl(StockTransactionService)
 
+	//Item Warehouse Transfer Request
+	ItemWarehouseTransferRequestRepository := transactionsparepartrepositoryimpl.NewItemWarehouseTransferRequestRepositoryImpl()
+	ItemWarehouseTransferRequestService := transactionsparepartserviceimpl.NewWhTransferRequestImpl(ItemWarehouseTransferRequestRepository, db, rdb, itemRepository, unitOfMeasurementRepository)
+	ItemWarehouseTransferRequestController := transactionsparepartcontroller.NewItemWarehouseTransferRequestControllerImpl(ItemWarehouseTransferRequestService)
+
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -568,6 +573,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	ItemLocationTransferRouter := ItemLocationTransferRouter(ItemLocationTransferController)
 	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	ItemQueryAllCompanyRouter := ItemQueryAllCompanyRouter(ItemQueryAllCompanyController)
+	ItemWarehouseTransferRequestRouter := ItemWarehouseTransferRequestRouter(ItemWarehouseTransferRequestController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
@@ -682,6 +688,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/goods-receive", GoodsReceiveRouter)
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
+		r.Mount("/transfer-request", ItemWarehouseTransferRequestRouter)
 		r.Mount("/stock-transaction", StockTransactionRouter)
 		r.Mount("/binning-list", BinningListRouter)
 		r.Mount("/item-location-transfer", ItemLocationTransferRouter)
