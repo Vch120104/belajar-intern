@@ -31,6 +31,7 @@ import (
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
 
+	"github.com/redis/go-redis/v9"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/go-chi/chi/v5"
@@ -38,9 +39,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func StartRouting(db *gorm.DB) {
-	// Initialize Redis client
-	rdb := config.InitRedis()
+func StartRouting(db *gorm.DB, rdb *redis.Client) {
 
 	/* Master */
 	// Unit Measurement
@@ -478,6 +477,11 @@ func StartRouting(db *gorm.DB) {
 	AtpmClaimRegistrationService := transactionworkshopserviceimpl.OpenAtpmClaimRegistrationServiceImpl(AtpmClaimRegistrationRepository, db, rdb)
 	AtpmClaimRegistrationController := transactionworkshopcontroller.NewAtpmClaimRegistrationController(AtpmClaimRegistrationService)
 
+	//License Owner Change
+	LicenseOwnerChangeRepository := transactionworkshoprepositoryimpl.OpenLicenseOwnerChangeRepositoryImpl()
+	LicenseOwnerChangeService := transactionworkshopserviceimpl.OpenLicenseOwnerChangeServiceImpl(LicenseOwnerChangeRepository, db, rdb)
+	LicenseOwnerChangeController := transactionworkshopcontroller.NewLicenseOwnerChangeController(LicenseOwnerChangeService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -567,6 +571,8 @@ func StartRouting(db *gorm.DB) {
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
+	LicenseOwnerChangeRouter := LicenseOwnerChangeRouter(LicenseOwnerChangeController)
+
 	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	AtpmClaimRegistrationRouter := AtpmClaimRegistrationRouter(AtpmClaimRegistrationController)
 
@@ -662,8 +668,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/contract-service", ContractServiceRouter)
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
 		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
+		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
 
-		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
 		r.Mount("/quality-control-bodyshop", QualityControlBodyshopRouter)
@@ -676,7 +682,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/goods-receive", GoodsReceiveRouter)
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
-
+		r.Mount("/stock-transaction", StockTransactionRouter)
 		r.Mount("/binning-list", BinningListRouter)
 		r.Mount("/item-location-transfer", ItemLocationTransferRouter)
 		r.Mount("/item-inquiry", ItemInquiryRouter)

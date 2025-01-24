@@ -75,11 +75,14 @@ func NewOperationModelMappingController(operationModelMappingservice masteropera
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_operation_model_mapping.is_active": request.URL.Query().Get("is_active"),
-		"mtr_operation_code.operation_code":     request.URL.Query().Get("operation_code"),
-		"mtr_operation_code.operation_name":     request.URL.Query().Get("operation_name"),
-		"mtr_brand.brand_name":                  request.URL.Query().Get("brand_name"),
-		"mtr_unit_model.model_code":             request.URL.Query().Get("model_code"),
+		"mtr_operation_model_mapping.is_active":    request.URL.Query().Get("is_active"),
+		"mtr_operation_model_mapping.operation_id": request.URL.Query().Get("operation_id"),
+		"mtr_operation_code.operation_code":        request.URL.Query().Get("operation_code"),
+		"mtr_operation_code.operation_name":        request.URL.Query().Get("operation_name"),
+		"mtr_operation_model_mapping.brand_id":     request.URL.Query().Get("brand_id"),
+		"mtr_brand.brand_name":                     request.URL.Query().Get("brand_name"),
+		"mtr_operation_model_mapping.model_id":     request.URL.Query().Get("model_id"),
+		"mtr_unit_model.model_code":                request.URL.Query().Get("model_code"),
 	}
 
 	paginate := pagination.Pagination{

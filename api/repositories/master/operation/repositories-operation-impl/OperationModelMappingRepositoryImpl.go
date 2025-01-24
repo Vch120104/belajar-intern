@@ -2,12 +2,12 @@ package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
+	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 
 	exceptions "after-sales/api/exceptions"
 	"errors"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
@@ -28,25 +28,39 @@ func StartOperationModelMappingRepositoryImpl() masteroperationrepository.Operat
 	return &OperationModelMappingRepositoryImpl{}
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
-	entities := masteroperationentities.OperationModelMapping{}
-	response := masteroperationpayloads.OperationModelMappingResponse{}
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingById(tx *gorm.DB, id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
+	var response masteroperationpayloads.OperationModelMappingResponse
 
-	rows, err := tx.Model(&entities).
-		Where(masteroperationentities.OperationModelMapping{
-			OperationModelMappingId: Id,
-		}).
+	err := tx.Table("mtr_operation_model_mapping").
+		Select("mtr_operation_model_mapping.is_active, "+
+			"mtr_operation_model_mapping.operation_model_mapping_id, "+
+			"mtr_operation_model_mapping.brand_id, "+
+			"mtr_operation_model_mapping.model_id, "+
+			"mtr_operation_model_mapping.operation_id, "+
+			"mtr_operation_code.operation_code, "+
+			"mtr_operation_code.operation_name, "+
+			"mtr_operation_model_mapping.operation_using_incentive AS operation_using_incentive, "+
+			"mtr_operation_model_mapping.operation_using_actual AS operation_using_actual, "+
+			"mtr_operation_model_mapping.operation_pdi AS operation_pdi").
+		Joins("JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id").
+		Where("mtr_operation_model_mapping.operation_model_mapping_id = ?", id).
 		First(&response).
-		Rows()
+		Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	return response, nil
 }
@@ -83,98 +97,83 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandMod
 	return response, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
-	tx *gorm.DB,
-	filterCondition []utils.FilterCondition,
-	pages pagination.Pagination,
-) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	var responses []masteroperationpayloads.OperationModelMappingLookup
-	var internalServiceFilter []utils.FilterCondition
-	responseStruct := reflect.TypeOf(masteroperationpayloads.OperationModelMappingLookup{})
-
-	// Separate internal and external filters
-	for _, filter := range filterCondition {
-		for j := 0; j < responseStruct.NumField(); j++ {
-			field := responseStruct.Field(j)
-			if filter.ColumnField == field.Tag.Get("parent_entity")+"."+field.Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filter)
-				break
-			}
-		}
-	}
-
-	// Start with query for operation model mapping
-	query := tx.Table("mtr_operation_model_mapping").
+	var entities []masteroperationentities.OperationModelMapping
+	tx = tx.
 		Select("mtr_operation_model_mapping.operation_model_mapping_id, " +
 			"mtr_operation_model_mapping.brand_id, mtr_operation_model_mapping.model_id, " +
 			"mtr_operation_model_mapping.operation_id, mtr_operation_model_mapping.is_active, " +
 			"mtr_operation_code.operation_code, mtr_operation_code.operation_name").
 		Joins("JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id")
+	tx = utils.ApplyFilter(tx.Model(&masteroperationentities.OperationModelMapping{}), filterCondition)
+	tx.Scopes(pagination.Paginate(&pages, tx)).Find(&entities)
 
-	// Apply internal filters
-	whereQuery := utils.ApplyFilter(query, internalServiceFilter)
-
-	// Apply pagination
-	paginationScope := pagination.Paginate(&pages, whereQuery)
-	err := whereQuery.Scopes(paginationScope).Find(&responses).Error
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        tx.Error,
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Message:    "Failed to get data",
+			Err:        tx.Error,
 		}
 	}
 
-	// If no data found
-	if len(responses) == 0 {
+	if len(entities) == 0 {
+		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	// Fetch Brand and Model Data using the provided utility functions
-	var mapResponses []map[string]interface{}
-	for _, response := range responses {
-		// Fetch Brand data
-		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(response.BrandId)
+	var results []map[string]interface{}
+	for _, entity := range entities {
+		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
 		if brandErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: brandErr.StatusCode,
+				Message:    "Failed to fetch brand data from external service",
 				Err:        brandErr.Err,
 			}
 		}
 
-		// Fetch Model data
-		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(response.ModelId)
+		modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
 		if modelErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch model data",
+				StatusCode: modelErr.StatusCode,
+				Message:    "Failed to fetch model data from external service",
 				Err:        modelErr.Err,
 			}
 		}
 
-		// Map the response
-		responseMap := map[string]interface{}{
-			"operation_model_mapping_id": response.OperationModelMappingId,
-			"brand_id":                   response.BrandId,
-			"brand_name":                 brandResponse.BrandName,
-			"model_id":                   response.ModelId,
-			"model_code":                 modelResponse.ModelCode,
-			"operation_id":               response.OperationId,
-			"operation_code":             response.OperationCode,
-			"operation_name":             response.OperationName,
-			"is_active":                  response.IsActive,
+		operationResponse, operationErr := aftersalesserviceapiutils.GetOperationById(entity.OperationId)
+		if operationErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: operationErr.StatusCode,
+				Message:    "Failed to fetch operation data from external service",
+				Err:        operationErr.Err,
+			}
 		}
-		mapResponses = append(mapResponses, responseMap)
+
+		result := map[string]interface{}{
+			"operation_model_mapping_id": entity.OperationModelMappingId,
+			"brand_id":                   entity.BrandId,
+			"brand_name":                 brandResponse.BrandName,
+			"model_id":                   entity.ModelId,
+			"model_code":                 modelResponse.ModelCode,
+			"operation_id":               entity.OperationId,
+			"operation_code":             operationResponse.OperationCode,
+			"operation_name":             operationResponse.OperationName,
+			"is_active":                  entity.IsActive,
+		}
+
+		results = append(results, result)
 	}
 
-	// Paginate the final data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	// Update pagination results
-	pages.Rows = dataPaginate
-	pages.TotalPages = totalPages
-	pages.TotalRows = int64(totalRows)
-
+	pages.Rows = results
 	return pages, nil
 }
 

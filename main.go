@@ -49,6 +49,6 @@ func main() {
 		fmt.Println("Key set successfully")
 
 		config.InitLogger(db)
-		route.StartRouting(db)
+		route.StartRouting(db, dbredis)
 	}
 }

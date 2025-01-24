@@ -17,13 +17,14 @@ import (
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type SalesOrderRepositoryImpl struct {
@@ -1152,7 +1153,7 @@ func (r *SalesOrderRepositoryImpl) SalesOrderProposedDiscountMultiId(db *gorm.DB
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
-					Err:        errors.New(fmt.Sprintf("sales order detail with id : %d is not exist", SoDetailId)),
+					Err:        fmt.Errorf("sales order detail with id : %d is not exist", SoDetailId),
 					Message:    fmt.Sprintf("sales order detail with id : %d is not exist", SoDetailId),
 				}
 			}
@@ -1172,7 +1173,7 @@ func (r *SalesOrderRepositoryImpl) SalesOrderProposedDiscountMultiId(db *gorm.DB
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
-					Err:        errors.New(fmt.Sprintf("sales order  with id : %d is not exist", salesOrderDetailEntities.SalesOrderSystemNumber)),
+					Err:        fmt.Errorf("sales order  with id : %d is not exist", salesOrderDetailEntities.SalesOrderSystemNumber),
 					Message:    fmt.Sprintf("sales order  with id : %d is not exist", salesOrderDetailEntities.SalesOrderSystemNumber),
 				}
 			}
@@ -1387,9 +1388,8 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 		}
 	}
 	//@Disc
-	var discountApproval float64
 	//@Disc = ISNULL(SO.ADD_DISC_AMOUNT,0) + ISNULL(@Disc_Req,0) ,
-	discountApproval = salesOrderEntities.AdditionalDiscountAmount + discountRequest
+	discountApproval := salesOrderEntities.AdditionalDiscountAmount + discountRequest
 
 	//check empty item code
 	isExist := false
@@ -1508,7 +1508,7 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 				Message:    "failed to cek ",
 			}
 		}
-		if itemMaster.IsTechnicalDefect == true {
+		if itemMaster.IsTechnicalDefect {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Err:        errors.New("this item has technical defect"),
@@ -1524,6 +1524,13 @@ func (r *SalesOrderRepositoryImpl) SubmitSalesOrderHeader(db *gorm.DB, salesOrde
 			Limit(1).
 			Scan(&exists).
 			Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "failed on getting item price",
+			}
+		}
 		if exists {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,

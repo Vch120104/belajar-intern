@@ -697,20 +697,20 @@ type WorkOrderAffiliateRequest struct {
 }
 
 type WorkOrderAffiliateGetResponse struct {
-	WorkOrderSystemNumber        int    `json:"work_order_system_number"`
-	WorkOrderDocumentNumber      string `json:"work_order_document_number"`
-	ServiceRequestSystemNumber   int    `json:"service_request_system_number"`
-	ServiceRequestDate           string `json:"service_request_date"`
-	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
-	BrandId                      int    `json:"brand_id"`
-	BrandName                    string `json:"brand_name"`
-	ModelId                      int    `json:"model_id"`
-	ModelName                    string `json:"model_name"`
-	VehicleId                    int    `json:"vehicle_id"`
-	VehicleCode                  string `json:"vehicle_chassis_number"`
-	VehicleTnkb                  string `json:"vehicle_registration_certificate_tnkb"`
-	CompanyId                    int    `json:"company_id"`
-	CompanyName                  string `json:"company_name"`
+	WorkOrderSystemNumber        int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber      string    `json:"work_order_document_number"`
+	ServiceRequestSystemNumber   int       `json:"service_request_system_number"`
+	ServiceRequestDate           time.Time `json:"service_request_date"`
+	ServiceRequestDocumentNumber string    `json:"service_request_document_number"`
+	BrandId                      int       `json:"brand_id"`
+	BrandName                    string    `json:"brand_name"`
+	ModelId                      int       `json:"model_id"`
+	ModelName                    string    `json:"model_name"`
+	VehicleId                    int       `json:"vehicle_id"`
+	VehicleCode                  string    `json:"vehicle_chassis_number"`
+	VehicleTnkb                  string    `json:"vehicle_registration_certificate_tnkb"`
+	CompanyId                    int       `json:"company_id"`
+	CompanyName                  string    `json:"company_name"`
 }
 
 type WorkOrderAffiliateResponse struct {
@@ -1036,6 +1036,7 @@ type WorkOrderDetailResponse struct {
 	FrtQuantity                         float64   `json:"frt_quantity"`
 	SupplyQuantity                      float64   `json:"supply_quantity"`
 	Description                         string    `json:"description"`
+	Uom                                 string    `json:"uom"`
 	OperationItemPrice                  float64   `json:"operation_item_price"`
 	OperationItemDiscountAmount         float64   `json:"operation_item_discount_amount"`
 	OperationItemDiscountRequestAmount  float64   `json:"operation_item_discount_request_amount"`

@@ -1,5 +1,7 @@
 package transactionworkshoppayloads
 
+import "time"
+
 type QualityControlResponse struct {
 	WorkOrderDocumentNumber string `json:"work_order_document_number"`
 	WorkOrderDate           string `json:"work_order_date"`
@@ -41,7 +43,7 @@ type QualityControlRequestId struct {
 
 type QualityControlIdResponse struct {
 	WorkOrderDocumentNumber string                        `json:"work_order_document_number"`
-	WorkOrderDate           string                        `json:"work_order_date"`
+	WorkOrderDate           time.Time                     `json:"work_order_date"`
 	BrandName               string                        `json:"brand_name"`
 	ModelName               string                        `json:"model_name"`
 	VariantDescription      string                        `json:"variant_description"`

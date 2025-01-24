@@ -10,9 +10,10 @@ import (
 )
 
 type ItemResponse struct {
-	ItemId   int    `json:"item_id"`
-	ItemCode string `json:"item_code"`
-	ItemName string `json:"item_name"`
+	ItemId     int    `json:"item_id"`
+	ItemCode   string `json:"item_code"`
+	ItemName   string `json:"item_name"`
+	UomStockId int    `json:"unit_of_measurement_stock_id"`
 }
 
 func GetItemId(id int) (ItemResponse, *exceptions.BaseErrorResponse) {
