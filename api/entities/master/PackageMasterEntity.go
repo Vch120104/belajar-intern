@@ -6,7 +6,6 @@ type PackageMaster struct {
 	IsActive       bool    `gorm:"column:is_active;not null;default:true" json:"is_active"`
 	PackageId      int     `gorm:"column:package_id;size:30;primarykey;not null" json:"package_id"`
 	PackageCode    string  `gorm:"column:package_code;size:15;not null;unique:true" json:"package_code"`
-	ItemGroupId    int     `gorm:"column:item_group_id;size:30;not null" json:"item_group-id"`
 	PackageName    string  `gorm:"column:package_name;size:40;not null" json:"package_name"`
 	BrandId        int     `gorm:"column:brand_id;size:30;not null" json:"brand_id"`
 	ModelId        int     `gorm:"column:model_id;size:30;not null" json:"model_id"`

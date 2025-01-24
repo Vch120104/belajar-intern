@@ -380,8 +380,8 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 
 	response := transactionworkshoppayloads.QualityControlIdResponse{
-		WorkOrderDocumentNumber: workOrderResponses.Data.WorkOrderDocumentNumber,
-		WorkOrderDate:           workOrderResponses.Data.WorkOrderDate,
+		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
+		WorkOrderDate:           workOrderResponses.WorkOrderDate,
 		BrandName:               brandResponses.BrandName,
 		ModelName:               modelResponses.ModelName,
 		VariantDescription:      variantResponses.VariantDescription,
@@ -393,8 +393,8 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		Address1:                customerResponses.AddressStreet2,
 		RTRW:                    customerResponses.AddressStreet3,
 		LastMilage:              workorderVehicleDetails[0].VehicleLastKm,
-		CurrentMilage:           workOrderResponses.Data.WorkOrderCurrentMileage,
-		Phone:                   workOrderResponses.Data.PhoneCustomer,
+		CurrentMilage:           workOrderResponses.WorkOrderCurrentMileage,
+		Phone:                   workOrderResponses.PhoneCustomer,
 		ForemanName:             foremanResponses.EmployeeName,
 		ServiceAdvisorName:      serviceAdvisorResponses.EmployeeName,
 		OrderDateTime:           "",

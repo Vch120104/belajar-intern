@@ -31,6 +31,7 @@ import (
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
 
+	"github.com/redis/go-redis/v9"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/go-chi/chi/v5"
@@ -38,9 +39,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func StartRouting(db *gorm.DB) {
-	// Initialize Redis client
-	rdb := config.InitRedis()
+func StartRouting(db *gorm.DB, rdb *redis.Client) {
 
 	/* Master */
 	// Unit Measurement
@@ -677,7 +676,6 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
 		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
 
-		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
 		r.Mount("/quality-control-bodyshop", QualityControlBodyshopRouter)
@@ -691,7 +689,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/goods-receive", GoodsReceiveRouter)
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
 		r.Mount("/transfer-request", ItemWarehouseTransferRequestRouter)
-
+		r.Mount("/stock-transaction", StockTransactionRouter)
 		r.Mount("/binning-list", BinningListRouter)
 		r.Mount("/item-location-transfer", ItemLocationTransferRouter)
 		r.Mount("/item-inquiry", ItemInquiryRouter)

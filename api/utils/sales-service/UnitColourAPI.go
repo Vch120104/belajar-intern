@@ -32,14 +32,8 @@ type UnitColourDetailData struct {
 	BrandName            string `json:"brand_name"`
 }
 
-type UnitColourDetailResponse struct {
-	StatusCode int                  `json:"status_code"`
-	Message    string               `json:"message"`
-	Data       UnitColourDetailData `json:"data"`
-}
-
-func GetUnitColorById(colourId int) (UnitColourDetailResponse, *exceptions.BaseErrorResponse) {
-	var unitColourDetailResponse UnitColourDetailResponse
+func GetUnitColorById(colourId int) (UnitColourDetailData, *exceptions.BaseErrorResponse) {
+	var unitColourDetailResponse UnitColourDetailData
 
 	if colourId <= 0 {
 		return unitColourDetailResponse, &exceptions.BaseErrorResponse{
@@ -50,7 +44,7 @@ func GetUnitColorById(colourId int) (UnitColourDetailResponse, *exceptions.BaseE
 	}
 
 	url := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(colourId)
-	fmt.Println("Requesting URL:", url)
+	//fmt.Println("Requesting URL:", url)
 
 	err := utils.CallAPI("GET", url, nil, &unitColourDetailResponse)
 	if err != nil {
@@ -66,15 +60,6 @@ func GetUnitColorById(colourId int) (UnitColourDetailResponse, *exceptions.BaseE
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting unit colour details"),
-		}
-	}
-
-	// Validasi status_code dari respons
-	if unitColourDetailResponse.StatusCode != http.StatusOK {
-		return unitColourDetailResponse, &exceptions.BaseErrorResponse{
-			StatusCode: unitColourDetailResponse.StatusCode,
-			Message:    unitColourDetailResponse.Message,
-			Err:        errors.New("unexpected response status code from API"),
 		}
 	}
 

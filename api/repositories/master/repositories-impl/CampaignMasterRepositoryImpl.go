@@ -461,17 +461,17 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 
 		for _, detail := range packageDetails {
 			// Get LineType Code
-			lineTypeCode, linetypeErr := generalserviceapiutils.GetLineTypeById(detail.LineTypeId)
-			if linetypeErr != nil {
-				return response, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Message:    "error fetching line type code",
-					Err:        linetypeErr.Err, // Fixing the error reference
-				}
-			}
+			// lineTypeCode, linetypeErr := generalserviceapiutils.GetLineTypeById(detail.LineTypeId)
+			// if linetypeErr != nil {
+			// 	return response, &exceptions.BaseErrorResponse{
+			// 		StatusCode: http.StatusInternalServerError,
+			// 		Message:    "error fetching line type code",
+			// 		Err:        linetypeErr.Err, // Fixing the error reference
+			// 	}
+			// }
 
 			// Get Item Price Code
-			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, lineTypeCode.LineTypeCode, req.CompanyId, detail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, detail.LineTypeId, req.CompanyId, detail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
 			if err != nil {
 				return response, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -512,7 +512,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		}
 
 		// Get Item Price Code
-		itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, lineTypeCode.LineTypeCode, req.CompanyId, packageDetail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+		itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, packageDetail.LineTypeId, req.CompanyId, packageDetail.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
 		if err != nil {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,

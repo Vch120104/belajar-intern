@@ -1,14 +1,16 @@
 package masteroperationpayloads
 
 type OperationModelMappingResponse struct {
-	IsActive                bool `json:"is_active"`
-	OperationModelMappingId int  `json:"operation_model_mapping_id"`
-	BrandId                 int  `json:"brand_id"`
-	ModelId                 int  `json:"model_id"`
-	OperationId             int  `json:"operation_id"`
-	OperationUsingIncentive bool `json:"operation_using_incentive"`
-	OperationUsingActual    bool `json:"operation_using_actual"`
-	OperationPdi            bool `json:"operation_pdi"`
+	IsActive                bool   `json:"is_active"`
+	OperationModelMappingId int    `json:"operation_model_mapping_id"`
+	BrandId                 int    `json:"brand_id"`
+	ModelId                 int    `json:"model_id"`
+	OperationId             int    `json:"operation_id"`
+	OperationCode           string `json:"operation_code"`
+	OperationName           string `json:"operation_name"`
+	OperationUsingIncentive bool   `json:"operation_using_incentive"`
+	OperationUsingActual    bool   `json:"operation_using_actual"`
+	OperationPdi            bool   `json:"operation_pdi"`
 }
 
 type CopyRequest struct {

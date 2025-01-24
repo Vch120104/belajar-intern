@@ -13,6 +13,7 @@ type ServiceRequest struct {
 	BrandId                      int                    `gorm:"column:brand_id;size:30;" json:"brand_id"`
 	ModelId                      int                    `gorm:"column:model_id;size:30;" json:"model_id"`
 	VariantId                    int                    `gorm:"column:variant_id;size:30;" json:"variant_id"`
+	ColourId                     int                    `gorm:"column:colour_id;size:30;" json:"colour_id"`
 	VehicleId                    int                    `gorm:"column:vehicle_id;size:30;" json:"vehicle_id"`
 	BookingSystemNumber          int                    `gorm:"column:booking_system_number;size:30;" json:"booking_system_number"`
 	EstimationSystemNumber       int                    `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`
