@@ -7,7 +7,9 @@ import (
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -36,6 +38,42 @@ func (t *TechnicianAttendanceImpl) GetAllTechnicianAttendance(tx *gorm.DB, filte
 	}
 
 	pages.Rows = responses
+
+	return pages, nil
+}
+
+func (t *TechnicianAttendanceImpl) GetAddLineTechnician(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var serviceDate string
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "service_date") {
+			serviceDate = filter.ColumnValue
+			break
+		}
+	}
+
+	entities := transactionjpcbentities.TechnicianAttendance{}
+	userIds := []int{}
+	err := tx.Model(&entities).Where("service_date = ?", serviceDate).Pluck("user_id", &userIds).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching technician attendance data",
+			Err:        err,
+		}
+	}
+
+	params := generalserviceapiutils.UserDetailParams{
+		Page:        pages.Page,
+		Limit:       10000000,
+		UserIdNotIn: utils.IntSliceToString(userIds),
+		RoleName:    "Technician",
+	}
+	employeeResponse, _ := generalserviceapiutils.GetAllUserDetail(params)
+
+	result, totalPages, totalRows := pagination.NewDataFramePaginate(employeeResponse, &pages)
+	pages.Rows = result
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
 
 	return pages, nil
 }

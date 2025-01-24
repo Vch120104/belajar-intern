@@ -17,7 +17,9 @@ type UserDetailParams struct {
 	Limit          int    `json:"limit"`
 	UserEmployeeId int    `json:"user_employee_id"`
 	UserId         int    `json:"user_id"`
+	UserIdNotIn    string `json:"user_id_not_in"`
 	EmployeeName   string `json:"employee_name"`
+	RoleName       string `json:"role_name"`
 	SortBy         string `json:"sort_by"`
 	SortOf         string `json:"sort_of"`
 }
