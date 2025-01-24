@@ -114,7 +114,10 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 		}
 	}
 
+	fmt.Printf("%s test1", response.ItemGroupId) 
 	itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	fmt.Printf("%s test2", itemGroupResponse) 
+	fmt.Printf("%s error", itemGroupErr) 
 	if itemGroupErr != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: itemGroupErr.StatusCode,
