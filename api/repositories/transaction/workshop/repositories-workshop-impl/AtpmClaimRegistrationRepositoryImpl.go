@@ -102,6 +102,16 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 		// 	}
 		// }
 
+		// fetch claim type
+		claimTypeResponse, claimTypeErr := generalserviceapiutils.GetClaimTypeById(entity.ClaimTypeId)
+		if claimTypeErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: claimTypeErr.StatusCode,
+				Message:    "Failed to fetch claim type data from internal service",
+				Err:        claimTypeErr.Err,
+			}
+		}
+
 		result := map[string]interface{}{
 			"vehicle_id":                 entity.VehicleId,
 			"vehicle_chassis_number":     "vehicleResponse.Data.Master.VehicleChassisNumber",
@@ -110,9 +120,11 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 			"work_order_date":            entity.WorkOrderDate,
 			"company_id":                 entity.CompanyId,
 			"company_name":               companyResponses.CompanyName,
+			"claim_system_number":        entity.ClaimSystemNumber,
 			"claim_number":               entity.ClaimNumber,
 			"claim_date":                 entity.ClaimDate,
 			"claim_type_id":              entity.ClaimTypeId,
+			"claim_type_description":     claimTypeResponse.ClaimTypeDescription,
 			"claim_status_id":            entity.ClaimStatusId,
 			"brand_id":                   entity.BrandId,
 			"brand_name":                 brandResponses.BrandName,
@@ -132,53 +144,42 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAll(tx *gorm.DB, filterConditio
 }
 
 func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages pagination.Pagination) (transactionworkshoppayloads.AtpmClaimRegistrationResponse, *exceptions.BaseErrorResponse) {
+
 	var entity transactionworkshopentities.AtpmClaimVehicle
-
-	tx.Where("claim_system_number = ?", id).Find(&entity)
-
-	if tx.Error != nil {
-		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+	err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
+		Where("claim_system_number = ?", id).
+		First(&entity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Data not found",
-				Err:        tx.Error,
+				Err:        err,
 			}
 		}
 		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get data",
-			Err:        tx.Error,
+			Err:        err,
 		}
 	}
 
 	// Get company data
 	companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(entity.CompanyId)
 	if companyErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: companyErr.StatusCode,
-			Message:    "Failed to fetch company data from internal service",
-			Err:        companyErr.Err,
-		}
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, companyErr
 	}
 
 	// Get brand data
 	brandResponses, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
 	if brandErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: brandErr.StatusCode,
-			Message:    "Failed to fetch brand data from external service",
-			Err:        brandErr.Err,
-		}
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, brandErr
 	}
 
 	// Get model data
 	modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
 	if modelErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: modelErr.StatusCode,
-			Message:    "Failed to fetch model data from external service",
-			Err:        modelErr.Err,
-		}
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, modelErr
 	}
 
 	// Get variant data
@@ -191,15 +192,17 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 		}
 	}
 
-	// Get vehicle data
-	vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
-	if vehicleErr != nil {
-		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: vehicleErr.StatusCode,
-			Message:    "Failed to fetch vehicle data from external service",
-			Err:        vehicleErr.Err,
-		}
+	// Claim Type
+	claimTypeResponse, claimTypeErr := generalserviceapiutils.GetClaimTypeById(entity.ClaimTypeId)
+	if claimTypeErr != nil {
+		return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, claimTypeErr
 	}
+
+	// Get vehicle data
+	// vehicleResponse, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+	// if vehicleErr != nil {
+	// 	return transactionworkshoppayloads.AtpmClaimRegistrationResponse{}, vehicleErr
+	// }
 
 	response := transactionworkshoppayloads.AtpmClaimRegistrationResponse{
 		ClaimSystemNumber:       entity.ClaimSystemNumber,
@@ -208,13 +211,14 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 		BrandId:                 entity.BrandId,
 		BrandName:               brandResponses.BrandName,
 		ClaimTypeId:             entity.ClaimTypeId,
+		ClaimTypeDescription:    claimTypeResponse.ClaimTypeDescription,
 		ClaimNumber:             entity.ClaimNumber,
 		ClaimDate:               entity.ClaimDate,
 		WorkOrderDocumentNumber: entity.WorkOrderDocumentNumber,
 		WorkOrderDate:           entity.WorkOrderDate,
 		VehicleId:               entity.VehicleId,
-		VehicleChassisNumber:    vehicleResponse.Data.Master.VehicleChassisNumber,
-		VehicleEngineNumber:     vehicleResponse.Data.Master.VehicleEngineNumber,
+		VehicleChassisNumber:    "vehicleResponse.Data.Master.VehicleChassisNumber",
+		VehicleEngineNumber:     "vehicleResponse.Data.Master.VehicleEngineNumber",
 		ModelId:                 entity.ModelId,
 		ModelDescription:        modelResponses.ModelName,
 		VariantId:               entity.VariantId,
@@ -637,7 +641,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (bool,
 
 			if servBookNo == "" {
 				if err := tx.Table("trx_atpm_claim_vehicle_detail A").
-					Joins("INNER JOIN trx_work_order_detail B ON A.work_order_system_number = B.work_order_system_number AND A.work_order_line_number = B.work_order_operation_item_line").
+					Joins("INNER JOIN trx_work_order_detail B ON A.work_order_system_number = B.work_order_system_number AND A.work_order_operation_item_line = B.work_order_operation_item_line").
 					Where("A.claim_system_number = ? AND B.transaction_type_id IN ('8', '10')", id). // 8 = F Free Service, 10 = W Warranty
 					Limit(1).
 					Scan(&exists).Error; err != nil {
@@ -664,7 +668,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Submit(tx *gorm.DB, id int) (bool,
 		var exists bool
 		if err := tx.Table("trx_atpm_claim_vehicle A").
 			Joins("INNER JOIN trx_atpm_claim_vehicle_detail B ON A.claim_system_number = B.claim_system_number").
-			Joins("INNER JOIN trx_work_order_detail C ON B.work_order_system_number = C.work_order_system_number AND B.work_order_line_number = C.work_order_operation_item_line").
+			Joins("INNER JOIN trx_work_order_detail C ON B.work_order_system_number = C.work_order_system_number AND B.work_order_operation_item_line = C.work_order_operation_item_line").
 			Where("A.claim_system_number = ? AND (ISNULL(C.atpm_claim_number,'') <> '' AND ISNULL(A.claim_number,'') <> ISNULL(C.atpm_claim_number,''))", id).
 			Limit(1).
 			Scan(&exists).Error; err != nil {
@@ -991,7 +995,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetAllDetail(tx *gorm.DB, id int, 
 		trx_atpm_claim_vehicle_detail.company_id,
 		trx_atpm_claim_vehicle_detail.claim_line_number,
 		trx_atpm_claim_vehicle_detail.work_order_system_number,
-		trx_atpm_claim_vehicle_detail.work_order_line_number,
+		trx_atpm_claim_vehicle_detail.work_order_operation_item_line,
 		trx_atpm_claim_vehicle_detail.line_type_id,
 		trx_atpm_claim_vehicle_detail.item_id,
 		CASE
@@ -1166,8 +1170,8 @@ func (r *AtpmClaimRegistrationRepositoryImpl) AddDetail(tx *gorm.DB, id int, req
 	// Fetch required work order details
 	var workOrder transactionworkshopentities.WorkOrderDetail
 	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Where("work_order_system_number = ? AND work_order_line_number = ? AND claim_system_number IS NULL",
-			request.WorkOrderSystemNumber, request.WorkOrderLineNumber).
+		Where("work_order_system_number = ? AND work_order_operation_item_line = ? AND COALESCE(claim_system_number,0) = 0",
+			request.WorkOrderSystemNumber, request.WorkOrderOperationItemLine).
 		First(&workOrder).Error; err != nil {
 		return entity, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -1179,8 +1183,9 @@ func (r *AtpmClaimRegistrationRepositoryImpl) AddDetail(tx *gorm.DB, id int, req
 	// Set entity values based on work order details
 	entity.ClaimSystemNumber = id
 	entity.ClaimLineNumber = nextClaimLineNumber
+	entity.CompanyId = request.CompanyId
 	entity.WorkOrderSystemNumber = request.WorkOrderSystemNumber
-	entity.WorkOrderLineNumber = request.WorkOrderLineNumber
+	entity.WorkOrderOperationItemLine = request.WorkOrderOperationItemLine
 	entity.LineTypeId = workOrder.LineTypeId
 	entity.ItemId = workOrder.OperationItemId
 	entity.FrtQuantity = workOrder.FrtQuantity
@@ -1200,7 +1205,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) AddDetail(tx *gorm.DB, id int, req
 	}
 
 	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Where("work_order_system_number = ? AND work_order_line_number = ?", request.WorkOrderSystemNumber, request.WorkOrderLineNumber).
+		Where("work_order_system_number = ? AND work_order_operation_item_line = ?", request.WorkOrderSystemNumber, request.WorkOrderOperationItemLine).
 		Update("claim_system_number", id).Error; err != nil {
 		return entity, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1230,4 +1235,65 @@ func (r *AtpmClaimRegistrationRepositoryImpl) AddDetail(tx *gorm.DB, id int, req
 	}
 
 	return entity, nil
+}
+
+// uspg_atAtpmVehicleClaim1_Delete
+// IF @Option = 0
+func (r *AtpmClaimRegistrationRepositoryImpl) DeleteDetail(tx *gorm.DB, detailId int, claimsysno int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.AtpmClaimVehicleDetail
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+		Where("claim_system_number = ? AND claim_detail_system_number = ?", claimsysno, detailId).
+		Delete(&entity).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete from vehicle claim table",
+			Err:        err,
+		}
+	}
+
+	var workOrderDetails struct {
+		WoSysNo  int
+		WoLineNo int
+	}
+
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+		Select("work_order_system_number, work_order_operation_item_line").
+		Where("claim_system_number = ? AND claim_detail_system_number = ?", claimsysno, detailId).
+		Scan(&workOrderDetails).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch work order system number and line number",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_operation_item_line = ?",
+			workOrderDetails.WoSysNo, workOrderDetails.WoLineNo).
+		Update("claim_system_number", 0).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update work order details",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicleDetail{}).
+		Where("claim_system_number = ?", claimsysno).
+		Updates(map[string]interface{}{
+			"total_after_discount": gorm.Expr("(SELECT SUM(B.total_after_discount) FROM ? B WHERE A.claim_system_number = B.claim_system_number)", &transactionworkshopentities.AtpmClaimVehicleDetail{}),
+			"total_labour":         gorm.Expr("(SELECT SUM(A1.total_after_discount) FROM ? A1 WHERE A1.claim_system_number = A.claim_system_number AND A1.line_type_id = 1)", &transactionworkshopentities.AtpmClaimVehicleDetail{}),
+			"total_part":           gorm.Expr("(SELECT SUM(A1.total_after_discount) FROM ? A1 WHERE A1.claim_system_number = A.claim_system_number AND A1.line_type_id <> 1)", &transactionworkshopentities.AtpmClaimVehicleDetail{}),
+			"total_frt_qty":        gorm.Expr("(SELECT SUM(A1.frt_quantity) FROM ? A1 WHERE A1.claim_system_number = A.claim_system_number AND A1.line_type_id = 1)", &transactionworkshopentities.AtpmClaimVehicleDetail{}),
+			"afs_area": gorm.Expr("(SELECT B.afs_area FROM ? A LEFT JOIN ? B ON A.company_id = B.company_id WHERE A.claim_system_number = ?)",
+				&transactionworkshopentities.AtpmClaimVehicle{}, &transactionworkshopentities.AtpmClaimVehicle{}, claimsysno),
+		}).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to recalculate totals",
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }

@@ -124,3 +124,17 @@ type ItemLocUOMResponse struct {
 	QuantityAvailable int    `json:"quantity_available"`
 	IsActive          bool   `json:"is_active"`
 }
+
+type ItemMasterForFreeAccsResponse struct {
+	ItemId          int     `json:"item_id"`
+	ItemCode        string  `json:"item_code"`
+	ItemName        string  `json:"item_name"`
+	ItemClassId     int     `json:"item_class_id"`
+	ItemClassCode   string  `json:"item_class_code"`
+	ItemClassName   string  `json:"item_class_name"`
+	UomId           int     `json:"uom_id"`
+	UomCode         string  `json:"uom_code"`
+	UomDescription  string  `json:"uom_description"`
+	PriceListAmount float64 `json:"price_list_amount"`
+	IsActive        bool    `json:"is_active"`
+}

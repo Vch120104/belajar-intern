@@ -22,4 +22,5 @@ type AtpmClaimRegistrationRepository interface {
 	GetAllDetail(tx *gorm.DB, claimsysno int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetDetailById(tx *gorm.DB, claimsysno int, detailId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	AddDetail(tx *gorm.DB, claimsysno int, request transactionworkshoppayloads.AtpmClaimDetailRequest) (transactionworkshopentities.AtpmClaimVehicleDetail, *exceptions.BaseErrorResponse)
+	DeleteDetail(tx *gorm.DB, detailId int, claimsysno int) (bool, *exceptions.BaseErrorResponse)
 }
