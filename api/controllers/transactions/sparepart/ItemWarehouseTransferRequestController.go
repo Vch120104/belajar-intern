@@ -11,7 +11,6 @@ import (
 	"after-sales/api/validation"
 	"bytes"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,6 +35,8 @@ type ItemWarehouseTransferRequestController interface {
 	Upload(writer http.ResponseWriter, request *http.Request)
 	ProcessUpload(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+	Accept(writer http.ResponseWriter, request *http.Request)
+	Reject(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemWarehouseTransferRequestControllerImpl(itemWarehouseTransferRequestService transactionsparepartservice.ItemWarehouseTransferRequestService) ItemWarehouseTransferRequestController {
@@ -46,6 +47,54 @@ func NewItemWarehouseTransferRequestControllerImpl(itemWarehouseTransferRequestS
 
 type ItemWarehouseTransferRequestControllerImpl struct {
 	ItemWarehouseTransferRequestService transactionsparepartservice.ItemWarehouseTransferRequestService
+}
+
+// Accept implements ItemWarehouseTransferRequestController.
+func (r *ItemWarehouseTransferRequestControllerImpl) Accept(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var transferRequest transactionsparepartpayloads.AcceptWarehouseTransferRequestRequest
+
+	helper.ReadFromRequestBody(request, &transferRequest)
+	if validationErr := validation.ValidationForm(writer, request, &transferRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	success, err := r.ItemWarehouseTransferRequestService.AcceptTransferReceipt(transferRequestSystemNumber, transferRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
+}
+
+// Reject implements ItemWarehouseTransferRequestController.
+func (r *ItemWarehouseTransferRequestControllerImpl) Reject(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var transferRequest transactionsparepartpayloads.RejectWarehouseTransferRequestRequest
+
+	helper.ReadFromRequestBody(request, &transferRequest)
+	if validationErr := validation.ValidationForm(writer, request, &transferRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	success, err := r.ItemWarehouseTransferRequestService.RejectTransferReceipt(transferRequestSystemNumber, transferRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
 }
 
 // DownloadTemplate implements ItemWarehouseTransferRequestController.
@@ -93,16 +142,91 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DownloadTemplate(writer htt
 
 // ProcessUpload implements ItemWarehouseTransferRequestController.
 func (r *ItemWarehouseTransferRequestControllerImpl) ProcessUpload(writer http.ResponseWriter, request *http.Request) {
-	var formRequest transactionsparepartpayloads.UploadProcessItemWarehouseTransferRequestPayloads
-	helper.ReadFromRequestBody(request, &formRequest)
-	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
-		exceptions.NewBadRequestException(writer, request, validationErr)
+	queryValues := request.URL.Query()
+
+	transferRequestSystemNumber, errA := strconv.Atoi(queryValues.Get("transfer_request_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
-	fmt.Println("cek")
-	create, err := r.ItemWarehouseTransferRequestService.ProcessUploadData(formRequest)
+
+	userId, errs := strconv.Atoi(queryValues.Get("modified_by_id"))
+	if errs != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	if err := request.ParseMultipartForm(10 << 20); err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error parsing multipart form",
+			Err:        err,
+		})
+		return
+	}
+
+	// Retrieve the file from the form data
+	file, handler, err := request.FormFile("file")
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		//log.Printf("Error retrieving file from form data: %v", err) // Logging error
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error retrieving file from form data",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
+
+	// Log the filename for debugging
+	//log.Printf("Received file: %s", handler.Filename)
+
+	// Check that the file is an xlsx format
+	if !strings.HasSuffix(handler.Filename, ".xlsx") {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "File must be in xlsx format",
+			Err:        errors.New("file must be in xlsx format"),
+		})
+		return
+	}
+
+	// Read the uploaded file into an excelize.File
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
+
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error retrieving rows from sheet",
+			Err:        err,
+		})
+		return
+	}
+
+	previewData, errResponse := r.ItemWarehouseTransferRequestService.PreviewUploadData(rows)
+	if errResponse != nil {
+		exceptions.NewNotFoundException(writer, request, errResponse)
+		return
+	}
+
+	var formRequest transactionsparepartpayloads.UploadProcessItemWarehouseTransferRequestPayloads
+
+	formRequest.TransferRequestDetails = previewData
+	formRequest.TransferRequestSystemNumber = transferRequestSystemNumber
+	formRequest.ModifiedById = userId
+
+	create, errProc := r.ItemWarehouseTransferRequestService.ProcessUploadData(formRequest)
+	if errProc != nil {
+		exceptions.NewNotFoundException(writer, request, errProc)
 		return
 	}
 
@@ -211,9 +335,33 @@ func (r *ItemWarehouseTransferRequestControllerImpl) UpdateWhTransferRequestDeta
 
 // DeleteDetail implements ItemWarehouseTransferRequestController.
 func (r *ItemWarehouseTransferRequestControllerImpl) DeleteDetail(writer http.ResponseWriter, request *http.Request) {
-	transferRequestDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	multiId := chi.URLParam(request, "id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
 
-	success, err := r.ItemWarehouseTransferRequestService.DeleteDetail(transferRequestDetailSystemNumber)
+	var transferRequest transactionsparepartpayloads.DeleteDetailItemWarehouseTransferRequest
+
+	helper.ReadFromRequestBody(request, &transferRequest)
+	if validationErr := validation.ValidationForm(writer, request, &transferRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+	success, err := r.ItemWarehouseTransferRequestService.DeleteDetail(intIds, transferRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -258,14 +406,15 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllDetailTransferRequest
 func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferRequest(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"transfer_request_status_id":       queryValues.Get("transfer_request_status_id"),
-		"transfer_request_document_number": queryValues.Get("item_group_id"),
-		"wmt.warehouse_group_id":           queryValues.Get("transfer_request_warehouse_group_id"),
+		"transfer_request_status_id":                     queryValues.Get("transfer_request_status_id"),
+		"transfer_request_document_number":               queryValues.Get("item_group_id"),
+		"wmt.warehouse_group_id":                         queryValues.Get("transfer_request_warehouse_group_id"),
+		"trx_item_warehouse_transfer_request.company_id": queryValues.Get("company_id"),
 	}
 
 	dateParams := map[string]string{
-		"transfer_request_date_from": queryValues.Get("purchase_order_date_from"),
-		"transfer_request_date_to":   queryValues.Get("purchase_order_date_to"),
+		"transfer_request_date_from": queryValues.Get("transfer_request_date_from"),
+		"transfer_request_date_to":   queryValues.Get("transfer_request_date_to"),
 	}
 
 	paginations := pagination.Pagination{
@@ -334,9 +483,21 @@ func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestHead
 
 // SubmitWhTransferRequest implements ItemWarehouseTransferRequestController.
 func (r *ItemWarehouseTransferRequestControllerImpl) SubmitWhTransferRequest(writer http.ResponseWriter, request *http.Request) {
-	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
-	success, err := r.ItemWarehouseTransferRequestService.SubmitWhTransferRequest(transferRequestSystemNumber)
+	var transferRequest transactionsparepartpayloads.SubmitItemWarehouseTransferRequest
+
+	helper.ReadFromRequestBody(request, &transferRequest)
+	if validationErr := validation.ValidationForm(writer, request, &transferRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	success, err := r.ItemWarehouseTransferRequestService.SubmitWhTransferRequest(transferRequestSystemNumber, transferRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
