@@ -1987,6 +1987,9 @@ func LookupRouter(
 	router.Get("/item-loc-uom", LookupController.ItemLocUOM)
 	router.Get("/item-loc-uom/by-id/{company_id}/{item_id}", LookupController.ItemLocUOMById)
 	router.Get("/item-loc-uom/by-code/{company_id}", LookupController.ItemLocUOMByCode)
+	router.Get("/item-freeaccs", LookupController.ItemMasterForFreeAccs)
+	router.Get("/item-freeaccs/by-id/{company_id}/{item_id}", LookupController.ItemMasterForFreeAccsById)
+	router.Get("/item-freeaccs/by-code/{company_id}", LookupController.ItemMasterForFreeAccsByCode)
 
 	return router
 }
