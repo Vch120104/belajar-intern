@@ -61,7 +61,6 @@ func (s *TechnicianAttendanceImpl) GetAllTechnicianAttendance(filterCondition []
 	return result, nil
 }
 
-// GetAddLineTechnician implements transactionjpcbservice.TechnicianAttendanceService.
 func (s *TechnicianAttendanceImpl) GetAddLineTechnician(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
