@@ -9,6 +9,7 @@ import (
 	"after-sales/api/utils"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -78,16 +79,40 @@ func (t *TechnicianAttendanceImpl) GetAddLineTechnician(tx *gorm.DB, filterCondi
 	return pages, nil
 }
 
-func (t *TechnicianAttendanceImpl) SaveTechnicianAttendance(tx *gorm.DB, req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) (transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
+func (t *TechnicianAttendanceImpl) SaveTechnicianAttendance(tx *gorm.DB, req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) ([]transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
 	serviceDate := req.ServiceDate.Truncate(24 * time.Hour)
-	entities := transactionjpcbentities.TechnicianAttendance{
-		CompanyId:   req.CompanyId,
-		ServiceDate: serviceDate,
-		UserId:      req.UserId,
-		Attendance:  req.Attendance,
+	userIdStr := strings.Split(req.UserIds, ",")
+
+	entities := []transactionjpcbentities.TechnicianAttendance{}
+	for _, userIdStr := range userIdStr {
+		userId, convErr := strconv.Atoi(userIdStr)
+		if convErr != nil {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error converting user_id into integer",
+				Err:        convErr,
+			}
+		}
+
+		_, employeeErr := generalserviceapiutils.GetEmployeeMasterById(userId)
+		if employeeErr != nil {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching employee data",
+				Err:        employeeErr.Err,
+			}
+		}
+
+		entity := transactionjpcbentities.TechnicianAttendance{
+			CompanyId:   req.CompanyId,
+			ServiceDate: serviceDate,
+			UserId:      userId,
+			Attendance:  true,
+		}
+		entities = append(entities, entity)
 	}
 
-	err := tx.Save(&entities).Error
+	err := tx.Create(&entities).Error
 
 	if err != nil {
 		return entities, &exceptions.BaseErrorResponse{

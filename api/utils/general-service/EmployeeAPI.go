@@ -55,7 +55,7 @@ type Address struct {
 	VillageId      int    `json:"village_id"`
 }
 type CompanyAccessData struct {
-	IsActive                 int    `json:"is_active"`
+	IsActive                 bool   `json:"is_active"`
 	DealerRepresentativeId   string `json:"dealer_representative_id"`
 	DealerRepresentativeCode string `json:"dealer_representative_code"`
 	DealerRepresentativeName bool   `json:"dealer_representative_name"`
@@ -66,7 +66,7 @@ type CompanyAccess struct {
 	PageLimit int `json:"page_limit"`
 	Npages    int `json:"npages"`
 	Nrows     int `json:"nrows"`
-	Data      CompanyAccessData
+	Data      []CompanyAccessData
 }
 type CompanyOutlet struct {
 	Page      int           `json:"page"`
@@ -112,7 +112,7 @@ type EmployeeMasterResponses struct {
 	CitizenshipId     int           `json:"citizenship_id"`
 	LastEducationId   int           `json:"last_education_id"`
 	LastEmployment    string        `json:"last_employment"`
-	FactorX           int           `json:"factor_x"`
+	FactorX           float64       `json:"factor_x"`
 	SkillLevelId      int           `json:"skill_level_id"`
 	CompanyAccess     CompanyAccess `json:"company_access"`
 	CompanyOutlet     CompanyOutlet `json:"company_outlet"`

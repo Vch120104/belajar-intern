@@ -93,7 +93,7 @@ func (s *TechnicianAttendanceImpl) GetAddLineTechnician(filterCondition []utils.
 	return result, nil
 }
 
-func (s *TechnicianAttendanceImpl) SaveTechnicianAttendance(req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) (transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
+func (s *TechnicianAttendanceImpl) SaveTechnicianAttendance(req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) ([]transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
