@@ -2082,6 +2082,9 @@ func ItemWarehouseTransferRequestRouter(
 	router.Get("/detail/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequestDetail)
 	router.Get("/detail", itemWarehouseTransferRequestController.GetAllDetailTransferRequest)
 
+	router.Put("/receipt/accept/{id}", itemWarehouseTransferRequestController.Accept)
+	router.Put("/receipt/reject/{id}", itemWarehouseTransferRequestController.Reject)
+
 	router.Post("/upload", itemWarehouseTransferRequestController.Upload)
 	router.Post("/process", itemWarehouseTransferRequestController.ProcessUpload)
 	router.Get("/download", itemWarehouseTransferRequestController.DownloadTemplate)
