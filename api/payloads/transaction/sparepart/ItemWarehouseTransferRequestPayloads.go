@@ -15,9 +15,11 @@ type InsertItemWarehouseTransferDetailRequest struct {
 	TransferRequestSystemNumberId int     `json:"transfer_request_system_number" parent_entity:"trx_item_warehouse_transfer_request_detail"`
 	ItemId                        *int    `json:"item_id" parent_entity:"trx_item_warehouse_transfer_request_detail"`
 	RequestQuantity               float64 `json:"request_quantity" parent_entity:"trx_item_warehouse_transfer_request_detail"`
+	ModifiedById                  int     `json:"modified_by_id"`
 }
 
 type UpdateItemWarehouseTransferRequest struct {
+	ModifiedById           int    `json:"modified_by_id"`
 	TransferRequestById    *int   `json:"transfer_request_by_id" parent_entity:"trx_item_warehouse_transfer_request"`
 	RequestFromWarehouseId *int   `json:"request_from_warehouse_id" parent_entity:"trx_item_warehouse_transfer_request"`
 	RequestToWarehouseId   *int   `json:"request_to_warehouse_id" parent_entity:"trx_item_warehouse_transfer_request"`
@@ -37,28 +39,32 @@ type GetAllDetailItemWarehouseTransferRequestResponse struct {
 }
 
 type GetByIdItemWarehouseTransferRequestResponse struct {
-	TransferRequestSystemNumber      int       `json:"transfer_request_system_number"`
-	TransferRequestDocumentNumber    string    `json:"transfer_request_document_number"`
-	TransferRequestStatusId          int       `json:"transfer_request_status_id"`
-	TransferRequestStatusCode        string    `json:"transfer_request_status_code"`
-	TransferRequestStatusDescription string    `json:"transfer_request_status_description"`
-	TransferRequestDate              time.Time `json:"transfer_request_date"`
-	RequestFromWarehouseId           int       `json:"request_from_warehouse_id"`
-	RequestFromWarehouseCode         string    `json:"request_from_warehouse_code"`
-	RequestFromWarehouseName         string    `json:"request_from_warehouse_name"`
-	RequestFromWarehouseGroupId      int       `json:"request_from_warehouse_group_id"`
-	RequestFromWarehouseGroupCode    string    `json:"request_from_warehouse_group_code"`
-	RequestFromWarehouseGroupName    string    `json:"request_from_warehouse_group_name"`
-	RequestToWarehouseId             int       `json:"request_to_warehouse_id"`
-	RequestToWarehouseCode           string    `json:"request_to_warehouse_code"`
-	RequestToWarehouseName           string    `json:"request_to_warehouse_name"`
-	RequestToWarehouseGroupId        int       `json:"request_to_warehouse_group_id"`
-	RequestToWarehouseGroupCode      string    `json:"request_to_warehouse_group_code"`
-	RequestToWarehouseGroupName      string    `json:"request_to_warehouse_group_name"`
-	Purpose                          string    `json:"purpose"`
-	ApprovalById                     *int      `json:"approval_by_id"`
-	ApprovalDate                     time.Time `json:"approval_date"`
-	ApprovalRemark                   string    `json:"approval_remark"`
+	TransferRequestSystemNumber      int        `json:"transfer_request_system_number"`
+	TransferRequestDocumentNumber    string     `json:"transfer_request_document_number"`
+	TransferRequestStatusId          int        `json:"transfer_request_status_id"`
+	TransferRequestStatusCode        string     `json:"transfer_request_status_code"`
+	TransferRequestStatusDescription string     `json:"transfer_request_status_description"`
+	TransferRequestDate              time.Time  `json:"transfer_request_date"`
+	RequestFromWarehouseId           int        `json:"request_from_warehouse_id"`
+	RequestFromWarehouseCode         string     `json:"request_from_warehouse_code"`
+	RequestFromWarehouseName         string     `json:"request_from_warehouse_name"`
+	RequestFromWarehouseGroupId      int        `json:"request_from_warehouse_group_id"`
+	RequestFromWarehouseGroupCode    string     `json:"request_from_warehouse_group_code"`
+	RequestFromWarehouseGroupName    string     `json:"request_from_warehouse_group_name"`
+	RequestToWarehouseId             int        `json:"request_to_warehouse_id"`
+	RequestToWarehouseCode           string     `json:"request_to_warehouse_code"`
+	RequestToWarehouseName           string     `json:"request_to_warehouse_name"`
+	RequestToWarehouseGroupId        int        `json:"request_to_warehouse_group_id"`
+	RequestToWarehouseGroupCode      string     `json:"request_to_warehouse_group_code"`
+	RequestToWarehouseGroupName      string     `json:"request_to_warehouse_group_name"`
+	Purpose                          string     `json:"purpose"`
+	ApprovalById                     *int       `json:"approval_by_id"`
+	ApprovalDate                     *time.Time `json:"approval_date"`
+	ApprovalRemark                   string     `json:"approval_remark"`
+	CreatedById                      int        `json:"created_by_id"`
+	CreatedByName                    string     `json:"created_by_name"`
+	ModifiedById                     int        `json:"modified_by_id"`
+	ModifiedByName                   string     `json:"modified_by_name"`
 }
 
 // type GetAllItemWarehouseTransferRequestRequest struct {
@@ -77,6 +83,7 @@ type GetAllItemWarehouseTransferRequestResponse struct {
 	TransferRequestStatusCode        string    `json:"transfer_request_status_code"`
 	TransferRequestStatusDescription string    `json:"transfer_request_status_description"`
 	TransferRequestById              int       `json:"transfer_request_by_id"`
+	TransferRequestByName            string    `json:"transfer_request_by_name"`
 	RequestFromWarehouseId           int       `json:"request_from_warehouse_id"`
 	RequestFromWarehouseName         string    `json:"request_from_warehouse_name"`
 	RequestFromWarehouseGroupId      int       `json:"request_from_warehouse_group_id"`
@@ -89,6 +96,7 @@ type GetAllItemWarehouseTransferRequestResponse struct {
 
 type UpdateItemWarehouseTransferRequestDetailRequest struct {
 	RequestQuantity float64 `json:"request_quantity"`
+	ModifiedById    int     `json:"modified_by_id"`
 }
 
 type GetByIdItemWarehouseTransferRequestDetailResponse struct {
@@ -102,16 +110,31 @@ type UploadPreviewItemWarehouseTransferRequestPayloads struct {
 	ItemCode          string  `json:"item_code"`
 	ItemName          string  `json:"item_name"`
 	RequestQuantity   float64 `json:"request_quantity"`
-	UnitOfMeasurement string  `json:"unit_of_Measurement"`
+	UnitOfMeasurement string  `json:"unit_of_measurement"`
 }
 
 type UploadProcessItemWarehouseTransferRequestPayloads struct {
-	TransferRequestSystemNumber *int                                                `json:"transfer_request_system_number"`
-	CompanyId                   int                                                 `json:"company_id"`
-	TransferRequestDate         *time.Time                                          `json:"transfer_request_date"`
-	TransferRequestById         *int                                                `json:"transfer_request_by_id"`
-	RequestFromWarehouseId      int                                                 `json:"request_from_warehouse_id"`
-	RequestToWarehouseId        int                                                 `json:"request_to_warehouse_id"`
-	Purpose                     string                                              `json:"purpose"`
+	TransferRequestSystemNumber int                                                 `json:"transfer_request_system_number"`
+	ModifiedById                int                                                 `json:"modified_by_id"`
 	TransferRequestDetails      []UploadPreviewItemWarehouseTransferRequestPayloads `json:"transfer_request_details"`
+}
+
+type SubmitItemWarehouseTransferRequest struct {
+	ModifiedById int `json:"modified_by_id"`
+}
+
+type DeleteDetailItemWarehouseTransferRequest struct {
+	ModifiedById int `json:"modified_by_id"`
+}
+
+type AcceptWarehouseTransferRequestRequest struct {
+	ApprovalById   int       `json:"approval_by_id"`
+	ApprovalDate   time.Time `json:"approval_date"`
+	ApprovalRemark string    `json:"approval_remark"`
+}
+
+type RejectWarehouseTransferRequestRequest struct {
+	ApprovalById   int       `json:"approval_by_id"`
+	ApprovalDate   time.Time `json:"approval_date"`
+	ApprovalRemark string    `json:"approval_remark"`
 }
