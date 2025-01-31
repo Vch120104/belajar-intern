@@ -12,6 +12,7 @@ import (
 	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -151,8 +152,20 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) UpdateWhTransferRequestDetail
 		entitiesDetail.RequestQuantity = request.RequestQuantity
 	}
 
-	//save header
+	//save detail
 	err = tx.Save(&entitiesDetail).Scan(&entitiesDetail).Error
+	if err != nil {
+		return entitiesDetail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to update transfer request",
+		}
+	}
+
+	//save header
+	entities.ModifiedById = request.ModifiedById
+
+	err = tx.Save(&entities).Error
 	if err != nil {
 		return entitiesDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -166,14 +179,61 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) UpdateWhTransferRequestDetail
 
 // DeleteDetail implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
 // Exec uspg_atTrfReq1_Delete @option = 0
-func (*ItemWarehouseTransferRequestRepositoryImpl) DeleteDetail(tx *gorm.DB, number int) (bool, *exceptions.BaseErrorResponse) {
+func (*ItemWarehouseTransferRequestRepositoryImpl) DeleteDetail(tx *gorm.DB, number int, request transactionsparepartpayloads.DeleteDetailItemWarehouseTransferRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entitiesDetail transactionsparepartentities.ItemWarehouseTransferRequestDetail
+	var entities transactionsparepartentities.ItemWarehouseTransferRequest
+
+	errGet := tx.Find(&entitiesDetail, number).Error
+	if errGet != nil {
+		if errors.Is(errGet, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "transfer detail with that id is not found please check input",
+				Err:        errGet,
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGet,
+			Message:    "failed to get transfer detail please check input",
+		}
+	}
+
+	errGetE := tx.Find(&entities, entitiesDetail.TransferRequestSystemNumberId).Scan(&entities).Error
+	if errGetE != nil {
+		if errors.Is(errGet, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "transfer request with that id is not found please check input",
+				Err:        errGetE,
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetE,
+			Message:    "failed to get transfer request please check input",
+		}
+	}
+
+	fmt.Println(entities)
 
 	errDeleteDetail := tx.Model(&entitiesDetail).Where("transfer_request_detail_system_number = ?", number).Delete(&entitiesDetail)
 	if errDeleteDetail.Error != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errDeleteDetail.Error,
+		}
+	}
+
+	//save header
+	entities.ModifiedById = request.ModifiedById
+
+	err := tx.Save(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to update transfer request",
 		}
 	}
 
@@ -259,6 +319,14 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetAllWhTransferRequest(tx *g
 	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
+	}
+
+	for i, respon := range responses {
+		get, errUser := generalserviceapiutils.GetUserDetailsByID(respon.TransferRequestById)
+		if errUser != nil {
+			return pages, nil
+		}
+		responses[i].TransferRequestByName = get.EmployeeName
 	}
 
 	pages.Rows = responses
@@ -372,6 +440,38 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequest(tx *go
 		}
 	}
 
+	getUser, errGetUser := generalserviceapiutils.GetUserDetailsByID(*entities.TransferRequestById)
+	if errGetUser != nil {
+		if errors.Is(errGetUser, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "user with that id is not found please check input",
+				Err:        errGetUser,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetUser,
+			Message:    "failed to get user please check input",
+		}
+	}
+
+	getUserModified, errGetUserModified := generalserviceapiutils.GetUserDetailsByID(entities.ModifiedById)
+	if errGetUserModified != nil {
+		if errors.Is(errGetUserModified, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "user with that id is not found please check input",
+				Err:        errGetUserModified,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetUserModified,
+			Message:    "failed to get user please check input",
+		}
+	}
+
 	response.TransferRequestSystemNumber = number
 	response.TransferRequestDocumentNumber = entities.TransferRequestDocumentNumber
 	response.TransferRequestStatusId = entities.TransferRequestStatusId
@@ -395,6 +495,10 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequest(tx *go
 	response.ApprovalById = entities.ApprovalById
 	response.ApprovalDate = entities.ApprovalDate
 	response.ApprovalRemark = entities.ApprovalRemark
+	response.CreatedById = getUser.UserId
+	response.CreatedByName = getUser.Username + " - " + getUser.EmployeeName
+	response.ModifiedById = getUserModified.UserId
+	response.ModifiedByName = getUserModified.Username + " - " + getUserModified.EmployeeName
 
 	return response, nil
 }
@@ -443,8 +547,6 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) InsertWhTransferRequestDetail
 	var entitiesDetail transactionsparepartentities.ItemWarehouseTransferRequestDetail
 	var entities transactionsparepartentities.ItemWarehouseTransferRequest
 
-	fmt.Println(request.TransferRequestSystemNumberId)
-
 	err := tx.Model(&entities).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestSystemNumber: request.TransferRequestSystemNumberId}).
 		First(&entities).Error
 	if err != nil {
@@ -477,6 +579,7 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) InsertWhTransferRequestDetail
 		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("qty for transfer request is not available"),
+			Message:    "qty for transfer request is not available",
 		}
 	}
 
@@ -490,6 +593,17 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) InsertWhTransferRequestDetail
 		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errDetail,
+		}
+	}
+
+	entities.ModifiedById = request.ModifiedById
+
+	errSave := tx.Save(&entities).Error
+	if errSave != nil {
+		return transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to update transfer request",
 		}
 	}
 
@@ -518,6 +632,8 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) InsertWhTransferRequestHeader
 	entities.TransferRequestDate = request.TransferRequestDate
 	entities.Purpose = request.Purpose
 	entities.TransferRequestById = request.TransferRequestById
+	entities.ModifiedById = *request.TransferRequestById
+	entities.ApprovalDate = nil
 
 	errCreate := tx.Create(&entities).Scan(&entities).Error
 	if errCreate != nil {
@@ -531,7 +647,7 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) InsertWhTransferRequestHeader
 }
 
 // SubmitWhTransferRequest implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
-func (*ItemWarehouseTransferRequestRepositoryImpl) SubmitWhTransferRequest(tx *gorm.DB, number int) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
+func (*ItemWarehouseTransferRequestRepositoryImpl) SubmitWhTransferRequest(tx *gorm.DB, number int, request transactionsparepartpayloads.SubmitItemWarehouseTransferRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.ItemWarehouseTransferRequest
 	var status masteritementities.ItemTransferStatus
 	var statusReady masteritementities.ItemTransferStatus
@@ -587,6 +703,28 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) SubmitWhTransferRequest(tx *g
 	// @TRANSACTION_DATE = @Trfreq_Date ,
 	// @Last_Doc_No = @Trfreq_Doc_No OUTPUT
 
+	// getCompany, errComp := generalserviceapiutils.GetCompanyDataById(entities.CompanyId)
+	// if errComp != nil {
+	// 	return transactionsparepartentities.ItemWarehouseTransferRequest{}, errComp
+	// }
+
+	// ss := strconv.Itoa(entities.TransferRequestDate.Year()) + strconv.Itoa(int(entities.TransferRequestDate.Month())) + "01"
+	// // ss := strconv.Itoa(entities.TransferRequestDate.Year()) + strconv.Itoa(int(entities.TransferRequestDate.Month())) + "01"
+	// var checkEntities []transactionsparepartentities.ItemWarehouseTransferRequest
+	// errGetCheck := tx.Where("transfer_request_date >= ?", ss).
+	// 	Find(&checkEntities)
+	// if errGetCheck.Error != nil {
+	// 	return transactionsparepartentities.ItemWarehouseTransferRequest{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Err:        errGetCheck.Error,
+	// 	}
+	// }
+
+	// month := entities.TransferRequestDate.Month()
+	// year := entities.TransferRequestDate.Year() % 100
+
+	// docNum := fmt.Sprintf("SPTR/%s/%02d/%02d/%05d", getCompany.CompanyCode, month, year, len(checkEntities))
+
 	warehouseFrom, errFrom := masterwarehouserepositoryimpl.OpenWarehouseMasterImpl().GetById(tx, entities.RequestFromWarehouseId)
 	if errFrom != nil {
 		return transactionsparepartentities.ItemWarehouseTransferRequest{}, errFrom
@@ -629,7 +767,9 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) SubmitWhTransferRequest(tx *g
 
 	entities.TransferRequestStatusId = statusReady.ItemTransferStatusId
 	// entities.TransferRequestDocumentNumber =
-	fmt.Println(entities.TransferRequestStatusId)
+
+	entities.ModifiedById = request.ModifiedById
+	// entities.TransferRequestDocumentNumber = docNum
 
 	err = tx.Save(&entities).Error
 	if err != nil {
@@ -679,6 +819,8 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) UpdateWhTransferRequest(tx *g
 	}
 
 	//save header
+	entities.ModifiedById = request.ModifiedById
+
 	err = tx.Save(&entities).Error
 	if err != nil {
 		return entities, &exceptions.BaseErrorResponse{
