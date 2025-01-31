@@ -1801,6 +1801,7 @@ func TechnicianAttendanceRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
+	router.Get("/add-line", TechnicianAttendanceController.GetAddLineTechnician)
 	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
 	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
 
