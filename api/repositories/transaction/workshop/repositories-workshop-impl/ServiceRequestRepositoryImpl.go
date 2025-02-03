@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	masteritementities "after-sales/api/entities/master/item"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -396,22 +397,37 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 
 		// fetch data item
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(detail.OperationItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", detail.OperationItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", detail.OperationItemId),
+				}
+			}
 			return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve item data from the external API",
-				Err:        itemErr.Err,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 
 		// Fetch data UOM from external API
-		uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
-		if uomErr != nil {
+		var uomItems masteritementities.Uom
+		if err := tx.Where("uom_id = ?", itemResponse.UnitOfMeasurementStockId).First(&uomItems).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "UOM not found",
+					Err:        fmt.Errorf("uom with ID %d not found", itemResponse.UnitOfMeasurementStockId),
+				}
+
+			}
 			return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve UOM data from the external API",
-				Err:        uomErr.Err,
+				Message:    "Failed to fetch UOM",
+				Err:        err,
 			}
 		}
 

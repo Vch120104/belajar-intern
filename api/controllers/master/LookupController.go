@@ -1446,11 +1446,6 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccs(writer http.ResponseWriter,
 		"mtr_item_detail.variant_id": queryValues.Get("variant_id"),
 	}
 
-	if filterCondition["company_id"] == "" {
-		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusBadRequest)
-		return
-	}
-
 	criteria := utils.BuildFilterCondition(filterCondition)
 
 	paginate := pagination.Pagination{
