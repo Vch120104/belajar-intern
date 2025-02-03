@@ -238,3 +238,24 @@ func TimeToDecimalHours(t time.Time) float64 {
 	minutes := float64(t.Minute())
 	return hours + (minutes / 60)
 }
+
+// IntSliceToString converts a slice of integers to a string formatted as "[1,2,3]".
+// If the input slice is empty, it returns "[]".
+func IntSliceToString(slice []int) string {
+	if len(slice) == 0 {
+		return "[]"
+	}
+
+	var builder strings.Builder
+	builder.WriteString("[")
+
+	for i, v := range slice {
+		builder.WriteString(strconv.Itoa(v))
+		if i < len(slice)-1 {
+			builder.WriteString(",")
+		}
+	}
+
+	builder.WriteString("]")
+	return builder.String()
+}

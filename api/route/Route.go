@@ -404,7 +404,8 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 
 	//Item Warehouse Transfer Request
 	ItemWarehouseTransferRequestRepository := transactionsparepartrepositoryimpl.NewItemWarehouseTransferRequestRepositoryImpl()
-	ItemWarehouseTransferRequestService := transactionsparepartserviceimpl.NewWhTransferRequestImpl(ItemWarehouseTransferRequestRepository, db, rdb, itemRepository, unitOfMeasurementRepository)
+	ItemWarehouseTransferReceiptRepository := transactionsparepartrepositoryimpl.NewItemWarehouseTransferReceiptRepositoryImpl()
+	ItemWarehouseTransferRequestService := transactionsparepartserviceimpl.NewWhTransferRequestImpl(ItemWarehouseTransferRequestRepository, db, rdb, itemRepository, unitOfMeasurementRepository, ItemWarehouseTransferReceiptRepository)
 	ItemWarehouseTransferRequestController := transactionsparepartcontroller.NewItemWarehouseTransferRequestControllerImpl(ItemWarehouseTransferRequestService)
 
 	//Work Order Allocation

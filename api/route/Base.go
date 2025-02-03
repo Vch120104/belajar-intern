@@ -1801,6 +1801,7 @@ func TechnicianAttendanceRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
+	router.Get("/add-line", TechnicianAttendanceController.GetAddLineTechnician)
 	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
 	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
 
@@ -2084,6 +2085,9 @@ func ItemWarehouseTransferRequestRouter(
 	router.Get("/", itemWarehouseTransferRequestController.GetAllWhTransferRequest)
 	router.Get("/detail/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequestDetail)
 	router.Get("/detail", itemWarehouseTransferRequestController.GetAllDetailTransferRequest)
+
+	router.Put("/receipt/accept/{id}", itemWarehouseTransferRequestController.Accept)
+	router.Put("/receipt/reject/{id}", itemWarehouseTransferRequestController.Reject)
 
 	router.Post("/upload", itemWarehouseTransferRequestController.Upload)
 	router.Post("/process", itemWarehouseTransferRequestController.ProcessUpload)
