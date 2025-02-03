@@ -7,7 +7,6 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
@@ -231,6 +230,24 @@ func (r *AtpmClaimRegistrationRepositoryImpl) GetById(tx *gorm.DB, id int, pages
 // uspg_atAtpmVehicleClaim0_Insert
 // IF @Option = 0
 func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.AtpmClaimRegistrationRequest) (transactionworkshopentities.AtpmClaimVehicle, *exceptions.BaseErrorResponse) {
+
+	// Get WorkOrder details from database
+	var workOrder transactionworkshopentities.WorkOrder
+	if err := tx.Where("work_order_system_number = ?", request.WorkOrderSystemNumber).First(&workOrder).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Work order not found",
+				Err:        fmt.Errorf("work order with ID %d not found", request.WorkOrderSystemNumber),
+			}
+		}
+		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch work order",
+			Err:        err,
+		}
+	}
+
 	// Get approval draft from external service
 	approvalDraft, approvalDraftErr := generalserviceapiutils.GetApprovalStatusByCode("10")
 	if approvalDraftErr != nil {
@@ -240,27 +257,6 @@ func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transacti
 			Err:        approvalDraftErr.Err,
 		}
 	}
-
-	// Get work order drom external service
-	workOrder, workOrderErr := aftersalesserviceapiutils.GetWorkOrderById(request.WorkOrderSystemNumber)
-	if workOrderErr != nil {
-		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
-			StatusCode: workOrderErr.StatusCode,
-			Message:    "Failed to fetch work order data from external service",
-			Err:        workOrderErr.Err,
-		}
-	}
-
-	fmt.Println("workOrder.Data.WorkOrderDocumentNumber", workOrder.WorkOrderDocumentNumber)
-	fmt.Println("workOrder.Data.WorkOrderDate", workOrder.WorkOrderDate)
-
-	// if workOrder.Data.WorkOrderInformation.WorkOrderDocumentNumber == "" || workOrder.Data.WorkOrderInformation.WorkOrderDate.IsZero() {
-	// 	return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusBadRequest,
-	// 		Message:    "Incomplete work order data from external service",
-	// 		Err:        errors.New("missing required work order fields"),
-	// 	}
-	// }
 
 	var existingEntity transactionworkshopentities.AtpmClaimVehicle
 	if err := tx.Where("claim_system_number = ?", request.ClaimSystemNumber).
@@ -279,25 +275,26 @@ func (r *AtpmClaimRegistrationRepositoryImpl) New(tx *gorm.DB, request transacti
 	}
 
 	entity := transactionworkshopentities.AtpmClaimVehicle{
-		CompanyId:               request.CompanyId,
-		BrandId:                 request.BrandId,
-		ModelId:                 request.ModelId,
-		VariantId:               request.VariantId,
-		ClaimTypeId:             request.ClaimTypeId,
-		ClaimStatusId:           approvalDraft.ApprovalStatusId,
-		CustomerComplaint:       request.CustomerComplaint,
-		TechnicianDiagnostic:    request.TechnicianDiagnostic,
-		Countermeasure:          request.Countermeasure,
-		ClaimDate:               request.ClaimDate,
-		RepairEndDate:           request.RepairEndDate,
-		WorkOrderSystemNumber:   request.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber: workOrder.WorkOrderDocumentNumber,
-		WorkOrderDate:           workOrder.WorkOrderDate,
+		CompanyId:             request.CompanyId,
+		BrandId:               request.BrandId,
+		ModelId:               request.ModelId,
+		VariantId:             request.VariantId,
+		ClaimTypeId:           request.ClaimTypeId,
+		ClaimStatusId:         approvalDraft.ApprovalStatusId,
+		CustomerComplaint:     request.CustomerComplaint,
+		TechnicianDiagnostic:  request.TechnicianDiagnostic,
+		Countermeasure:        request.Countermeasure,
+		ClaimDate:             request.ClaimDate,
+		RepairEndDate:         request.RepairEndDate,
+		WorkOrderSystemNumber: request.WorkOrderSystemNumber,
 
 		// Other data
 		Fuel:       request.Fuel,
 		CustomerId: request.CustomerId,
 		Vdn:        request.VDN,
+
+		WorkOrderDocumentNumber: workOrder.WorkOrderDocumentNumber,
+		WorkOrderDate:           workOrder.WorkOrderDate,
 
 		// Claim Header, Symptom, Trouble Code
 		ClaimHeader: request.ClaimHeader,

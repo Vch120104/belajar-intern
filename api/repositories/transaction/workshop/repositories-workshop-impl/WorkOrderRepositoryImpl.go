@@ -6,6 +6,7 @@ import (
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	transactionunitentities "after-sales/api/entities/transaction/Unit"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
@@ -2324,12 +2325,19 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
-		whsGroup, whsGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(workOrderReq.WarehouseGroupId)
-		if whsGroupErr != nil {
+		var whsGroup masterwarehouseentities.WarehouseGroup
+		if err := tx.Where("warehouse_group_id = ?", workOrderReq.WarehouseGroupId).First(&whsGroup).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Warehouse group not found",
+					Err:        fmt.Errorf("warehouse group with ID %d not found", workOrderReq.WarehouseGroupId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: whsGroupErr.StatusCode,
-				Message:    "Failed to retrieve warehouse group from the external API",
-				Err:        whsGroupErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Warehouse group",
+				Err:        err,
 			}
 		}
 
@@ -2367,22 +2375,37 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		}
 
 		// fetch data item
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(workOrderReq.OperationItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", workOrderReq.OperationItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", workOrderReq.OperationItemId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve item data from the external API",
-				Err:        itemErr.Err,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 
 		// Fetch data UOM from external API
-		uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
-		if uomErr != nil {
+		var uomItems masteritementities.Uom
+		if err := tx.Where("uom_id = ?", itemResponse.UnitOfMeasurementStockId).First(&uomItems).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "UOM not found",
+					Err:        fmt.Errorf("uom with ID %d not found", itemResponse.UnitOfMeasurementStockId),
+				}
+
+			}
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve UOM data from the external API",
-				Err:        uomErr.Err,
+				Message:    "Failed to fetch UOM",
+				Err:        err,
 			}
 		}
 
@@ -2561,12 +2584,19 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		}
 	}
 
-	whsGroup, whsGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(entity.WarehouseGroupId)
-	if whsGroupErr != nil {
+	var whsGroup masterwarehouseentities.WarehouseGroup
+	if err := tx.Where("warehouse_group_id = ?", entity.WarehouseGroupId).First(&whsGroup).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Warehouse group not found",
+				Err:        fmt.Errorf("warehouse group with ID %d not found", entity.WarehouseGroupId),
+			}
+		}
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: whsGroupErr.StatusCode,
-			Message:    "Failed to retrieve warehouse group from the external API",
-			Err:        whsGroupErr.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Warehouse group",
+			Err:        err,
 		}
 	}
 
@@ -2604,22 +2634,37 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	}
 
 	// fetch data item
-	itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.OperationItemId)
-	if itemErr != nil {
+	var itemResponse masteritementities.Item
+	if err := tx.Where("item_id = ?", entity.OperationItemId).First(&itemResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item not found",
+				Err:        fmt.Errorf("item with ID %d not found", entity.OperationItemId),
+			}
+		}
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve item data from the external API",
-			Err:        itemErr.Err,
+			Message:    "Failed to fetch Item",
+			Err:        err,
 		}
 	}
 
 	// Fetch data UOM from external API
-	uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
-	if uomErr != nil {
+	var uomItems masteritementities.Uom
+	if err := tx.Where("uom_id = ?", itemResponse.UnitOfMeasurementStockId).First(&uomItems).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "UOM not found",
+				Err:        fmt.Errorf("uom with ID %d not found", itemResponse.UnitOfMeasurementStockId),
+			}
+
+		}
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve UOM data from the external API",
-			Err:        uomErr.Err,
+			Message:    "Failed to fetch UOM",
+			Err:        err,
 		}
 	}
 

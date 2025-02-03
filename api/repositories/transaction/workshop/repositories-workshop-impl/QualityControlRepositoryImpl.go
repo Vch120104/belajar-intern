@@ -8,7 +8,6 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
@@ -315,13 +314,20 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		}
 	}
 
-	// Fetch data work order from external API
-	workOrderResponses, workOrderErr := aftersalesserviceapiutils.GetWorkOrderById(entity.WorkOrderSystemNumber)
-	if workOrderErr != nil {
+	// Get WorkOrder details from database
+	var workOrder transactionworkshopentities.WorkOrder
+	if err := tx.Where("work_order_system_number = ?", entity.WorkOrderSystemNumber).First(&workOrder).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Work order not found",
+				Err:        fmt.Errorf("work order with ID %d not found", entity.WorkOrderSystemNumber),
+			}
+		}
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order data from the external API",
-			Err:        workOrderErr.Err,
+			Message:    "Failed to fetch work order",
+			Err:        err,
 		}
 	}
 
@@ -380,8 +386,8 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 
 	response := transactionworkshoppayloads.QualityControlIdResponse{
-		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
-		WorkOrderDate:           workOrderResponses.WorkOrderDate,
+		WorkOrderDocumentNumber: workOrder.WorkOrderDocumentNumber,
+		WorkOrderDate:           workOrder.WorkOrderDate,
 		BrandName:               brandResponses.BrandName,
 		ModelName:               modelResponses.ModelName,
 		VariantDescription:      variantResponses.VariantDescription,
@@ -393,8 +399,8 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		Address1:                customerResponses.AddressStreet2,
 		RTRW:                    customerResponses.AddressStreet3,
 		LastMilage:              workorderVehicleDetails[0].VehicleLastKm,
-		CurrentMilage:           workOrderResponses.WorkOrderCurrentMileage,
-		Phone:                   workOrderResponses.PhoneCustomer,
+		CurrentMilage:           workOrder.ServiceMileage,
+		Phone:                   workOrder.ContactPersonPhone,
 		ForemanName:             foremanResponses.EmployeeName,
 		ServiceAdvisorName:      serviceAdvisorResponses.EmployeeName,
 		OrderDateTime:           "",
