@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	utils "after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
@@ -314,12 +313,19 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 	}
 
 	for i, detail := range purchasepriceDetails {
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(detail.ItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", detail.ItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", detail.ItemId),
+				}
+			}
 			return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: itemErr.StatusCode,
-				Message:    "Internal server error while fetching item data",
-				Err:        itemErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 		purchasepriceDetails[i].ItemCode = itemResponse.ItemCode
@@ -371,11 +377,19 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, fil
 	var results []map[string]interface{}
 	for _, response := range responses {
 
-		getItemResponse, itemErr := aftersalesserviceapiutils.GetItemId(response.ItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", response.ItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", response.ItemId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: itemErr.StatusCode,
-				Err:        itemErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 
@@ -383,8 +397,8 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, fil
 			"purchase_price_detail_id": response.PurchasePriceDetailId,
 			"purchase_price_id":        response.PurchasePriceId,
 			"item_id":                  response.ItemId,
-			"item_code":                getItemResponse.ItemCode,
-			"item_name":                getItemResponse.ItemName,
+			"item_code":                itemResponse.ItemCode,
+			"item_name":                itemResponse.ItemName,
 			"is_active":                response.IsActive,
 			"purchase_price":           response.PurchasePrice,
 		}
@@ -419,11 +433,19 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id
 	}
 
 	// Fetch Item data from external service
-	getItemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entities.ItemId)
-	if itemErr != nil {
+	var itemResponse masteritementities.Item
+	if err := tx.Where("item_id = ?", entities.ItemId).First(&itemResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item not found",
+				Err:        fmt.Errorf("item with ID %d not found", entities.ItemId),
+			}
+		}
 		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
-			StatusCode: itemErr.StatusCode,
-			Err:        itemErr.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item",
+			Err:        err,
 		}
 	}
 
@@ -431,8 +453,8 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id
 		PurchasePriceDetailId: entities.PurchasePriceDetailId,
 		PurchasePriceId:       entities.PurchasePriceId,
 		ItemId:                entities.ItemId,
-		ItemCode:              getItemResponse.ItemCode,
-		ItemName:              getItemResponse.ItemName,
+		ItemCode:              itemResponse.ItemCode,
+		ItemName:              itemResponse.ItemName,
 		IsActive:              entities.IsActive,
 		PurchasePrice:         entities.PurchasePrice,
 	}
