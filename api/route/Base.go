@@ -2096,6 +2096,19 @@ func ItemWarehouseTransferRequestRouter(
 	return router
 }
 
+func AtpmReimbursementRouter(
+	atpmReimbursementController transactionworkshopcontroller.AtpmReimbursementController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", atpmReimbursementController.GetAll)
+
+	return router
+}
+
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
