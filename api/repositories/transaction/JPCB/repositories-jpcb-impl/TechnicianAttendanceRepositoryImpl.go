@@ -45,10 +45,23 @@ func (t *TechnicianAttendanceImpl) GetAllTechnicianAttendance(tx *gorm.DB, filte
 
 func (t *TechnicianAttendanceImpl) GetAddLineTechnician(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var serviceDate string
+	var companyId int
 	for _, filter := range filterCondition {
 		if strings.Contains(filter.ColumnField, "service_date") {
 			serviceDate = filter.ColumnValue
-			break
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "company_id") {
+			id, parseErr := strconv.Atoi(filter.ColumnValue)
+			if parseErr != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Error parsing company_id",
+					Err:        parseErr,
+				}
+			}
+			companyId = id
+			continue
 		}
 	}
 
@@ -67,6 +80,7 @@ func (t *TechnicianAttendanceImpl) GetAddLineTechnician(tx *gorm.DB, filterCondi
 		Page:        pages.Page,
 		Limit:       10000000,
 		UserIdNotIn: utils.IntSliceToString(userIds),
+		CompanyId:   companyId,
 		RoleName:    "Technician",
 	}
 	employeeResponse, _ := generalserviceapiutils.GetAllUserDetail(params)
