@@ -59,22 +59,22 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 	var selectedWOs []transactionworkshoppayloads.PrintGatePassResponse
 	for _, response := range responses {
 		selectedWOs = append(selectedWOs, transactionworkshoppayloads.PrintGatePassResponse{
-			WorkOrderSystemNumber: response.WorkOrderSystemNumber,
+			WorkOrderSystemNumber:   response.WorkOrderSystemNumber,
 			WorkOrderDocumentNumber: response.WorkOrderDocumentNumber,
-			WorkOrderDate: response.WorkOrderDate,
-			CustomerId: response.CustomerId,
-			CustomerName: response.CustomerName,
-			VehicleId: response.VehicleId,
-			VehicleBrandId: response.VehicleBrandId,
-			ModelId: response.ModelId,
-			GatePassSystemNumber: response.GatePassSystemNumber,
-			GatePassDocumentNumber: response.GatePassDocumentNumber,
-			GatePassDate: response.GatePassDate,
-			DeliveryName: response.DeliveryName,
-			DeliveryAddress: response.DeliveryAddress,
+			WorkOrderDate:           response.WorkOrderDate,
+			CustomerId:              response.CustomerId,
+			CustomerName:            response.CustomerName,
+			VehicleId:               response.VehicleId,
+			VehicleBrandId:          response.VehicleBrandId,
+			ModelId:                 response.ModelId,
+			GatePassSystemNumber:    response.GatePassSystemNumber,
+			GatePassDocumentNumber:  response.GatePassDocumentNumber,
+			GatePassDate:            response.GatePassDate,
+			DeliveryName:            response.DeliveryName,
+			DeliveryAddress:         response.DeliveryAddress,
 		})
 	}
-	
+
 	if len(selectedWOs) > 1 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
