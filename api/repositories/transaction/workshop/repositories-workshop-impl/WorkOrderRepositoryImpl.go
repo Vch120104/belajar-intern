@@ -2365,12 +2365,12 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		var OperationItemCode string
 		var Description string
 
-		operationItemResponse, operationItemErr := r.GetOperationItemById(lineTypeResponse.LineTypeCode, workOrderReq.OperationItemId)
+		operationItemResponse, operationItemErr := r.GetOperationItemById(workOrderReq.LineTypeId, workOrderReq.OperationItemId)
 		if operationItemErr != nil {
 			return pages, operationItemErr
 		}
 
-		OperationItemCode, Description, errResp := r.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		OperationItemCode, Description, errResp := r.HandleLineTypeResponse(workOrderReq.LineTypeId, operationItemResponse)
 		if errResp != nil {
 			return pages, errResp
 		}
@@ -2624,12 +2624,12 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	var OperationItemCode string
 	var Description string
 
-	operationItemResponse, operationItemErr := r.GetOperationItemById(lineTypeResponse.LineTypeCode, entity.OperationItemId)
+	operationItemResponse, operationItemErr := r.GetOperationItemById(entity.LineTypeId, entity.OperationItemId)
 	if operationItemErr != nil {
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, operationItemErr
 	}
 
-	OperationItemCode, Description, errResp := r.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+	OperationItemCode, Description, errResp := r.HandleLineTypeResponse(entity.LineTypeId, operationItemResponse)
 	if errResp != nil {
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, errResp
 	}
@@ -8821,19 +8821,18 @@ func (r *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 	return entity, nil
 }
 
-func (r *WorkOrderRepositoryImpl) GetOperationItemById(LineTypeStr string, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) GetOperationItemById(LineTypeId int, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse) {
 	// Validate LineType
-	lineType, err := strconv.Atoi(LineTypeStr)
-	if err != nil || lineType < 0 || lineType > 9 {
+	if LineTypeId < 0 || LineTypeId > 9 {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Invalid LineType",
-			Err:        fmt.Errorf("invalid LineType: %s", LineTypeStr),
+			Err:        fmt.Errorf("invalid LineType: %d", LineTypeId),
 		}
 	}
 
 	// URL for the request
-	url := fmt.Sprintf("%slookup/item-opr-code/%s/by-id/%d", config.EnvConfigs.AfterSalesServiceUrl, LineTypeStr, OperationItemId)
+	url := fmt.Sprintf("%slookup/item-opr-code/%d/by-id/%d", config.EnvConfigs.AfterSalesServiceUrl, LineTypeId, OperationItemId)
 	log.Printf("Requesting URL: %s", url)
 
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -8895,7 +8894,7 @@ func (r *WorkOrderRepositoryImpl) GetOperationItemById(LineTypeStr string, Opera
 
 	// Handle data according to LineType
 	var responseData interface{}
-	switch lineType {
+	switch LineTypeId {
 	case 2, 3, 4, 5, 6, 7, 8, 9:
 		var response transactionworkshoppayloads.LineType2To9Response
 		if err := r.mapToStruct(apiResponse.Data, &response); err != nil {
@@ -8930,7 +8929,7 @@ func (r *WorkOrderRepositoryImpl) GetOperationItemById(LineTypeStr string, Opera
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Unknown line type in operation item response",
-			Err:        fmt.Errorf("unexpected line type %d", lineType),
+			Err:        fmt.Errorf("unexpected line type %d", LineTypeId),
 		}
 	}
 
@@ -8951,11 +8950,11 @@ func (r *WorkOrderRepositoryImpl) mapToStruct(data map[string]interface{}, resul
 }
 
 // aftersalesserviceapiutils/response_utils.go
-func (r *WorkOrderRepositoryImpl) HandleLineTypeResponse(lineTypeCode string, operationItemResponse interface{}) (string, string, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) HandleLineTypeResponse(lineTypeId int, operationItemResponse interface{}) (string, string, *exceptions.BaseErrorResponse) {
 	var OperationItemCode, Description string
 
-	switch lineTypeCode {
-	case "0":
+	switch lineTypeId {
+	case 1:
 		if response, ok := operationItemResponse.(transactionworkshoppayloads.LineType0Response); ok {
 			OperationItemCode = response.PackageCode
 			Description = response.PackageName
@@ -8967,7 +8966,7 @@ func (r *WorkOrderRepositoryImpl) HandleLineTypeResponse(lineTypeCode string, op
 			}
 		}
 
-	case "1":
+	case 2:
 		if response, ok := operationItemResponse.(transactionworkshoppayloads.LineType1Response); ok {
 			OperationItemCode = response.OperationCode
 			Description = response.OperationName

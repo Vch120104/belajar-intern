@@ -61,6 +61,6 @@ type WorkOrderRepository interface {
 	ChangePhoneNo(tx *gorm.DB, workorderID int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse)
 	ConfirmPrice(tx *gorm.DB, workorderID int, detailID []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 
-	GetOperationItemById(LineTypeStr string, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse)
-	HandleLineTypeResponse(lineTypeCode string, operationItemResponse interface{}) (string, string, *exceptions.BaseErrorResponse)
+	GetOperationItemById(LineTypeId int, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse)
+	HandleLineTypeResponse(LineTypeId int, operationItemResponse interface{}) (string, string, *exceptions.BaseErrorResponse)
 }
