@@ -1714,6 +1714,14 @@ func LicenseOwnerChangeRouter(
 	return router
 }
 
+func PrintGatePassRouter(
+	PrintGatePassController transactionworkshopcontroller.PrintGatePassController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	return router
+}
+
 func ClaimSupplierRouter(
 	ClaimSupplierController transactionsparepartcontroller.ClaimSupplierController,
 ) chi.Router {

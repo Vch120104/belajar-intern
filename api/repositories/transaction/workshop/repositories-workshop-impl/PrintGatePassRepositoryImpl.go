@@ -1,7 +1,6 @@
 package transactionworkshoprepositoryimpl
 
 import (
-	"after-sales/api/config"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
@@ -9,7 +8,7 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	"net/http"
-	"strconv"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -23,12 +22,28 @@ func OpenPrintGatePassRepositoryImpl() transactionworkshoprepository.PrintGatePa
 
 // GetAll implements transactionworkshoprepository.PrintGatePassRepository.
 func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var gatePasses []transactionworkshopentities.PrintGatePass
+	var entities transactionworkshopentities.PrintGatePass
+	var responses []transactionworkshoppayloads.PrintGatePassResponse
 
-	baseQuery := tx.Model(&transactionworkshopentities.PrintGatePass{})
-	whereQuery := utils.ApplyFilter(baseQuery, filterCondition)
+	baseModelQuery := tx.Model(&entities).
+		Select(
+			"trx_gate_pass.gate_pass_system_number",
+			"trx_gate_pass.gate_pass_document_number",
+			"trx_gate_pass.gate_pass_date",
+			"trx_gate_pass.delivery_name",
+			"trx_gate_pass.delivery_address",
+			"trx_gate_pass.customer_id",
+			"trx_gate_pass.vehicle_id",
+			"trx_gate_pass.vehicle_brand_id",
+			"trx_gate_pass.model_id",
+			"trx_gate_pass.company_id",
+			"trx_work_order.work_order_system_number",
+			"trx_work_order.work_order_document_number",
+			"trx_work_order.work_order_date",
+		).Joins("LEFT JOIN trx_work_order ON trx_gate_pass.company_id = trx_work_order.company_id")
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&gatePasses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -36,66 +51,47 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 		}
 	}
 
-	if len(gatePasses) == 0 {
+	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	var results []map[string]interface{}
-	for _, gatePass := range gatePasses {
-		workOrderResponse, errWorkOrder := p.getWorkOrderData(gatePass.CompanyId, gatePass.BpkSystemNumber)
-		if errWorkOrder != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: errWorkOrder.StatusCode,
-				Err:        errWorkOrder.Err,
-			}
+	var selectedWOs []transactionworkshoppayloads.PrintGatePassResponse
+	for _, response := range responses {
+		selectedWOs = append(selectedWOs, transactionworkshoppayloads.PrintGatePassResponse{
+			WorkOrderSystemNumber: response.WorkOrderSystemNumber,
+			WorkOrderDocumentNumber: response.WorkOrderDocumentNumber,
+			WorkOrderDate: response.WorkOrderDate,
+			CustomerId: response.CustomerId,
+			CustomerName: response.CustomerName,
+			VehicleId: response.VehicleId,
+			VehicleBrandId: response.VehicleBrandId,
+			ModelId: response.ModelId,
+			GatePassSystemNumber: response.GatePassSystemNumber,
+			GatePassDocumentNumber: response.GatePassDocumentNumber,
+			GatePassDate: response.GatePassDate,
+			DeliveryName: response.DeliveryName,
+			DeliveryAddress: response.DeliveryAddress,
+		})
+	}
+	
+	if len(selectedWOs) > 1 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Cannot print multiple WO. Please select only one WO",
 		}
-
-		if workOrderResponse == nil {
-			continue
-		}
-
-		result := map[string]interface{}{
-			"wo_sys_no":        gatePass.BpkSystemNumber,
-			"wo_doc_no":        workOrderResponse.WorkOrderDocumentNumber,
-			"wo_date":          workOrderResponse.WorkOrderDate,
-			"customer_name":    workOrderResponse.NameCust,
-			"vehicle_id":       gatePass.VehicleId,
-			"vehicle_brand_id": gatePass.VehicleBrandId,
-			"model_id":         gatePass.ModelId,
-			"gate_pass_sys_no": gatePass.GatePassSystemNumber,
-			"gate_pass_doc_no": gatePass.GatePassDocumentNumber,
-			"gate_pass_date":   gatePass.GatePassDate,
-			"delivery_name":    gatePass.DeliveryName,
-			"delivery_address": gatePass.DeliveryAddress,
-		}
-		results = append(results, result)
 	}
 
-	pages.Rows = results
+	gatePassDate := responses[0].GatePassDate
+	currentDate := time.Now().Format("2006-01-02")
+
+	if gatePassDate != currentDate {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Gate Pass form only can be printed sameday as gate pass date (" + gatePassDate + ")",
+		}
+	}
+	pages.Rows = responses
 
 	return pages, nil
-}
-
-func (p *PrintGatePassRepositoryImpl) getWorkOrderData(companyId int, workOrderSystemNumber int) (*transactionworkshoppayloads.WorkOrderResponse, *exceptions.BaseErrorResponse) {
-	workOrderURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(workOrderSystemNumber)
-	var workOrderResponse transactionworkshoppayloads.WorkOrderResponse
-
-	err := utils.Get(workOrderURL, &workOrderResponse, nil)
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order data from the external API",
-			Err:        err,
-		}
-	}
-
-	if workOrderResponse.WorkOrderDocumentNumber == "" {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Work Order document number not found",
-		}
-	}
-
-	return &workOrderResponse, nil
 }

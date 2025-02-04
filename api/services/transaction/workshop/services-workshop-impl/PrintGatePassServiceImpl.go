@@ -14,15 +14,15 @@ import (
 )
 
 type PrintGatePassServiceImpl struct {
-	DB                      *gorm.DB
 	PrintGatePassRepository transactionworkshoprepository.PrintGatePassRepository
+	DB                      *gorm.DB
 	RedisClient             *redis.Client
 }
 
 func OpenPrintGatePassServiceImpl(db *gorm.DB, repository transactionworkshoprepository.PrintGatePassRepository, redisClient *redis.Client) *PrintGatePassServiceImpl {
 	return &PrintGatePassServiceImpl{
-		DB:                      db,
 		PrintGatePassRepository: repository,
+		DB:                      db,
 		RedisClient:             redisClient,
 	}
 }
