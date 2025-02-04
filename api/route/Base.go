@@ -1801,6 +1801,7 @@ func TechnicianAttendanceRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
+	router.Get("/add-line", TechnicianAttendanceController.GetAddLineTechnician)
 	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
 	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
 
@@ -1943,32 +1944,6 @@ func SalesOrderRouter(
 	return router
 }
 
-func ItemWarehouseTransferRequestRouter(
-	itemWarehouseTransferRequestController transactionsparepartcontroller.ItemWarehouseTransferRequestController,
-) chi.Router {
-	router := chi.NewRouter()
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Post("/", itemWarehouseTransferRequestController.InsertWhTransferRequestHeader)
-	router.Post("/detail", itemWarehouseTransferRequestController.InsertWhTransferRequestDetail)
-	router.Put("/{id}", itemWarehouseTransferRequestController.UpdateWhTransferRequest)
-	router.Put("/detail/{id}", itemWarehouseTransferRequestController.UpdateWhTransferRequestDetail)
-	router.Put("/submit/{id}", itemWarehouseTransferRequestController.SubmitWhTransferRequest)
-	router.Delete("/{id}", itemWarehouseTransferRequestController.DeleteHeaderTransferRequest)
-	router.Delete("/detail/{id}", itemWarehouseTransferRequestController.DeleteDetail)
-	router.Get("/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequest)
-	router.Get("/", itemWarehouseTransferRequestController.GetAllWhTransferRequest)
-	router.Get("/detail/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequestDetail)
-	router.Get("/detail", itemWarehouseTransferRequestController.GetAllDetailTransferRequest)
-
-	router.Post("/upload", itemWarehouseTransferRequestController.Upload)
-	router.Post("/process", itemWarehouseTransferRequestController.ProcessUpload)
-	router.Get("/download", itemWarehouseTransferRequestController.DownloadTemplate)
-
-	return router
-}
-
 func LookupRouter(
 	LookupController mastercontroller.LookupController,
 ) chi.Router {
@@ -2012,6 +1987,9 @@ func LookupRouter(
 	router.Get("/item-loc-uom", LookupController.ItemLocUOM)
 	router.Get("/item-loc-uom/by-id/{company_id}/{item_id}", LookupController.ItemLocUOMById)
 	router.Get("/item-loc-uom/by-code/{company_id}", LookupController.ItemLocUOMByCode)
+	router.Get("/item-freeaccs", LookupController.ItemMasterForFreeAccs)
+	router.Get("/item-freeaccs/by-id/{company_id}/{item_id}", LookupController.ItemMasterForFreeAccsById)
+	router.Get("/item-freeaccs/by-code/{company_id}", LookupController.ItemMasterForFreeAccsByCode)
 
 	return router
 }
@@ -2084,6 +2062,36 @@ func AtpmClaimRegistrationRouter(
 	router.Get("/{claim_system_number}/detail/{claim_detail_system_number}", atpmClaimRegistrationController.GetDetailById)
 	router.Post("/{claim_system_number}/detail", atpmClaimRegistrationController.AddDetail)
 	router.Delete("/{claim_system_number}/detail/{claim_detail_system_number}", atpmClaimRegistrationController.DeleteDetail)
+
+	return router
+}
+
+func ItemWarehouseTransferRequestRouter(
+	itemWarehouseTransferRequestController transactionsparepartcontroller.ItemWarehouseTransferRequestController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Post("/", itemWarehouseTransferRequestController.InsertWhTransferRequestHeader)
+	router.Post("/detail", itemWarehouseTransferRequestController.InsertWhTransferRequestDetail)
+	router.Put("/{id}", itemWarehouseTransferRequestController.UpdateWhTransferRequest)
+	router.Put("/detail/{id}", itemWarehouseTransferRequestController.UpdateWhTransferRequestDetail)
+	router.Put("/submit/{id}", itemWarehouseTransferRequestController.SubmitWhTransferRequest)
+	router.Delete("/{id}", itemWarehouseTransferRequestController.DeleteHeaderTransferRequest)
+	router.Delete("/detail/{id}", itemWarehouseTransferRequestController.DeleteDetail)
+	router.Get("/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequest)
+	router.Get("/", itemWarehouseTransferRequestController.GetAllWhTransferRequest)
+	router.Get("/detail/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequestDetail)
+	router.Get("/detail", itemWarehouseTransferRequestController.GetAllDetailTransferRequest)
+
+	router.Put("/receipt/accept/{id}", itemWarehouseTransferRequestController.Accept)
+	router.Put("/receipt/reject/{id}", itemWarehouseTransferRequestController.Reject)
+
+	router.Post("/upload", itemWarehouseTransferRequestController.Upload)
+	router.Post("/process", itemWarehouseTransferRequestController.ProcessUpload)
+	router.Get("/download", itemWarehouseTransferRequestController.DownloadTemplate)
 
 	return router
 }

@@ -21,9 +21,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewWhTransferRequestImpl(transferRequestRepo transactionsparepartrepository.ItemWarehouseTransferRequestRepository, db *gorm.DB, redis *redis.Client, itemRepository masteritemrepository.ItemRepository, unitOfMeasurement masteritemrepository.UnitOfMeasurementRepository) transactionsparepartservice.ItemWarehouseTransferRequestService {
+func NewWhTransferRequestImpl(transferRequestRepo transactionsparepartrepository.ItemWarehouseTransferRequestRepository, db *gorm.DB, redis *redis.Client, itemRepository masteritemrepository.ItemRepository, unitOfMeasurement masteritemrepository.UnitOfMeasurementRepository, transferReceiptRepo transactionsparepartrepository.ItemWarehouseTransferReceiptRepository) transactionsparepartservice.ItemWarehouseTransferRequestService {
 	return &WhTransferRequestServiceImpl{
 		TransferRequestRepo: transferRequestRepo,
+		TransferReceiptRepo: transferReceiptRepo,
 		DB:                  db,
 		RedisClient:         redis,
 		ItemRepository:      itemRepository,
@@ -33,10 +34,75 @@ func NewWhTransferRequestImpl(transferRequestRepo transactionsparepartrepository
 
 type WhTransferRequestServiceImpl struct {
 	TransferRequestRepo transactionsparepartrepository.ItemWarehouseTransferRequestRepository
+	TransferReceiptRepo transactionsparepartrepository.ItemWarehouseTransferReceiptRepository
 	ItemRepository      masteritemrepository.ItemRepository
 	UnitOfMeasurement   masteritemrepository.UnitOfMeasurementRepository
 	DB                  *gorm.DB
 	RedisClient         *redis.Client
+}
+
+// AcceptTransferReceipt implements transactionsparepartservice.ItemWarehouseTransferRequestService.
+func (s *WhTransferRequestServiceImpl) AcceptTransferReceipt(number int, request transactionsparepartpayloads.AcceptWarehouseTransferRequestRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TransferReceiptRepo.Accept(tx, number, request)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// RejectTransferReceipt implements transactionsparepartservice.ItemWarehouseTransferRequestService.
+func (s *WhTransferRequestServiceImpl) RejectTransferReceipt(number int, request transactionsparepartpayloads.RejectWarehouseTransferRequestRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TransferReceiptRepo.Reject(tx, number, request)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
 // GenerateTemplateFile implements transactionsparepartservice.ItemWarehouseTransferRequestService.
@@ -135,34 +201,6 @@ func (s *WhTransferRequestServiceImpl) ProcessUploadData(request transactionspar
 
 	details := request.TransferRequestDetails
 
-	if request.TransferRequestSystemNumber == nil {
-		getRes, err := s.TransferRequestRepo.InsertWhTransferRequestHeader(tx, transactionsparepartpayloads.InsertItemWarehouseTransferRequest{
-			CompanyId:              request.CompanyId,
-			TransferRequestDate:    request.TransferRequestDate,
-			TransferRequestById:    request.TransferRequestById,
-			Purpose:                request.Purpose,
-			RequestFromWarehouseId: request.RequestFromWarehouseId,
-			RequestToWarehouseId:   request.RequestToWarehouseId,
-		})
-
-		if err != nil {
-			return []transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, err
-		}
-
-		request.TransferRequestSystemNumber = &getRes.TransferRequestSystemNumber
-	} else {
-		_, err := s.TransferRequestRepo.UpdateWhTransferRequest(tx, transactionsparepartpayloads.UpdateItemWarehouseTransferRequest{
-			TransferRequestById:    request.TransferRequestById,
-			RequestFromWarehouseId: &request.RequestFromWarehouseId,
-			RequestToWarehouseId:   &request.RequestToWarehouseId,
-			Purpose:                request.Purpose,
-		}, *request.TransferRequestSystemNumber)
-
-		if err != nil {
-			return []transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, err
-		}
-	}
-
 	var validation_text string
 
 	for _, detail := range details {
@@ -174,18 +212,19 @@ func (s *WhTransferRequestServiceImpl) ProcessUploadData(request transactionspar
 				return []transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, err
 			}
 		}
-
-		get, err := s.TransferRequestRepo.InsertWhTransferRequestDetail(tx, transactionsparepartpayloads.InsertItemWarehouseTransferDetailRequest{
-			TransferRequestSystemNumberId: *request.TransferRequestSystemNumber,
+		var get transactionsparepartentities.ItemWarehouseTransferRequestDetail
+		get, err = s.TransferRequestRepo.InsertWhTransferRequestDetail(tx, transactionsparepartpayloads.InsertItemWarehouseTransferDetailRequest{
+			TransferRequestSystemNumberId: request.TransferRequestSystemNumber,
+			ModifiedById:                  request.ModifiedById,
 			ItemId:                        &item.ItemId,
 			RequestQuantity:               detail.RequestQuantity,
 		})
 
-		if err != nil {
-			return []transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, err
-		}
-
 		results = append(results, get)
+	}
+
+	if err != nil {
+		return []transactionsparepartentities.ItemWarehouseTransferRequestDetail{}, err
 	}
 
 	return results, nil
@@ -335,9 +374,10 @@ func (s *WhTransferRequestServiceImpl) UpdateWhTransferRequestDetail(request tra
 }
 
 // DeleteDetail implements transactionsparepartservice.WhTransferRequestService.
-func (s *WhTransferRequestServiceImpl) DeleteDetail(number int) (bool, *exceptions.BaseErrorResponse) {
+func (s *WhTransferRequestServiceImpl) DeleteDetail(number []int, request transactionsparepartpayloads.DeleteDetailItemWarehouseTransferRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+	var result bool
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -359,10 +399,14 @@ func (s *WhTransferRequestServiceImpl) DeleteDetail(number int) (bool, *exceptio
 			}
 		}
 	}()
-	result, err := s.TransferRequestRepo.DeleteDetail(tx, number)
-	if err != nil {
-		return result, err
+
+	for _, num := range number {
+		result, err = s.TransferRequestRepo.DeleteDetail(tx, num, request)
+		if err != nil {
+			return result, err
+		}
 	}
+
 	return result, nil
 }
 
@@ -559,7 +603,7 @@ func (s *WhTransferRequestServiceImpl) InsertWhTransferRequestHeader(request tra
 }
 
 // SubmitWhTransferRequest implements transactionsparepartservice.WhTransferRequestService.
-func (s *WhTransferRequestServiceImpl) SubmitWhTransferRequest(number int) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
+func (s *WhTransferRequestServiceImpl) SubmitWhTransferRequest(number int, request transactionsparepartpayloads.SubmitItemWarehouseTransferRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -583,7 +627,7 @@ func (s *WhTransferRequestServiceImpl) SubmitWhTransferRequest(number int) (tran
 			}
 		}
 	}()
-	result, err := s.TransferRequestRepo.SubmitWhTransferRequest(tx, number)
+	result, err := s.TransferRequestRepo.SubmitWhTransferRequest(tx, number, request)
 	if err != nil {
 		return result, err
 	}

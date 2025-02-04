@@ -2,12 +2,12 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -148,35 +148,67 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 	for _, result := range results {
 
 		// Ambil data Item berdasarkan ItemId
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(result.ItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", result.ItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", result.ItemId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: itemErr.StatusCode,
-				Err:        itemErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 
-		warehouseResponse, warehouseErr := aftersalesserviceapiutils.GetWarehouseById(result.WarehouseId)
-		if warehouseErr != nil {
+		var warehouseResponse masterwarehouseentities.WarehouseMaster
+		if err := tx.Where("warehouse_id = ?", result.WarehouseId).First(&warehouseResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Warehouse not found",
+					Err:        fmt.Errorf("warehouse with ID %d not found", result.WarehouseId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: warehouseErr.StatusCode,
-				Err:        warehouseErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Warehouse",
+				Err:        err,
 			}
 		}
 
-		locationResponse, locationErr := aftersalesserviceapiutils.GetWarehouseLocationById(result.WarehouseLocationId)
-		if locationErr != nil {
+		var locationResponse masterwarehouseentities.WarehouseLocation
+		if err := tx.Where("warehouse_location_id = ?", result.WarehouseLocationId).First(&locationResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Warehouse not found",
+					Err:        fmt.Errorf("warehouse with ID %d not found", result.WarehouseLocationId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: locationErr.StatusCode,
-				Err:        locationErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Warehouse Location",
+				Err:        err,
 			}
 		}
 
-		warehouseGroupResponse, warehouseGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(result.WarehouseGroupId)
-		if warehouseGroupErr != nil {
+		var warehouseGroupResponse masterwarehouseentities.WarehouseGroup
+		if err := tx.Where("warehouse_group_id = ?", result.WarehouseGroupId).First(&warehouseGroupResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Warehouse group not found",
+					Err:        fmt.Errorf("warehouse group with ID %d not found", result.WarehouseGroupId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: warehouseGroupErr.StatusCode,
-				Err:        warehouseGroupErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Warehouse group",
+				Err:        err,
 			}
 		}
 
@@ -199,7 +231,6 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filterConditions
 		itemLocations = append(itemLocations, itemLocation)
 	}
 
-	// Store the results into the pagination struct
 	pages.Rows = itemLocations
 
 	return pages, nil
