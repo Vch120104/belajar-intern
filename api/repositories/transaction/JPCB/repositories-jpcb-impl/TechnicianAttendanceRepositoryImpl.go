@@ -38,6 +38,18 @@ func (t *TechnicianAttendanceImpl) GetAllTechnicianAttendance(tx *gorm.DB, filte
 		}
 	}
 
+	for i, data := range responses {
+		employeeResp, employeeErr := generalserviceapiutils.GetEmployeeMasterById(data.UserId)
+		if employeeErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching employee master data",
+				Err:        employeeErr,
+			}
+		}
+		responses[i].EmployeeName = employeeResp.EmployeeName
+	}
+
 	pages.Rows = responses
 
 	return pages, nil
