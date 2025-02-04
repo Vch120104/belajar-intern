@@ -2105,6 +2105,9 @@ func AtpmReimbursementRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", atpmReimbursementController.GetAll)
+	router.Post("/", atpmReimbursementController.New)
+	router.Put("/{claim_system_number}", atpmReimbursementController.Save)
+	router.Patch("/submit/{claim_system_number}", atpmReimbursementController.Submit)
 
 	return router
 }
