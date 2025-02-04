@@ -8,7 +8,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
@@ -158,10 +157,17 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		getItemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-		if itemGroupErr != nil || getItemGroupResponse.ItemGroupId == 0 {
-			getItemGroupResponse = aftersalesserviceapiutils.ItemGroupResponse{
-				ItemGroupCode: "",
+		var getItemGroupResponse masteritementities.ItemGroup
+		err := tx.Where("item_group_id = ?", response.ItemGroupId).First(&getItemGroupResponse).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				getItemGroupResponse.ItemGroupCode = ""
+			} else {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch Item group code",
+					Err:        err,
+				}
 			}
 		}
 

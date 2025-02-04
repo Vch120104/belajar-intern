@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
@@ -26,10 +25,14 @@ import (
 )
 
 type ServiceRequestRepositoryImpl struct {
+	workorderRepo transactionworkshoprepository.WorkOrderRepository
 }
 
 func OpenServiceRequestRepositoryImpl() transactionworkshoprepository.ServiceRequestRepository {
-	return &ServiceRequestRepositoryImpl{}
+	workorderRepo := OpenWorkOrderRepositoryImpl()
+	return &ServiceRequestRepositoryImpl{
+		workorderRepo: workorderRepo,
+	}
 }
 
 func (s *ServiceRequestRepositoryImpl) GenerateDocumentNumberServiceRequest(tx *gorm.DB, ServiceRequestId int) (string, *exceptions.BaseErrorResponse) {
@@ -386,12 +389,12 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 			}
 		}
 
-		operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, detail.OperationItemId)
+		operationItemResponse, operationItemErr := s.workorderRepo.GetOperationItemById(lineTypeResponse.LineTypeCode, detail.OperationItemId)
 		if operationItemErr != nil {
 			return transactionworkshoppayloads.ServiceRequestResponse{}, operationItemErr
 		}
 
-		OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		OperationItemCode, Description, errResp := s.workorderRepo.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
 		if errResp != nil {
 			return transactionworkshoppayloads.ServiceRequestResponse{}, errResp
 		}
