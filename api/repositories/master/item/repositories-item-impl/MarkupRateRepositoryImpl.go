@@ -1,14 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -48,23 +48,24 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 	// Handle order type filters
 	var orderTypeIds []int
 	if orderTypeName != "" {
-		orderTypeParams := aftersalesserviceapiutils.OrderTypeParams{
-			Page:          0,
-			Limit:         100,
-			OrderTypeName: orderTypeName,
-		}
-		orderTypes, err := aftersalesserviceapiutils.GetAllOrderType(orderTypeParams)
+		var orderTypes []masterentities.OrderType
+		err := tx.Select("order_type_id").
+			Where("order_type_name LIKE ?", "%"+orderTypeName+"%").
+			Find(&orderTypes).Error
+
 		if err != nil {
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: err.StatusCode,
+				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch order types",
-				Err:        err.Err,
+				Err:        err,
 			}
 		}
 
 		for _, orderType := range orderTypes {
 			orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 		}
+
+		// Jika tidak ada hasil, gunakan nilai default agar query tetap valid
 		if len(orderTypeIds) == 0 {
 			orderTypeIds = []int{-1}
 		}
@@ -103,16 +104,25 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 
 		// If order type exists, fetch the order type name
 		if entity.OrderTypeId != 0 {
-			orderType, err := aftersalesserviceapiutils.GetOrderTypeById(entity.OrderTypeId)
-			if err == nil {
-				response["order_type_name"] = orderType.OrderTypeName
+			var getOrderTypeResponse masterentities.OrderType
+			err := tx.Where("order_type_id = ?", entity.OrderTypeId).First(&getOrderTypeResponse).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					response["order_type_name"] = ""
+				} else {
+					return pages, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to fetch order type",
+						Err:        err,
+					}
+				}
 			} else {
-				response["order_type_name"] = ""
+				response["order_type_name"] = getOrderTypeResponse.OrderTypeName
 			}
 		}
 		responses = append(responses, response)
 	}
-	fmt.Println(entities)
+
 	pages.Rows = responses
 	return pages, nil
 }

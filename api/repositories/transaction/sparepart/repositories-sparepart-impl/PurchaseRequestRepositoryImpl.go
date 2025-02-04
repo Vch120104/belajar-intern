@@ -11,7 +11,6 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -153,9 +152,20 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	if CompanyReponseerr != nil {
 		return response, CompanyReponseerr
 	}
-	ItemGroup, ItemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-	if ItemGroupErr != nil {
-		return response, ItemGroupErr
+	var itemGroup masteritementities.ItemGroup
+	if err := db.Where("item_group_id = ?", response.ItemGroupId).First(&itemGroup).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item group not found",
+				Err:        fmt.Errorf("item group with id %d not found", response.ItemGroupId),
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item group code",
+			Err:        err,
+		}
 	}
 
 	OrderType := masterentities.OrderType{}
@@ -298,7 +308,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		PurchaseRequestDocumentNumber: response.PurchaseRequestDocumentNumber,
 		PurchaseRequestDocumentDate:   response.PurchaseRequestDocumentDate,
 		PurchaseRequestDocumentStatus: purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-		ItemGroup:                     ItemGroup.ItemGroupName,
+		ItemGroup:                     itemGroup.ItemGroupName,
 		Brand:                         GetBrandName.BrandName,
 		ReferenceType:                 PurchaseRequestReferenceType.ReferenceTypePurchaseRequestName,
 		//ReferenceDocumentNumber:       docNo,
