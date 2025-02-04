@@ -724,14 +724,26 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 			Message:    "Item has technical defect",
 		}
 	}
-	ItemTypeGoods, ItemTypeGoodsErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if ItemTypeGoodsErr != nil {
-		return entities, ItemTypeGoodsErr
+	var itemTypeResponse masteritementities.ItemType
+	if err := db.Where("item_type_code = ?", "G").First(&itemTypeResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return entities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
+
 	//check if exist with item goods
 	isItemExist = false
 	err = db.Model(&masteritementities.Item{}).
-		Where(masteritementities.Item{ItemId: payload.ItemId, ItemTypeId: ItemTypeGoods.ItemTypeId}).
+		Where(masteritementities.Item{ItemId: payload.ItemId, ItemTypeId: itemTypeResponse.ItemTypeId}).
 		Select("1").
 		Scan(&isItemExist).Error
 	if err != nil {

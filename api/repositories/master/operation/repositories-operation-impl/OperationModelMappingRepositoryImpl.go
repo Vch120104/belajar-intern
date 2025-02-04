@@ -2,8 +2,8 @@ package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
+	"math"
 
 	exceptions "after-sales/api/exceptions"
 	"errors"
@@ -100,36 +100,40 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandMod
 func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var entities []masteroperationentities.OperationModelMapping
-	tx = tx.
+	var operationCodes []masteroperationentities.OperationCode
+
+	txQuery := tx.
 		Select("mtr_operation_model_mapping.operation_model_mapping_id, " +
 			"mtr_operation_model_mapping.brand_id, mtr_operation_model_mapping.model_id, " +
 			"mtr_operation_model_mapping.operation_id, mtr_operation_model_mapping.is_active, " +
 			"mtr_operation_code.operation_code, mtr_operation_code.operation_name").
-		Joins("JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id")
-	tx = utils.ApplyFilter(tx.Model(&masteroperationentities.OperationModelMapping{}), filterCondition)
-	tx.Scopes(pagination.Paginate(&pages, tx)).Find(&entities)
+		Joins("JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id").
+		Order("mtr_operation_model_mapping.operation_model_mapping_id")
 
-	if tx.Error != nil {
-		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "Data not found",
-				Err:        tx.Error,
-			}
-		}
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to get data",
-			Err:        tx.Error,
-		}
-	}
+	txQuery = utils.ApplyFilter(txQuery, filterCondition)
+
+	var totalRows int64
+	txQuery.Model(&masteroperationentities.OperationModelMapping{}).Count(&totalRows)
+	txQuery = pagination.Paginate(&pages, txQuery)(tx)
+	txQuery.Find(&entities)
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
 
 	if len(entities) == 0 {
 		pages.Rows = []map[string]interface{}{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
 		return pages, nil
 	}
 
-	var results []map[string]interface{}
+	tx.Model(&masteroperationentities.OperationCode{}).Find(&operationCodes)
+
+	operationCodeMap := make(map[int]masteroperationentities.OperationCode)
+	for _, operationCode := range operationCodes {
+		operationCodeMap[operationCode.OperationId] = operationCode
+	}
+
+	var results []masteroperationpayloads.OperationModelMappingLookupView
 	for _, entity := range entities {
 		brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
 		if brandErr != nil {
@@ -149,25 +153,21 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 			}
 		}
 
-		operationResponse, operationErr := aftersalesserviceapiutils.GetOperationById(entity.OperationId)
-		if operationErr != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: operationErr.StatusCode,
-				Message:    "Failed to fetch operation data from external service",
-				Err:        operationErr.Err,
-			}
+		operationCode, operationCodeFound := operationCodeMap[entity.OperationId]
+		if !operationCodeFound {
+			operationCode = masteroperationentities.OperationCode{}
 		}
 
-		result := map[string]interface{}{
-			"operation_model_mapping_id": entity.OperationModelMappingId,
-			"brand_id":                   entity.BrandId,
-			"brand_name":                 brandResponse.BrandName,
-			"model_id":                   entity.ModelId,
-			"model_code":                 modelResponse.ModelCode,
-			"operation_id":               entity.OperationId,
-			"operation_code":             operationResponse.OperationCode,
-			"operation_name":             operationResponse.OperationName,
-			"is_active":                  entity.IsActive,
+		result := masteroperationpayloads.OperationModelMappingLookupView{
+			IsActive:                entity.IsActive,
+			OperationModelMappingId: entity.OperationModelMappingId,
+			OperationId:             entity.OperationId,
+			OperationCode:           operationCode.OperationCode,
+			OperationName:           operationCode.OperationName,
+			BrandId:                 entity.BrandId,
+			BrandName:               brandResponse.BrandName,
+			ModelId:                 entity.ModelId,
+			ModelCode:               modelResponse.ModelCode,
 		}
 
 		results = append(results, result)

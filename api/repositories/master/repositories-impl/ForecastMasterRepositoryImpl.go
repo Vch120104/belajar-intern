@@ -7,8 +7,9 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -130,15 +131,37 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		}
 
 		// Fetch order type
-		getOrderTypeResponse, orderTypeErr := aftersalesserviceapiutils.GetOrderTypeById(entity.OrderTypeId)
-		if orderTypeErr != nil {
-			return pages, orderTypeErr
+		var getOrderTypeResponse masterentities.OrderType
+		if err := tx.Where("order_type_id = ?", entity.OrderTypeId).First(&getOrderTypeResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "order type not found",
+					Err:        fmt.Errorf("order type with id %d not found", entity.OrderTypeId),
+				}
+			}
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch order type",
+				Err:        err,
+			}
 		}
 
 		// Fetch moving code
-		getMovingCodeResponse, movingCodeErr := aftersalesserviceapiutils.GetMovingCodeById(entity.MovingCodeId)
-		if movingCodeErr != nil {
-			return pages, movingCodeErr
+		var getMovingCodeResponse masterentities.MovingCode
+		if err := tx.Where("moving_code_id = ?", entity.MovingCodeId).First(&getMovingCodeResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Moving code not found",
+					Err:        err,
+				}
+			}
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve moving code",
+				Err:        err,
+			}
 		}
 
 		result := map[string]interface{}{
@@ -148,7 +171,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 			"supplier_id":                   entity.SupplierId,
 			"supplier_name":                 getSupplierResponse.SupplierName,
 			"moving_code_id":                entity.MovingCodeId,
-			"moving_code_description":       getMovingCodeResponse.MovingCodeName,
+			"moving_code_description":       getMovingCodeResponse.MovingCodeDescription,
 			"order_type_id":                 entity.OrderTypeId,
 			"order_type_name":               getOrderTypeResponse.OrderTypeName,
 			"forecast_master_lead_time":     entity.ForecastMasterLeadTime,

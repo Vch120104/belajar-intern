@@ -1290,3 +1290,48 @@ type GetClaimResponsePayload struct {
 	PurchaseOrderDetailSystemNumber       string  `json:"purchase_order_detail_system_number,omitempty"`
 	Description                           string  `json:"description,omitempty"`
 }
+
+type LineType0Response struct {
+	Description      string  `json:"description"`
+	FRT              float64 `json:"frt"`
+	ModelCode        string  `json:"model_code"`
+	PackageCode      string  `json:"package_code"`
+	PackageID        int     `json:"package_id"`
+	PackageName      string  `json:"package_name"`
+	Price            int     `json:"price"`
+	ProfitCenter     int     `json:"profit_center"`
+	ProfitCenterName string  `json:"profit_center_name"`
+}
+
+type LineType1Response struct {
+	FrtHour                     int     `json:"frt_hour"`
+	OperationCode               string  `json:"operation_code"`
+	OperationEntriesCode        *string `json:"operation_entries_code"`
+	OperationEntriesDescription *string `json:"operation_entries_description"`
+	OperationID                 int     `json:"operation_id"`
+	OperationKeyCode            *string `json:"operation_key_code"`
+	OperationKeyDescription     *string `json:"operation_key_description"`
+	OperationName               string  `json:"operation_name"`
+}
+
+type LineType2To9Response struct {
+	AvailableQty   int    `json:"available_qty"`
+	ItemCode       string `json:"item_code"`
+	ItemID         int    `json:"item_id"`
+	ItemLevel1     int    `json:"item_level_1"`
+	ItemLevel1Code string `json:"item_level_1_code"`
+	ItemLevel2     int    `json:"item_level_2"`
+	ItemLevel2Code string `json:"item_level_2_code"`
+	ItemLevel3     int    `json:"item_level_3"`
+	ItemLevel3Code string `json:"item_level_3_code"`
+	ItemLevel4     int    `json:"item_level_4"`
+	ItemLevel4Code string `json:"item_level_4_code"`
+	ItemName       string `json:"item_name"`
+}
+
+// General structure for API responses.
+type ApiResponse struct {
+	StatusCode int                    `json:"status_code"`
+	Message    string                 `json:"message"`
+	Data       map[string]interface{} `json:"data"`
+}

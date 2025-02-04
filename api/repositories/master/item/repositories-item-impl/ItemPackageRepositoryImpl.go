@@ -7,7 +7,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -38,11 +39,19 @@ func (r *ItemPackageRepositoryImpl) GetItemPackageByCode(tx *gorm.DB, itemPackag
 		}
 	}
 
-	itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-	if itemGroupErr != nil {
+	var itemGroupResponse masteritementities.ItemGroup
+	if err := tx.Where("item_group_id = ?", response.ItemGroupId).First(&itemGroupResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item group not found",
+				Err:        fmt.Errorf("item group with id %d not found", response.ItemGroupId),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: itemGroupErr.StatusCode,
-			Err:        itemGroupErr.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item group code",
+			Err:        err,
 		}
 	}
 
@@ -114,11 +123,19 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 		}
 	}
 
-	itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-	if itemGroupErr != nil {
+	var itemGroupResponse masteritementities.ItemGroup
+	if err := tx.Where("item_group_id = ?", response.ItemGroupId).First(&itemGroupResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item group not found",
+				Err:        fmt.Errorf("item group with id %d not found", response.ItemGroupId),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: itemGroupErr.StatusCode,
-			Err:        itemGroupErr.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item group code",
+			Err:        err,
 		}
 	}
 
