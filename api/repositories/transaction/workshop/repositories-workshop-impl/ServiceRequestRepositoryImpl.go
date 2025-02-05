@@ -389,12 +389,12 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 			}
 		}
 
-		operationItemResponse, operationItemErr := s.workorderRepo.GetOperationItemById(lineTypeResponse.LineTypeCode, detail.OperationItemId)
+		operationItemResponse, operationItemErr := s.workorderRepo.GetOperationItemById(detail.LineTypeId, detail.OperationItemId)
 		if operationItemErr != nil {
 			return transactionworkshoppayloads.ServiceRequestResponse{}, operationItemErr
 		}
 
-		OperationItemCode, Description, errResp := s.workorderRepo.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		OperationItemCode, Description, errResp := s.workorderRepo.HandleLineTypeResponse(detail.LineTypeId, operationItemResponse)
 		if errResp != nil {
 			return transactionworkshoppayloads.ServiceRequestResponse{}, errResp
 		}
