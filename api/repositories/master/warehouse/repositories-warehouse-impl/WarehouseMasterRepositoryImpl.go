@@ -9,7 +9,6 @@ import (
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
-	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -237,13 +236,16 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 		}
 	}
 
-	// Address
-	log.Println("Fetching address details for AddressId:", entities.AddressId)
 	getAddressResponse, addrErr := generalserviceapiutils.GetAddressById(entities.AddressId)
 	var addressDetails masterwarehousepayloads.AddressResponse
 	if addrErr != nil {
-		log.Println("Error fetching address details:", addrErr)
-		addressDetails = masterwarehousepayloads.AddressResponse{}
+		addressDetails = masterwarehousepayloads.AddressResponse{
+			AddressId:      0,
+			AddressStreet1: "",
+			AddressStreet2: "",
+			AddressStreet3: "",
+			VillageId:      0,
+		}
 	} else {
 		addressDetails = masterwarehousepayloads.AddressResponse{
 			AddressId:      getAddressResponse.AddressId,
@@ -255,12 +257,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// Brand
-	log.Println("Fetching brand details for BrandId:", entities.BrandId)
 	getBrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entities.BrandId)
 	var brandDetails masterwarehousepayloads.BrandResponse
 	if brandErr != nil {
-		log.Println("Error fetching brand details:", brandErr)
-		brandDetails = masterwarehousepayloads.BrandResponse{}
+		brandDetails = masterwarehousepayloads.BrandResponse{
+			BrandId:   0,
+			BrandCode: "",
+			BrandName: "",
+		}
 	} else {
 		brandDetails = masterwarehousepayloads.BrandResponse{
 			BrandId:   getBrandResponse.BrandId,
@@ -270,12 +274,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// Supplier
-	log.Println("Fetching supplier details for SupplierId:", entities.SupplierId)
 	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
 	var supplierDetails masterwarehousepayloads.SupplierResponse
 	if supplierErr != nil {
-		log.Println("Error fetching supplier details:", supplierErr)
-		supplierDetails = masterwarehousepayloads.SupplierResponse{}
+		supplierDetails = masterwarehousepayloads.SupplierResponse{
+			SupplierId:   0,
+			SupplierName: "",
+			SupplierCode: "",
+		}
 	} else {
 		supplierDetails = masterwarehousepayloads.SupplierResponse{
 			SupplierId:   getSupplierResponse.SupplierId,
@@ -285,12 +291,19 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// Village
-	log.Println("Fetching village details for VillageId:", addressDetails.VillageId)
 	getVillageResponse, villageErr := generalserviceapiutils.GetVillageById(addressDetails.VillageId)
 	var villageDetails masterwarehousepayloads.VillageResponse
 	if villageErr != nil {
-		log.Println("Error fetching village details:", villageErr)
-		villageDetails = masterwarehousepayloads.VillageResponse{}
+		villageDetails = masterwarehousepayloads.VillageResponse{
+			VillageId:      0,
+			VillageName:    "",
+			DistrictCode:   "",
+			DistrictName:   "",
+			CityName:       "",
+			ProvinceName:   "",
+			CountryName:    "",
+			VillageZipCode: "",
+		}
 	} else {
 		villageDetails = masterwarehousepayloads.VillageResponse{
 			VillageId:      getVillageResponse.VillageId,
@@ -305,12 +318,13 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// User
-	log.Println("Fetching user details for UserId:", entities.UserId)
 	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserDetailsByID(entities.UserId)
 	var userDetails masterwarehousepayloads.UserResponse
 	if userErr != nil {
-		log.Println("Error fetching user details:", userErr)
-		userDetails = masterwarehousepayloads.UserResponse{}
+		userDetails = masterwarehousepayloads.UserResponse{
+			UserId:        0,
+			JobPositionId: 0,
+		}
 	} else {
 		userDetails = masterwarehousepayloads.UserResponse{
 			UserId:        getUserCompanyResponse.UserId,
@@ -319,12 +333,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 	}
 
 	// Job Position
-	log.Println("Fetching job position details for JobPositionId:", userDetails.JobPositionId)
 	getJobPositionResponse, jobPositionErr := generalserviceapiutils.GetRoleById(userDetails.JobPositionId)
 	var jobPositionDetails masterwarehousepayloads.JobPositionResponse
 	if jobPositionErr != nil {
-		log.Println("Error fetching job position details:", jobPositionErr)
-		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{}
+		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
+			RolePositionId:   0,
+			RolePositionCode: "",
+			RolePositionName: "",
+		}
 	} else {
 		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
 			RolePositionId:   getJobPositionResponse.RoleId,
