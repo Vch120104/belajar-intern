@@ -60,6 +60,7 @@ func (r *TechnicianAttendanceControllerImpl) GetAddLineTechnician(writer http.Re
 
 	queryParams := map[string]string{
 		"service_date": queryValues.Get("service_date"),
+		"company_id":   queryValues.Get("company_id"),
 	}
 
 	if queryParams["service_date"] == "" {
