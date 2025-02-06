@@ -570,7 +570,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -613,8 +613,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -628,7 +628,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -645,7 +645,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -711,7 +711,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
-	case "3":
+	case 4:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -772,7 +772,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -849,7 +849,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -927,7 +927,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -988,7 +988,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1049,7 +1049,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1120,7 +1120,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 
 	// Apply manual filters based on linetype
 	for _, filter := range filters {
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -1143,7 +1143,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "variant_id":
 				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -1169,7 +1169,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
 			}
 
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -1234,7 +1234,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -1277,8 +1277,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -1293,7 +1293,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -1311,7 +1311,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1377,7 +1377,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1439,7 +1439,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1517,7 +1517,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1596,7 +1596,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1658,7 +1658,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1720,7 +1720,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -1793,7 +1793,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 	// apply filter manual baseon linetype
 	for _, filter := range filters {
 
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -1810,7 +1810,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -1829,7 +1829,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -1888,7 +1888,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		year        string
@@ -1951,8 +1951,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -1967,7 +1967,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -1985,7 +1985,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2051,7 +2051,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2113,7 +2113,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2191,7 +2191,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2270,7 +2270,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2332,7 +2332,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2394,7 +2394,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -2467,7 +2467,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 	// apply filter manual baseon linetype
 	for _, filter := range filters {
 
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -2484,7 +2484,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -2503,7 +2503,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -2562,7 +2562,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
-func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, trxTypeId int, jobTypeId int, variantId int, currencyId int, whsGroup string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var (
 		currentTime = time.Now()
@@ -3304,11 +3304,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
-func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr string, companyId int, OprItemCode int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeId int, OprItemCode int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var (
-		currentTime = time.Now()
-		year, month = currentTime.Year(), int(currentTime.Month() - 1)
+		companyId = 426
 	)
 
 	// Fetch item type from external service
@@ -3346,8 +3345,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -3359,10 +3358,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Where("A.is_active = ?", 1).
 			Where("A.package_id = ?", OprItemCode).
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
-				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
-			Order("A.package_id")
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -3377,10 +3375,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Where("omm.operation_id = ?", OprItemCode).
 			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
 				"oe.operation_entries_code, oe.operation_entries_description, " +
-				"ok.operation_key_code, ok.operation_key_description").
-			Order("omm.operation_id")
+				"ok.operation_key_code, ok.operation_key_description")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3421,7 +3418,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 					B.brand_id AS brand_id,
 					B.model_id AS model_id,
 					B.variant_id AS variant_id,
-					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 					A.item_level_1_id AS item_level_1,
 					mil1.item_level_1_code AS item_level_1_code, 
 					A.item_level_2_id AS item_level_2,
@@ -3436,17 +3432,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?",
 				itemGrpFetch.ItemGroupId,
 				itemTypeFetchGoods.ItemTypeId,
 				itemClassResp.ItemClassId,
 				true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3487,7 +3481,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			B.brand_id AS brand_id,
 			B.model_id AS model_id,
 			B.variant_id AS variant_id,
-			COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 			A.item_level_1_id AS item_level_1,
 			mil1.item_level_1_code AS item_level_1_code, 
 			A.item_level_2_id AS item_level_2,
@@ -3502,13 +3495,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3565,7 +3556,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 					B.brand_id AS brand_id,
 					B.model_id AS model_id,
 					B.variant_id AS variant_id,
-					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 					A.item_level_1_id AS item_level_1,
 					mil1.item_level_1_code AS item_level_1_code, 
 					A.item_level_2_id AS item_level_2,
@@ -3580,13 +3570,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3644,7 +3632,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 						B.brand_id AS brand_id,
 						B.model_id AS model_id,
 						B.variant_id AS variant_id,
-						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 						A.item_level_1_id AS item_level_1,
 						mil1.item_level_1_code AS item_level_1_code, 
 						A.item_level_2_id AS item_level_2,
@@ -3659,13 +3646,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3706,7 +3691,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 							B.brand_id AS brand_id,
 							B.model_id AS model_id,
 							B.variant_id AS variant_id,
-							COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 							A.item_level_1_id AS item_level_1,
 							mil1.item_level_1_code AS item_level_1_code, 
 							A.item_level_2_id AS item_level_2,
@@ -3721,12 +3705,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3767,7 +3749,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 						B.brand_id AS brand_id,
 						B.model_id AS model_id,
 						B.variant_id AS variant_id,
-						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 						A.item_level_1_id AS item_level_1,
 						mil1.item_level_1_code AS item_level_1_code, 
 						A.item_level_2_id AS item_level_2,
@@ -3782,13 +3763,11 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
 		var itemGrpFetch masteritementities.ItemGroup
 		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
@@ -3829,7 +3808,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 					B.brand_id AS brand_id,
 					B.model_id AS model_id,
 					B.variant_id AS variant_id,
-					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 					A.item_level_1_id AS item_level_1,
 					mil1.item_level_1_code AS item_level_1_code, 
 					A.item_level_2_id AS item_level_2,
@@ -3844,11 +3822,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 	default:
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -3858,7 +3834,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 	}
 
 	for _, filter := range filters {
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -3881,7 +3857,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			case "variant_id":
 				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -3907,7 +3883,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
 			}
 
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -3950,17 +3926,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 	baseQuery = baseQuery.Scopes(paginateFunc)
 
 	type LineType0Response struct {
-		Description      string  `json:"description"`
-		FRT              float64 `json:"frt"`
-		ModelCode        string  `json:"model_code"`
-		PackageCode      string  `json:"package_code"`
 		PackageID        int     `json:"package_id"`
 		PackageName      string  `json:"package_name"`
+		PackageCode      string  `json:"package_code"`
+		Description      string  `json:"description"`
+		FRT              float64 `json:"frt"`
+		ModelId          int     `json:"model_id"`
+		ModelCode        string  `json:"model_code"`
 		Price            int     `json:"price"`
 		ProfitCenter     int     `json:"profit_center"`
 		ProfitCenterName string  `json:"profit_center_name"`
 		BrandId          int     `json:"brand_id"`
-		ModelId          int     `json:"model_id"`
 	}
 
 	type LineType1Response struct {
@@ -3978,7 +3954,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 	}
 
 	type LineType2To9Response struct {
-		AvailableQty   int     `json:"available_qty"`
 		ItemCode       string  `json:"item_code"`
 		ItemID         int     `json:"item_id"`
 		ItemLevel1     int     `json:"item_level_1"`
@@ -3995,21 +3970,25 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		ModelId        int     `json:"model_id"`
 	}
 
-	switch linetypeStr {
-	case "0":
-		var results []LineType0Response
-		if err := baseQuery.Find(&results).Error; err != nil {
+	var results interface{}
+	switch linetypeId {
+	case 1:
+
+		var result LineType0Response
+		if err := baseQuery.First(&result).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch data",
 				Err:        err,
 			}
 		}
+		results = result
 		paginate.Rows = results
 
-	case "1":
-		var results []LineType1Response
-		if err := baseQuery.Find(&results).Error; err != nil {
+	case 2:
+
+		var result LineType1Response
+		if err := baseQuery.First(&result).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch data",
@@ -4017,27 +3996,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			}
 		}
 
-		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
-		if linetypeErr != nil {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error fetching line type code",
-				Err:        linetypeErr.Err,
-			}
+		price, err := r.GetOprItemPrice(tx, linetypeId, companyId, result.OperationID, result.BrandId, result.ModelId, 2, 1, 11, 6, "")
+		if err != nil {
+			return pagination.Pagination{}, err
 		}
-
-		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, results[i].BrandId, results[i].ModelId, 2, 1, 11, 6, "")
-			if err != nil {
-				return pagination.Pagination{}, err
-			}
-			results[i].Price = price
-		}
+		result.Price = price
+		results = result
 		paginate.Rows = results
 
-	case "2", "3", "4", "5", "6", "7", "9":
-		var results []LineType2To9Response
-		if err := baseQuery.Find(&results).Error; err != nil {
+	case 3, 4, 5, 6, 7, 8, 9:
+		var result LineType2To9Response
+		if err := baseQuery.First(&result).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch data",
@@ -4045,22 +4014,13 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			}
 		}
 
-		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
-		if linetypeErr != nil {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error fetching line type code",
-				Err:        linetypeErr.Err,
-			}
+		price, err := r.GetOprItemPrice(tx, linetypeId, companyId, result.ItemID, result.BrandId, result.ModelId, 2, 1, 11, 6, "")
+		if err != nil {
+			return pagination.Pagination{}, err
 		}
 
-		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, results[i].BrandId, results[i].ModelId, 2, 1, 11, 6, "")
-			if err != nil {
-				return pagination.Pagination{}, err
-			}
-			results[i].Price = price
-		}
+		result.Price = price
+		results = result
 		paginate.Rows = results
 	}
 

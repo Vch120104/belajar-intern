@@ -212,145 +212,109 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 		}
 	}
 
-	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
-	err = tx.Model(&CostingTypeEntities).
-		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
-		First(&CostingTypeEntities).Error
-
+	// Fetch Costing Type
 	var costingTypeCode string
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			costingTypeCode = ""
-		} else {
-			return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Error fetching warehouse costing type",
-				Err:        err,
-			}
-		}
-	} else {
-		if CostingTypeEntities.WarehouseCostingTypeCode == "" {
-			costingTypeCode = ""
-		} else {
+	if entities.WarehouseCostingTypeId > 0 {
+		var CostingTypeEntities masterwarehouseentities.WarehouseCostingType
+		if err := tx.Model(&CostingTypeEntities).
+			Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
+			First(&CostingTypeEntities).Error; err == nil {
 			costingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
 		}
 	}
 
-	getAddressResponse, addrErr := generalserviceapiutils.GetAddressById(entities.AddressId)
-	var addressDetails masterwarehousepayloads.AddressResponse
-	if addrErr != nil {
-		addressDetails = masterwarehousepayloads.AddressResponse{
-			AddressId:      0,
-			AddressStreet1: "",
-			AddressStreet2: "",
-			AddressStreet3: "",
-			VillageId:      0,
-		}
-	} else {
-		addressDetails = masterwarehousepayloads.AddressResponse{
-			AddressId:      getAddressResponse.AddressId,
-			AddressStreet1: getAddressResponse.AddressStreet1,
-			AddressStreet2: getAddressResponse.AddressStreet2,
-			AddressStreet3: getAddressResponse.AddressStreet3,
-			VillageId:      getAddressResponse.VillageId,
+	// Fetch Address
+	addressDetails := masterwarehousepayloads.AddressResponse{}
+	if entities.AddressId > 0 {
+		getAddressResponse, addrErr := generalserviceapiutils.GetAddressById(entities.AddressId)
+		if addrErr == nil {
+			addressDetails = masterwarehousepayloads.AddressResponse{
+				AddressId:      getAddressResponse.AddressId,
+				AddressStreet1: getAddressResponse.AddressStreet1,
+				AddressStreet2: getAddressResponse.AddressStreet2,
+				AddressStreet3: getAddressResponse.AddressStreet3,
+				VillageId:      getAddressResponse.VillageId,
+			}
 		}
 	}
 
-	// Brand
-	getBrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entities.BrandId)
-	var brandDetails masterwarehousepayloads.BrandResponse
-	if brandErr != nil {
-		brandDetails = masterwarehousepayloads.BrandResponse{
-			BrandId:   0,
-			BrandCode: "",
-			BrandName: "",
-		}
-	} else {
-		brandDetails = masterwarehousepayloads.BrandResponse{
-			BrandId:   getBrandResponse.BrandId,
-			BrandCode: getBrandResponse.BrandCode,
-			BrandName: getBrandResponse.BrandName,
+	// Fetch Brand
+	brandDetails := masterwarehousepayloads.BrandResponse{}
+	if entities.BrandId > 0 {
+		getBrandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entities.BrandId)
+		if brandErr == nil {
+			brandDetails = masterwarehousepayloads.BrandResponse{
+				BrandId:   getBrandResponse.BrandId,
+				BrandCode: getBrandResponse.BrandCode,
+				BrandName: getBrandResponse.BrandName,
+			}
 		}
 	}
 
-	// Supplier
-	getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
-	var supplierDetails masterwarehousepayloads.SupplierResponse
-	if supplierErr != nil {
-		supplierDetails = masterwarehousepayloads.SupplierResponse{
-			SupplierId:   0,
-			SupplierName: "",
-			SupplierCode: "",
-		}
-	} else {
-		supplierDetails = masterwarehousepayloads.SupplierResponse{
-			SupplierId:   getSupplierResponse.SupplierId,
-			SupplierName: getSupplierResponse.SupplierName,
-			SupplierCode: getSupplierResponse.SupplierCode,
+	// Fetch Supplier
+	supplierDetails := masterwarehousepayloads.SupplierResponse{}
+	if entities.SupplierId > 0 {
+		getSupplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterById(entities.SupplierId)
+		if supplierErr == nil {
+			supplierDetails = masterwarehousepayloads.SupplierResponse{
+				SupplierId:   getSupplierResponse.SupplierId,
+				SupplierName: getSupplierResponse.SupplierName,
+				SupplierCode: getSupplierResponse.SupplierCode,
+			}
 		}
 	}
 
-	// Village
-	getVillageResponse, villageErr := generalserviceapiutils.GetVillageById(addressDetails.VillageId)
-	var villageDetails masterwarehousepayloads.VillageResponse
-	if villageErr != nil {
-		villageDetails = masterwarehousepayloads.VillageResponse{
-			VillageId:      0,
-			VillageName:    "",
-			DistrictCode:   "",
-			DistrictName:   "",
-			CityName:       "",
-			ProvinceName:   "",
-			CountryName:    "",
-			VillageZipCode: "",
-		}
-	} else {
-		villageDetails = masterwarehousepayloads.VillageResponse{
-			VillageId:      getVillageResponse.VillageId,
-			VillageName:    getVillageResponse.VillageName,
-			DistrictCode:   getVillageResponse.DistrictCode,
-			DistrictName:   getVillageResponse.DistrictName,
-			CityName:       getVillageResponse.CityName,
-			ProvinceName:   getVillageResponse.ProvinceName,
-			CountryName:    getVillageResponse.CountryName,
-			VillageZipCode: getVillageResponse.VillageZipCode,
+	// Fetch Village
+	villageDetails := masterwarehousepayloads.VillageResponse{}
+	if addressDetails.VillageId > 0 {
+		getVillageResponse, villageErr := generalserviceapiutils.GetVillageById(addressDetails.VillageId)
+		if villageErr == nil {
+			villageDetails = masterwarehousepayloads.VillageResponse{
+				VillageId:      getVillageResponse.VillageId,
+				VillageName:    getVillageResponse.VillageName,
+				DistrictCode:   getVillageResponse.DistrictCode,
+				DistrictName:   getVillageResponse.DistrictName,
+				CityName:       getVillageResponse.CityName,
+				ProvinceName:   getVillageResponse.ProvinceName,
+				CountryName:    getVillageResponse.CountryName,
+				VillageZipCode: getVillageResponse.VillageZipCode,
+			}
 		}
 	}
 
-	// User
-	getUserCompanyResponse, userErr := generalserviceapiutils.GetUserDetailsByID(entities.UserId)
-	var userDetails masterwarehousepayloads.UserResponse
-	if userErr != nil {
-		userDetails = masterwarehousepayloads.UserResponse{
-			UserId:        0,
-			JobPositionId: 0,
-		}
-	} else {
-		userDetails = masterwarehousepayloads.UserResponse{
-			UserId:        getUserCompanyResponse.UserId,
-			JobPositionId: getUserCompanyResponse.RoleId,
+	// Fetch User
+	userDetails := masterwarehousepayloads.UserResponse{}
+	if entities.UserId > 0 {
+		getUserCompanyResponse, userErr := generalserviceapiutils.GetUserDetailsByID(entities.UserId)
+		if userErr == nil {
+			userDetails = masterwarehousepayloads.UserResponse{
+				UserId:        getUserCompanyResponse.UserId,
+				EmployeeName:  getUserCompanyResponse.EmployeeName,
+				JobPositionId: getUserCompanyResponse.RoleId,
+			}
 		}
 	}
 
-	// Job Position
-	getJobPositionResponse, jobPositionErr := generalserviceapiutils.GetRoleById(userDetails.JobPositionId)
-	var jobPositionDetails masterwarehousepayloads.JobPositionResponse
-	if jobPositionErr != nil {
-		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
-			RolePositionId:   0,
-			RolePositionCode: "",
-			RolePositionName: "",
+	// Fetch Job Position
+	jobPositionDetails := masterwarehousepayloads.JobPositionResponse{}
+	if userDetails.JobPositionId > 0 {
+		getJobPositionResponse, jobPositionErr := generalserviceapiutils.GetRoleById(userDetails.JobPositionId)
+		if jobPositionErr == nil {
+			jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
+				RolePositionId:   getJobPositionResponse.RoleId,
+				RolePositionCode: getJobPositionResponse.RoleCode,
+				RolePositionName: getJobPositionResponse.RoleName,
+			}
 		}
-	} else {
-		jobPositionDetails = masterwarehousepayloads.JobPositionResponse{
-			RolePositionId:   getJobPositionResponse.RoleId,
-			RolePositionCode: getJobPositionResponse.RoleCode,
-			RolePositionName: getJobPositionResponse.RoleName,
-		}
+	}
+
+	isActive := false
+	if entities.IsActive != nil {
+		isActive = *entities.IsActive
 	}
 
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterResponse{
-		IsActive:                      *entities.IsActive,
+		IsActive:                      isActive,
 		WarehouseId:                   entities.WarehouseId,
 		WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
 		WarehouseCostingTypeCode:      costingTypeCode,
@@ -381,10 +345,8 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwareh
 
 	if warehouseMasterResponse.WarehouseKaroseri {
 		warehouseMasterResponse.SupplierDetails = supplierDetails
-
 	} else {
 		warehouseMasterResponse.UserDetails = userDetails
-
 	}
 
 	return warehouseMasterResponse, nil

@@ -418,21 +418,12 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocate(tx *gorm.DB, companyId i
 		var OperationItemCode string
 		var Description string
 
-		lineTypeResponse, linetypeErr := generalserviceapiutils.GetLineTypeById(detail.LineTypeId)
-		if linetypeErr != nil {
-			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve line type from the external API",
-				Err:        linetypeErr.Err,
-			}
-		}
-
-		operationItemResponse, operationItemErr := r.workorderRepo.GetOperationItemById(lineTypeResponse.LineTypeCode, detail.OperationItemId)
+		operationItemResponse, operationItemErr := r.workorderRepo.GetOperationItemById(detail.LineTypeId, detail.OperationItemId)
 		if operationItemErr != nil {
 			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, operationItemErr
 		}
 
-		OperationItemCode, Description, errResp := r.workorderRepo.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		OperationItemCode, Description, errResp := r.workorderRepo.HandleLineTypeResponse(detail.LineTypeId, operationItemResponse)
 		if errResp != nil {
 			return transactionworkshoppayloads.WorkOrderAllocationResponse{}, errResp
 		}
