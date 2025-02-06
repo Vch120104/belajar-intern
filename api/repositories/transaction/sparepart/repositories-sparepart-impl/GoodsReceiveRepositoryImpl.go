@@ -1,7 +1,6 @@
 package transactionsparepartrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -29,10 +28,13 @@ import (
 )
 
 type GoodsReceiveRepositoryImpl struct {
+	StockTransactionRepository transactionsparepartrepository.StockTransactionRepository
 }
 
 func NewGoodsReceiveRepositoryImpl() transactionsparepartrepository.GoodsReceiveRepository {
-	return &GoodsReceiveRepositoryImpl{}
+	NewStockTransactionRepository := StartStockTransactionRepositoryImpl()
+
+	return &GoodsReceiveRepositoryImpl{StockTransactionRepository: NewStockTransactionRepository}
 }
 
 func (repository *GoodsReceiveRepositoryImpl) GetAllGoodsReceive(db *gorm.DB, filter []utils.FilterCondition, paginations pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
@@ -1523,16 +1525,14 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 					UpdatedByUserId:              GoodsReceiveEntities.UpdatedByUserId,
 					UpdatedDate:                  time.Now(),
 				}
-				stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
 
-				errStockTransaction := utils.CallAPI("POST", stockTransactionUrl, &payloadsStockTransaction, nil)
-
+				//stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
+				//
+				//errStockTransaction := utils.CallAPI("POST", stockTransactionUrl, &payloadsStockTransaction, nil)
+				StockTransaction, errStockTransaction := repository.StockTransactionRepository.StockTransactionInsert(db, payloadsStockTransaction)
 				//utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
-				if errStockTransaction != nil {
-					return false, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    "error on inserting stock transaction type claim in",
-					}
+				if errStockTransaction != nil || !StockTransaction {
+					return false, errStockTransaction
 				}
 				//-- End Update Binning List
 			}
@@ -1742,11 +1742,9 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 					UpdatedByUserId:              GoodsReceiveEntities.UpdatedByUserId,
 					UpdatedDate:                  time.Now(),
 				}
-				stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
-
-				errStockTransaction := utils.CallAPI("POST", stockTransactionUrl, &payloadsStockTransaction, nil)
+				StockTransaction, errStockTransaction := repository.StockTransactionRepository.StockTransactionInsert(db, payloadsStockTransaction)
 				//utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
-				if errStockTransaction != nil {
+				if errStockTransaction != nil || !StockTransaction {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
 						Message:    "error on inserting stock transaction type claim in",
