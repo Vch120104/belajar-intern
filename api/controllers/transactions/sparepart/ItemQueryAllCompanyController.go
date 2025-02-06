@@ -7,7 +7,7 @@ import (
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"net/http"
-) 
+)
 
 type ItemQueryAllCompanyControllerImpl struct {
 	ItemQueryAllCompanyService transactionsparepartservice.ItemQueryAllCompanyService
@@ -25,6 +25,30 @@ func NewItemQueryAllCompanyController(
 	}
 }
 
+// @Summary Get All Item Query All Company
+// @Description Get All Item Query All Company
+// @Tags Transaction Sparepart: Item Query All Company
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param brand_id query string false "Brand ID"
+// @Param item_code_1 query string false "Item Code 1"
+// @Param item_code_2 query string false "Item Code 2"
+// @Param item_code_3 query string false "Item Code 3"
+// @Param item_code_4 query string false "Item Code 4"
+// @Param moving_code_1 query string false "Moving Code 1"
+// @Param moving_code_2 query string false "Moving Code 2"
+// @Param moving_code_3 query string false "Moving Code 3"
+// @Param moving_code_4 query string false "Moving Code 4"
+// @Param moving_code_5 query string false "Moving Code 5"
+// @Param moving_code_6 query string false "Moving Code 6"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-query-all-company [get]
 func (c *ItemQueryAllCompanyControllerImpl) GetAllItemQueryAllCompany(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 

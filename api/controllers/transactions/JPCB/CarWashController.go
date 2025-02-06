@@ -40,6 +40,25 @@ func NewCarWashController(carWashService transactionjpcbservice.CarWashService) 
 	}
 }
 
+// @Summary Get All Car Wash
+// @Description Get All Car Wash
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param work_order_document_number query string false "Work Order Document Number"
+// @Param promise_time query string false "Promise Time"
+// @Param promise_date query string false "Promise Date"
+// @Param car_wash_bay_id query string false "Car Wash Bay ID"
+// @Param car_wash_status_id query string false "Car Wash Status ID"
+// @Param car_wash_priority_id query string false "Car Wash Priority ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of path string false "Sort Of"
+// @Param sort_by path string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash [get]
 func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -82,6 +101,16 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 	)
 }
 
+// @Summary Update Car Wash Priority
+// @Description Update Car Wash Priority
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param work_order_system_number path string true "Work Order System Number"
+// @Param car_wash_priority_id path string true "Car Wash Priority ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/update-priority [put]
 func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.CarWashUpdatePriorityRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -98,6 +127,14 @@ func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, reque
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Car Wash Priority Drop Down
+// @Description Get All Car Wash Priority Drop Down
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/priority/dropdown [get]
 func (r *CarWashControllerImpl) GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request) {
 	response, err := r.CarWashService.GetAllCarWashPriorityDropDown()
 	if err != nil {
@@ -107,6 +144,15 @@ func (r *CarWashControllerImpl) GetAllCarWashPriorityDropDown(writer http.Respon
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Delete Car Wash
+// @Description Delete Car Wash
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param work_order_system_number path int true "Work Order System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/{work_order_system_number} [delete]
 func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, request *http.Request) {
 	workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 
@@ -123,6 +169,15 @@ func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, reques
 	}
 }
 
+// @Summary Post Car Wash
+// @Description Post Car Wash
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param request body transactionjpcbpayloads.CarWashPostRequestProps true "Car Wash Post Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash [post]
 func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.CarWashPostRequestProps
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -145,6 +200,16 @@ func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request 
 	payloads.NewHandleSuccess(writer, insert, "Data created successfully", http.StatusOK)
 }
 
+// @Summary Car Wash Screen
+// @Description Car Wash Screen
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param car_wash_status_id query string false "Car Wash Status ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/screen [get]
 func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -172,6 +237,15 @@ func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, data, "Successfully get data", http.StatusOK)
 }
 
+// @Summary Update Bay Number Car Wash Screen
+// @Description Update Bay Number Car Wash Screen
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param request body transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest true "Car Wash Screen Update Bay Number Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/screen/update-bay [put]
 func (r *CarWashControllerImpl) UpdateBayNumberCarWashScreenn(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -193,6 +267,15 @@ func (r *CarWashControllerImpl) UpdateBayNumberCarWashScreenn(writer http.Respon
 	payloads.NewHandleSuccess(writer, data, "Successfully update data", http.StatusOK)
 }
 
+// @Summary Start Car Wash
+// @Description Start Car Wash
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param request body transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest true "Car Wash Screen Update Bay Number Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/start [put]
 func (r *CarWashControllerImpl) StartCarWash(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest
 
@@ -215,7 +298,15 @@ func (r *CarWashControllerImpl) StartCarWash(writer http.ResponseWriter, request
 	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
 }
 
-// StopCarWash implements CarWashController.
+// @Summary Stop Car Wash
+// @Description Stop Car Wash
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param request body transactionjpcbpayloads.StopCarWashScreenRequest true "Stop Car Wash Screen Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/stop [put]
 func (r *CarWashControllerImpl) StopCarWash(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.StopCarWashScreenRequest
 
@@ -238,7 +329,15 @@ func (r *CarWashControllerImpl) StopCarWash(writer http.ResponseWriter, request 
 	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
 }
 
-// CancelCarWash implements CarWashController.
+// @Summary Cancel Car Wash
+// @Description Cancel Car Wash
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param request body transactionjpcbpayloads.StopCarWashScreenRequest true "Stop Car Wash Screen Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/cancel [put]
 func (r *CarWashControllerImpl) CancelCarWash(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.StopCarWashScreenRequest
 
@@ -261,7 +360,15 @@ func (r *CarWashControllerImpl) CancelCarWash(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
 }
 
-// GetCarWashByWorkOrderSystemNumber implements CarWashController.
+// @Summary Get Car Wash By Work Order System Number
+// @Description Get Car Wash By Work Order System Number
+// @Tags Transaction JPCB: Car Wash
+// @Accept json
+// @Produce json
+// @Param work_order_system_number path int true "Work Order System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/car-wash/{work_order_system_number} [get]
 func (r *CarWashControllerImpl) GetCarWashByWorkOrderSystemNumber(writer http.ResponseWriter, request *http.Request) {
 	workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 

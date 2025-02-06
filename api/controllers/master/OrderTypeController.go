@@ -36,6 +36,18 @@ func NewOrderTypeControllerImpl(orderTypeService masterservice.OrderTypeService)
 	}
 }
 
+// @Summary Get All Order Type
+// @Description Get All Order Type
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Param is_active query string false "is_active"
+// @Param order_type_id query string false "order_type_id"
+// @Param order_type_code query string false "order_type_code"
+// @Param order_type_name query string false "order_type_name"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type [get]
 func (r *OrderTypeControllerImpl) GetAllOrderType(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -57,6 +69,15 @@ func (r *OrderTypeControllerImpl) GetAllOrderType(writer http.ResponseWriter, re
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Order Type By ID
+// @Description Get Order Type By ID
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Param order_type_id path string true "order_type_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type/{order_type_id} [get]
 func (r *OrderTypeControllerImpl) GetOrderTypeById(writer http.ResponseWriter, request *http.Request) {
 	orderTypeId, errA := strconv.Atoi(chi.URLParam(request, "order_type_id"))
 	if errA != nil {
@@ -82,6 +103,15 @@ func (r *OrderTypeControllerImpl) GetOrderTypeById(writer http.ResponseWriter, r
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Order Type By Name
+// @Description Get Order Type By Name
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Param order_type_name query string true "order_type_name"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type/by-name [get]
 func (r *OrderTypeControllerImpl) GetOrderTypeByName(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	orderTypeName := queryValues.Get("order_type_name")
@@ -98,6 +128,14 @@ func (r *OrderTypeControllerImpl) GetOrderTypeByName(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Order Type
+// @Description Save Order Type
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type [post]
 func (r *OrderTypeControllerImpl) SaveOrderType(writer http.ResponseWriter, request *http.Request) {
 	formRequest := masterpayloads.OrderTypeSaveRequest{}
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -120,6 +158,15 @@ func (r *OrderTypeControllerImpl) SaveOrderType(writer http.ResponseWriter, requ
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
+// @Summary Update Order Type
+// @Description Update Order Type
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Param order_type_id path string true "order_type_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type/{order_type_id} [put]
 func (r *OrderTypeControllerImpl) UpdateOrderType(writer http.ResponseWriter, request *http.Request) {
 	orderTypeId, errA := strconv.Atoi(chi.URLParam(request, "order_type_id"))
 	if errA != nil {
@@ -158,6 +205,15 @@ func (r *OrderTypeControllerImpl) UpdateOrderType(writer http.ResponseWriter, re
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Change Status Order Type
+// @Description Change Status Order Type
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Param order_type_id path string true "order_type_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type/{order_type_id} [patch]
 func (r *OrderTypeControllerImpl) ChangeStatusOrderType(writer http.ResponseWriter, request *http.Request) {
 	orderTypeId, errA := strconv.Atoi(chi.URLParam(request, "order_type_id"))
 	if errA != nil {
@@ -183,6 +239,15 @@ func (r *OrderTypeControllerImpl) ChangeStatusOrderType(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Delete Order Type
+// @Description Delete Order Type
+// @Tags Master : Order Type
+// @Accept json
+// @Produce json
+// @Param order_type_id path string true "order_type_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /order-type/{order_type_id} [delete]
 func (r *OrderTypeControllerImpl) DeleteOrderType(writer http.ResponseWriter, request *http.Request) {
 	orderTypeId, errA := strconv.Atoi(chi.URLParam(request, "order_type_id"))
 	if errA != nil {

@@ -34,6 +34,19 @@ type BinningListControllerImpl struct {
 	service transactionsparepartservice.BinningListService
 }
 
+// @Summary Get Reference Number Typo PO With Pagination
+// @Description Get Reference Number Typo PO With Pagination
+// @Tags Transaction Sparepart: Binning List
+// @Accept json
+// @Produce json
+// @Param purchase_order_status_id query string false "Purchase Order Status ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_by query string false "Sort By"
+// @Param sort_of query string false "Sort Of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/binning-list/reference-type-purchase-order [get]
 func (controller *BinningListControllerImpl) GetReferenceNumberTypoPOWithPagination(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -65,7 +78,9 @@ func NewBinningListControllerImpl(service transactionsparepartservice.BinningLis
 //	@Description	REST API Get By Id Binning List
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Binning List
+//
+// @Tags Transaction Sparepart: Binning List
+//
 //	@Param			binning_stock_system_number		path		string	false	"binning_stock_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.BinningListGetByIdResponse
 //	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
@@ -86,7 +101,9 @@ func (controller *BinningListControllerImpl) GetBinningListById(writer http.Resp
 //	@Description	REST API Get All Binning List
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Binning List
+//
+// @Tags Transaction Sparepart: Binning List
+//
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
 //	@Param			binning_document_number				query		string	false	"binning_document_number"
@@ -137,7 +154,9 @@ func (controller *BinningListControllerImpl) GetAllBinningListWithPagination(wri
 //	@Description	Create a new Binning List
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Binning List
+//
+// @Tags Transaction Sparepart: Binning List
+//
 //	@Param			reqBody					body		transactionsparepartpayloads.BinningListInsertPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -163,7 +182,9 @@ func (controller *BinningListControllerImpl) InsertBinningListHeader(writer http
 //	@Description	Update Binning List Header
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Binning List
+//
+// @Tags Transaction Sparepart: Binning List
+//
 //	@Param			reqBody					body		transactionsparepartpayloads.BinningListSavePayload	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -190,7 +211,9 @@ func (controller *BinningListControllerImpl) UpdateBinningListHeader(writer http
 //	@Description	REST API Get By Id Binning List Detail
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Binning List
+//
+// @Tags Transaction Sparepart: Binning List
+//
 //	@Param			binning_stock_detail_system_number		path		string	false	"binning_stock_detail_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.BinningListGetByIdResponses
 //	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
@@ -212,7 +235,9 @@ func (controller *BinningListControllerImpl) GetBinningDetailById(writer http.Re
 //	@Description	REST API Get All Binning List Detail By Id
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Binning List
+//
+// @Tags Transaction Sparepart: Binning List
+//
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
 //	@Param			binning_system_number				path		int	true	"binning_system_number"
@@ -258,7 +283,15 @@ func (controller *BinningListControllerImpl) InsertBinningListDetail(writer http
 	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Detail", http.StatusCreated)
 }
 
-// route binning-list/detail [patch]
+// @Summary Update Binning List Detail
+// @Description Update Binning List Detail
+// @Tags Transaction Sparepart: Binning List
+// @Accept json
+// @Produce json
+// @Param reqBody body transactionsparepartpayloads.BinningListDetailUpdatePayloads true "Binning List Detail Update Payloads"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/binning-list/detail [patch]
 func (controller *BinningListControllerImpl) UpdateBinningListDetail(writer http.ResponseWriter, request *http.Request) {
 	var BinningListSavePayloads transactionsparepartpayloads.BinningListDetailUpdatePayloads
 	helper.ReadFromRequestBody(request, &BinningListSavePayloads)
@@ -274,7 +307,15 @@ func (controller *BinningListControllerImpl) UpdateBinningListDetail(writer http
 	payloads.NewHandleSuccess(writer, res, "Successfully Updated Binning List Detail", http.StatusOK)
 }
 
-// router binning-list/submit/{binning_system_number}
+// @Summary Submit Binning List
+// @Description Submit Binning List
+// @Tags Transaction Sparepart: Binning List
+// @Accept json
+// @Produce json
+// @Param binning_system_number path int true "Binning System Number"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/binning-list/submit/{binning_system_number} [post]
 func (controller *BinningListControllerImpl) SubmitBinningList(writer http.ResponseWriter, request *http.Request) {
 	BinningStockSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "binning_system_number"))
 	res, err := controller.service.SubmitBinningList(BinningStockSystemNumber)
@@ -285,6 +326,16 @@ func (controller *BinningListControllerImpl) SubmitBinningList(writer http.Respo
 	payloads.NewHandleSuccess(writer, res, "Successfully Submit Binning List", http.StatusOK)
 
 }
+
+// @Summary Delete Binning List
+// @Description Delete Binning List
+// @Tags Transaction Sparepart: Binning List
+// @Accept json
+// @Produce json
+// @Param binning_system_number path int true "Binning System Number"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/binning-list/{binning_system_number} [delete]
 func (controller *BinningListControllerImpl) DeleteBinningList(writer http.ResponseWriter, request *http.Request) {
 	BinningStockSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "binning_system_number"))
 	res, err := controller.service.DeleteBinningList(BinningStockSystemNumber)
@@ -295,6 +346,15 @@ func (controller *BinningListControllerImpl) DeleteBinningList(writer http.Respo
 	payloads.NewHandleSuccess(writer, res, "Successfully Delete Binning List", http.StatusOK)
 }
 
+// @Summary Delete Binning List Detail Multi Id
+// @Description Delete Binning List Detail Multi Id
+// @Tags Transaction Sparepart: Binning List
+// @Accept json
+// @Produce json
+// @Param binning_detail_multi_id path string true "Binning Detail Multi Id"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/binning-list/detail/{binning_detail_multi_id} [delete]
 func (controller *BinningListControllerImpl) DeleteBinningListDetailMultiId(writer http.ResponseWriter, request *http.Request) {
 	BinningStockDetailSystemNumber := chi.URLParam(request, "binning_detail_multi_id")
 	res, err := controller.service.DeleteBinningListDetailMultiId(BinningStockDetailSystemNumber)

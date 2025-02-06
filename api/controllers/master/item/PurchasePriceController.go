@@ -60,7 +60,7 @@ func NewPurchasePriceController(PurchasePriceService masteritemservice.PurchaseP
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_name query int false "item_name"
@@ -114,7 +114,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
@@ -150,7 +150,7 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePrice(writer http.ResponseWr
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -183,7 +183,7 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 // @Description REST API  Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -219,7 +219,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -250,7 +250,7 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 // @Description REST API Purchase Price Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -299,7 +299,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Description REST API  Purchase Price Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.ResponsePagination
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -325,7 +325,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.Res
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
 // @param purchase_price_detail_id path int true "purchase_price_detail_id"
 // @Success 200 {object} payloads.Response
@@ -360,7 +360,7 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePriceDetail(writer http.Resp
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -392,7 +392,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Description REST API  Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
@@ -448,7 +448,7 @@ func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWr
 // @Description REST API  Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
@@ -500,7 +500,7 @@ func (r *PurchasePriceControllerImpl) ActivatePurchasePriceDetail(writer http.Re
 // @Description REST API  Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
@@ -555,7 +555,7 @@ func (r *PurchasePriceControllerImpl) DeactivatePurchasePriceDetail(writer http.
 // @Description REST API Download Template
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/download-template [get]
@@ -607,7 +607,7 @@ func (r *PurchasePriceControllerImpl) DownloadTemplate(writer http.ResponseWrite
 // @Description REST API Upload
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param file formData file true "File"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -694,7 +694,7 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 // @Description REST API Process Data Upload
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param file formData file true "File"
 // @Param data formData string true "Data"
 // @Success 200 {object} payloads.Response
@@ -784,7 +784,7 @@ func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWrit
 // @Description REST API Download
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/download [get]
@@ -858,7 +858,7 @@ func (r *PurchasePriceControllerImpl) Download(writer http.ResponseWriter, reque
 // @Description REST API  Purchase Price Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price
+// @Tags Master Item : Purchase Price
 // @Param currency_id query int true "currency_id"
 // @Param supplier_id query int true "supplier_id"
 // @Param effective_date query string true "effective_date"

@@ -46,6 +46,15 @@ func NewCampaignMasterController(campaignmasterservice masterservice.CampaignMas
 	}
 }
 
+// @Summary Save Campaign Master
+// @Description Save Campaign Master
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param body body masterpayloads.CampaignMasterPost true "Campaign Master"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master [post]
 func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterPost
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -73,6 +82,16 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, create, message, status)
 }
 
+// @Summary Save Campaign Master Detail
+// @Description Save Campaign Master Detail
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_id path int true "Campaign ID"
+// @Param body body masterpayloads.CampaignMasterDetailPayloads true "Campaign Master Detail"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/{campaign_id} [post]
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -90,6 +109,16 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
+// @Summary Save Campaign Master Detail From History
+// @Description Save Campaign Master Detail From History
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_id_1 path int true "Campaign ID 1"
+// @Param campaign_id_2 path int true "Campaign ID 2"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/save-from-history/{campaign_id_1}/{campaign_id_2} [post]
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(writer http.ResponseWriter, request *http.Request) {
 	CampaignId1, errA := strconv.Atoi(chi.URLParam(request, "campaign_id_1"))
 
@@ -114,6 +143,15 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 	payloads.NewHandleSuccess(writer, response, message, http.StatusOK)
 }
 
+// @Summary Save Campaign Master Detail From Package
+// @Description Save Campaign Master Detail From Package
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param body body masterpayloads.CampaignMasterDetailPostFromPackageRequest true "Campaign Master Detail From Package"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/save-from-package [post]
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromPackage(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPostFromPackageRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -130,6 +168,15 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromPackage(write
 	payloads.NewHandleSuccess(writer, response, "Create Data Successfully!", http.StatusCreated)
 }
 
+// @Summary Change Status Campaign Master
+// @Description Change Status Campaign Master
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_id path int true "Campaign ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/{campaign_id} [patch]
 func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	CampaignId, errA := strconv.Atoi(chi.URLParam(request, "campaign_id"))
 
@@ -144,6 +191,15 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", 200)
 }
 
+// @Summary Activate Campaign Master Detail
+// @Description Activate Campaign Master Detail
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_detail_id path int true "Campaign Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/activate/{campaign_detail_id} [patch]
 func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
 	id, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId)
@@ -155,6 +211,15 @@ func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.
 	payloads.NewHandleSuccess(writer, id, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Deactivate Campaign Master Detail
+// @Description Deactivate Campaign Master Detail
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_detail_id path int true "Campaign Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/deactivate/{campaign_detail_id} [patch]
 func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
 	id, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId)
@@ -166,6 +231,15 @@ func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer htt
 	payloads.NewHandleSuccess(writer, id, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Campaign Master By ID
+// @Description Get Campaign Master By ID
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_id path int true "Campaign ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/{campaign_id} [get]
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	CampaignIdstr := chi.URLParam(request, "campaign_id")
 
@@ -189,6 +263,15 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.Respons
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Campaign Master Detail By ID
+// @Description Get Campaign Master Detail By ID
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_detail_id path int true "Campaign Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/by-id/{campaign_detail_id} [get]
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
 	CampaignDetailId, errA := strconv.Atoi(CampaignDetailIdstr)
@@ -208,6 +291,15 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Campaign Master By Code
+// @Description Get Campaign Master By Code
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_code path string true "Campaign Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/by-code/{campaign_code} [get]
 func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 
 	encodedcampaignCode := chi.URLParam(request, "*")
@@ -232,6 +324,29 @@ func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.Respo
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Campaign Master
+// @Description Get All Campaign Master
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param is_active query string false "Is Active"
+// @Param brand_id query string false "Brand ID"
+// @Param campaign_id query string false "Campaign ID"
+// @Param campaign_code query string false "Campaign Code"
+// @Param campaign_name query string false "Campaign Name"
+// @Param model_id query string false "Model ID"
+// @Param model_code query string false "Model Code"
+// @Param model_description query string false "Model Description"
+// @Param campaign_period_from query string false "Campaign Period From"
+// @Param campaign_period_to query string false "Campaign Period To"
+// @Param company_id query string false "Company ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master [get]
 func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -275,6 +390,19 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 	)
 }
 
+// @Summary Get All Campaign Master Detail
+// @Description Get All Campaign Master Detail
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_id path int true "Campaign ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/{campaign_id} [get]
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	CampaignIdStr := chi.URLParam(request, "campaign_id")
@@ -310,6 +438,18 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.Re
 
 }
 
+// @Summary Get All Campaign Master Code And Name
+// @Description Get All Campaign Master Code And Name
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/history [get]
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -328,6 +468,16 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 
 }
 
+// @Summary Update Campaign Master Detail
+// @Description Update Campaign Master Detail
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param campaign_detail_id path int true "Campaign Detail ID"
+// @Param body body masterpayloads.CampaignMasterDetailPayloads true "Campaign Master Detail"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/detail/update/{campaign_detail_id} [put]
 func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
@@ -351,6 +501,18 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)
 }
 
+// @Summary Get All Package Master To Copy
+// @Description Get All Package Master To Copy
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/package [get]
 func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -368,6 +530,16 @@ func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.Res
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Select From Package Master
+// @Description Select From Package Master
+// @Tags Master : Campaign Master
+// @Accept json
+// @Produce json
+// @Param package_id path int true "Package ID"
+// @Param campaign_detail_id path int true "Campaign Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/campaign-master/package/{package_id}/{campaign_detail_id} [get]
 func (r *CampaignMasterControllerImpl) SelectFromPackageMaster(writer http.ResponseWriter, request *http.Request) {
 	var message = ""
 	PackageMaster, errA := strconv.Atoi(chi.URLParam(request, "package_id"))

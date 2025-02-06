@@ -50,7 +50,7 @@ func NewItemLocationController(ItemLocationService masteritemservice.ItemLocatio
 // @Description REST API Item Location Popup
 // @Accept json
 // @Produce json
-// @Tags Master : Item Location
+// @Tags Master Item : Item Location
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_location_source_id query string false "item_location_source_id"
@@ -90,7 +90,7 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 // @Description REST API Item Location Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Item Location
+// @Tags Master Item : Item Location
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -141,7 +141,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Description REST API Item Location
 // @Accept json
 // @Produce json
-// @Tags Master : Item Location
+// @Tags Master Item : Item Location
 // @Param item_location_id path int true "Item Location Detail ID"
 // @param reqBody body masteritempayloads.ItemLocationDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -174,7 +174,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 // @Description REST API  Item Location
 // @Accept json
 // @Produce json
-// @Tags Master : Item Location
+// @Tags Master Item : Item Location
 // @Param item_location_detail_id path int true "item_location_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -199,6 +199,24 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, nil, "Item location deleted successfully", http.StatusOK)
 }
 
+// @Summary Get All Item Location
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param warehouse_group_name query string false "warehouse_group_name"
+// @Param warehouse_group_code query string false "warehouse_group_code"
+// @Param warehouse_id query string false "warehouse_id"
+// @Param warehouse_code query string false "warehouse_code"
+// @Param warehouse_name query string false "warehouse_name"
+// @Param item_id query string false "item_id"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location [get]
 func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -234,6 +252,15 @@ func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, r
 	)
 }
 
+// @Summary Get Item Location By ID
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Param item_location_id path int true "item_location_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location/{item_location_id} [get]
 func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
 	ItemLocationIds, errA := strconv.Atoi(chi.URLParam(request, "item_location_id"))
 
@@ -251,6 +278,16 @@ func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Item Location
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Param item_location_id path int true "Item Location ID"
+// @param reqBody body masteritempayloads.SaveItemlocation true "Form Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location [post]
 func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.SaveItemlocation
 	var message = ""
@@ -274,6 +311,15 @@ func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, req
 	}
 }
 
+// @Summary Delete Item Location By ID
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Param item_location_id path int true "item_location_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location/{item_location_id} [delete]
 func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, request *http.Request) {
 	itemlocationids := chi.URLParam(request, "item_location_id")
 	itemlocationids = strings.Trim(itemlocationids, "[]")
@@ -297,6 +343,14 @@ func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, r
 	}
 }
 
+// @Summary Download Template Item Location
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location/download-template [get]
 func (r *ItemLocationControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
 	f, errorGenerate := r.ItemLocationService.GenerateTemplateFile()
 
@@ -321,6 +375,15 @@ func (r *ItemLocationControllerImpl) DownloadTemplate(writer http.ResponseWriter
 	writer.Write(b.Bytes())
 }
 
+// @Summary Upload Template Item Location
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Param file formData file true "File"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location/upload-template [post]
 func (r *ItemLocationControllerImpl) UploadTemplate(writer http.ResponseWriter, request *http.Request) {
 	err := request.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -380,6 +443,15 @@ func (r *ItemLocationControllerImpl) UploadTemplate(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
 }
 
+// @Summary Process Upload Data
+// @Description REST API Item Location
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Location
+// @Param file formData file true "File"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-location/process-template [post]
 func (r *ItemLocationControllerImpl) ProcessUploadData(writer http.ResponseWriter, request *http.Request) {
 	err := request.ParseMultipartForm(10 << 20)
 	if err != nil {

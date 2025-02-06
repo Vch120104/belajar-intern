@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -64,6 +63,39 @@ func NewLookupController(LookupService masterservice.LookupService) LookupContro
 	}
 }
 
+// @Summary Get Opr Item Price
+// @Description Get Opr Item Price
+// @Tags Master Lookup : Opr Item Price
+// @Accept json
+// @Produce json
+// @Param line_type_id path int true "Line Type ID"
+// @Param package_id query string false "Package ID"
+// @Param package_code query string false "Package Code"
+// @Param package_name query string false "Package Name"
+// @Param profit_center_name query string false "Profit Center Name"
+// @Param model_code query string false "Model Code"
+// @Param model_description query string false "Model Description"
+// @Param package_price query string false "Package Price"
+// @Param brand_id query string false "Brand ID"
+// @Param model_id query string false "Model ID"
+// @Param variant_id query string false "Variant ID"
+// @Param operation_id query string false "Operation ID"
+// @Param operation_code query string false "Operation Code"
+// @Param operation_name query string false "Operation Name"
+// @Param operation_entries_code query string false "Operation Entries Code"
+// @Param operation_entries_description query string false "Operation Entries Description"
+// @Param operation_key_code query string false "Operation Key Code"
+// @Param operation_key_description query string false "Operation Key Description"
+// @Param item_id query string false "Item ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-opr-code/{line_type_id} [get]
 func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *http.Request) {
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
@@ -126,6 +158,20 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 	)
 }
 
+// @Summary Get Opr Item Price By Code
+// @Description Get Opr Item Price By Code
+// @Tags Master Lookup : Opr Item Price
+// @Accept json
+// @Produce json
+// @Param line_type_id path int true "Line Type ID"
+// @Param item_code path string true "Item Code"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-opr-code/{line_type_id}/{item_code} [get]
 func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
@@ -186,6 +232,20 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	)
 }
 
+// @Summary Get Opr Item Price By ID
+// @Description Get Opr Item Price By ID
+// @Tags Master Lookup : Opr Item Price
+// @Accept json
+// @Produce json
+// @Param line_type_id path int true "Line Type ID"
+// @Param id path int true "Item ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-opr-code/{line_type_id}/{id} [get]
 func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, request *http.Request) {
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
@@ -228,6 +288,35 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 	)
 }
 
+// @Summary Get Opr Item Price With Price
+// @Description Get Opr Item Price With Price
+// @Tags Master Lookup : Opr Item Price
+// @Accept json
+// @Produce json
+// @Param line_type_id path int true "Line Type ID"
+// @Param company_id query int true "Company ID"
+// @Param opr_item_id query int true "Opr Item ID"
+// @Param brand_id query int true "Brand ID"
+// @Param model_id query int true "Model ID"
+// @Param trx_type_id query int true "Trx Type ID"
+// @Param job_type_id query int true "Job Type ID"
+// @Param variant_id query int true "Variant ID"
+// @Param currency_id query int true "Currency ID"
+// @Param whs_group query string true "Warehouse Group"
+// @Param package_id query string false "Package ID"
+// @Param package_code query string false "Package Code"
+// @Param package_name query string false "Package Name"
+// @Param profit_center_id query string false "Profit Center ID"
+// @Param brand_id query string false "Brand ID"
+// @Param model_id query string false "Model ID"
+// @Param package_price query string false "Package Price"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-opr-code-with-price [get]
 func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -340,6 +429,20 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 	)
 }
 
+// @Summary Get Vehicle Unit Master
+// @Description Get Vehicle Unit Master
+// @Tags Master Lookup : Vehicle Unit Master
+// @Accept json
+// @Produce json
+// @Param brand_id path int true "Brand ID"
+// @Param model_id path int true "Model ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/vehicle-unit-master/{brand_id}/{model_id} [get]
 func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, request *http.Request) {
 	brandStrId := chi.URLParam(request, "brand_id")
 	brandId, err := strconv.Atoi(brandStrId)
@@ -386,6 +489,17 @@ func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, req
 	)
 }
 
+// @Summary Get Vehicle Unit By ID
+// @Description Get Vehicle Unit By ID
+// @Tags Master Lookup : Vehicle Unit Master
+// @Accept json
+// @Produce json
+// @Param vehicle_id path int true "Vehicle ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/vehicle-unit-master/{vehicle_id} [get]
 func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request) {
 	vehicleStrId := chi.URLParam(request, "vehicle_id")
 	vehicleId, err := strconv.Atoi(vehicleStrId)
@@ -425,6 +539,19 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 	)
 }
 
+// @Summary Get Vehicle Unit By Chassis Number
+// @Description Get Vehicle Unit By Chassis Number
+// @Tags Master Lookup : Vehicle Unit Master
+// @Accept json
+// @Produce json
+// @Param vehicle_chassis_number path string true "Vehicle Chassis Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/vehicle-unit-master/by-code/{vehicle_chassis_number} [get]
 func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request) {
 	chassisNumber := chi.URLParam(request, "vehicle_chassis_number")
 
@@ -460,6 +587,19 @@ func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.Respons
 	)
 }
 
+// @Summary Get Campaign Master
+// @Description Get Campaign Master
+// @Tags Master Lookup : Campaign Master
+// @Accept json
+// @Produce json
+// @Param company_id path int true "Company ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/campaign-master/{company_id} [get]
 func (r *LookupControllerImpl) GetCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	companyStrId := chi.URLParam(request, "company_id")
 	companyId, err := strconv.Atoi(companyStrId)
@@ -499,6 +639,18 @@ func (r *LookupControllerImpl) GetCampaignMaster(writer http.ResponseWriter, req
 	)
 }
 
+// @Summary Work Order Service
+// @Description Work Order Service
+// @Tags Master Lookup : Work Order Service
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/work-order-service [get]
 func (r *LookupControllerImpl) WorkOrderService(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -533,6 +685,18 @@ func (r *LookupControllerImpl) WorkOrderService(writer http.ResponseWriter, requ
 	)
 }
 
+// @Summary Work Order ATPM Registration
+// @Description Work Order ATPM Registration
+// @Tags Master Lookup : Work Order ATPM Registration
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/work-order-atpm-registration [get]
 func (r *LookupControllerImpl) WorkOrderAtpmRegistration(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -568,6 +732,19 @@ func (r *LookupControllerImpl) WorkOrderAtpmRegistration(writer http.ResponseWri
 	)
 }
 
+// @Summary Customer By Type And Address By ID
+// @Description Customer By Type And Address By ID
+// @Tags Master Lookup : Customer By Type And Address
+// @Accept json
+// @Produce json
+// @Param customer_id path int true "Customer ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/new-bill-to/{customer_id} [get]
 func (r *LookupControllerImpl) CustomerByTypeAndAddressByID(writer http.ResponseWriter, request *http.Request) {
 	customerStrId := chi.URLParam(request, "customer_id")
 	customerId, err := strconv.Atoi(customerStrId)
@@ -607,6 +784,18 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByID(writer http.Response
 	)
 }
 
+// @Summary Customer By Type And Address
+// @Description Customer By Type And Address
+// @Tags Master Lookup : Customer By Type And Address
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/new-bill-to [get]
 func (r *LookupControllerImpl) CustomerByTypeAndAddress(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{}
@@ -639,6 +828,19 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddress(writer http.ResponseWrit
 	)
 }
 
+// @Summary Customer By Type And Address By Code
+// @Description Customer By Type And Address By Code
+// @Tags Master Lookup : Customer By Type And Address
+// @Accept json
+// @Produce json
+// @Param customer_code path string true "Customer Code"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/new-bill-to/{customer_code} [get]
 func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request) {
 
 	customerCodeStrId := chi.URLParam(request, "customer_code")
@@ -680,12 +882,13 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.Respon
 // GetLineTypeByItemCode godoc
 // @Summary Get Line Type By Item Code
 // @Description Get Line Type By Item Code
-// @Tags Master
+// @Tags Master Lookup : Get Line Type By Item Code
 // @Accept json
 // @Produce json
 // @Param item_code path string true "Item Code"
-
-// @Router /master/lookup/line-type/{item_code} [get]
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/line-type/{item_code} [get]
 func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request) {
 	itemCode := chi.URLParam(request, "item_code")
 	if itemCode == "" {
@@ -706,6 +909,23 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary List Item Location
+// @Description List Item Location
+// @Tags Master Lookup : List Item Location
+// @Accept json
+// @Produce json
+// @Param company_id query int true "Company ID"
+// @Param warehouse_code query string false "Warehouse Code"
+// @Param warehouse_name query string false "Warehouse Name"
+// @Param warehouse_group_code query string false "Warehouse Group Code"
+// @Param warehouse_group_name query string false "Warehouse Group Name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-location-warehouse [get]
 func (r *LookupControllerImpl) ListItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -739,6 +959,15 @@ func (r *LookupControllerImpl) ListItemLocation(writer http.ResponseWriter, requ
 	payloads.NewHandleSuccessPagination(writer, warehouse.Rows, "Get Data Successfully!", http.StatusOK, warehouse.Limit, warehouse.Page, warehouse.TotalRows, warehouse.TotalPages)
 }
 
+// @Summary Warehouse Group By Company
+// @Description Warehouse Group By Company
+// @Tags Master Lookup : Warehouse Group By Company
+// @Accept json
+// @Produce json
+// @Param company_id path int true "Company ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/warehouse-group/{company_id [get]
 func (r *LookupControllerImpl) WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request) {
 	companyIdstr := chi.URLParam(request, "company_id")
 	if companyIdstr == "" {
@@ -755,6 +984,28 @@ func (r *LookupControllerImpl) WarehouseGroupByCompany(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Item List Trans
+// @Description Item List Trans
+// @Tags Master Lookup : Item List Trans
+// @Accept json
+// @Produce json
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param item_class_id query string false "Item Class ID"
+// @Param item_class_code query string false "Item Class Code"
+// @Param item_class_name query string false "Item Class Name"
+// @Param item_type_code query string false "Item Type Code"
+// @Param item_level_1_code query string false "Item Level 1 Code"
+// @Param item_level_2_code query string false "Item Level 2 Code"
+// @Param item_level_3_code query string false "Item Level 3 Code"
+// @Param item_level_4_code query string false "Item Level 4 Code"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-list-trans [get]
 func (r *LookupControllerImpl) ItemListTrans(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -787,6 +1038,29 @@ func (r *LookupControllerImpl) ItemListTrans(writer http.ResponseWriter, request
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Item List Trans PL
+// @Description Item List Trans PL
+// @Tags Master Lookup : Item List Trans PL
+// @Accept json
+// @Produce json
+// @Param company_id query int true "Company ID"
+// @Param brand_id query string false "Brand ID"
+// @Param item_group_id query string false "Item Group ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param item_class_code query string false "Item Class Code"
+// @Param item_type_code query string false "Item Type Code"
+// @Param item_level_1_code query string false "Item Level 1 Code"
+// @Param item_level_2_code query string false "Item Level 2 Code"
+// @Param item_level_3_code query string false "Item Level 3 Code"
+// @Param item_level_4_code query string false "Item Level 4 Code"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-list-trans-pl [get]
 func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	companyIdstr := queryValues.Get("company_id")
@@ -837,6 +1111,22 @@ func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, reque
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Reference Type Work Order
+// @Description Reference Type Work Order
+// @Tags Master Lookup : Reference Type Work Order
+// @Accept json
+// @Produce json
+// @Param work_order_system_number query string false "Work Order System Number"
+// @Param work_order_document_number query string false "Work Order Document Number"
+// @Param work_order_date query string false "Work Order Date"
+// @Param work_order_status_description query string false "Work Order Status Description"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/reference-type-work-order [get]
 func (r *LookupControllerImpl) ReferenceTypeWorkOrder(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -885,6 +1175,19 @@ func (r *LookupControllerImpl) ReferenceTypeWorkOrder(writer http.ResponseWriter
 	)
 }
 
+// @Summary Reference Type Work Order By ID
+// @Description Reference Type Work Order By ID
+// @Tags Master Lookup : Reference Type Work Order
+// @Accept json
+// @Produce json
+// @Param work_order_system_number path int true "Work Order System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/reference-type-work-order/{work_order_system_number} [get]
 func (r *LookupControllerImpl) ReferenceTypeWorkOrderByID(writer http.ResponseWriter, request *http.Request) {
 
 	referenceTypeIdStr := chi.URLParam(request, "work_order_system_number")
@@ -926,6 +1229,22 @@ func (r *LookupControllerImpl) ReferenceTypeWorkOrderByID(writer http.ResponseWr
 	)
 }
 
+// @Summary Reference Type Sales Order
+// @Description Reference Type Sales Order
+// @Tags Master Lookup : Reference Type Sales Order
+// @Accept json
+// @Produce json
+// @Param work_order_system_number query string false "Work Order System Number"
+// @Param work_order_document_number query string false "Work Order Document Number"
+// @Param work_order_date query string false "Work Order Date"
+// @Param work_order_status_description query string false "Work Order Status Description"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/reference-type-sales-order [get]
 func (r *LookupControllerImpl) ReferenceTypeSalesOrder(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -974,6 +1293,19 @@ func (r *LookupControllerImpl) ReferenceTypeSalesOrder(writer http.ResponseWrite
 	)
 }
 
+// @Summary Reference Type Sales Order By ID
+// @Description Reference Type Sales Order By ID
+// @Tags Master Lookup : Reference Type Sales Order
+// @Accept json
+// @Produce json
+// @Param sales_order_system_number path int true "Sales Order System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/reference-type-sales-order/{sales_order_system_number} [get]
 func (r *LookupControllerImpl) ReferenceTypeSalesOrderByID(writer http.ResponseWriter, request *http.Request) {
 
 	referenceTypeIdStr := chi.URLParam(request, "sales_order_system_number")
@@ -1015,6 +1347,19 @@ func (r *LookupControllerImpl) ReferenceTypeSalesOrderByID(writer http.ResponseW
 	)
 }
 
+// @Summary Get Line Type By Reference Type
+// @Description Get Line Type By Reference Type
+// @Tags Master Lookup : Get Line Type By Reference Type
+// @Accept json
+// @Produce json
+// @Param reference_type_id path int true "Reference Type ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/line-type-reference/{reference_type_id} [get]
 func (r *LookupControllerImpl) GetLineTypeByReferenceType(writer http.ResponseWriter, request *http.Request) {
 	referenceTypeStr := chi.URLParam(request, "reference_type_id")
 	referenceType, err := strconv.Atoi(referenceTypeStr)
@@ -1044,6 +1389,23 @@ func (r *LookupControllerImpl) GetLineTypeByReferenceType(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Location Available
+// @Description Location Available
+// @Tags Master Lookup : Location Available
+// @Accept json
+// @Produce json
+// @Param company_id query int true "Company ID"
+// @Param warehouse_id query int true "Warehouse ID"
+// @Param is_active query string false "Is Active"
+// @Param warehouse_location_code query string false "Warehouse Location Code"
+// @Param warehouse_location_name query string false "Warehouse Location Name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/location-available [get]
 func (r *LookupControllerImpl) LocationAvailable(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -1085,6 +1447,20 @@ func (r *LookupControllerImpl) LocationAvailable(writer http.ResponseWriter, req
 	payloads.NewHandleSuccessPagination(writer, location.Rows, "Get Data Successfully!", http.StatusOK, location.Limit, location.Page, location.TotalRows, location.TotalPages)
 }
 
+// @Summary Item Detail For Item Inquiry
+// @Description Item Detail For Item Inquiry
+// @Tags Master Lookup : Item Detail For Item Inquiry
+// @Accept json
+// @Produce json
+// @Param brand_id query string true "Brand ID"
+// @Param item_id query string true "Item ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-detail/item-inquiry [get]
 func (r *LookupControllerImpl) ItemDetailForItemInquiry(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -1122,6 +1498,20 @@ func (r *LookupControllerImpl) ItemDetailForItemInquiry(writer http.ResponseWrit
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Item Substitute Detail For Item Inquiry
+// @Description Item Substitute Detail For Item Inquiry
+// @Tags Master Lookup : Item Substitute Detail For Item Inquiry
+// @Accept json
+// @Produce json
+// @Param item_id query string true "Item ID"
+// @Param company_id query string true "Company ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-substitute/detail/item-inquiry [get]
 func (r *LookupControllerImpl) ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -1159,6 +1549,22 @@ func (r *LookupControllerImpl) ItemSubstituteDetailForItemInquiry(writer http.Re
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Get PartNumber Item Import
+// @Description Get PartNumber Item Import
+// @Tags Master Lookup : Get PartNumber Item Import
+// @Accept json
+// @Produce json
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param supplier_code query string false "Supplier Code"
+// @Param supplier_name query string false "Supplier Name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-import/part-number [get]
 func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	internalFilterCondition := map[string]string{
@@ -1192,6 +1598,24 @@ func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWrite
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Location Item
+// @Description Location Item
+// @Tags Master Lookup : Location Item
+// @Accept json
+// @Produce json
+// @Param warehouse_location_id query string false "Warehouse Location ID"
+// @Param warehouse_location_code query string false "Warehouse Location Code"
+// @Param warehouse_location_name query string false "Warehouse Location Name"
+// @Param company_id query string false "Company ID"
+// @Param warehouse_id query string false "Warehouse ID"
+// @Param item_id query string false "Item ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/location-item [get]
 func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	filterCondition := map[string]string{
@@ -1229,6 +1653,25 @@ func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request 
 
 }
 
+// @Summary Item Loc UOM
+// @Description Item Loc UOM
+// @Tags Master Lookup : Item Loc UOM
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param item_id query string false "Item ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param uom_code query string false "UOM Code"
+// @Param quantity_available query string false "Quantity Available"
+// @Param is_active query string false "Is Active"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-loc-uom [get]
 func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	filterCondition := map[string]string{
@@ -1271,6 +1714,25 @@ func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *h
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Item Loc UOM By ID
+// @Description Item Loc UOM By ID
+// @Tags Master Lookup : Item Loc UOM
+// @Accept json
+// @Produce json
+// @Param company_id path int true "Company ID"
+// @Param item_id path int true "Item ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param uom_code query string false "UOM Code"
+// @Param quantity_available query string false "Quantity Available"
+// @Param is_active query string false "Is Active"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-loc-uom/by-id/{company_id}/{item_id} [get]
 func (r *LookupControllerImpl) ItemLocUOMById(writer http.ResponseWriter, request *http.Request) {
 	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
@@ -1287,6 +1749,24 @@ func (r *LookupControllerImpl) ItemLocUOMById(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Item Loc UOM By Code
+// @Description Item Loc UOM By Code
+// @Tags Master Lookup : Item Loc UOM
+// @Accept json
+// @Produce json
+// @Param company_id path int true "Company ID"
+// @Param item_code query string true "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param uom_code query string false "UOM Code"
+// @Param quantity_available query string false "Quantity Available"
+// @Param is_active query string false "Is Active"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-loc-uom/by-code/{company_id} [get]
 func (r *LookupControllerImpl) ItemLocUOMByCode(writer http.ResponseWriter, request *http.Request) {
 	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 	itemCode := request.URL.Query().Get("item_code")
@@ -1303,18 +1783,23 @@ func (r *LookupControllerImpl) ItemLocUOMByCode(writer http.ResponseWriter, requ
 	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Item Opr Code With Price By ID
+// @Description Item Opr Code With Price By ID
+// @Tags Master Lookup : Item Opr Code With Price By ID
+// @Accept json
+// @Produce json
+// @Param line_type_id path int true "Line Type ID"
+// @Param opr_item_id path int true "Opr Item ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-opr-code-with-price/{line_type_id}/by-id/{opr_item_id} [get]
 func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	// Debugging: Cetak URL yang diterima
-	fmt.Println("Raw URL Path:", request.URL.Path)
-
-	// Coba ambil parameter dan print nilainya
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	oprItemIdStr := chi.URLParam(request, "opr_item_id")
-
-	fmt.Println("Extracted line_type_id:", linetypeIdStr)
-	fmt.Println("Extracted opr_item_id:", oprItemIdStr)
 
 	if linetypeIdStr == "" {
 		payloads.NewHandleError(writer, "Missing Line Type Id in URL", http.StatusBadRequest)
@@ -1325,7 +1810,6 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 		return
 	}
 
-	// Konversi ke integer
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
 	if err != nil {
 		payloads.NewHandleError(writer, "Invalid Line Type Id", http.StatusBadRequest)
@@ -1337,10 +1821,6 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 		payloads.NewHandleError(writer, "Invalid Opr Item Id", http.StatusBadRequest)
 		return
 	}
-
-	// Logging tambahan setelah parsing sukses
-	fmt.Println("Parsed line_type_id:", linetypeId)
-	fmt.Println("Parsed opr_item_id:", oprItemId)
 
 	queryParams := map[string]string{}
 	paginate := pagination.Pagination{
@@ -1368,6 +1848,22 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 	)
 }
 
+// @Summary Get Opr Item Price
+// @Description Get Opr Item Price
+// @Tags Master Lookup : Get Opr Item Price
+// @Accept json
+// @Produce json
+// @Param line_type_id query int true "Line Type ID"
+// @Param company_id query int true "Company ID"
+// @Param opr_item_id query int true "Opr Item ID"
+// @Param brand_id query int true "Brand ID"
+// @Param model_id query int true "Model ID"
+// @Param job_type_id query int true "Job Type ID"
+// @Param variant_id query int true "Variant ID"
+// @Param currency_id query int true "Currency ID"
+// @Param trx_type_id query int true "Bill Code"
+// @Param whs_group query string true "Warehouse Group"
+// @Param limit query int false "Limit"
 func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -1419,7 +1915,7 @@ func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, reque
 		return
 	}
 
-	billCode, err := strconv.Atoi(queryValues.Get("bill_code"))
+	billCode, err := strconv.Atoi(queryValues.Get("trx_type_id"))
 	if err != nil {
 		payloads.NewHandleError(writer, "Invalid Bill Code", http.StatusBadRequest)
 		return
@@ -1431,7 +1927,6 @@ func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, reque
 		return
 	}
 
-	// Memanggil service dengan parameter yang sesuai
 	price, baseErr := r.LookupService.GetOprItemPrice(
 		linetypeId, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup,
 	)
@@ -1453,6 +1948,27 @@ func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, reque
 	)
 }
 
+// @Summary Item Master For Free Accs
+// @Description Item Master For Free Accs
+// @Tags Master Lookup : Item Master For Free Accs
+// @Accept json
+// @Produce json
+// @Param company_id query int true "Company ID"
+// @Param item_id query int false "Item ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param uom_code query string false "UOM Code"
+// @Param is_active query string false "Is Active"
+// @Param brand_id query int false "Brand ID"
+// @Param model_id query int false "Model ID"
+// @Param variant_id query int false "Variant ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-freeaccs [get]
 func (r *LookupControllerImpl) ItemMasterForFreeAccs(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	filterCondition := map[string]string{
@@ -1492,6 +2008,27 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccs(writer http.ResponseWriter,
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
 
+// @Summary Item Master For Free Accs By ID
+// @Description Item Master For Free Accs By ID
+// @Tags Master Lookup : Item Master For Free Accs
+// @Accept json
+// @Produce json
+// @Param company_id path int true "Company ID"
+// @Param item_id path int true "Item ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param uom_code query string false "UOM Code"
+// @Param is_active query string false "Is Active"
+// @Param brand_id query int false "Brand ID"
+// @Param model_id query int false "Model ID"
+// @Param variant_id query int false "Variant ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-freeaccs/by-id/{company_id}/{item_id} [get]
 func (r *LookupControllerImpl) ItemMasterForFreeAccsById(writer http.ResponseWriter, request *http.Request) {
 	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
@@ -1508,6 +2045,26 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccsById(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Item Master For Free Accs By Code
+// @Description Item Master For Free Accs By Code
+// @Tags Master Lookup : Item Master For Free Accs
+// @Accept json
+// @Produce json
+// @Param company_id path int true "Company ID"
+// @Param item_code query string true "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param uom_code query string false "UOM Code"
+// @Param is_active query string false "Is Active"
+// @Param brand_id query int false "Brand ID"
+// @Param model_id query int false "Model ID"
+// @Param variant_id query int false "Variant ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-freeaccs/by-code/{company_id} [get]
 func (r *LookupControllerImpl) ItemMasterForFreeAccsByCode(writer http.ResponseWriter, request *http.Request) {
 	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 	itemCode := request.URL.Query().Get("item_code")

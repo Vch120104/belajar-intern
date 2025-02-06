@@ -21,6 +21,14 @@ func NewGmmDiscountSettingControllerImpl(gmmDiscountSettingService masterservice
 	}
 }
 
+// @Summary Get All Gmm Discount Setting
+// @Description REST API Gmm Discount Setting
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Discount Setting
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-discount-setting [get]
 func (c *GmmDiscountSettingControllerImpl) GetAllGmmDiscountSetting(writer http.ResponseWriter, request *http.Request) {
 	result, err := c.GmmDiscountSettingService.GetAllGmmDiscountSetting()
 	if err != nil {
