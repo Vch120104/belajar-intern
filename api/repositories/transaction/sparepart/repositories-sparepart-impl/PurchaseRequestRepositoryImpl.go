@@ -1104,19 +1104,11 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 			Err:        err,
 		}
 	}
-	var UomItemResponse transactionsparepartpayloads.UomItemResponses
-	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(response.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
-
-	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Item data from external service",
-			Err:        err,
-		}
-	}
-	//UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	//UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	UomRate := UomItemResponse.TargetConvertion
+	entities := masteritementities.UomItem{}
+	err = db.Model(&entities).
+		Where(masteritementities.UomItem{ItemId: response.ItemId, UomSourceTypeCode: "P"}).
+		First(&response).Error
+	UomRate := entities.TargetConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
 		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", i, "P").Scan(&response.UnitOfMeasurementCode).Error
@@ -1221,16 +1213,11 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 			Err:        err,
 		}
 	}
-	var UomItemResponse transactionsparepartpayloads.UomItemResponses
-	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(response.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
-	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Item data from external service",
-			Err:        err,
-		}
-	}
-	UomRate := UomItemResponse.TargetConvertion
+	entities := masteritementities.UomItem{}
+	err = db.Model(&entities).
+		Where(masteritementities.UomItem{ItemId: response.ItemId, UomSourceTypeCode: "P"}).
+		First(&response).Error
+	UomRate := entities.TargetConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
 		Select("B.uom_code").Where("A.item_id = ? and A.uom_source_type_code = ?", response.ItemId, "P").Scan(&response.UnitOfMeasurementCode).Error

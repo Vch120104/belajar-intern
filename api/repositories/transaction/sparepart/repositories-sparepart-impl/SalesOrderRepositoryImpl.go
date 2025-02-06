@@ -9,9 +9,10 @@ import (
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
+	masterrepository "after-sales/api/repositories/master"
+	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -28,10 +29,12 @@ import (
 )
 
 type SalesOrderRepositoryImpl struct {
+	locationStockImpl masterrepository.LocationStockRepository
 }
 
 func StartSalesOrderRepositoryImpl() transactionsparepartrepository.SalesOrderRepository {
-	return &SalesOrderRepositoryImpl{}
+	locationStockRepoImpl := masterwarehouserepository.NewLocationStockRepositoryImpl()
+	return &SalesOrderRepositoryImpl{locationStockImpl: locationStockRepoImpl}
 }
 
 // [dbo].[uspg_atSalesOrder0_Insert] option = 0
@@ -765,23 +768,29 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 		//@Whs_Group = @WHS_GROUP ,
 		//@UoM_Type = @UoM_Type ,
 		//@QtyResult = @QTY_AVAIL OUTPUT
-		availableItem, errStockLocation := aftersalesserviceapiutils.GetAvailableItemLocationStock(masterwarehousepayloads.GetAvailableQuantityPayload{
+		avaibleItem, errStockLocations := r.locationStockImpl.GetAvailableQuantity(db, masterwarehousepayloads.GetAvailableQuantityPayload{
 			CompanyId:        soEntities.CompanyID,
 			PeriodDate:       soEntities.SalesOrderDate,
 			WarehouseId:      169,
 			LocationId:       0,
 			ItemId:           payload.ItemId,
-			WarehouseGroupId: soEntities.WarehouseGroupID,
+			WarehouseGroupId: payload.ItemId,
 			UomTypeId:        1,
 		})
-		if errStockLocation != nil {
-			return entities, errStockLocation
+		//availableItem, errStockLocation := aftersalesserviceapiutils.GetAvailableItemLocationStock(masterwarehousepayloads.GetAvailableQuantityPayload{
+		//	CompanyId:        soEntities.CompanyID,
+		//	PeriodDate:       soEntities.SalesOrderDate,
+		//	WarehouseId:      169,
+		//	LocationId:       0,
+		//	ItemId:           payload.ItemId,
+		//	WarehouseGroupId: soEntities.WarehouseGroupID,
+		//	UomTypeId:        1,
+		//})
+		if errStockLocations != nil {
+			return entities, errStockLocations
 		}
-		availableQuantity = availableItem.QuantityAvailable
+		availableQuantity = avaibleItem.QuantityAvailable
 	} else {
-		//BEGIN
-		//SET @QTY_AVAIL = 1
-		//END
 		availableQuantity = 1
 	}
 	//
