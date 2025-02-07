@@ -46,7 +46,7 @@ type ItemGroupControllerImpl struct {
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/list [get]
+// @Router /v1/item-group/list [get]
 func (i *ItemGroupControllerImpl) GetAllItemGroupWithPagination(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -79,7 +79,7 @@ func (i *ItemGroupControllerImpl) GetAllItemGroupWithPagination(writer http.Resp
 // @Param item_group_code query string false "Item Group Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/dropdown [get]
+// @Router /v1/item-group/dropdown [get]
 func (i *ItemGroupControllerImpl) GetAllItemGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	ItemGroupCode := queryValues.Get("item_group_code")
@@ -99,7 +99,7 @@ func (i *ItemGroupControllerImpl) GetAllItemGroup(writer http.ResponseWriter, re
 // @Param item_group_id path int true "Item Group Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/{item_group_id} [get]
+// @Router /v1/item-group/{item_group_id} [get]
 func (i *ItemGroupControllerImpl) GetItemGroupById(writer http.ResponseWriter, request *http.Request) {
 	Id := chi.URLParam(request, "item_group_id")
 	itemGroupId, errs := strconv.Atoi(Id)
@@ -128,7 +128,7 @@ func (i *ItemGroupControllerImpl) GetItemGroupById(writer http.ResponseWriter, r
 // @Param item_group_id path int true "Item Group Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/{item_group_id} [delete]
+// @Router /v1/item-group/{item_group_id} [delete]
 func (i *ItemGroupControllerImpl) DeleteItemGroupById(writer http.ResponseWriter, request *http.Request) {
 	Id := chi.URLParam(request, "item_group_id")
 	itemGroupId, errs := strconv.Atoi(Id)
@@ -161,7 +161,7 @@ func (i *ItemGroupControllerImpl) DeleteItemGroupById(writer http.ResponseWriter
 // @Param is_item_sparepart body string true "Is Item Sparepart"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/{item_group_id} [put]
+// @Router /v1/item-group/{item_group_id} [put]
 func (i *ItemGroupControllerImpl) UpdateItemGroupById(writer http.ResponseWriter, request *http.Request) {
 	payload := masteritempayloads.ItemGroupUpdatePayload{}
 	id := chi.URLParam(request, "item_group_id")
@@ -199,7 +199,7 @@ func (i *ItemGroupControllerImpl) UpdateItemGroupById(writer http.ResponseWriter
 // @Param item_group_id path int true "Item Group Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/{item_group_id} [patch]
+// @Router /v1/item-group/{item_group_id} [patch]
 func (i *ItemGroupControllerImpl) UpdateStatusItemGroupById(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "item_group_id")
 	ids, err := strconv.Atoi(id)
@@ -241,7 +241,7 @@ func (i *ItemGroupControllerImpl) GetItemGroupByMultiId(writer http.ResponseWrit
 // @Param is_item_sparepart body string true "Is Item Sparepart"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group [post]
+// @Router /v1/item-group [post]
 func (i *ItemGroupControllerImpl) NewItemGroup(writer http.ResponseWriter, request *http.Request) {
 	payload := masteritempayloads.NewItemGroupPayload{}
 
@@ -269,7 +269,7 @@ func (i *ItemGroupControllerImpl) NewItemGroup(writer http.ResponseWriter, reque
 // @Param item_group_code path string true "Item Group Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /item-group/code/{item_group_code} [get]
+// @Router /v1/item-group/code/{item_group_code} [get]
 func (i *ItemGroupControllerImpl) GetItemGroupByCode(writer http.ResponseWriter, request *http.Request) {
 	code := chi.URLParam(request, "item_group_code")
 	res, errData := i.service.GetItemGroupByCode(code)

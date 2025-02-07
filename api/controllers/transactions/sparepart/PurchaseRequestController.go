@@ -372,7 +372,7 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestHeader(wri
 // @Description	Update Purchase Request Detail
 // @Accept			json
 // @Produce		json
-// @Tags			Transaction : Purchase Request
+// @Tags Transaction Sparepart: Purchase Request
 // @Param			purchase_request_detail_system_number	path		int	true	"purchase_request_detail_system_number"
 // @Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads	true	"Purchase Request Header Data"
 // @Success		201						{object}	transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
@@ -402,7 +402,7 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestDetail(wri
 // @Description	Void Request Detail
 // @Accept			json
 // @Produce		json
-// @Tags			Transaction : Purchase Request
+// @Tags Transaction Sparepart: Purchase Request
 // @Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
 // @Success		201						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -550,7 +550,7 @@ func (controller *PurchaseRequestControllerImpl) GetByCodeItemTypePr(writer http
 // @Description	Void Request Purchase Detail Multi Id
 // @Accept			json
 // @Produce		json
-// @Tags			Transaction : Purchase Request
+// @Tags Transaction Sparepart: Purchase Request
 // @Param			purchase_request_detail_system_number	path		string true	"purchase_request_detail_system_number"
 // @Success		201						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
