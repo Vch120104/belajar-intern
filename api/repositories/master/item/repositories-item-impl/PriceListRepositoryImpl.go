@@ -190,12 +190,12 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 		tempRows = tempRows.Where("price_list_modifiable = ?", request.PriceListModifiable)
 	}
 
-	if request.AtpmSyncronize != "" {
-		tempRows = tempRows.Where("atpm_syncronize = ?", request.AtpmSyncronize)
+	if request.AtpmSynchronize != "" {
+		tempRows = tempRows.Where("atpm_synchronize = ?", request.AtpmSynchronize)
 	}
 
-	if !request.AtpmSyncronizeTime.IsZero() {
-		tempRows = tempRows.Where("atpm_syncronize_time >= ?", request.AtpmSyncronizeTime)
+	if !request.AtpmSynchronizeTime.IsZero() {
+		tempRows = tempRows.Where("atpm_synchronize_time >= ?", request.AtpmSynchronizeTime)
 	}
 
 	rows, err := tempRows.

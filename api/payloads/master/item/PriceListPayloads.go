@@ -15,8 +15,8 @@ type PriceListResponse struct {
 	ItemClassId         int       `json:"item_class_id"`
 	PriceListAmount     float64   `json:"price_list_amount"`
 	PriceListModifiable bool      `json:"price_list_modifiable"`
-	AtpmSyncronize      bool      `json:"atpm_syncronize"`
-	AtpmSyncronizeTime  time.Time `json:"atpm_syncronize_time"`
+	AtpmSynchronize     bool      `json:"atpm_synchronize"`
+	AtpmSynchronizeTime time.Time `json:"atpm_synchronize_time"`
 }
 
 type PriceListItemResponses struct {
@@ -42,8 +42,8 @@ type PriceListRequest struct {
 	ItemClassId         int       `json:"item_class_id"`
 	PriceListAmount     float64   `json:"price_list_amount"`
 	PriceListModifiable bool      `json:"price_list_modifiable"`
-	AtpmSyncronize      bool      `json:"atpm_syncronize"`
-	AtpmSyncronizeTime  time.Time `json:"atpm_syncronize_time"`
+	AtpmSynchronize     bool      `json:"atpm_synchronize"`
+	AtpmSynchronizeTime time.Time `json:"atpm_synchronize_time"`
 }
 
 type SavePriceListMultiple struct {
@@ -98,8 +98,8 @@ type PriceListGetAllRequest struct {
 	ItemClassName       string    `json:"item_class_name" parent_entity:"mtr_item_class"`
 	PriceListAmount     float64   `json:"price_list_amount" parent_entity:"mtr_item_price_list"`
 	PriceListModifiable string    `json:"price_list_modifiable" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronize      string    `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronizeTime  time.Time `json:"atpm_syncronize_time" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronize     string    `json:"atpm_synchronize" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronizeTime time.Time `json:"atpm_synchronize_time" parent_entity:"mtr_item_price_list"`
 }
 
 type PriceListGetAllResponse struct {
@@ -119,8 +119,8 @@ type PriceListGetAllResponse struct {
 	ItemPriceCode string `json:"item_price_code" parent_entity:"mtr_item_price_code"`
 	//PriceListAmount     float64 `json:"price_list_amount" parent_entity:"mtr_item_price_list"`
 	//PriceListModifiable string  `json:"price_list_modifiable" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronize     string `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronizeTime string `json:"atpm_syncronize_time" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronize     string `json:"atpm_synchronize" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronizeTime string `json:"atpm_synchronize_time" parent_entity:"mtr_item_price_list"`
 }
 
 type PriceListGetbyId struct {
@@ -144,8 +144,8 @@ type PriceListGetbyId struct {
 	ItemClassName       string  `json:"item_class_name" parent_entity:"mtr_item_class"`
 	PriceListAmount     float64 `json:"price_list_amount" parent_entity:"mtr_item_price_list"`
 	PriceListModifiable string  `json:"price_list_modifiable" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronize      string  `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronizeTime  string  `json:"atpm_syncronize_time" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronize     string  `json:"atpm_synchronize" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronizeTime string  `json:"atpm_synchronize_time" parent_entity:"mtr_item_price_list"`
 }
 
 type PriceListGetbyCode struct {
@@ -169,6 +169,6 @@ type PriceListGetbyCode struct {
 	ItemClassName       string  `json:"item_class_name" parent_entity:"mtr_item_class"`
 	PriceListAmount     float64 `json:"price_list_amount" parent_entity:"mtr_item_price_list"`
 	PriceListModifiable string  `json:"price_list_modifiable" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronize      string  `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
-	AtpmSyncronizeTime  string  `json:"atpm_syncronize_time" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronize     string  `json:"atpm_synchronize" parent_entity:"mtr_item_price_list"`
+	AtpmSynchronizeTime string  `json:"atpm_synchronize_time" parent_entity:"mtr_item_price_list"`
 }
