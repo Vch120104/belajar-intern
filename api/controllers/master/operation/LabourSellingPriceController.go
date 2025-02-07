@@ -52,7 +52,7 @@ func NewLabourSellingPriceController(LabourSellingPriceService masteroperationse
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1//labour-selling-price [get]
+// @Router /v1/labour-selling-price [get]
 func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
