@@ -37,6 +37,21 @@ func NewItemPriceCodeController(itemPriceCodeService masteritemservice.ItemPrice
 	}
 }
 
+// @Summary Get All Item Price Code
+// @Description Get all item price code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param is_active query string false "Is Active"
+// @Param item_price_code query string false "Item Price Code"
+// @Param item_price_code_id query string false "Item Price Code ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_by query string false "Sort By"
+// @Param sort_of query string false "Sort Of"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code [get]
 func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -73,6 +88,15 @@ func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWr
 	)
 }
 
+// @Summary Get Item Price Code By ID
+// @Description Get item price code by ID
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param item_price_code_id path int true "Item Price Code ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code/{item_price_code_id} [get]
 func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {
@@ -92,6 +116,15 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Item Price Code By Code
+// @Description Get item price code by code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param item_price_code path string true "Item Price Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code/by-code/{item_price_code} [get]
 func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCode := chi.URLParam(request, "item_price_code")
 
@@ -104,6 +137,15 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.Respons
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Item Price Code
+// @Description Save item price code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param body body masteritempayloads.SaveItemPriceCode true "Save Item Price Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code [post]
 func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.SaveItemPriceCode
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -121,6 +163,15 @@ func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)
 }
 
+// @Summary Delete Item Price Code
+// @Description Delete item price code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param item_price_code_id path int true "Item Price Code ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code/{item_price_code_id} [delete]
 func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {
@@ -140,6 +191,16 @@ func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, result, "Item Price Code deleted successfully!", http.StatusOK)
 }
 
+// @Summary Update Item Price Code
+// @Description Update item price code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param item_price_code_id path int true "Item Price Code ID"
+// @Param body body masteritempayloads.UpdateItemPriceCode true "Update Item Price Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code/{item_price_code_id} [put]
 func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.UpdateItemPriceCode
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -165,6 +226,15 @@ func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, result, "Item Price Code updated successfully!", http.StatusOK)
 }
 
+// @Summary Change Status Item Price Code
+// @Description Change status item price code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Param item_price_code_id path int true "Item Price Code ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code/{item_price_code_id} [patch]
 func (r *ItemPriceCodeControllerImpl) ChangeStatusItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {
@@ -184,6 +254,14 @@ func (r *ItemPriceCodeControllerImpl) ChangeStatusItemPriceCode(writer http.Resp
 	payloads.NewHandleSuccess(writer, result, "Item Price Code status changed successfully!", http.StatusOK)
 }
 
+// @Summary Get Item Price Code Drop Down
+// @Description Get item price code drop down
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Price Code
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-price-code/drop-down [get]
 func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeDropDown(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.ItemPriceCodeService.GetItemPriceCodeDropDown()

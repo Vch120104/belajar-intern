@@ -42,7 +42,9 @@ func NewPurchaseOrderControllerImpl(PurchaseOrderService transactionsparepartser
 //	@Description	REST API Purchase Order
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
 //	@Param			purchase_order_document_number		query		string	false	"purchase_order_document_number"
@@ -102,7 +104,9 @@ func (controller *PurchaseOrderControllerImpl) GetAllPurchaserOrderWithPaginatio
 //	@Description	REST API Get By Id Purchase Order
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			purchase_order_system_number		path		string	false	"purchase_order_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.PurchaseOrderGetByIdResponses
 //	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
@@ -124,7 +128,9 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrder(writer http.
 //	@Description	REST API Get Purchase Request Detail
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
 //	@Param			sort_by								query		string	false	"sort_by"
@@ -157,7 +163,9 @@ func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailByHeaderId(
 //	@Description	Create New Purchase Order Header
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -186,7 +194,9 @@ func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderHeader(writer htt
 //	@Description	Update Purchase Request order
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			purchase_order_system_number	path		int	true	"purchase_order_system_number"
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -215,7 +225,9 @@ func (controller *PurchaseOrderControllerImpl) UpdatePurchaseOrderHeader(writer 
 //	@Description	Get Purchase Order Detail Per Id
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			purchase_order_detail_system_number	path		int	true	"purchase_order_detail_system_number"	true	"Purchase Request Header Data"
 //	@Success		200						{object}	transactionsparepartpayloads.PurchaseOrderGetDetail
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -239,7 +251,9 @@ func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailById(writer
 //	@Description	Create New Purchase Order Detail
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderDetailPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -296,7 +310,9 @@ func (controller *PurchaseOrderControllerImpl) DeletePurchaseOrderDetailMultiId(
 //	@Description	Save Purchase Order Detail
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Purchase Order
+//
+// @Tags Transaction Sparepart: Purchase Order
+//
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads	true	"Purchase Request Detail Data"
 //	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse

@@ -36,7 +36,15 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 	}
 }
 
-// GetItemPackageByCode implements ItemPackageController.
+// @Summary Get Item Package By Code
+// @Description Retrieve an item package by its code
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Package
+// @Param item_package_code path string true "Item Package Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-package/{item_package_code} [get]
 func (r *ItemPackageControllerImpl) GetItemPackageByCode(writer http.ResponseWriter, request *http.Request) {
 	itemPackageCode := chi.URLParam(request, "item_package_code")
 
@@ -53,7 +61,7 @@ func (r *ItemPackageControllerImpl) GetItemPackageByCode(writer http.ResponseWri
 // @Description Retrieve all item packages with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Master : Item Package
+// @Tags Master Item : Item Package
 // @Param item_package_code query string false "Item Package Code"
 // @Param item_package_name query string false "Item Package Name"
 // @Param item_package_set query string false "Item Package Set"
@@ -116,7 +124,7 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 // @Description Retrieve an item package by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Item Package
+// @Tags Master Item : Item Package
 // @Param item_package_id path int true "Item Package ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -142,9 +150,9 @@ func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWrite
 // @Description Create or update an item package
 // @Accept json
 // @Produce json
-// @Tags Master : Item Package
+// @Tags Master Item : Item Package
 // @Param reqBody body masteritempayloads.SaveItemPackageRequest true "Form Request"
-// @Success 200 {object} payloads.Response
+// @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package/ [post]
 func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, request *http.Request) {
@@ -184,7 +192,7 @@ func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, 
 // @Description Change the status of an item package by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Item Package
+// @Tags Master Item : Item Package
 // @Param item_package_id path int true "Item Package ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

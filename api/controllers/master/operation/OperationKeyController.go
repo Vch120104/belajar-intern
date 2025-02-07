@@ -40,7 +40,7 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 // @Description REST API Operation Key
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Key
+// @Tags Master Operation : Operation Key
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_section_code query string false "operation_section_code"
@@ -95,7 +95,7 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Description REST API Operation Key
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Key
+// @Tags Master Operation : Operation Key
 // @Param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -121,7 +121,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWri
 // @Description REST API Operation Key
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Key
+// @Tags Master Operation : Operation Key
 // @Param operation_group_id query int true "operation_group_id"
 // @Param operation_section_id query int true "operation_section_id"
 // @Param operation_key_code query string true "operation_key_code"
@@ -153,7 +153,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 // @Description REST API Operation Key
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Key
+// @Tags Master Operation : Operation Key
 // @param reqBody body masteroperationpayloads.OperationKeyResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -196,7 +196,7 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 // @Description REST API Operation Key
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Key
+// @Tags Master Operation : Operation Key
 // @param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -219,6 +219,16 @@ func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.Respon
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Operation Key Dropdown
+// @Description REST API Operation Key
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Key
+// @Param operation_group_id path int true "operation_group_id"
+// @Param operation_section_id path int true "operation_section_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-key/drop-down/{operation_group_id}/{operation_section_id} [get]
 func (r *OperationKeyControllerImpl) GetOperationKeyDropdown(writer http.ResponseWriter, request *http.Request) {
 
 	operationGroupId, err := strconv.Atoi(chi.URLParam(request, "operation_group_id"))

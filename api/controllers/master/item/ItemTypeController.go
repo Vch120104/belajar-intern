@@ -37,7 +37,14 @@ func NewItemTypeController(itemTypeService masteritemservice.ItemTypeService) It
 	}
 }
 
-// GetItemTypeDropDown implements ItemTypeController.
+// @Summary Get All ItemType
+// @Description Get All ItemType
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type/drop-down [get]
 func (r *ItemTypeControllerImpl) GetItemTypeDropDown(writer http.ResponseWriter, request *http.Request) {
 	response, err := r.ItemTypeService.GetItemTypeDropDown()
 
@@ -49,7 +56,15 @@ func (r *ItemTypeControllerImpl) GetItemTypeDropDown(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetItemTypeByCode implements ItemTypeController.
+// @Summary Get ItemType By Code
+// @Description Get ItemType By Code
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @Param item_type_code path string true "Item Type Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type/code/{item_type_code} [get]
 func (r *ItemTypeControllerImpl) GetItemTypeByCode(writer http.ResponseWriter, request *http.Request) {
 	itemTypeCode := chi.URLParam(request, "item_type_code")
 
@@ -63,7 +78,15 @@ func (r *ItemTypeControllerImpl) GetItemTypeByCode(writer http.ResponseWriter, r
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetItemTypeById implements ItemTypeController.
+// @Summary Get ItemType By Id
+// @Description Get ItemType By Id
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @Param item_type_id path string true "Item Type Id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type/{item_type_id} [get]
 func (r *ItemTypeControllerImpl) GetItemTypeById(writer http.ResponseWriter, request *http.Request) {
 	itemTypeId, errA := strconv.Atoi(chi.URLParam(request, "item_type_id"))
 
@@ -82,7 +105,21 @@ func (r *ItemTypeControllerImpl) GetItemTypeById(writer http.ResponseWriter, req
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetAllItemType implements ItemTypeController.
+// @Summary Get All ItemType
+// @Description Get All ItemType
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @Param item_type_id query string false "Item Type Id"
+// @Param item_type_code query string false "Item Type Code"
+// @Param item_type_name query string false "Item Type Name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type [get]
 func (r *ItemTypeControllerImpl) GetAllItemType(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -119,7 +156,15 @@ func (r *ItemTypeControllerImpl) GetAllItemType(writer http.ResponseWriter, requ
 	)
 }
 
-// CreateItemType implements ItemTypeController to create new ItemType.
+// @Summary Create ItemType
+// @Description Create ItemType
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @param reqBody body masteritempayloads.ItemTypeRequest true "Form Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type [post]
 func (r *ItemTypeControllerImpl) CreateItemType(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemTypeRequest
 
@@ -145,7 +190,16 @@ func (r *ItemTypeControllerImpl) CreateItemType(writer http.ResponseWriter, requ
 	payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 }
 
-// SaveItemType implements ItemTypeController to update an existing ItemType.
+// @Summary Save ItemType
+// @Description Save ItemType
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @Param item_type_id path string true "Item Type Id"
+// @param reqBody body masteritempayloads.ItemTypeRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type/{item_type_id} [put]
 func (r *ItemTypeControllerImpl) SaveItemType(writer http.ResponseWriter, request *http.Request) {
 	itemTypeID, errA := strconv.Atoi(chi.URLParam(request, "item_type_id"))
 	if errA != nil {
@@ -178,7 +232,15 @@ func (r *ItemTypeControllerImpl) SaveItemType(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-// ChangeStatusItemType implements ItemTypeController.
+// @Summary Change Status ItemType
+// @Description Change Status ItemType
+// @Tags Master Item : Item Type
+// @Accept json
+// @Produce json
+// @Param item_type_id path string true "Item Type Id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-type/{item_type_id} [patch]
 func (r *ItemTypeControllerImpl) ChangeStatusItemType(writer http.ResponseWriter, request *http.Request) {
 	itemTypeId, errA := strconv.Atoi(chi.URLParam(request, "item_type_id"))
 

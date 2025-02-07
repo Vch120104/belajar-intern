@@ -35,7 +35,7 @@ func NewServiceWorkshopController(service transactionworkshopservice.ServiceWork
 // GetAll gets all service receipts
 // @Summary Get all service receipts
 // @Description Get all service receipts
-// @Tags Transaction : Workshop Service Receipts
+// @Tags Transaction Workshop : Service Receipts
 // @Accept json
 // @Produce json
 // @Param service_request_system_number query string false "Service receipts System Number"
@@ -50,7 +50,7 @@ func NewServiceWorkshopController(service transactionworkshopservice.ServiceWork
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-receipt [get]
+// @Router /v1/service-workshop [get]
 func (r *ServiceWorkshopControllerImp) GetAllByTechnicianWO(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -100,7 +100,7 @@ func (r *ServiceWorkshopControllerImp) GetAllByTechnicianWO(writer http.Response
 // StartService starts the service
 // @Summary Start the service
 // @Description Start the service
-// @Tags Transaction : Workshop Service Log
+// @Tags Transaction Workshop : Service Log
 // @Accept json
 // @Produce json
 // @Param service_log_system_number query int false "Service Log System Number"
@@ -109,7 +109,7 @@ func (r *ServiceWorkshopControllerImp) GetAllByTechnicianWO(writer http.Response
 // @Param company_id query int false "Company ID"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{service_log_system_number}/{company_id}/start [post]
+// @Router /v1/service-workshop/{technician_allocation_system_number}/{work_order_system_number}/{service_log_system_number}/{company_id}/start [post]
 func (r *ServiceWorkshopControllerImp) StartService(writer http.ResponseWriter, request *http.Request) {
 	// Extract parameters from URL
 	allocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
@@ -162,7 +162,7 @@ func (r *ServiceWorkshopControllerImp) StartService(writer http.ResponseWriter, 
 // PendingService pending the service
 // @Summary Pending the service
 // @Description Pending the service
-// @Tags Transaction : Workshop Service Log
+// @Tags Transaction Workshop : Service Log
 // @Accept json
 // @Produce json
 // @Param service_log_system_number query int false "Service Log System Number"
@@ -171,7 +171,7 @@ func (r *ServiceWorkshopControllerImp) StartService(writer http.ResponseWriter, 
 // @Param company_id query int false "Company ID"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending [post]
+// @Router /v1/service-workshop/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending [post]
 func (r *ServiceWorkshopControllerImp) PendingService(writer http.ResponseWriter, request *http.Request) {
 
 	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
@@ -210,7 +210,7 @@ func (r *ServiceWorkshopControllerImp) PendingService(writer http.ResponseWriter
 // TransferService transfer the service
 // @Summary Transfer the service
 // @Description Transfer the service
-// @Tags Transaction : Workshop Service Log
+// @Tags Transaction Workshop : Service Log
 // @Accept json
 // @Produce json
 // @Param service_log_system_number query int false "Service Log System Number"
@@ -219,8 +219,7 @@ func (r *ServiceWorkshopControllerImp) PendingService(writer http.ResponseWriter
 // @Param company_id query int false "Company ID"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer [post]
-
+// @Router /v1/service-workshop/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer [post]
 func (r *ServiceWorkshopControllerImp) TransferService(writer http.ResponseWriter, request *http.Request) {
 
 	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
@@ -259,7 +258,7 @@ func (r *ServiceWorkshopControllerImp) TransferService(writer http.ResponseWrite
 // StopService stops the service
 // @Summary Stop the service
 // @Description Stop the service
-// @Tags Transaction : Workshop Service Log
+// @Tags Transaction Workshop : Service Log
 // @Accept json
 // @Produce json
 // @Param service_log_system_number query int false "Service Log System Number"
@@ -268,7 +267,7 @@ func (r *ServiceWorkshopControllerImp) TransferService(writer http.ResponseWrite
 // @Param company_id query int false "Company ID"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop [post]
+// @Router /v1/service-workshop/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop [post]
 func (r *ServiceWorkshopControllerImp) StopService(writer http.ResponseWriter, request *http.Request) {
 
 	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))

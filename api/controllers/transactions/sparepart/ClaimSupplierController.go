@@ -8,9 +8,10 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type ClaimSupplierController interface {
@@ -28,6 +29,16 @@ type ClaimSupplierControllerImpl struct {
 func NewClaimSupplierControllerImpl(service transactionsparepartservice.ClaimSupplierService) ClaimSupplierController {
 	return &ClaimSupplierControllerImpl{service: service}
 }
+
+// @Summary Insert Item Claim
+// @Description Insert Item Claim
+// @Tags Transaction Sparepart: Claim Supplier
+// @Accept json
+// @Produce json
+// @Param InsertItemClaim body transactionsparepartpayloads.ClaimSupplierInsertPayload true "Insert Item Claim"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/cliam-supplier [post]
 func (controller *ClaimSupplierControllerImpl) InsertItemClaim(writer http.ResponseWriter, request *http.Request) {
 	var claimSupplierInsertPayload transactionsparepartpayloads.ClaimSupplierInsertPayload
 	helper.ReadFromRequestBody(request, &claimSupplierInsertPayload)
@@ -38,6 +49,16 @@ func (controller *ClaimSupplierControllerImpl) InsertItemClaim(writer http.Respo
 	}
 	payloads.NewHandleSuccess(writer, res, "Successfully Inserted item claim Header", http.StatusCreated)
 }
+
+// @Summary Insert Item Claim Detail
+// @Description Insert Item Claim Detail
+// @Tags Transaction Sparepart: Claim Supplier
+// @Accept json
+// @Produce json
+// @Param InsertItemClaimDetail body transactionsparepartpayloads.ClaimSupplierInsertDetailPayload true "Insert Item Claim Detail"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/cliam-supplier/detail [post]
 func (controller *ClaimSupplierControllerImpl) InsertItemClaimDetail(writer http.ResponseWriter, request *http.Request) {
 	var claimSupplierDetailInsertPayload transactionsparepartpayloads.ClaimSupplierInsertDetailPayload
 	helper.ReadFromRequestBody(request, &claimSupplierDetailInsertPayload)
@@ -50,6 +71,16 @@ func (controller *ClaimSupplierControllerImpl) InsertItemClaimDetail(writer http
 	payloads.NewHandleSuccess(writer, res, "Successfully Inserted item claim Header", http.StatusCreated)
 
 }
+
+// @Summary Get Item Claim By ID
+// @Description Get Item Claim By ID
+// @Tags Transaction Sparepart: Claim Supplier
+// @Accept json
+// @Produce json
+// @Param claim_system_number path string true "Claim System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/cliam-supplier/{claim_system_number} [get]
 func (controller *ClaimSupplierControllerImpl) GetItemClaimById(writer http.ResponseWriter, request *http.Request) {
 	claimIdStr := chi.URLParam(request, "claim_system_number")
 	claimId, errs := strconv.Atoi(claimIdStr)
@@ -64,6 +95,16 @@ func (controller *ClaimSupplierControllerImpl) GetItemClaimById(writer http.Resp
 	}
 	payloads.NewHandleSuccess(writer, res, "Successfully Inserted item claim Header", http.StatusCreated)
 }
+
+// @Summary Submit Item Claim
+// @Description Submit Item Claim
+// @Tags Transaction Sparepart: Claim Supplier
+// @Accept json
+// @Produce json
+// @Param claim_system_number path string true "Claim System Number"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/cliam-supplier/submit/{claim_system_number} [post]
 func (controller *ClaimSupplierControllerImpl) SubmitItemClaim(writer http.ResponseWriter, request *http.Request) {
 	claimId := chi.URLParam(request, "claim_system_number")
 	claimIds, err := strconv.Atoi(claimId)
@@ -81,6 +122,24 @@ func (controller *ClaimSupplierControllerImpl) SubmitItemClaim(writer http.Respo
 	payloads.NewHandleSuccess(writer, res, "Successfully Submitted item claim Header", http.StatusCreated)
 }
 
+// @Summary Get All Item Claim
+// @Description Get All Item Claim
+// @Tags Transaction Sparepart: Claim Supplier
+// @Accept json
+// @Produce json
+// @Param claim_system_number query string false "Claim System Number"
+// @Param goods_receive_document_number query string false "Goods Receive Document Number"
+// @Param vehicle_brand_id query string false "Vehicle Brand ID"
+// @Param profit_center_id query string false "Profit Center ID"
+// @Param claim_document_number query string false "Claim Document Number"
+// @Param reference_document_number query string false "Reference Document Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/cliam-supplier [get]
 func (controller *ClaimSupplierControllerImpl) GetAllItemClaim(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -108,6 +167,19 @@ func (controller *ClaimSupplierControllerImpl) GetAllItemClaim(writer http.Respo
 
 }
 
+// @Summary Get Item Claim Detail By Header ID
+// @Description Get Item Claim Detail By Header ID
+// @Tags Transaction Sparepart: Claim Supplier
+// @Accept json
+// @Produce json
+// @Param claim_system_number query string false "Claim System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/cliam-supplier/detail [get]
 func (controller *ClaimSupplierControllerImpl) GetItemClaimDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{

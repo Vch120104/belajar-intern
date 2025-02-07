@@ -43,7 +43,7 @@ func NewMarkupRateController(markupRateService masteritemservice.MarkupRateServi
 // @Description REST API Markup Rate
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Rate
+// @Tags Master Item : Markup Rate
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -100,7 +100,7 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 // @Description REST API Markup Rate
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Rate
+// @Tags Master Item : Markup Rate
 // @Param markup_rate_id path int true "markup_rate_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -128,7 +128,7 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 // @Description REST API Markup Rate
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Rate
+// @Tags Master Item : Markup Rate
 // @param reqBody body masteritempayloads.MarkupRateRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -169,7 +169,7 @@ func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, re
 // @Description REST API Markup Rate
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Rate
+// @Tags Master Item : Markup Rate
 // @param markup_rate_id path int true "markup_rate_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -193,6 +193,16 @@ func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Markup Rate By Markup Master And Order Type
+// @Description REST API Markup Rate
+// @Accept json
+// @Produce json
+// @Tags Master Item : Markup Rate
+// @Param markup_master_id path int true "markup_master_id"
+// @Param order_type_id path int true "order_type_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-rate/markup-master/{markup_master_id}/order-type/{order_type_id} [get]
 func (r *MarkupRateControllerImpl) GetMarkupRateByMarkupMasterAndOrderType(writer http.ResponseWriter, request *http.Request) {
 
 	markupMasterId, errA := strconv.Atoi(chi.URLParam(request, "markup_master_id"))

@@ -75,7 +75,15 @@ func (l *LocationStockControlerImpl) GetViewLocationStock(writer http.ResponseWr
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfull", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
-// location-stock [put]
+// @Summary Update Location Stock
+// @Description REST API Location Stock
+// @Accept json
+// @Produce json
+// @Tags Master : Location Stock
+// @Param request body masterwarehousepayloads.LocationStockUpdatePayloads true "Location Stock Update Payloads"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/location-stock/ [put]
 func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWriter, request *http.Request) {
 	var locationStockPayloads masterwarehousepayloads.LocationStockUpdatePayloads
 
@@ -95,6 +103,22 @@ func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWri
 	}
 	payloads.NewHandleSuccess(writer, res, "success to update location stock", http.StatusOK)
 }
+
+// @Summary Get Available Quantity
+// @Description REST API Location Stock
+// @Accept json
+// @Produce json
+// @Tags Master : Location Stock
+// @Param period_date query string true "period_date"
+// @Param company_id query string false "company_id"
+// @Param warehouse_id query string false "warehouse_id"
+// @Param location_id query string false "location_id"
+// @Param item_id query string false "item_id"
+// @Param warehouse_group_id query string false "warehouse_group_id"
+// @Param uom_id query string false "uom_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/location-stock/available-quantity [get]
 func (l *LocationStockControlerImpl) GetAvailableQuantity(writer http.ResponseWriter, request *http.Request) {
 
 	filter := masterwarehousepayloads.GetAvailableQuantityPayload{}

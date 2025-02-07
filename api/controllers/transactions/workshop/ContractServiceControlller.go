@@ -35,6 +35,26 @@ func NewContractServiceController(ContractServiceService transactionworkshopserv
 	}
 }
 
+// @Summary Get All Contract Service
+// @Description Retrieve all contract service with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service
+// @Param company_code query string false "Company Code"
+// @Param contract_serv_doc_no query string false "Contract Service Document Number"
+// @Param date_from query string false "Date From"
+// @Param date_to query string false "Date To"
+// @Param vehicle_brand query string false "Vehicle Brand"
+// @Param model_code query string false "Model Code"
+// @Param tnkb query string false "TNKB"
+// @Param contract_serv_status query string false "Contract Service Status"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service [get]
 func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -79,7 +99,20 @@ func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, reque
 	)
 }
 
-// GetById implements ContractServiceController.
+// @Summary Get Contract Service by ID
+// @Description Retrieve contract service by ID with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Param contract_service_system_number query string false "Contract Service System Number"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service/{contract_service_system_number} [get]
 func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 	idstr := chi.URLParam(request, "contract_service_system_number")
 	id, err := strconv.Atoi(idstr)
@@ -118,7 +151,15 @@ func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, requ
 	payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
 }
 
-// Save implements ContractServiceController.
+// @Summary Save Contract Service
+// @Description Save contract service
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service
+// @Param body body transactionworkshoppayloads.ContractServiceInsert true "Contract Service Insert"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service [post]
 func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var contractServiceInsert transactionworkshoppayloads.ContractServiceInsert
 	helper.ReadFromRequestBody(request, &contractServiceInsert)
@@ -136,7 +177,15 @@ func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request
 	payloads.NewHandleSuccess(writer, result, "Contract Service Saved Successfully", http.StatusOK)
 }
 
-// Void implements ContractServiceController.
+// @Summary Void Contract Service
+// @Description Void contract service
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service/{contract_service_system_number} [delete]
 func (r *ContractServiceControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	workOrderIdStr := chi.URLParam(request, "contract_service_system_number")
 	workOrderId, err := strconv.Atoi(workOrderIdStr)
@@ -162,7 +211,15 @@ func (r *ContractServiceControllerImpl) Void(writer http.ResponseWriter, request
 	}
 }
 
-// Submit implements ContractServiceController.
+// @Summary Submit Contract Service
+// @Description Submit contract service
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service/{contract_service_system_number} [put]
 func (r *ContractServiceControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
 	Id, _ := strconv.Atoi(chi.URLParam(request, "contract_service_system_number"))
 	res, err := r.ContractServiceService.Submit(Id)

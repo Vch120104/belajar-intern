@@ -4,8 +4,9 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
-	"github.com/go-chi/chi/v5"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type WarehouseCostingTypeController interface {
@@ -18,6 +19,16 @@ type WarehouseCostingTypeControllerImpl struct {
 func NewWarehouseCostingTypeController(CostingService masterwarehouseservice.WarehouseCostingTypeService) WarehouseCostingTypeController {
 	return &WarehouseCostingTypeControllerImpl{CostingService: CostingService}
 }
+
+// @Summary Get Warehouse Costing Type By Code
+// @Description Get Warehouse Costing Type By Code
+// @Tags Master Warehouse : Costing Type
+// @Accept json
+// @Produce json
+// @Param warehouse-costing-type-code path string true "Warehouse Costing Type Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-costing-type/by-code/{warehouse-costing-type-code} [get]
 func (w *WarehouseCostingTypeControllerImpl) GetWarehouseCostingTypeByCode(writer http.ResponseWriter, request *http.Request) {
 	CostingTypeCode := chi.URLParam(request, "warehouse-costing-type-code")
 

@@ -47,7 +47,7 @@ func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transaction
 // @Description Retrieve all atpm claim registrations with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param atpm_claim_registration_number query string false "ATPM Claim Registration Number"
 // @Param atpm_claim_registration_document_number query string false "ATPM Claim Registration Document Number"
 // @Param page query string true "Page number"
@@ -98,7 +98,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAll(writer http.ResponseWriter,
 // @Description Retrieve atpm claim registration by id
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path string true "ATPM Claim Registration ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -139,7 +139,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetById(writer http.ResponseWriter
 // @Description Create new atpm claim registration
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param body body transactionworkshoppayloads.AtpmClaimRegistrationRequest true "Atpm Claim Registration Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -167,7 +167,7 @@ func (r *AtpmClaimRegistrationControllerImpl) New(writer http.ResponseWriter, re
 // @Description Update atpm claim registration
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path string true "ATPM Claim Registration ID"
 // @Param body body transactionworkshoppayloads.AtpmClaimRegistrationRequestSave true "Atpm Claim Registration Request"
 // @Success 200 {object} payloads.Response
@@ -203,7 +203,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Save(writer http.ResponseWriter, r
 // @Description Submit atpm claim registration
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path string true "ATPM Claim Registration ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -231,7 +231,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Submit(writer http.ResponseWriter,
 // @Description Void atpm claim registration
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -259,7 +259,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Void(writer http.ResponseWriter, r
 // @Description Retrieve all service history with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -308,7 +308,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllServiceHistory(writer http.R
 // @Description Retrieve all claim history with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -357,7 +357,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllClaimHistory(writer http.Res
 // @Description Retrieve all detail with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -413,7 +413,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllDetail(writer http.ResponseW
 // @Description Retrieve detail by id
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
 // @Param claim_system_number path int true "ATPM Claim ID"
 // @Success 200 {object} payloads.Response
@@ -472,7 +472,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetDetailById(writer http.Response
 // @Description Add new detail
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param body body transactionworkshoppayloads.AtpmClaimDetailRequest true "Atpm Claim Detail Request"
 // @Success 200 {object} payloads.Response
@@ -508,7 +508,7 @@ func (r *AtpmClaimRegistrationControllerImpl) AddDetail(writer http.ResponseWrit
 // @Description Delete detail
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop ATPM Claim Registration
+// @Tags Transaction Workshop : ATPM Claim Registration
 // @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
 // @Param claim_system_number path int true "ATPM Claim ID"
 // @Success 200 {object} payloads.Response
