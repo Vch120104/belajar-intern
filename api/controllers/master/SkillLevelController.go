@@ -175,6 +175,16 @@ func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Skill Level
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @param skill_level_id path int true "skill_level_id"
+// @param reqBody body masterpayloads.SkillLevelResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/skill-level/{skill_level_id} [put]
 func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, request *http.Request) {
 	skill_level_id, errA := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
@@ -193,6 +203,15 @@ func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Skill Level By Code
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @param skill_level_code path string true "skill_level_code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/skill-level/{skill_level_code} [get]
 func (r *SkillLevelControllerImpl) GetSkillLevelByCode(writer http.ResponseWriter, request *http.Request) {
 	skillLevelCode := chi.URLParam(request, "skill_level_code")
 

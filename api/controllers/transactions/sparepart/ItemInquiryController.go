@@ -29,6 +29,33 @@ func NewItemInquiryController(itemInquiryService transactionsparepartservice.Ite
 	}
 }
 
+// @Summary Get All Item Inquiry
+// @Description Get All Item Inquiry
+// @Tags Transaction Sparepart: Item Inquiry
+// @Accept json
+// @Produce json
+// @Param company_id query string true "Company ID"
+// @Param company_session_id query string true "Company Session ID"
+// @Param item_id query string false "Item ID"
+// @Param brand_id query string false "Brand ID"
+// @Param model_id query string false "Model ID"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param item_class_id query string false "Item Class ID"
+// @Param available_quantity_from query string false "Available Quantity From"
+// @Param available_quantity_to query string false "Available Quantity To"
+// @Param sales_price_from query string false "Sales Price From"
+// @Param sales_price_to query string false "Sales Price To"
+// @Param warehouse_group_id query string false "Warehouse Group ID"
+// @Param warehouse_id query string false "Warehouse ID"
+// @Param warehouse_location_id query string false "Warehouse Location ID"
+// @Param limit query string false "Limit"
+// @Param page query string false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-inquiry [get]
 func (i *ItemInquiryControllerImpl) GetAllItemInquiry(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -77,6 +104,21 @@ func (i *ItemInquiryControllerImpl) GetAllItemInquiry(writer http.ResponseWriter
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result.Rows), "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get Item Inquiry By ID
+// @Description Get Item Inquiry By ID
+// @Tags Transaction Sparepart: Item Inquiry
+// @Accept json
+// @Produce json
+// @Param item_id query string true "Item ID"
+// @Param company_id query string true "Company ID"
+// @Param warehouse_id query string false "Warehouse ID"
+// @Param warehouse_location_id query string false "Warehouse Location ID"
+// @Param brand_id query string true "Brand ID"
+// @Param currency_id query string true "Currency ID"
+// @Param company_session_id query string true "Company Session ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-inquiry/by-id [get]
 func (i *ItemInquiryControllerImpl) GetByIdItemInquiry(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 

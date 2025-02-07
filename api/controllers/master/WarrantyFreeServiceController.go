@@ -178,6 +178,16 @@ func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writ
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Warranty Free Service
+// @Description Update a warranty free service
+// @Accept json
+// @Produce json
+// @Tags Master : Warranty Free Service
+// @Param warranty_free_services_id path int true "Warranty Free Service ID"
+// @Param reqBody body masterentities.WarrantyFreeService true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warranty-free-service/{warranty_free_services_id} [put]
 func (r *WarrantyFreeServiceControllerImpl) UpdateWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 	warranty_free_services_id, errA := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
 	if errA != nil {

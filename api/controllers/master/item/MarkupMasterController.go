@@ -46,7 +46,7 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Master
+// @Tags Master Item : Markup Master
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param markup_master_code query string false "markup_master_code"
@@ -84,6 +84,15 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get Markup Master by ID
+// @Description REST API Markup Master
+// @Accept json
+// @Produce json
+// @Tags Master Item : Markup Master
+// @Param markup_master_id path int true "markup_master_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/{markup_master_id} [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request) {
 
 	markupMasterId, errA := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
@@ -107,7 +116,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWri
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Master
+// @Tags Master Item : Markup Master
 // @Param markup_master_code path string true "markup_master_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -126,6 +135,14 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Markup Master is Active
+// @Description REST API Markup Master
+// @Accept json
+// @Produce json
+// @Tags Master Item : Markup Master
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/dropdown [get]
 func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.markupMasterService.GetAllMarkupMasterIsActive()
@@ -142,7 +159,7 @@ func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.Resp
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Master
+// @Tags Master Item : Markup Master
 // @param reqBody body masteritempayloads.MarkupMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -183,7 +200,7 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master : Markup Master
+// @Tags Master Item : Markup Master
 // @param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

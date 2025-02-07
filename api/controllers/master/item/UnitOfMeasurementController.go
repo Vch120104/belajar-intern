@@ -38,7 +38,15 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 	}
 }
 
-// GetUnitOfMeasurementById implements UnitOfMeasurementController.
+// @Summary Get Unit Of Measurement By Id
+// @Description	REST API Unit Of Measurement
+// @Accept json
+// @Produce	json
+// @Tags Master Item : Unit Of Measurement
+// @Param uom_id path string true "uom_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/unit-of-measurement/{uom_id} [get]
 func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request) {
 	uomId, errA := strconv.Atoi(chi.URLParam(request, "uom_id"))
 
@@ -61,7 +69,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.R
 // @Description	REST API Unit Of Measurement
 // @Accept			json
 // @Produce		json
-// @Tags			Master : Unit Of Measurement
+// @Tags Master Item : Unit Of Measurement
 // @Param			page					query		string	true	"page"
 // @Param			limit					query		string	true	"limit"
 // @Param			is_active				query		string	false	"is_active"	Enums(true, false)
@@ -105,7 +113,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 // @Description	REST API Unit Of Measurement
 // @Accept			json
 // @Produce		json
-// @Tags			Master : Unit Of Measurement
+// @Tags Master Item : Unit Of Measurement
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 // @Router			/v1/unit-of-measurement/drop-down [get]
@@ -125,7 +133,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 // @Description	REST API Unit Of Measurement
 // @Accept			json
 // @Produce		json
-// @Tags			Master : Unit Of Measurement
+// @Tags Master Item : Unit Of Measurement
 // @Param			uom_code				path		string	true	"uom_code"
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -147,7 +155,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 // @Description	REST API Unit Of Measurement
 // @Accept			json
 // @Produce		json
-// @Tags			Master : Unit Of Measurement
+// @Tags Master Item : Unit Of Measurement
 // @param			reqBody					body		masteritempayloads.UomResponse	true	"Form Request"
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -189,7 +197,7 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 // @Description	REST API Unit Of Measurement
 // @Accept			json
 // @Produce		json
-// @Tags			Master : Unit Of Measurement
+// @Tags Master Item : Unit Of Measurement
 // @param			uom_id					path		int	true	"uom_id"
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -216,7 +224,7 @@ func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer h
 // @Description	REST API Unit Of Measurement Item
 // @Accept			json
 // @Produce		json
-// @Tags			Master : Unit Of Measurement
+// @Tags Master Item : Unit Of Measurement
 // @Param			item_id					path		string	true	"item_id"
 // @Param			source_type				path		string	true	"source_type"
 // @Success		200						{object}	masteritempayloads.UomItemResponses
@@ -241,6 +249,18 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementItem(writer http.R
 	payloads.NewHandleSuccess(writer, response, "Get Data Success!", http.StatusOK)
 
 }
+
+// @Summary		Get Quantity Conversion
+// @Description	REST API Unit Of Measurement
+// @Accept			json
+// @Produce		json
+// @Tags Master Item : Unit Of Measurement
+// @Param			source_type				query		string	true	"source_type"
+// @Param			item_id					query		int		true	"item_id"
+// @Param			quantity				query		float64	true	"quantity"
+// @Success		200						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/get_quantity_conversion [get]
 func (r *UnitOfMeasurementControllerImpl) GetQuantityConversion(writer http.ResponseWriter, request *http.Request) {
 	//var formRequest masteritempayloads.UomItemRequest
 	//groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName

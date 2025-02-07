@@ -35,7 +35,19 @@ func NewContractServiceDetailController(contractServiceDetailService transaction
 	}
 }
 
-// GetAllDetail implements ContractServiceDetailController.
+// @Summary Get All Contract Service Detail
+// @Description Retrieve all contract service detail with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service Detail
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Param limit query string true "Items per page"
+// @Param page query string true "Page number"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service-detail/{contract_service_system_number} [get]
 func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -79,7 +91,15 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 	)
 }
 
-// GetById implements ContractServiceDetailController.
+// @Summary Get Contract Service Detail By ID
+// @Description Retrieve contract service detail by ID
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service Detail
+// @Param contract_service_package_detail_system_number path string true "Contract Service Package Detail System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service-detail/{contract_service_package_detail_system_number} [get]
 func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 	Id, _ := strconv.Atoi(chi.URLParam(request, "contract_service_package_detail_system_number"))
 
@@ -92,7 +112,15 @@ func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
 
-// SaveDetail implements ContractServiceDetailController.
+// @Summary Save Contract Service Detail
+// @Description Save contract service detail
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service Detail
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service-detail/{contract_service_system_number} [post]
 func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWriter, request *http.Request) {
 	formRequest := transactionworkshoppayloads.ContractServiceIdResponse{}
 
@@ -117,7 +145,16 @@ func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusCreated) // Menggunakan StatusCreated (201)
 }
 
-// UpdateDetail implements ContractServiceDetailController.
+// @Summary Update Contract Service Detail
+// @Description Update contract service detail
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service Detail
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Param contract_service_line path string true "Contract Service Line"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service-detail/{contract_service_system_number}/{contract_service_line} [put]
 func (c *ContractServiceDetailControllerImpl) UpdateDetail(writer http.ResponseWriter, request *http.Request) {
 	contractServiceSystemNumber, err := strconv.Atoi(chi.URLParam(request, "contract_service_system_number"))
 	if err != nil {
@@ -162,7 +199,16 @@ func (c *ContractServiceDetailControllerImpl) UpdateDetail(writer http.ResponseW
 	}
 }
 
-// DeleteDetail implements ContractServiceDetailController.
+// @Summary Delete Contract Service Detail
+// @Description Delete contract service detail
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : Contract Service Detail
+// @Param contract_service_system_number path string true "Contract Service System Number"
+// @Param package_code path string true "Package Code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/contract-service-detail/{contract_service_system_number}/{package_code} [delete]
 func (c *ContractServiceDetailControllerImpl) DeleteDetail(writer http.ResponseWriter, request *http.Request) {
 	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_system_number")
 	packageCode := chi.URLParam(request, "package_code")

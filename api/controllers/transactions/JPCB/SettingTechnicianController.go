@@ -37,6 +37,21 @@ func NewSettingTechnicianController(SettingTechnicianServ transactionjpcbservice
 	}
 }
 
+// @Summary Get All Setting Technician
+// @Description Get All Setting Technician
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param effective_date query string false "Effective Date"
+// @Param setting_technician_system_number query string false "Setting Technician System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician [get]
 func (r *SettingTechnicianControllerImpl) GetAllSettingTechnician(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -61,6 +76,17 @@ func (r *SettingTechnicianControllerImpl) GetAllSettingTechnician(writer http.Re
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get All Setting Technician Detail
+// @Description Get All Setting Technician Detail
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param setting_technician_system_number query string false "Setting Technician System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician/detail [get]
 func (r *SettingTechnicianControllerImpl) GetAllSettingTechinicianDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -81,6 +107,15 @@ func (r *SettingTechnicianControllerImpl) GetAllSettingTechinicianDetail(writer 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get Setting Technician By ID
+// @Description Get Setting Technician By ID
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param setting_technician_system_number path string true "Setting Technician System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician/{setting_technician_system_number} [get]
 func (r *SettingTechnicianControllerImpl) GetSettingTechnicianById(writer http.ResponseWriter, request *http.Request) {
 	settingTechnicianId, _ := strconv.Atoi(chi.URLParam(request, "setting_technician_system_number"))
 
@@ -93,6 +128,15 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianById(writer http.R
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Get Setting Technician Detail By ID
+// @Description Get Setting Technician Detail By ID
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param setting_technician_detail_system_number path string true "Setting Technician Detail System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician/detail/{setting_technician_detail_system_number} [get]
 func (r *SettingTechnicianControllerImpl) GetSettingTechnicianDetailById(writer http.ResponseWriter, request *http.Request) {
 	settingTechnicianDetailId, _ := strconv.Atoi(chi.URLParam(request, "setting_technician_detail_system_number"))
 
@@ -105,6 +149,16 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianDetailById(writer 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Get Setting Technician By Company Date
+// @Description Get Setting Technician By Company Date
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param company_id path string true "Company ID"
+// @Param effective_date path string true "Effective Date"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician/{company_id}/{effective_date} [get]
 func (r *SettingTechnicianControllerImpl) GetSettingTechnicianByCompanyDate(writer http.ResponseWriter, request *http.Request) {
 	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
 	effectiveDate, _ := time.Parse(time.RFC3339, chi.URLParam(request, "effective_date"))
@@ -117,6 +171,15 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianByCompanyDate(writ
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Save Setting Technician Detail
+// @Description Save Setting Technician Detail
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param request body transactionjpcbpayloads.SettingTechnicianDetailSaveRequest true "Setting Technician Detail Save Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician/detail [post]
 func (r *SettingTechnicianControllerImpl) SaveSettingTechnicianDetail(writer http.ResponseWriter, request *http.Request) {
 	formRequest := transactionjpcbpayloads.SettingTechnicianDetailSaveRequest{}
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -139,6 +202,16 @@ func (r *SettingTechnicianControllerImpl) SaveSettingTechnicianDetail(writer htt
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusOK)
 }
 
+// @Summary Update Setting Technician Detail
+// @Description Update Setting Technician Detail
+// @Tags Transaction JPCB: Setting Technician
+// @Accept json
+// @Produce json
+// @Param setting_technician_detail_system_number path string true "Setting Technician Detail System Number"
+// @Param request body transactionjpcbpayloads.SettingTechnicianDetailUpdateRequest true "Setting Technician Detail Update Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/setting-technician/detail/{setting_technician_detail_system_number} [put]
 func (r *SettingTechnicianControllerImpl) UpdateSettingTechnicianDetail(writer http.ResponseWriter, request *http.Request) {
 	settingTechnicianDetailId, _ := strconv.Atoi(chi.URLParam(request, "setting_technician_detail_system_number"))
 	formRequest := transactionjpcbpayloads.SettingTechnicianDetailUpdateRequest{}

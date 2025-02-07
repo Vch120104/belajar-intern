@@ -6,9 +6,10 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type VehicleHistoryController interface {
@@ -29,7 +30,9 @@ func NewVehicleHistoryController(VehicleHIstoryService transactionworkshopservic
 //	@Description	REST API Vehicle History
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Vehicle History
+//
+// @Tags Transaction Workshop : Vehicle History
+//
 //	@Param			page					query		string	true	"page"
 //	@Param			limit					query		string	true	"limit"
 //	@Param			vehicle_model			query		string	false	"vehicle_model"
@@ -67,7 +70,9 @@ func (r *VehicleHistoryControllerImpl) GetAllFieldVehicleHistory(writer http.Res
 //	@Description	REST API Vehicle History
 //	@Accept			json
 //	@Produce		json
-//	@Tags			Transaction : Vehicle History
+//
+// @Tags Transaction Workshop : Vehicle History
+//
 //	@Param			work_order_system_number_id	path		int true	"work_order_system_number_id"
 //	@Success		200							{object}	transactionworkshoppayloads.VehicleHistoryByIdResponses
 //	@Failure		500,400,401,404,403,422		{object}	exceptions.BaseErrorResponse
