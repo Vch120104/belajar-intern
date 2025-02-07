@@ -11,11 +11,12 @@ import (
 )
 
 // test
+//
 //	@title			DMS After-Sales API
 //	@version		v1
 //	@license		AGPLv3
 //	@description	This is a DMS After-Sales API Server.
-
+//	 @basePath		/aftersales-service
 func main() {
 	args := os.Args
 	env := ""
