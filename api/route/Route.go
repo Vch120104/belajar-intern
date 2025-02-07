@@ -707,7 +707,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/lookup", LookupRouter)
 	})
 	// Route untuk Swagger
-	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
+	r.Mount("/docs", httpSwagger.WrapHandler)
 	// Route untuk Prometheus metrics
 	r.Mount("/metrics", promhttp.Handler())
 

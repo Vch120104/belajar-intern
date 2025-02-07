@@ -16,6 +16,8 @@ import (
 //	@version		v1
 //	@license		AGPLv3
 //	@description	This is a DMS After-Sales API Server.
+//
+// @BasePath /aftersales-service
 func main() {
 	args := os.Args
 	env := ""
