@@ -65,7 +65,7 @@ func NewLookupController(LookupService masterservice.LookupService) LookupContro
 
 // @Summary Get Opr Item Price
 // @Description Get Opr Item Price
-// @Tags Master Lookup : Opr Item Price
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
@@ -160,7 +160,7 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 
 // @Summary Get Opr Item Price By Code
 // @Description Get Opr Item Price By Code
-// @Tags Master Lookup : Opr Item Price
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
@@ -234,7 +234,7 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 
 // @Summary Get Opr Item Price By ID
 // @Description Get Opr Item Price By ID
-// @Tags Master Lookup : Opr Item Price
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
@@ -290,7 +290,7 @@ func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, reque
 
 // @Summary Get Opr Item Price With Price
 // @Description Get Opr Item Price With Price
-// @Tags Master Lookup : Opr Item Price
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
@@ -431,7 +431,7 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 
 // @Summary Get Vehicle Unit Master
 // @Description Get Vehicle Unit Master
-// @Tags Master Lookup : Vehicle Unit Master
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param brand_id path int true "Brand ID"
@@ -491,7 +491,7 @@ func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, req
 
 // @Summary Get Vehicle Unit By ID
 // @Description Get Vehicle Unit By ID
-// @Tags Master Lookup : Vehicle Unit Master
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param vehicle_id path int true "Vehicle ID"
@@ -541,7 +541,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 
 // @Summary Get Vehicle Unit By Chassis Number
 // @Description Get Vehicle Unit By Chassis Number
-// @Tags Master Lookup : Vehicle Unit Master
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param vehicle_chassis_number path string true "Vehicle Chassis Number"
@@ -589,7 +589,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.Respons
 
 // @Summary Get Campaign Master
 // @Description Get Campaign Master
-// @Tags Master Lookup : Campaign Master
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id path int true "Company ID"
@@ -641,7 +641,7 @@ func (r *LookupControllerImpl) GetCampaignMaster(writer http.ResponseWriter, req
 
 // @Summary Work Order Service
 // @Description Work Order Service
-// @Tags Master Lookup : Work Order Service
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param limit query int false "Limit"
@@ -687,7 +687,7 @@ func (r *LookupControllerImpl) WorkOrderService(writer http.ResponseWriter, requ
 
 // @Summary Work Order ATPM Registration
 // @Description Work Order ATPM Registration
-// @Tags Master Lookup : Work Order ATPM Registration
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param limit query int false "Limit"
@@ -734,7 +734,7 @@ func (r *LookupControllerImpl) WorkOrderAtpmRegistration(writer http.ResponseWri
 
 // @Summary Customer By Type And Address By ID
 // @Description Customer By Type And Address By ID
-// @Tags Master Lookup : Customer By Type And Address
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param customer_id path int true "Customer ID"
@@ -786,7 +786,7 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByID(writer http.Response
 
 // @Summary Customer By Type And Address
 // @Description Customer By Type And Address
-// @Tags Master Lookup : Customer By Type And Address
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param limit query int false "Limit"
@@ -830,7 +830,7 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddress(writer http.ResponseWrit
 
 // @Summary Customer By Type And Address By Code
 // @Description Customer By Type And Address By Code
-// @Tags Master Lookup : Customer By Type And Address
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param customer_code path string true "Customer Code"
@@ -882,7 +882,7 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.Respon
 // GetLineTypeByItemCode godoc
 // @Summary Get Line Type By Item Code
 // @Description Get Line Type By Item Code
-// @Tags Master Lookup : Get Line Type By Item Code
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param item_code path string true "Item Code"
@@ -911,7 +911,7 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 
 // @Summary List Item Location
 // @Description List Item Location
-// @Tags Master Lookup : List Item Location
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id query int true "Company ID"
@@ -961,7 +961,7 @@ func (r *LookupControllerImpl) ListItemLocation(writer http.ResponseWriter, requ
 
 // @Summary Warehouse Group By Company
 // @Description Warehouse Group By Company
-// @Tags Master Lookup : Warehouse Group By Company
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id path int true "Company ID"
@@ -986,7 +986,7 @@ func (r *LookupControllerImpl) WarehouseGroupByCompany(writer http.ResponseWrite
 
 // @Summary Item List Trans
 // @Description Item List Trans
-// @Tags Master Lookup : Item List Trans
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param item_code query string false "Item Code"
@@ -1040,7 +1040,7 @@ func (r *LookupControllerImpl) ItemListTrans(writer http.ResponseWriter, request
 
 // @Summary Item List Trans PL
 // @Description Item List Trans PL
-// @Tags Master Lookup : Item List Trans PL
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id query int true "Company ID"
@@ -1113,7 +1113,7 @@ func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, reque
 
 // @Summary Reference Type Work Order
 // @Description Reference Type Work Order
-// @Tags Master Lookup : Reference Type Work Order
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param work_order_system_number query string false "Work Order System Number"
@@ -1177,7 +1177,7 @@ func (r *LookupControllerImpl) ReferenceTypeWorkOrder(writer http.ResponseWriter
 
 // @Summary Reference Type Work Order By ID
 // @Description Reference Type Work Order By ID
-// @Tags Master Lookup : Reference Type Work Order
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param work_order_system_number path int true "Work Order System Number"
@@ -1231,7 +1231,7 @@ func (r *LookupControllerImpl) ReferenceTypeWorkOrderByID(writer http.ResponseWr
 
 // @Summary Reference Type Sales Order
 // @Description Reference Type Sales Order
-// @Tags Master Lookup : Reference Type Sales Order
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param work_order_system_number query string false "Work Order System Number"
@@ -1295,7 +1295,7 @@ func (r *LookupControllerImpl) ReferenceTypeSalesOrder(writer http.ResponseWrite
 
 // @Summary Reference Type Sales Order By ID
 // @Description Reference Type Sales Order By ID
-// @Tags Master Lookup : Reference Type Sales Order
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path int true "Sales Order System Number"
@@ -1349,7 +1349,7 @@ func (r *LookupControllerImpl) ReferenceTypeSalesOrderByID(writer http.ResponseW
 
 // @Summary Get Line Type By Reference Type
 // @Description Get Line Type By Reference Type
-// @Tags Master Lookup : Get Line Type By Reference Type
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param reference_type_id path int true "Reference Type ID"
@@ -1391,7 +1391,7 @@ func (r *LookupControllerImpl) GetLineTypeByReferenceType(writer http.ResponseWr
 
 // @Summary Location Available
 // @Description Location Available
-// @Tags Master Lookup : Location Available
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id query int true "Company ID"
@@ -1449,7 +1449,7 @@ func (r *LookupControllerImpl) LocationAvailable(writer http.ResponseWriter, req
 
 // @Summary Item Detail For Item Inquiry
 // @Description Item Detail For Item Inquiry
-// @Tags Master Lookup : Item Detail For Item Inquiry
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param brand_id query string true "Brand ID"
@@ -1500,7 +1500,7 @@ func (r *LookupControllerImpl) ItemDetailForItemInquiry(writer http.ResponseWrit
 
 // @Summary Item Substitute Detail For Item Inquiry
 // @Description Item Substitute Detail For Item Inquiry
-// @Tags Master Lookup : Item Substitute Detail For Item Inquiry
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param item_id query string true "Item ID"
@@ -1551,7 +1551,7 @@ func (r *LookupControllerImpl) ItemSubstituteDetailForItemInquiry(writer http.Re
 
 // @Summary Get PartNumber Item Import
 // @Description Get PartNumber Item Import
-// @Tags Master Lookup : Get PartNumber Item Import
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param item_code query string false "Item Code"
@@ -1600,7 +1600,7 @@ func (r *LookupControllerImpl) GetPartNumberItemImport(writer http.ResponseWrite
 
 // @Summary Location Item
 // @Description Location Item
-// @Tags Master Lookup : Location Item
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param warehouse_location_id query string false "Warehouse Location ID"
@@ -1655,7 +1655,7 @@ func (r *LookupControllerImpl) LocationItem(writer http.ResponseWriter, request 
 
 // @Summary Item Loc UOM
 // @Description Item Loc UOM
-// @Tags Master Lookup : Item Loc UOM
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -1716,7 +1716,7 @@ func (r *LookupControllerImpl) ItemLocUOM(writer http.ResponseWriter, request *h
 
 // @Summary Item Loc UOM By ID
 // @Description Item Loc UOM By ID
-// @Tags Master Lookup : Item Loc UOM
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id path int true "Company ID"
@@ -1751,7 +1751,7 @@ func (r *LookupControllerImpl) ItemLocUOMById(writer http.ResponseWriter, reques
 
 // @Summary Item Loc UOM By Code
 // @Description Item Loc UOM By Code
-// @Tags Master Lookup : Item Loc UOM
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id path int true "Company ID"
@@ -1785,7 +1785,7 @@ func (r *LookupControllerImpl) ItemLocUOMByCode(writer http.ResponseWriter, requ
 
 // @Summary Item Opr Code With Price By ID
 // @Description Item Opr Code With Price By ID
-// @Tags Master Lookup : Item Opr Code With Price By ID
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
@@ -1850,7 +1850,7 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 
 // @Summary Get Opr Item Price
 // @Description Get Opr Item Price
-// @Tags Master Lookup : Get Opr Item Price
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param line_type_id query int true "Line Type ID"
@@ -1950,7 +1950,7 @@ func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, reque
 
 // @Summary Item Master For Free Accs
 // @Description Item Master For Free Accs
-// @Tags Master Lookup : Item Master For Free Accs
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id query int true "Company ID"
@@ -2010,7 +2010,7 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccs(writer http.ResponseWriter,
 
 // @Summary Item Master For Free Accs By ID
 // @Description Item Master For Free Accs By ID
-// @Tags Master Lookup : Item Master For Free Accs
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id path int true "Company ID"
@@ -2047,7 +2047,7 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccsById(writer http.ResponseWri
 
 // @Summary Item Master For Free Accs By Code
 // @Description Item Master For Free Accs By Code
-// @Tags Master Lookup : Item Master For Free Accs
+// @Tags Master Lookup :
 // @Accept json
 // @Produce json
 // @Param company_id path int true "Company ID"

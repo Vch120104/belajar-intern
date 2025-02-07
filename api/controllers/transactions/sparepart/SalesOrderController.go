@@ -41,9 +41,9 @@ func StartSalesOrderControllerImpl(SalesOrderService transactionsparepartservice
 // @Tags Transaction Sparepart: Sales Order
 // @Accept json
 // @Produce json
-// @Param body body SalesOrderInsertHeaderPayload true "Body"
-// @Success 201 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Param body body transactionsparepartpayloads.SalesOrderInsertHeaderPayload true "Body"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/estimation [post]
 func (s *SalesOrderControllerImpl) InsertSalesOrderHeader(writer http.ResponseWriter, request *http.Request) {
 	SalesOrderBody := transactionsparepartpayloads.SalesOrderInsertHeaderPayload{}
@@ -70,8 +70,8 @@ func (s *SalesOrderControllerImpl) InsertSalesOrderHeader(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/{sales_order_system_number} [get]
 func (s *SalesOrderControllerImpl) GetSalesOrderByID(writer http.ResponseWriter, request *http.Request) {
 	salesOrderIdStr := chi.URLParam(request, "sales_order_system_number")
@@ -112,8 +112,8 @@ func (s *SalesOrderControllerImpl) GetSalesOrderByID(writer http.ResponseWriter,
 // @Param page query int false "Page"
 // @Param sort_of query string false "Sort Of"
 // @Param sort_by query string false "Sort By"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order [get]
 func (s *SalesOrderControllerImpl) GetAllSalesOrder(writer http.ResponseWriter, request *http.Request) {
 
@@ -156,8 +156,8 @@ func (s *SalesOrderControllerImpl) GetAllSalesOrder(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/{sales_order_system_number} [delete]
 func (s *SalesOrderControllerImpl) VoidSalesOrder(writer http.ResponseWriter, request *http.Request) {
 	salesOrderIdStr := chi.URLParam(request, "sales_order_system_number")
@@ -182,9 +182,9 @@ func (s *SalesOrderControllerImpl) VoidSalesOrder(writer http.ResponseWriter, re
 // @Tags Transaction Sparepart: Sales Order
 // @Accept json
 // @Produce json
-// @Param body body SalesOrderDetailInsertPayload true "Body"
-// @Success 201 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Param body body transactionsparepartpayloads.SalesOrderDetailInsertPayload true "Body"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/detail [post]
 func (s *SalesOrderControllerImpl) InsertSalesOrderDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionsparepartpayloads.SalesOrderDetailInsertPayload
@@ -207,8 +207,8 @@ func (s *SalesOrderControllerImpl) InsertSalesOrderDetail(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Param sales_order_detail_system_number path string true "Sales Order Detail System Number"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/detail/{sales_order_detail_system_number} [delete]
 func (s *SalesOrderControllerImpl) DeleteSalesOrderDetail(writer http.ResponseWriter, request *http.Request) {
 	salesOrderDetailId, errConvert := strconv.Atoi(chi.URLParam(request, "sales_order_detail_system_number"))
@@ -245,8 +245,8 @@ func (s *SalesOrderControllerImpl) DeleteSalesOrderDetail(writer http.ResponseWr
 // @Produce json
 // @Param sales_order_detail_multi_id path string true "Sales Order Detail Multi Id"
 // @Param proposed_discount query float64 false "Proposed Discount"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/proposed-discount-multi-id/{sales_order_detail_multi_id} [put]
 func (s *SalesOrderControllerImpl) SalesOrderProposedDiscountMultiId(writer http.ResponseWriter, request *http.Request) {
 	queryValue := request.URL.Query()
@@ -268,9 +268,9 @@ func (s *SalesOrderControllerImpl) SalesOrderProposedDiscountMultiId(writer http
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
-// @Param body body SalesOrderUpdatePayload true "Body"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Param body body transactionsparepartpayloads.SalesOrderUpdatePayload true "Body"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/{sales_order_system_number} [put]
 func (s *SalesOrderControllerImpl) UpdateSalesOrderHeader(writer http.ResponseWriter, request *http.Request) {
 	salesOrderId := chi.URLParam(request, "sales_order_system_number")
@@ -306,8 +306,8 @@ func (s *SalesOrderControllerImpl) UpdateSalesOrderHeader(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
-// @Success 200 {object} Response
-// @Failure 500,400,401,404,403,422 {object} BaseErrorResponse
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/submit/{sales_order_system_number} [patch]
 func (s *SalesOrderControllerImpl) SubmitSalesOrderHeader(writer http.ResponseWriter, request *http.Request) {
 	//get sales order
