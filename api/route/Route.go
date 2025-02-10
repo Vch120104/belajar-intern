@@ -688,6 +688,8 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
 		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
 		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
+		r.Mount("/atpm-reimbursement", AtpmReimbursementRouter)
+		r.Mount("/print-gate-pass", PrintGatePassRouter)
 
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
