@@ -24,6 +24,7 @@ type LookupController interface {
 	GetCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPriceByID(writer http.ResponseWriter, request *http.Request)
+	ItemOprCodeWithPriceByCode(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
 	GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request)
 	GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request)
@@ -171,7 +172,7 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/lookup/item-opr-code/{line_type_id}/{item_code} [get]
+// @Router /v1/lookup/item-opr-code/{line_type_id}/{param+} [get]
 func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
@@ -1831,6 +1832,92 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
 	lookup, baseErr := r.LookupService.ItemOprCodeWithPriceByID(linetypeId, oprItemId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+	)
+}
+
+// @Summary Item Opr Code With Price By Code
+// @Description Item Opr Code With Price By Code
+// @Tags Master Lookup :
+// @Accept json
+// @Produce json
+// @Param line_type_id path int true "Line Type ID"
+// @Param opr_item_code query string true "Opr Item Code"
+// @Param opr_item_name query string false "Opr Item Name"
+// @Param brand_id query int false "Brand ID"
+// @Param model_id query int false "Model ID"
+// @Param job_type_id query int false "Job Type ID"
+// @Param variant_id query int false "Variant ID"
+// @Param currency_id query int false "Currency ID"
+// @Param trx_type_id query int false "Bill Code"
+// @Param whs_group query string false "Warehouse Group"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-opr-code-with-price/{line_type_id}/by-code/{param+} [get]
+func (r *LookupControllerImpl) ItemOprCodeWithPriceByCode(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	linetypeIdStr := chi.URLParam(request, "line_type_id")
+	encodedoprItemCodeCode := chi.URLParam(request, "*")
+	if len(encodedoprItemCodeCode) > 0 && encodedoprItemCodeCode[0] == '/' {
+		encodedoprItemCodeCode = encodedoprItemCodeCode[1:]
+	}
+
+	itemCodeUnescaped, err := url.PathUnescape(encodedoprItemCodeCode)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid operation item Code",
+		})
+		return
+	}
+
+	itemCodeUnescaped, err = url.PathUnescape(itemCodeUnescaped)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid operation item Code after second decoding",
+		})
+		return
+	}
+
+	if linetypeIdStr == "" {
+		payloads.NewHandleError(writer, "Missing Line Type Id in URL", http.StatusBadRequest)
+		return
+	}
+
+	linetypeId, err := strconv.Atoi(linetypeIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Line Type Id", http.StatusBadRequest)
+		return
+	}
+
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, baseErr := r.LookupService.ItemOprCodeWithPriceByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
