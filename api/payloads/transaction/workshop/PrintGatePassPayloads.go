@@ -18,4 +18,5 @@ type PrintGatePassResponse struct {
 
 type PrintGatePassRequest struct {
 	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	CustomerId            int `json:"customer_id"`
 }

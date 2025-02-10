@@ -7,8 +7,8 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -20,7 +20,6 @@ func OpenPrintGatePassRepositoryImpl() transactionworkshoprepository.PrintGatePa
 	return &PrintGatePassRepositoryImpl{}
 }
 
-// GetAll implements transactionworkshoprepository.PrintGatePassRepository.
 func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities transactionworkshopentities.PrintGatePass
 	var responses []transactionworkshoppayloads.PrintGatePassResponse
@@ -36,17 +35,17 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 			"trx_gate_pass.vehicle_id",
 			"trx_gate_pass.vehicle_brand_id",
 			"trx_gate_pass.model_id",
-			"trx_gate_pass.company_id",
 			"trx_work_order.work_order_system_number",
 			"trx_work_order.work_order_document_number",
 			"trx_work_order.work_order_date",
 		).Joins("LEFT JOIN trx_work_order ON trx_gate_pass.company_id = trx_work_order.company_id")
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch gate pass data",
 			Err:        err,
 		}
 	}
@@ -56,42 +55,44 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 		return pages, nil
 	}
 
-	var selectedWOs []transactionworkshoppayloads.PrintGatePassResponse
+	var enrichedResponses []map[string]interface{}
 	for _, response := range responses {
-		selectedWOs = append(selectedWOs, transactionworkshoppayloads.PrintGatePassResponse{
-			WorkOrderSystemNumber:   response.WorkOrderSystemNumber,
-			WorkOrderDocumentNumber: response.WorkOrderDocumentNumber,
-			WorkOrderDate:           response.WorkOrderDate,
-			CustomerId:              response.CustomerId,
-			CustomerName:            response.CustomerName,
-			VehicleId:               response.VehicleId,
-			VehicleBrandId:          response.VehicleBrandId,
-			ModelId:                 response.ModelId,
-			GatePassSystemNumber:    response.GatePassSystemNumber,
-			GatePassDocumentNumber:  response.GatePassDocumentNumber,
-			GatePassDate:            response.GatePassDate,
-			DeliveryName:            response.DeliveryName,
-			DeliveryAddress:         response.DeliveryAddress,
-		})
-	}
-
-	if len(selectedWOs) > 1 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Cannot print multiple WO. Please select only one WO",
+		// Get customer data from external API
+		customerData, customerErr := generalserviceapiutils.GetCustomerMasterById(response.CustomerId)
+		if customerErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve customer data from external API",
+				Err:        customerErr.Err,
+			}
 		}
-	}
 
-	gatePassDate := responses[0].GatePassDate
-	currentDate := time.Now().Format("2006-01-02")
-
-	if gatePassDate != currentDate {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Gate Pass form only can be printed sameday as gate pass date (" + gatePassDate + ")",
+		// Map the data including customer information
+		responseMap := map[string]interface{}{
+			"work_order_system_number":   response.WorkOrderSystemNumber,
+			"work_order_document_number": response.WorkOrderDocumentNumber,
+			"work_order_date":            response.WorkOrderDate,
+			"customer_id":                response.CustomerId,
+			"customer_name":              customerData.CustomerName,
+			"customer_code":              customerData.CustomerCode,
+			"vehicle_id":                 response.VehicleId,
+			"vehicle_brand_id":           response.VehicleBrandId,
+			"model_id":                   response.ModelId,
+			"gate_pass_system_number":    response.GatePassSystemNumber,
+			"gate_pass_document_number":  response.GatePassDocumentNumber,
+			"gate_pass_date":             response.GatePassDate,
+			"delivery_name":              response.DeliveryName,
+			"delivery_address":           response.DeliveryAddress,
 		}
+		enrichedResponses = append(enrichedResponses, responseMap)
 	}
-	pages.Rows = responses
+
+	// Handle pagination
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(enrichedResponses, &pages)
+
+	pages.Rows = paginatedData
+	pages.TotalRows = int64(totalRows)
+	pages.TotalPages = totalPages
 
 	return pages, nil
 }

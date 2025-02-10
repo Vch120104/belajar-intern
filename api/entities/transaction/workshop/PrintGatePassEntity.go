@@ -20,7 +20,7 @@ type PrintGatePass struct {
 	CustomerId             int    `gorm:"column:customer_id;not null" json:"customer_id"`
 	WarehouseId            int    `gorm:"column:warehouse_id;not null" json:"warehouse_id"`
 	DeliveryName           string `gorm:"column:delivery_name;size:100;not null" json:"delivery_name"`
-	DeliveryAddress        string `gorm:"column:delivery_address_1;size:256;not null" json:"delivery_address"`
+	DeliveryAddress        string `gorm:"column:delivery_address;size:256;not null" json:"delivery_address"`
 	VillageId              string `gorm:"column:village_id;size:10;not null" json:"village_id"`
 	DistrictId             string `gorm:"column:district_id;size:10;not null" json:"district_id"`
 	ProvinceId             string `gorm:"column:province_id;size:10;not null" json:"province_id"`

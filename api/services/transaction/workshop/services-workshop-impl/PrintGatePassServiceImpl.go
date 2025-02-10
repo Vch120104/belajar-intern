@@ -19,9 +19,9 @@ type PrintGatePassServiceImpl struct {
 	RedisClient             *redis.Client
 }
 
-func OpenPrintGatePassServiceImpl(db *gorm.DB, repository transactionworkshoprepository.PrintGatePassRepository, redisClient *redis.Client) *PrintGatePassServiceImpl {
+func OpenPrintGatePassServiceImpl(PrintGatePassRepo transactionworkshoprepository.PrintGatePassRepository, db *gorm.DB, redisClient *redis.Client) *PrintGatePassServiceImpl {
 	return &PrintGatePassServiceImpl{
-		PrintGatePassRepository: repository,
+		PrintGatePassRepository: PrintGatePassRepo,
 		DB:                      db,
 		RedisClient:             redisClient,
 	}

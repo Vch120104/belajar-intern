@@ -1719,6 +1719,13 @@ func PrintGatePassRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", PrintGatePassController.GetAll)
+
 	return router
 }
 

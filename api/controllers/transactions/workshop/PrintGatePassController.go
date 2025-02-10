@@ -25,10 +25,10 @@ func (ctrl *PrintGatePassController) GetAll(writer http.ResponseWriter, request 
 
 	// Defining query parameters as key-value pairs
 	queryParams := map[string]string{
-		"wo_sys_no":                queryValues.Get("work_order_no"),
-		"wo_date":                  queryValues.Get("work_order_date"),
-		"customer_id":              queryValues.Get("customer"),
-		"tnkb":                     queryValues.Get("no_polisi"),
+		"work_order_system_number": queryValues.Get("work_order_system_number"),
+		"work_order_date":          queryValues.Get("work_order_date"),
+		"customer_id":              queryValues.Get("customer_id"),
+		"tnkb":                     queryValues.Get("tnkb"),
 		"approval_gatepass_status": queryValues.Get("print_option"),
 	}
 
