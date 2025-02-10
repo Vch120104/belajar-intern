@@ -1965,6 +1965,7 @@ func LookupRouter(
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price", LookupController.ItemOprCodeWithPrice)
 	router.Get("/item-opr-code-with-price/{line_type_id}/by-id/{opr_item_id}", LookupController.ItemOprCodeWithPriceByID)
+	router.Get("/item-opr-code-with-price/{line_type_id}/by-code/*", LookupController.ItemOprCodeWithPriceByCode)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
 	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)

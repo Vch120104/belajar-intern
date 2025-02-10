@@ -806,7 +806,7 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 // @Param agreement_code path string true "Agreement Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/agreement/by-code/{agreement_code} [get]
+// @Router /v1/agreement/by-code/{param+} [get]
 func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter, request *http.Request) {
 
 	encodedAgreementCode := chi.URLParam(request, "*")
