@@ -1,13 +1,14 @@
 package masteritemrepositoryimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -43,19 +44,25 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 	var orderTypeIds []int
 	if orderTypeName != "" {
-		orderTypeParams := aftersalesserviceapiutils.OrderTypeParams{
-			Page: 0, Limit: 100, OrderTypeName: orderTypeName,
-		}
 
-		orderTypes, err := aftersalesserviceapiutils.GetAllOrderType(orderTypeParams)
+		var orderTypes []masterentities.OrderType
+		err := tx.Select("order_type_id").
+			Where("order_type_name LIKE ?", "%"+orderTypeName+"%").
+			Find(&orderTypes).Error
+
 		if err != nil {
-			return pages, err
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch order type",
+				Err:        err,
+			}
 		}
 
 		for _, orderType := range orderTypes {
 			orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 		}
 
+		// Jika tidak ada hasil, gunakan nilai default agar query tetap valid
 		if len(orderTypeIds) == 0 {
 			orderTypeIds = []int{-1}
 		}
@@ -106,9 +113,18 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 		responseMap.DiscountDescription = discountDetails.DiscountDescription
 
 		if response.OrderTypeId != 0 {
-			orderTypeResponse, err := aftersalesserviceapiutils.GetOrderTypeById(response.OrderTypeId)
+			var orderTypeResponse masterentities.OrderType
+			err := tx.Where("order_type_id = ?", response.OrderTypeId).First(&orderTypeResponse).Error
 			if err != nil {
-				responseMap.OrderTypeName = ""
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					responseMap.OrderTypeName = "" // Set default jika tidak ditemukan
+				} else {
+					return pages, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to fetch order type",
+						Err:        err,
+					}
+				}
 			} else {
 				responseMap.OrderTypeName = orderTypeResponse.OrderTypeName
 			}

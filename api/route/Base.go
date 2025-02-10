@@ -11,6 +11,8 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
+	_ "after-sales/docs"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -1970,14 +1972,15 @@ func LookupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/opr-item-price", LookupController.GetOprItemPrice)
-	router.Get("/item-opr-code/{linetype_code}", LookupController.ItemOprCode)
-	router.Get("/item-opr-code/{linetype_code}/by-code/*", LookupController.ItemOprCodeByCode)
-	router.Get("/item-opr-code/{linetype_code}/by-id/{item_id}", LookupController.ItemOprCodeByID)
+	router.Get("/item-opr-code/{line_type_id}", LookupController.ItemOprCode)
+	router.Get("/item-opr-code/{line_type_id}/by-code/*", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{line_type_id}/by-id/{id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price", LookupController.ItemOprCodeWithPrice)
-	router.Get("/item-opr-code-with-price/{linetype_code}/{company_id}/by-id/{id}", LookupController.ItemOprCodeWithPriceByID)
+	router.Get("/item-opr-code-with-price/{line_type_id}/by-id/{opr_item_id}", LookupController.ItemOprCodeWithPriceByID)
+	router.Get("/item-opr-code-with-price/{line_type_id}/by-code/*", LookupController.ItemOprCodeWithPriceByCode)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
 	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
@@ -2107,6 +2110,22 @@ func ItemWarehouseTransferRequestRouter(
 	router.Post("/upload", itemWarehouseTransferRequestController.Upload)
 	router.Post("/process", itemWarehouseTransferRequestController.ProcessUpload)
 	router.Get("/download", itemWarehouseTransferRequestController.DownloadTemplate)
+
+	return router
+}
+
+func AtpmReimbursementRouter(
+	atpmReimbursementController transactionworkshopcontroller.AtpmReimbursementController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", atpmReimbursementController.GetAll)
+	router.Post("/", atpmReimbursementController.New)
+	router.Put("/{claim_system_number}", atpmReimbursementController.Save)
+	router.Patch("/submit/{claim_system_number}", atpmReimbursementController.Submit)
 
 	return router
 }

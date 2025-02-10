@@ -10,7 +10,6 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -396,19 +395,22 @@ func (c *ClaimSupplierRepositoryImpl) SubmitItemClaim(db *gorm.DB, claimId int) 
 	for _, item := range itemClaimDetailResponds {
 		if item.QuantityVariance != 0 {
 			//<<localhostp8000>>unit-of-measurement/get_quantity_conversion?source_type=S&item_id=893891&quantity=1.0
-			sourceTypeConversionResponse, SourceTypeConversionErr := aftersalesserviceapiutils.GetQuantityConversion("P", item.ItemId, item.QuantityVariance)
-			if SourceTypeConversionErr != nil {
-				return false, SourceTypeConversionErr
-
-			}
-
-			if sourceTypeConversionResponse.QuantityConversion == 0 {
+			var sourceTypeConversionResponse masteritementities.Uom
+			if err := db.Where("source_type = ? AND item_id = ? AND quantity = ?", "P", item.ItemId, item.QuantityVariance).First(&sourceTypeConversionResponse).Error; err != nil {
 				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusBadRequest,
+					StatusCode: http.StatusInternalServerError,
 					Err:        err,
-					Message:    "UOM does not have conversion, please define UOM Conversion",
+					Message:    "failed to get quantity conversion",
 				}
 			}
+
+			// if sourceTypeConversionResponse.QuantityConversion == 0 {
+			// 	return false, &exceptions.BaseErrorResponse{
+			// 		StatusCode: http.StatusBadRequest,
+			// 		Err:        err,
+			// 		Message:    "UOM does not have conversion, please define UOM Conversion",
+			// 	}
+			// }
 
 			//IF EXISTS (SELECT * FROM	amLocationStock WHERE	PERIOD_YEAR = @Period_Year AND PERIOD_MONTH = @Period_Month AND
 			//COMPANY_CODE = @Company_Code AND ITEM_CODE = @CSR_Item_Code AND

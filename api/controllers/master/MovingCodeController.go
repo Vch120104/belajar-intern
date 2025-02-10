@@ -33,7 +33,15 @@ type MovingCodeControllerImpl struct {
 	MovingCodeService masterservice.MovingCodeService
 }
 
-// ActivateMovingCode implements MovingCodeController.
+// @Summary Get Activate Moving Code
+// @Description REST API Activate Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param moving_code_id path string true "moving_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/activate/{moving_code_id} [get]
 func (r *MovingCodeControllerImpl) ActivateMovingCode(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "moving_code_id")
 
@@ -47,7 +55,15 @@ func (r *MovingCodeControllerImpl) ActivateMovingCode(writer http.ResponseWriter
 	payloads.NewHandleSuccess(writer, response, "Activate Status Successfully!", http.StatusOK)
 }
 
-// DeactiveMovingCode implements MovingCodeController.
+// @Summary Get Deactive Moving Code
+// @Description REST API Deactive Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param moving_code_id path string true "moving_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/deactive/{moving_code_id} [get]
 func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter, request *http.Request) {
 	id := chi.URLParam(request, "moving_code_id")
 
@@ -61,7 +77,15 @@ func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter
 	payloads.NewHandleSuccess(writer, response, "Deactive Status Successfully!", http.StatusOK)
 }
 
-// GetDropdownMovingCode implements MovingCodeController.
+// @Summary Get Dropdown Moving Code
+// @Description REST API Dropdown Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param company_id path string true "company_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/drop-down/{company_id} [get]
 func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request) {
 	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
 
@@ -80,7 +104,15 @@ func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// ChangeStatusMovingCode implements MovingCodeController.
+// @Summary Change Status Moving Code
+// @Description REST API Change Status Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param moving_code_id path string true "moving_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/{moving_code_id} [patch]
 func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
 	id, errA := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
 
@@ -99,7 +131,16 @@ func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
 
-// CreateMovingCode implements MovingCodeController.
+// @Summary Create Moving Code
+// @Description REST API Create Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param company_id path string true "company_id"
+// @Param Request body masterpayloads.MovingCodeListRequest true "Request Body"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/{company_id} [post]
 func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.MovingCodeListRequest
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -126,7 +167,17 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
 }
 
-// GetAllMovingCode implements MovingCodeController.
+// @Summary Get All Moving Code
+// @Description REST API Get All Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param company_id path string true "company_id"
+// @Param limit query int false "limit"
+// @Param page query int false "page"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/{company_id} [get]
 func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, request *http.Request) {
 
 	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
@@ -156,7 +207,15 @@ func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, 
 
 }
 
-// GetMovingCodebyId implements MovingCodeController.
+// @Summary Get Moving Code by Id
+// @Description REST API Get Moving Code by Id
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param moving_code_id path string true "moving_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/{moving_code_id} [get]
 func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter, request *http.Request) {
 	movingCodeId, errA := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
 
@@ -175,7 +234,16 @@ func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// PushMovingCodePriority implements MovingCodeController.
+// @Summary Push Moving Code Priority
+// @Description REST API Push Moving Code Priority
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param moving_code_id path string true "moving_code_id"
+// @Param company_id path string true "company_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code/push-priority/{company_id}/{moving_code_id} [get]
 func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWriter, request *http.Request) {
 	itemPackageId, errA := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
 
@@ -200,7 +268,15 @@ func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, result, "Push Priority Successfull!", http.StatusOK)
 }
 
-// UpdateMovingCode implements MovingCodeController.
+// @Summary Update Moving Code
+// @Description REST API Update Moving Code
+// @Accept json
+// @Produce json
+// @Tags Master : Moving Code
+// @Param Request body masterpayloads.MovingCodeListUpdate true "Request Body"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/moving-code [put]
 func (r *MovingCodeControllerImpl) UpdateMovingCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.MovingCodeListUpdate
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)

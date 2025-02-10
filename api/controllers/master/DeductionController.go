@@ -25,7 +25,7 @@ type DeductionController interface {
 	SaveDeductionList(writer http.ResponseWriter, request *http.Request)
 	SaveDeductionDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusDeduction(writer http.ResponseWriter, request *http.Request)
-	UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request)																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																			
+	UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type DeductionControllerImpl struct {
@@ -107,9 +107,18 @@ func (r *DeductionControllerImpl) GetByIdDeductionDetail(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Deduction By Id
+// @Description REST API Deduction
+// @Accept json
+// @Produce json
+// @Tags Master : Deduction
+// @Param id path int true "id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/deduction/by-header-id/{id} [get]
 func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	
+
 	DeductionListId, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -123,7 +132,7 @@ func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, r
 		return
 	}
 
-	result, err := r.DeductionService.GetDeductionById(DeductionListId,pagination)
+	result, err := r.DeductionService.GetDeductionById(DeductionListId, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -132,6 +141,19 @@ func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, r
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Deduction Detail
+// @Description REST API Deduction
+// @Accept json
+// @Produce json
+// @Tags Master : Deduction
+// @Param deduction_id path int true "deduction_id"
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/deduction/{deduction_id} [get]
 func (r *DeductionControllerImpl) GetAllDeductionDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	DeductionDetailId, _ := strconv.Atoi(chi.URLParam(request, "deduction_id"))
@@ -250,6 +272,16 @@ func (r *DeductionControllerImpl) ChangeStatusDeduction(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Deduction Detail
+// @Description REST API Deduction
+// @Accept json
+// @Produce json
+// @Tags Master : Deduction
+// @param id path int true "id"
+// @param reqBody body masterpayloads.DeductionDetailUpdate true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/deduction/detail/{id} [put]
 func (r *DeductionControllerImpl) UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request) {
 	DeductionDetailRequest := masterpayloads.DeductionDetailUpdate{}
 	DeductionId, errA := strconv.Atoi(chi.URLParam(request, "id"))

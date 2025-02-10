@@ -7,9 +7,9 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -78,12 +78,19 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 	}
 
 	if response.ItemGroupId != 0 {
-		itemGroupResponse, groupErr := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-		if groupErr != nil {
+		var itemGroupResponse masteritementities.ItemGroup
+		if err := tx.Where("item_group_id = ?", response.ItemGroupId).First(&itemGroupResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with id %d not found", response.ItemGroupId),
+				}
+			}
 			return response, &exceptions.BaseErrorResponse{
-				StatusCode: groupErr.StatusCode,
-				Message:    "Error fetching item group data",
-				Err:        groupErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group ",
+				Err:        err,
 			}
 		}
 
@@ -144,13 +151,27 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 
 	// Filter by item group using GetItemGroupById
 	if groupName != "" {
-		itemGroupResponse, groupErr := aftersalesserviceapiutils.GetItemGroupById(groupId)
-		if groupErr == nil {
-			internalFilter = append(internalFilter, utils.FilterCondition{
-				ColumnField: "item_group_id",
-				ColumnValue: strconv.Itoa(itemGroupResponse.ItemGroupId),
-			})
+		var itemGroupResponse masteritementities.ItemGroup
+		err := tx.Where("item_group_id = ?", groupId).First(&itemGroupResponse).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with id %d not found", groupId),
+				}
+			}
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group",
+				Err:        err,
+			}
 		}
+
+		internalFilter = append(internalFilter, utils.FilterCondition{
+			ColumnField: "item_group_id",
+			ColumnValue: strconv.Itoa(itemGroupResponse.ItemGroupId),
+		})
 	}
 
 	// Apply internal filters and paginate
@@ -195,12 +216,24 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 
 	// Fetch detailed information for item groups and line types
 	for i := range entities {
-		itemGroupResponse, groupErr := aftersalesserviceapiutils.GetItemGroupById(entities[i].ItemGroupId)
-		if groupErr != nil {
+		var itemGroupResponse masteritementities.ItemGroup
+		err := tx.Where("item_group_id = ?", entities[i].ItemGroupId).First(&itemGroupResponse).Error
+		if err != nil {
+
 			entities[i].ItemGroupName = ""
-		} else {
-			entities[i].ItemGroupName = itemGroupResponse.ItemGroupName
+
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
+
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group",
+				Err:        err,
+			}
 		}
+
+		entities[i].ItemGroupName = itemGroupResponse.ItemGroupName
 
 		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(entities[i].LineTypeId)
 		if lineErr != nil {
@@ -259,18 +292,19 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 
 func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse) {
 
-	itemGroup, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(request.ItemGroupId)
-	if itemGroupErr != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: itemGroupErr.StatusCode,
-			Err:        itemGroupErr.Err,
+	var itemGroup masteritementities.ItemGroup
+	if err := tx.Where("item_group_id = ?", request.ItemGroupId).First(&itemGroup).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item group not found",
+				Err:        fmt.Errorf("item group with id %d not found", request.ItemGroupId),
+			}
 		}
-	}
-
-	if itemGroup == (aftersalesserviceapiutils.ItemGroupResponse{}) {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("item group not found"),
+			Message:    "Failed to fetch Item group code",
+			Err:        err,
 		}
 	}
 

@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
@@ -670,11 +669,19 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 		}
 
 		// fetch order type from utils cross service
-		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
-		if orderTypeError != nil {
+		var orderTypeResponse masterentities.OrderType
+		if err := tx.Where("order_type_id = ?", entity.AgreementOrderTypeId).First(&orderTypeResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "order type not found",
+					Err:        fmt.Errorf("order type with id %d not found", entity.AgreementOrderTypeId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: orderTypeError.StatusCode,
-				Err:        orderTypeError.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch order type",
+				Err:        err,
 			}
 		}
 
@@ -979,11 +986,19 @@ func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementByHeaderId(tx *gorm.D
 		}
 
 		// fetch order type from utils cross service
-		orderTypeResponse, orderTypeError := aftersalesserviceapiutils.GetOrderTypeById(entity.AgreementOrderTypeId)
-		if orderTypeError != nil {
+		var orderTypeResponse masterentities.OrderType
+		if err := tx.Where("order_type_id = ?", entity.AgreementOrderTypeId).First(&orderTypeResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "order type not found",
+					Err:        fmt.Errorf("order type with id %d not found", entity.AgreementOrderTypeId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: orderTypeError.StatusCode,
-				Err:        orderTypeError.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch order type",
+				Err:        err,
 			}
 		}
 

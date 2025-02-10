@@ -18,6 +18,15 @@ type StockTransactionControllerImpl struct {
 	service transactionsparepartservice.StockTransactionService
 }
 
+// @Summary Insert Stock Transaction
+// @Description Insert Stock Transaction
+// @Tags Transaction Sparepart : Stock Transaction
+// @Accept json
+// @Produce json
+// @Param StockTransactionInsertPayloads body transactionsparepartpayloads.StockTransactionInsertPayloads true "Stock Transaction Insert Payloads"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/stock-transaction [post]
 func (s *StockTransactionControllerImpl) StockTransactionInsert(writer http.ResponseWriter, request *http.Request) {
 	var stocktransaction transactionsparepartpayloads.StockTransactionInsertPayloads
 

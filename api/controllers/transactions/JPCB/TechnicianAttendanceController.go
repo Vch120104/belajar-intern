@@ -34,6 +34,18 @@ func NewTechnicianAttendanceController(technicianAttendanceService transactionjp
 	}
 }
 
+// @Summary Get All Technician Attendance
+// @Description Get All Technician Attendance
+// @Tags Transaction JPCB: Technician Attendance
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param service_date query string false "Service Date"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/technician-attendance [get]
 func (r *TechnicianAttendanceControllerImpl) GetAllTechnicianAttendance(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -55,11 +67,24 @@ func (r *TechnicianAttendanceControllerImpl) GetAllTechnicianAttendance(writer h
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get Add Line Technician
+// @Description Get Add Line Technician
+// @Tags Transaction JPCB: Technician Attendance
+// @Accept json
+// @Produce json
+// @Param service_date query string true "Service Date"
+// @Param company_id query string true "Company ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/technician-attendance/add-line [get]
 func (r *TechnicianAttendanceControllerImpl) GetAddLineTechnician(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
 		"service_date": queryValues.Get("service_date"),
+		"company_id":   queryValues.Get("company_id"),
 	}
 
 	if queryParams["service_date"] == "" {
@@ -88,6 +113,15 @@ func (r *TechnicianAttendanceControllerImpl) GetAddLineTechnician(writer http.Re
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Save Technician Attendance
+// @Description Save Technician Attendance
+// @Tags Transaction JPCB: Technician Attendance
+// @Accept json
+// @Produce json
+// @Param body body transactionjpcbpayloads.TechnicianAttendanceSaveRequest true "Technician Attendance Save Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/technician-attendance [post]
 func (r *TechnicianAttendanceControllerImpl) SaveTechnicianAttendance(writer http.ResponseWriter, request *http.Request) {
 	formRequest := transactionjpcbpayloads.TechnicianAttendanceSaveRequest{}
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -110,6 +144,15 @@ func (r *TechnicianAttendanceControllerImpl) SaveTechnicianAttendance(writer htt
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusOK)
 }
 
+// @Summary Change Status Technician Attendance
+// @Description Change Status Technician Attendance
+// @Tags Transaction JPCB: Technician Attendance
+// @Accept json
+// @Produce json
+// @Param technician_attendance_id path int true "Technician Attendance ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/technician-attendance/{technician_attendance_id} [patch]
 func (r *TechnicianAttendanceControllerImpl) ChangeStatusTechnicianAttendance(writer http.ResponseWriter, request *http.Request) {
 	technicianAttendanceId, _ := strconv.Atoi(chi.URLParam(request, "technician_attendance_id"))
 

@@ -29,7 +29,7 @@ func StartLookupService(LookupRepo masterrepository.LookupRepository, db *gorm.D
 	}
 }
 
-func (s *LookupServiceImpl) ItemOprCode(linetypeStr string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -54,7 +54,7 @@ func (s *LookupServiceImpl) ItemOprCode(linetypeStr string, pages pagination.Pag
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.ItemOprCode(tx, linetypeStr, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCode(tx, linetypeId, pages, filterCondition)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
@@ -62,7 +62,7 @@ func (s *LookupServiceImpl) ItemOprCode(linetypeStr string, pages pagination.Pag
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeStr string, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -87,7 +87,7 @@ func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeStr string, oprItemCode st
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.ItemOprCodeByCode(tx, linetypeStr, oprItemCode, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeByCode(tx, linetypeId, oprItemCode, pages, filterCondition)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
@@ -95,7 +95,7 @@ func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeStr string, oprItemCode st
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeByID(linetypeStr string, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -120,7 +120,7 @@ func (s *LookupServiceImpl) ItemOprCodeByID(linetypeStr string, oprItemId int, p
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.ItemOprCodeByID(tx, linetypeStr, oprItemId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeByID(tx, linetypeId, oprItemId, pages, filterCondition)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
@@ -128,7 +128,7 @@ func (s *LookupServiceImpl) ItemOprCodeByID(linetypeStr string, oprItemId int, p
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, trxTypeId int, jobTypeId int, variantId int, currencyId int, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -153,7 +153,7 @@ func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, 
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeId, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeId, companyId, oprItemCode, brandId, modelId, trxTypeId, jobTypeId, variantId, currencyId, whsGroup, pages, filterCondition)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
@@ -1085,7 +1085,7 @@ func (s *LookupServiceImpl) ItemLocUOMByCode(companyId int, itemCode string) (ma
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeWithPriceByID(linetypeStr string, companyId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeWithPriceByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -1110,7 +1110,40 @@ func (s *LookupServiceImpl) ItemOprCodeWithPriceByID(linetypeStr string, company
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPriceByID(tx, linetypeStr, companyId, oprItemId, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPriceByID(tx, linetypeId, oprItemId, pages, filterCondition)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}
+
+func (s *LookupServiceImpl) ItemOprCodeWithPriceByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	lookup, baseErr := s.LookupRepo.ItemOprCodeWithPriceByCode(tx, linetypeId, oprItemCode, pages, filterCondition)
 	if baseErr != nil {
 		return lookup, baseErr
 	}

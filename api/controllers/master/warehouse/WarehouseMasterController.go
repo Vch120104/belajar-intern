@@ -48,7 +48,16 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 	}
 }
 
-// DropdownbyGroupId implements WarehouseMasterController.
+// @Summary Get Dropdown Warehouse By Group Id
+// @Description Get Dropdown Warehouse By Group Id
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Master
+// @Param warehouse_group_id path int true "warehouse_group_id"
+// @Param company_id path int true "company_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/drop-down/by-warehouse-group-id/{warehouse_group_id}/{company_id} [get]
 func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWriter, request *http.Request) {
 
 	warehouseDropDownGroupId, err := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
@@ -80,7 +89,7 @@ func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWr
 // @Description Get All Warehouse Master
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -90,7 +99,7 @@ func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWr
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/warehouse-master/ [get]
+// @Router /v1/warehouse-master [get]
 func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -128,7 +137,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Description Get All Warehouse Master Is Active
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/is-active [get]
@@ -147,7 +156,7 @@ func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWrite
 // @Description Get Dropdown Warehouse
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/drop-down [get]
@@ -166,7 +175,7 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Description Get Warehouse Master By Id
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -196,7 +205,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Description Get Warehouse Master By Code
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Param warehouse_code path string true "warehouse_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -220,6 +229,16 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 
 }
 
+// @Summary Get Warehouse Master By Code Company
+// @Description Get Warehouse Master By Code Company
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Master
+// @Param warehouse_code path string true "warehouse_code"
+// @Param company_id path int true "company_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/by-code-company/{warehouse_code}/{company_id} [get]
 func (r *WarehouseMasterControllerImpl) GetWarehouseMasterByCodeCompany(writer http.ResponseWriter, request *http.Request) {
 	warehouseCode := chi.URLParam(request, "warehouse_code")
 	if warehouseCode == "" {
@@ -246,7 +265,7 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseMasterByCodeCompany(writer h
 // @Description Get Warehouse Master
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Param warehouse_ids path string true "warehouse_ids"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -284,11 +303,11 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 // @Description Save Warehouse Master
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @param reqBody body masterwarehousepayloads.GetWarehouseMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/warehouse-master/ [post]
+// @Router /v1/warehouse-master [post]
 func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
@@ -311,7 +330,7 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 // @Description Update Warehouse Master
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Param warehouse_id path int true "warehouse_id"
 // @param reqBody body masterwarehousepayloads.GetWarehouseMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -355,7 +374,7 @@ func (r *WarehouseMasterControllerImpl) Update(writer http.ResponseWriter, reque
 // @Description Change Warehouse Master Status By Id
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Master
+// @Tags Master Warehouse : Warehouse Master
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -382,6 +401,24 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 }
 
+// @Summary Get Authorize User
+// @Description Get Authorize User
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Master
+// @Param warehouse_authorize_id query string false "warehouse_authorize_id"
+// @Param employee_id query string false "employee_id"
+// @Param employee_name query string false "employee_name"
+// @Param username query string false "username"
+// @Param company_id query string false "company_id"
+// @Param warehouse_id query string false "warehouse_id"
+// @Param page query string true "Page"
+// @Param limit query string true "Limit"
+// @Param sort_by query string false "Sort Of: {column}"
+// @Param sort_of query string false "Sort By: {asc}"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/authorize-user [get]
 func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -421,6 +458,15 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 	)
 }
 
+// @Summary Post Authorize User
+// @Description Post Authorize User
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Master
+// @param reqBody body masterwarehousepayloads.WarehouseAuthorize true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/authorize-user [post]
 func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	formRequest := masterwarehousepayloads.WarehouseAuthorize{}
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -436,6 +482,15 @@ func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, save, "data saved succesfully", http.StatusOK)
 }
 
+// @Summary Delete Multi Id Authorize User
+// @Description Delete Multi Id Authorize User
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Master
+// @Param warehouse_authorize_id path string true "warehouse_authorize_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/authorize-user/{warehouse_authorize_id} [delete]
 func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	warehouseAuthorizeId := chi.URLParam(request, "warehouse_authorize_id")
 	delete, err := r.WarehouseMasterService.DeleteMultiIdAuthorizeUser(warehouseAuthorizeId)
@@ -446,6 +501,16 @@ func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.R
 	payloads.NewHandleSuccess(writer, delete, "data deleted succesfully", http.StatusOK)
 }
 
+// @Summary In Transit Warehouse Code Dropdown
+// @Description In Transit Warehouse Code Dropdown
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Master
+// @Param company_id path int true "company_id"
+// @Param warehouse_group_id path int true "warehouse_group_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/drop-down/in-transit/{company_id}/{warehouse_group_id} [get]
 func (r *WarehouseMasterControllerImpl) InTransitWarehouseCodeDropdown(writer http.ResponseWriter, request *http.Request) {
 
 	companyID, err := strconv.Atoi(chi.URLParam(request, "company_id"))

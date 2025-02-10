@@ -488,6 +488,11 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	LicenseOwnerChangeService := transactionworkshopserviceimpl.OpenLicenseOwnerChangeServiceImpl(LicenseOwnerChangeRepository, db, rdb)
 	LicenseOwnerChangeController := transactionworkshopcontroller.NewLicenseOwnerChangeController(LicenseOwnerChangeService)
 
+	//Atpm Reimbursement
+	AtpmReimbursementRepository := transactionworkshoprepositoryimpl.OpenAtpmReimbursementRepositoryImpl()
+	AtpmReimbursementService := transactionworkshopserviceimpl.OpenAtpmReimbursementServiceImpl(AtpmReimbursementRepository, db, rdb)
+	AtpmReimbursementController := transactionworkshopcontroller.NewAtpmReimbursementController(AtpmReimbursementService)
+
 	//Print Gate Pass
 	PrintGatePassRepository := transactionworkshoprepositoryimpl.OpenPrintGatePassRepositoryImpl()
 	PrintGatePassService := transactionworkshopserviceimpl.OpenPrintGatePassServiceImpl(PrintGatePassRepository, db, rdb)
@@ -588,6 +593,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 
 	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	AtpmClaimRegistrationRouter := AtpmClaimRegistrationRouter(AtpmClaimRegistrationController)
+	AtpmReimbursementRouter := AtpmReimbursementRouter(AtpmReimbursementController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -682,7 +688,6 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
 		r.Mount("/atpm-claim-registration", AtpmClaimRegistrationRouter)
 		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
-		r.Mount("/print-gate-pass", PrintGatePassRouter)
 
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)

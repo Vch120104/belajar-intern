@@ -7,10 +7,10 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -190,12 +190,12 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 		tempRows = tempRows.Where("price_list_modifiable = ?", request.PriceListModifiable)
 	}
 
-	if request.AtpmSyncronize != "" {
-		tempRows = tempRows.Where("atpm_syncronize = ?", request.AtpmSyncronize)
+	if request.AtpmSynchronize != "" {
+		tempRows = tempRows.Where("atpm_synchronize = ?", request.AtpmSynchronize)
 	}
 
-	if !request.AtpmSyncronizeTime.IsZero() {
-		tempRows = tempRows.Where("atpm_syncronize_time >= ?", request.AtpmSyncronizeTime)
+	if !request.AtpmSynchronizeTime.IsZero() {
+		tempRows = tempRows.Where("atpm_synchronize_time >= ?", request.AtpmSynchronizeTime)
 	}
 
 	rows, err := tempRows.
@@ -258,11 +258,19 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	response.BrandCode = brandResponse.BrandCode
 
 	// Fetch Item Group
-	itemGroupResponse, errItemGroup := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-	if errItemGroup != nil {
+	var itemGroupResponse masteritementities.ItemGroup
+	if err := tx.Where("item_group_id = ?", response.ItemGroupId).First(&itemGroupResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item group not found",
+				Err:        fmt.Errorf("item group with id %d not found", response.ItemGroupId),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: errItemGroup.StatusCode,
-			Err:        errItemGroup.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item group code",
+			Err:        err,
 		}
 	}
 	response.ItemGroupId = itemGroupResponse.ItemGroupId
@@ -458,11 +466,19 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterConditio
 			}
 		}
 
-		itemGroupResponse, itemGroupErr := aftersalesserviceapiutils.GetItemGroupById(payload.ItemGroupId)
-		if itemGroupErr != nil {
+		var itemGroupResponse masteritementities.ItemGroup
+		if err := tx.Where("item_group_id = ?", payload.ItemGroupId).First(&itemGroupResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with id %d not found", payload.ItemGroupId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        itemGroupErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
 			}
 		}
 
@@ -592,11 +608,19 @@ func (r *PriceListRepositoryImpl) GetPriceListByCodeId(tx *gorm.DB, CodeId strin
 	response.BrandCode = brandResponse.BrandCode
 
 	// Fetch Item Group
-	itemGroupResponse, errItemGroup := aftersalesserviceapiutils.GetItemGroupById(response.ItemGroupId)
-	if errItemGroup != nil {
+	var itemGroupResponse masteritementities.ItemGroup
+	if err := tx.Where("item_group_id = ?", response.ItemGroupId).First(&itemGroupResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item group not found",
+				Err:        fmt.Errorf("item group with id %d not found", response.ItemGroupId),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: errItemGroup.StatusCode,
-			Err:        errItemGroup.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item group code",
+			Err:        err,
 		}
 	}
 	response.ItemGroupId = itemGroupResponse.ItemGroupId

@@ -51,7 +51,28 @@ func NewItemController(ItemService masteritemservice.ItemService) ItemController
 	}
 }
 
-// GetAllItemSearch
+// @Summary Get All Item Search
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param item_code query string false "item_code"
+// @Param item_name query string false "item_name"
+// @Param item_type query string false "item_type"
+// @Param item_class_id query string false "item_class_id"
+// @Param item_class_code query string false "item_class_code"
+// @Param is_active query string false "is_active"
+// @Param item_group_id query string false "item_group_id"
+// @Param item_group_code query string false "item_group_code"
+// @Param supplier_code query string false "supplier_code"
+// @Param supplier_name query string false "supplier_name"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item [get]
 func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -104,6 +125,26 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
 }
 
+// @Summary Get All Item Inventory
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param item_code query string false "item_code"
+// @Param item_name query string false "item_name"
+// @Param item_class_name query string false "item_class_name"
+// @Param item_group_code query string false "item_group_code"
+// @Param item_class_code query string false "item_class_code"
+// @Param uom_code query string false "uom_code"
+// @Param is_active query string false "is_active"
+// @Param item_class_id query string false "item_class_id"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/inventory [get]
 func (r *ItemControllerImpl) GetAllItemInventory(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -136,6 +177,15 @@ func (r *ItemControllerImpl) GetAllItemInventory(writer http.ResponseWriter, req
 	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
 }
 
+// @Summary Get Item Inventory By Code
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param item_code query string true "item_code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/inventory/by-code [get]
 func (r *ItemControllerImpl) GetItemInventoryByCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	itemCode := queryValues.Get("item_code")
@@ -149,7 +199,15 @@ func (r *ItemControllerImpl) GetItemInventoryByCode(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-// GetItembyId implements ItemController.
+// @Summary Get Item By Id
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param item_id path int true "item_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/{item_id} [get]
 func (r *ItemControllerImpl) GetItembyId(writer http.ResponseWriter, request *http.Request) {
 	itemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
 
@@ -167,7 +225,15 @@ func (r *ItemControllerImpl) GetItembyId(writer http.ResponseWriter, request *ht
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-// GetUomDropDown implements ItemController.
+// @Summary Get Uom Drop Down
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param uom_type_id path int true "uom_type_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/uom/{uom_type_id} [get]
 func (r *ItemControllerImpl) GetUomDropDown(writer http.ResponseWriter, request *http.Request) {
 
 	uomTypeId, errA := strconv.Atoi(chi.URLParam(request, "uom_type_id"))
@@ -186,7 +252,14 @@ func (r *ItemControllerImpl) GetUomDropDown(writer http.ResponseWriter, request 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-// GetUomTypeDropDown implements ItemController.
+// @Summary Get Uom Type Drop Down
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/uom-type [get]
 func (r *ItemControllerImpl) GetUomTypeDropDown(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.itemservice.GetUomTypeDropDown()
@@ -203,7 +276,7 @@ func (r *ItemControllerImpl) GetUomTypeDropDown(writer http.ResponseWriter, requ
 // @Description REST API Item
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
@@ -261,7 +334,7 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 // @Description REST API Item
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param item_ids path string true "item_ids"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -284,7 +357,7 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 // @Description REST API Item
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param item_code path string true "item_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -309,7 +382,7 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 // @Description REST API Item
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @param reqBody body masteritempayloads.ItemRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -344,7 +417,7 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 // @Description REST API Item
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @param item_id path int true "item_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -370,7 +443,7 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 // @Description Retrieve all detail items from an item by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param item_id path int true "Item ID"
 // @Param page query int true "Page number"
 // @Param limit query int true "Items per page"
@@ -428,7 +501,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 // @Description Retrieve a detail item from an item by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param item_id path int true "Item ID"
 // @Param item_detail_id path int true "Item Detail ID"
 // @Success 200 {object} payloads.Response
@@ -459,7 +532,7 @@ func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, reque
 // @Description Add a new item detail to an item by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param item_id path int true "Item ID"
 // @Param reqBody body masteritempayloads.ItemDetailRequest true "Item Detail Data"
 // @Success 200 {object} payloads.Response
@@ -490,7 +563,7 @@ func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *
 // @Description Delete an item detail from an item by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master Item : Item
 // @Param item_id path int true "Item ID"
 // @Param item_detail_id path int true "Item Detail ID"
 // @Success 200 {object} payloads.Response
@@ -536,6 +609,16 @@ func (r *ItemControllerImpl) DeleteItemDetails(writer http.ResponseWriter, reque
 	payloads.NewHandleSuccess(writer, resp, "Item details deleted successfully", http.StatusOK)
 }
 
+// @Summary Update Item
+// @Description Update an item by its ID
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param item_id path int true "Item ID"
+// @Param reqBody body masteritempayloads.ItemUpdateRequest true "Item Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/{item_id} [put]
 func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemUpdateRequest
 
@@ -553,6 +636,17 @@ func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *htt
 	payloads.NewHandleSuccess(writer, nil, "Item updated successfully", http.StatusOK)
 }
 
+// @Summary Update Item Detail
+// @Description Update an item detail by its ID
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param item_id path int true "Item ID"
+// @Param item_detail_id path int true "Item Detail ID"
+// @Param reqBody body masteritempayloads.ItemDetailUpdateRequest true "Item Detail Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/{item_id}/detail/{item_detail_id} [put]
 func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, request *http.Request) {
 
 	itemIdStr := chi.URLParam(request, "item_id")
@@ -581,6 +675,14 @@ func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, update, "Item detail updated successfully", http.StatusOK)
 }
 
+// @Summary Get Principal Brand Dropdown
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/principal-brand-dropdown [get]
 func (r *ItemControllerImpl) GetPrincipalBrandDropdown(writer http.ResponseWriter, request *http.Request) {
 	result, err := r.itemservice.GetPrincipalBrandDropdown()
 	if err != nil {
@@ -590,6 +692,15 @@ func (r *ItemControllerImpl) GetPrincipalBrandDropdown(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
+// @Summary Get Principal Brand Parent
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param principal_catalog_id path int true "principal_catalog_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/principal-brand-parent/{principal_catalog_id} [get]
 func (r *ItemControllerImpl) GetPrincipalBrandParent(writer http.ResponseWriter, request *http.Request) {
 	principalCatalogId, errA := strconv.Atoi(chi.URLParam(request, "principal_catalog_id"))
 	if errA != nil {
@@ -604,6 +715,16 @@ func (r *ItemControllerImpl) GetPrincipalBrandParent(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
+// @Summary Add Item Detail By Brand
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param item_id path int true "item_id"
+// @Param brand_id path string true "brand_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/{item_id}/{brand_id} [post]
 func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request) {
 	ItemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
 	if errA != nil {
@@ -619,6 +740,15 @@ func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, re
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
+// @Summary Get Principal Catalog
+// @Description REST API Item
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item
+// @Param principal_catalog_id path int true "principal_catalog_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item/principal-catalog [get]
 func (r *ItemControllerImpl) GetPrincipalCatalog(writer http.ResponseWriter, request *http.Request) {
 	result, err := r.itemservice.GetPrincipalCatalog()
 	if err != nil {

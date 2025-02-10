@@ -40,7 +40,16 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 	}
 }
 
-// UpdateDiscount implements DiscountController.
+// @Summary Update Discount
+// @Description REST API Discount
+// @Accept json
+// @Produce json
+// @Tags Master : Discount
+// @Param id path string true "id"
+// @param reqBody body masterpayloads.DiscountUpdate true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount/{id} [put]
 func (r *DiscountControllerImpl) UpdateDiscount(writer http.ResponseWriter, request *http.Request) {
 	discountId, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	if errA != nil {

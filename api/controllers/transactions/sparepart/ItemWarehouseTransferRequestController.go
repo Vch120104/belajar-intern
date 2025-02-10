@@ -49,7 +49,16 @@ type ItemWarehouseTransferRequestControllerImpl struct {
 	ItemWarehouseTransferRequestService transactionsparepartservice.ItemWarehouseTransferRequestService
 }
 
-// Accept implements ItemWarehouseTransferRequestController.
+// @Summary Accept Item Warehouse Transfer Request
+// @Description Accept Item Warehouse Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Param AcceptWarehouseTransferRequestRequest body transactionsparepartpayloads.AcceptWarehouseTransferRequestRequest true "Accept Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/accept/{id} [put]
 func (r *ItemWarehouseTransferRequestControllerImpl) Accept(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	if errA != nil {
@@ -73,7 +82,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) Accept(writer http.Response
 	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
 }
 
-// Reject implements ItemWarehouseTransferRequestController.
+// @Summary Reject Item Warehouse Transfer Request
+// @Description Reject Item Warehouse Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Param RejectWarehouseTransferRequestRequest body transactionsparepartpayloads.RejectWarehouseTransferRequestRequest true "Reject Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/receipt/reject/{id} [put]
 func (r *ItemWarehouseTransferRequestControllerImpl) Reject(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	if errA != nil {
@@ -97,7 +115,14 @@ func (r *ItemWarehouseTransferRequestControllerImpl) Reject(writer http.Response
 	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
 }
 
-// DownloadTemplate implements ItemWarehouseTransferRequestController.
+// @Summary Download Template
+// @Description Download Template
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/download [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
 	f, err := r.ItemWarehouseTransferRequestService.GenerateTemplateFile()
 	if err != nil {
@@ -140,7 +165,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DownloadTemplate(writer htt
 	}
 }
 
-// ProcessUpload implements ItemWarehouseTransferRequestController.
+// @Summary Process Upload
+// @Description Process Upload
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param transfer_request_system_number query int true "Transfer Request System Number"
+// @Param modified_by_id query int true "Modified By ID"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/process-upload [post]
 func (r *ItemWarehouseTransferRequestControllerImpl) ProcessUpload(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -233,7 +267,14 @@ func (r *ItemWarehouseTransferRequestControllerImpl) ProcessUpload(writer http.R
 	payloads.NewHandleSuccess(writer, create, "Create/Update Data Successfully!", http.StatusCreated)
 }
 
-// Upload implements ItemWarehouseTransferRequestController.
+// @Summary Upload
+// @Description Upload
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/upload [post]
 func (r *ItemWarehouseTransferRequestControllerImpl) Upload(writer http.ResponseWriter, request *http.Request) {
 	// Parse the multipart form with a 10 MB limit
 	if err := request.ParseMultipartForm(10 << 20); err != nil {
@@ -301,7 +342,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) Upload(writer http.Response
 	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
 }
 
-// GetByIdTransferRequestDetail implements ItemWarehouseTransferRequestController.
+// @Summary Insert Item Warehouse Transfer Request Detail
+// @Description Insert Item Warehouse Transfer Request Detail
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Param InsertItemWarehouseTransferDetailRequest body transactionsparepartpayloads.InsertItemWarehouseTransferDetailRequest true "Insert Item Warehouse Transfer Detail Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/detail/{id} [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) GetByIdTransferRequestDetail(writer http.ResponseWriter, request *http.Request) {
 	transferRequestDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
 
@@ -313,7 +363,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetByIdTransferRequestDetai
 	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
 }
 
-// UpdateWhTransferRequestDetail implements ItemWarehouseTransferRequestController.
+// @Summary Update Item Warehouse Transfer Request Detail
+// @Description Update Item Warehouse Transfer Request Detail
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request Detail System Number"
+// @Param UpdateItemWarehouseTransferRequestDetailRequest body transactionsparepartpayloads.UpdateItemWarehouseTransferRequestDetailRequest true "Update Item Warehouse Transfer Request Detail Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/detail/{id} [put]
 func (r *ItemWarehouseTransferRequestControllerImpl) UpdateWhTransferRequestDetail(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.UpdateItemWarehouseTransferRequestDetailRequest
 
@@ -333,7 +392,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) UpdateWhTransferRequestDeta
 	payloads.NewHandleSuccess(writer, success, "update success", http.StatusCreated)
 }
 
-// DeleteDetail implements ItemWarehouseTransferRequestController.
+// @Summary Delete Detail
+// @Description Delete Detail
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path string true "Detail Multi ID"
+// @Param DeleteDetailItemWarehouseTransferRequest body transactionsparepartpayloads.DeleteDetailItemWarehouseTransferRequest true "Delete Detail Item Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/detail/{id} [delete]
 func (r *ItemWarehouseTransferRequestControllerImpl) DeleteDetail(writer http.ResponseWriter, request *http.Request) {
 	multiId := chi.URLParam(request, "id")
 	if multiId == "[]" {
@@ -369,7 +437,15 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DeleteDetail(writer http.Re
 	payloads.NewHandleSuccess(writer, success, "delete success", http.StatusCreated)
 }
 
-// DeleteHeaderTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Delete Header Transfer Request
+// @Description Delete Header Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/{id} [delete]
 func (r *ItemWarehouseTransferRequestControllerImpl) DeleteHeaderTransferRequest(writer http.ResponseWriter, request *http.Request) {
 
 	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
@@ -382,7 +458,19 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DeleteHeaderTransferRequest
 	payloads.NewHandleSuccess(writer, success, "delete success", http.StatusCreated)
 }
 
-// GetAllDetailTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Get All Detail Transfer Request
+// @Description Get All Detail Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param transfer_request_system_number query int true "Transfer Request System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/detail [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) GetAllDetailTransferRequest(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -402,7 +490,24 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllDetailTransferRequest
 	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", 200, res.Limit, res.Page, res.TotalRows, res.TotalPages)
 }
 
-// GetAllWhTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Get All Warehouse Transfer Request
+// @Description Get All Warehouse Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param transfer_request_status_id query int false "Transfer Request Status ID"
+// @Param transfer_request_document_number query int false "Transfer Request Document Number"
+// @Param transfer_request_warehouse_group_id query int false "Transfer Request Warehouse Group ID"
+// @Param company_id query int false "Company ID"
+// @Param transfer_request_date_from query string false "Transfer Request Date From"
+// @Param transfer_request_date_to query string false "Transfer Request Date To"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferRequest(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -433,7 +538,15 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferRequest(wri
 	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", 200, res.Limit, res.Page, res.TotalRows, res.TotalPages)
 }
 
-// GetByIdTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Get By ID Transfer Request
+// @Description Get By ID Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/{id} [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) GetByIdTransferRequest(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
 
@@ -445,7 +558,15 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetByIdTransferRequest(writ
 	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
 }
 
-// InsertWhTransferRequestDetail implements ItemWarehouseTransferRequestController.
+// @Summary Insert Item Warehouse Transfer Request Detail
+// @Description Insert Item Warehouse Transfer Request Detail
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param InsertItemWarehouseTransferRequest body transactionsparepartpayloads.InsertItemWarehouseTransferRequest true "Insert Item Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/detail [post]
 func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestDetail(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.InsertItemWarehouseTransferDetailRequest
 
@@ -463,7 +584,15 @@ func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestDeta
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusCreated)
 }
 
-// InsertWhTransferRequestHeader implements ItemWarehouseTransferRequestController.
+// @Summary Insert Item Warehouse Transfer Request Header
+// @Description Insert Item Warehouse Transfer Request Header
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param InsertItemWarehouseTransferRequest body transactionsparepartpayloads.InsertItemWarehouseTransferRequest true "Insert Item Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request [post]
 func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestHeader(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.InsertItemWarehouseTransferRequest
 
@@ -481,7 +610,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestHead
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusCreated)
 }
 
-// SubmitWhTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Submit Item Warehouse Transfer Request
+// @Description Submit Item Warehouse Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Param SubmitItemWarehouseTransferRequest body transactionsparepartpayloads.SubmitItemWarehouseTransferRequest true "Submit Item Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/submit/{id} [put]
 func (r *ItemWarehouseTransferRequestControllerImpl) SubmitWhTransferRequest(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	if errA != nil {
@@ -505,7 +643,16 @@ func (r *ItemWarehouseTransferRequestControllerImpl) SubmitWhTransferRequest(wri
 	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
 }
 
-// UpdateWhTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Update Item Warehouse Transfer Request
+// @Description Update Item Warehouse Transfer Request
+// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Param UpdateItemWarehouseTransferRequest body transactionsparepartpayloads.UpdateItemWarehouseTransferRequest true "Update Item Warehouse Transfer Request"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/{id} [put]
 func (r *ItemWarehouseTransferRequestControllerImpl) UpdateWhTransferRequest(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.UpdateItemWarehouseTransferRequest
 

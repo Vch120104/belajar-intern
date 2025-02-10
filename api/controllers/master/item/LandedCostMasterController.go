@@ -39,7 +39,7 @@ func NewLandedCostMasterController(LandedCostService masteritemservice.LandedCos
 // @Description REST API Landed Cost Master
 // @Accept json
 // @Produce json
-// @Tags Master : Landed Cost Master
+// @Tags Master Item : Landed Cost Master
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param company_id query string false "company_id"
@@ -86,7 +86,7 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 // @Description REST API Landed Cost Master
 // @Accept json
 // @Produce json
-// @Tags Master : Landed Cost Master
+// @Tags Master Item : Landed Cost Master
 // @Param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -114,7 +114,7 @@ func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseW
 // @Description REST API Landed Cost Master
 // @Accept json
 // @Produce json
-// @Tags Master : Landed Cost Master
+// @Tags Master Item : Landed Cost Master
 // @param reqBody body masteritempayloads.LandedCostMasterPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -147,7 +147,7 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 // @Description REST API Landed Cost Master
 // @Accept json
 // @Produce json
-// @Tags Master : Landed Cost Master
+// @Tags Master Item : Landed Cost Master
 // @param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -166,7 +166,7 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 // @Description REST API Landed Cost Master
 // @Accept json
 // @Produce json
-// @Tags Master : Landed Cost Master
+// @Tags Master Item : Landed Cost Master
 // @param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

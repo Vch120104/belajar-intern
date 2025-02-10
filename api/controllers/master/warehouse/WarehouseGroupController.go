@@ -40,7 +40,15 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 	}
 }
 
-// GetbyGroupCode implements WarehouseGroupController.
+// @Summary Get Warehouse Group By Group Code
+// @Description Get Warehouse Group By Group Code
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Group
+// @Param warehouse_group_code path string true "warehouse_group_code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-group/by-code/{warehouse_group_code} [get]
 func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter, request *http.Request) {
 	groupCode := chi.URLParam(request, "warehouse_group_code")
 
@@ -52,7 +60,15 @@ func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetWarehouseGroupDropdownbyId implements WarehouseGroupController.
+// @Summary Get Warehouse Group Dropdown By Id
+// @Description Get Warehouse Group Dropdown By Id
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Group
+// @Param warehouse_group_id path int true "warehouse_group_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-group/drop-down/{warehouse_group_id} [get]
 func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http.ResponseWriter, request *http.Request) {
 	warehouseGroupId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
 
@@ -69,7 +85,14 @@ func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetWarehouseGroupDropDown implements WarehouseGroupController.
+// @Summary Get Warehouse Group Dropdown
+// @Description Get Warehouse Group Dropdown
+// @Accept json
+// @Produce json
+// @Tags Master Warehouse : Warehouse Group
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-group/drop-down [get]
 func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropDown(writer http.ResponseWriter, request *http.Request) {
 
 	get, err := r.WarehouseGroupService.GetWarehouseGroupDropdown()
@@ -84,7 +107,7 @@ func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropDown(writer http.Res
 // @Description Get All Warehouse Group
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Group
+// @Tags Master Warehouse : Warehouse Group
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -124,7 +147,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Description Get Warehouse Group By Id
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Group
+// @Tags Master Warehouse : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -151,7 +174,7 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 // @Description Save Warehouse Group
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Group
+// @Tags Master Warehouse : Warehouse Group
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -185,7 +208,7 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Description Change Warehouse Group Status By Id
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Group
+// @Tags Master Warehouse : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

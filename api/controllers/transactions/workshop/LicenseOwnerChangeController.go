@@ -25,7 +25,27 @@ func NewLicenseOwnerChangeController(LicenseOwnerChangeService transactionworksh
 	}
 }
 
-// GetAll implements LicenseOwnerChangeController.
+// @Summary Get All License Owner Change
+// @Description Retrieve all license owner change with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : License Owner Change
+// @Param vehicle_brand query string false "Vehicle Brand"
+// @Param model_code query string false "Model Code"
+// @Param vehicle_id query string false "Vehicle ID"
+// @Param tnkb_old query string false "TNKB Old"
+// @Param tnkb_new query string false "TNKB New"
+// @Param owner_name_old query string false "Owner Name Old"
+// @Param owner_name_new query string false "Owner Name New"
+// @Param change_date_from query string false "Change Date From"
+// @Param change_date_to query string false "Change Date To"
+// @Param limit query string true "Items per page"
+// @Param page query string true "Page number"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/license-owner-change [get]
 func (l *LicenseOwnerChangeControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -69,7 +89,20 @@ func (l *LicenseOwnerChangeControllerImpl) GetAll(writer http.ResponseWriter, re
 	)
 }
 
-// GetHistoryByChassisNumber implements LicenseOwnerChangeController.
+// @Summary Get License Owner Change History By Chassis Number
+// @Description Retrieve license owner change history by chassis number with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction Workshop : License Owner Change
+// @Param vehicle_chassis_number path string true "Vehicle Chassis Number"
+// @Param change_type query string false "Change Type"
+// @Param limit query string true "Items per page"
+// @Param page query string true "Page number"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/license-owner-change/history/{vehicle_chassis_number} [get]
 func (l *LicenseOwnerChangeControllerImpl) GetHistoryByChassisNumber(writer http.ResponseWriter, request *http.Request) {
 	chassisNumber := chi.URLParam(request, "vehicle_chassis_number")
 	if chassisNumber == "" {

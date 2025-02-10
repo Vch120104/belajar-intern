@@ -1,16 +1,17 @@
 package transactionworkshoprepositoryimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"time"
@@ -19,10 +20,14 @@ import (
 )
 
 type ServiceReceiptRepositoryImpl struct {
+	workorderRepo transactionworkshoprepository.WorkOrderRepository
 }
 
 func OpenServiceReceiptRepositoryImpl() transactionworkshoprepository.ServiceReceiptRepository {
-	return &ServiceReceiptRepositoryImpl{}
+	workorderRepo := OpenWorkOrderRepositoryImpl()
+	return &ServiceReceiptRepositoryImpl{
+		workorderRepo: workorderRepo,
+	}
 }
 
 func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
@@ -293,33 +298,48 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 			}
 		}
 
-		operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, detail.OperationItemId)
+		operationItemResponse, operationItemErr := s.workorderRepo.GetOperationItemById(detail.LineTypeId, detail.OperationItemId)
 		if operationItemErr != nil {
 			return transactionworkshoppayloads.ServiceReceiptResponse{}, operationItemErr
 		}
 
-		OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		OperationItemCode, Description, errResp := s.workorderRepo.HandleLineTypeResponse(detail.LineTypeId, operationItemResponse)
 		if errResp != nil {
 			return transactionworkshoppayloads.ServiceReceiptResponse{}, errResp
 		}
 
 		// fetch data item
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(detail.OperationItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", detail.OperationItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", detail.OperationItemId),
+				}
+			}
 			return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve item data from the external API",
-				Err:        itemErr.Err,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 
 		// Fetch data UOM from external API
-		uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
-		if uomErr != nil {
+		var uomItems masteritementities.Uom
+		if err := tx.Where("uom_id = ?", itemResponse.UnitOfMeasurementStockId).First(&uomItems).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "UOM not found",
+					Err:        fmt.Errorf("uom with ID %d not found", itemResponse.UnitOfMeasurementStockId),
+				}
+
+			}
 			return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve UOM data from the external API",
-				Err:        uomErr.Err,
+				Message:    "Failed to fetch UOM",
+				Err:        err,
 			}
 		}
 

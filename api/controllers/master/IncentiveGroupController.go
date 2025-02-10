@@ -3,6 +3,7 @@ package mastercontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"errors"
+
 	// "after-sales/api/helper"
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -41,6 +42,23 @@ func NewIncentiveGroupController(IncentiveGroupService masterservice.IncentiveGr
 	}
 }
 
+// @Summary Get All Incentive Group
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Param incentive_group_id query string false "incentive_group_id"
+// @Param incentive_group_code query string false "incentive_group_code"
+// @Param incentive_group_name query string false "incentive_group_name"
+// @Param effective_date query string false "effective_date"
+// @Param is_active query string false "is_active"
+// @Param limit query int false "limit"
+// @Param page query int false "page"
+// @Param sort_of query string false "sort_of"
+// @Param sort_by query string false "sort_by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group [get]
 func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -68,6 +86,14 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get All Incentive Group Is Active
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group/is-active [get]
 func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.IncentiveGroupService.GetAllIncentiveGroupIsActive()
@@ -79,6 +105,15 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Incentive Group By Id
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Param incentive_group_id path string true "incentive_group_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group/by-id/{incentive_group_id} [get]
 func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request) {
 	incentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
 	if errA != nil {
@@ -94,6 +129,19 @@ func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.Respons
 	payloads.NewHandleSuccess(writer, incentiveGroupResponse, utils.GetDataSuccess, http.StatusOK)
 }
 
+// @Summary Save Incentive Group
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Param incentive_group_id body object true "incentive_group_id"
+// @Param incentive_group_code body string true "incentive_group_code"
+// @Param incentive_group_name body string true "incentive_group_name"
+// @Param effective_date body string true "effective_date"
+// @Param is_active body string true "is_active"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group [post]
 func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	IncentiveGroupRequest := masterpayloads.IncentiveGroupResponse{}
 	var message string
@@ -123,6 +171,15 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 }
 
+// @Summary Change Status Incentive Group
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Param incentive_group_id path string true "incentive_group_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group/{incentive_group_id} [patch]
 func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 
 	IncentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
@@ -140,6 +197,19 @@ func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.Re
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Incentive Group
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Param incentive_group_id path string true "incentive_group_id"
+// @Param incentive_group_code body string true "incentive_group_code"
+// @Param incentive_group_name body string true "incentive_group_name"
+// @Param effective_date body string true "effective_date"
+// @Param is_active body string true "is_active"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group/{incentive_group_id} [put]
 func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.UpdateIncentiveGroupRequest
 	incentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
@@ -171,6 +241,14 @@ func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.Response
 	payloads.NewHandleSuccess(writer, create, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Incentive Group Drop Down
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive-group/dropdown [get]
 func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupDropDown(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.IncentiveGroupService.GetAllIncentiveGroupDropDown()

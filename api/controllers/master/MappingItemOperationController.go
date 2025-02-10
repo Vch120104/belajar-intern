@@ -34,6 +34,23 @@ func NewItemOperationController(ItemOperationService masterservice.MappingItemOp
 	}
 }
 
+// @Summary Get All Item Operation
+// @Description REST API Item Operation
+// @Accept json
+// @Produce json
+// @Tags Master : Item Operation
+// @Param item_operation_id query string false "item_operation_id"
+// @Param item_id query string false "item_id"
+// @Param operation_id query string false "operation_id"
+// @Param line_type_id query string false "line_type_id"
+// @Param package_id query string false "package_id"
+// @Param limit query string false "limit"
+// @Param page query string false "page"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-operation/ [get]
 func (r *ItemOperationControllerImpl) GetAllItemOperation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -63,6 +80,15 @@ func (r *ItemOperationControllerImpl) GetAllItemOperation(writer http.ResponseWr
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get data successfully", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get By Id Item Operation
+// @Description REST API Item Operation
+// @Accept json
+// @Produce json
+// @Tags Master : Item Operation
+// @Param item_operation_id path string true "item_operation_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-operation/{item_operation_id} [get]
 func (r *ItemOperationControllerImpl) GetByIdItemOperation(writer http.ResponseWriter, request *http.Request) {
 	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_operation_id"))
 
@@ -75,6 +101,15 @@ func (r *ItemOperationControllerImpl) GetByIdItemOperation(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Post Item Operation
+// @Description REST API Item Operation
+// @Accept json
+// @Produce json
+// @Tags Master : Item Operation
+// @Param request body masterpayloads.ItemOperationPost true "Item Operation Post Payloads"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-operation/ [post]
 func (r *ItemOperationControllerImpl) PostItemOperation(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.ItemOperationPost
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -103,6 +138,16 @@ func (r *ItemOperationControllerImpl) DeleteItemOperation(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, delete, "success delete data", http.StatusOK)
 }
 
+// @Summary Update Item Operation
+// @Description REST API Item Operation
+// @Accept json
+// @Produce json
+// @Tags Master : Item Operation
+// @Param item_operation_id path string true "item_operation_id"
+// @Param request body masterpayloads.ItemOperationPost true "Item Operation Post Payloads"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-operation/{item_operation_id} [put]
 func (r *ItemOperationControllerImpl) UpdateItemOperation(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.ItemOperationPost
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)

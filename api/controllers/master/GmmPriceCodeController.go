@@ -35,6 +35,14 @@ func NewGmmPriceCodeControllerImpl(gmmPriceCodeService masterservice.GmmPriceCod
 	}
 }
 
+// @Summary Get All Gmm Price Code
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code [get]
 func (c *GmmPriceCodeControllerImpl) GetAllGmmPriceCode(writer http.ResponseWriter, request *http.Request) {
 	results, err := c.GmmPriceCodeService.GetAllGmmPriceCode()
 	if err != nil {
@@ -44,6 +52,15 @@ func (c *GmmPriceCodeControllerImpl) GetAllGmmPriceCode(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, results, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Gmm Price Code By Id
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Param gmm_price_code_id path int true "gmm_price_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code/{gmm_price_code_id} [get]
 func (c *GmmPriceCodeControllerImpl) GetGmmPriceCodeById(writer http.ResponseWriter, request *http.Request) {
 	gmmPriceCodeId, errA := strconv.Atoi(chi.URLParam(request, "gmm_price_code_id"))
 	if errA != nil {
@@ -69,6 +86,14 @@ func (c *GmmPriceCodeControllerImpl) GetGmmPriceCodeById(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Gmm Price Code Dropdown
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code/dropdown [get]
 func (c *GmmPriceCodeControllerImpl) GetGmmPriceCodeDropdown(writer http.ResponseWriter, request *http.Request) {
 	results, err := c.GmmPriceCodeService.GetGmmPriceCodeDropdown()
 	if err != nil {
@@ -78,6 +103,15 @@ func (c *GmmPriceCodeControllerImpl) GetGmmPriceCodeDropdown(writer http.Respons
 	payloads.NewHandleSuccess(writer, results, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Gmm Price Code
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Param body body masterpayloads.GmmPriceCodeSaveRequest true "body"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code [post]
 func (c *GmmPriceCodeControllerImpl) SaveGmmPriceCode(writer http.ResponseWriter, request *http.Request) {
 	formRequest := masterpayloads.GmmPriceCodeSaveRequest{}
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -100,6 +134,16 @@ func (c *GmmPriceCodeControllerImpl) SaveGmmPriceCode(writer http.ResponseWriter
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
+// @Summary Update Gmm Price Code
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Param gmm_price_code_id path int true "gmm_price_code_id"
+// @Param body body masterpayloads.GmmPriceCodeUpdateRequest true "body"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code/{gmm_price_code_id} [put]
 func (c *GmmPriceCodeControllerImpl) UpdateGmmPriceCode(writer http.ResponseWriter, request *http.Request) {
 	gmmPriceCodeId, errA := strconv.Atoi(chi.URLParam(request, "gmm_price_code_id"))
 	if errA != nil {
@@ -138,6 +182,15 @@ func (c *GmmPriceCodeControllerImpl) UpdateGmmPriceCode(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Change Status Gmm Price Code
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Param gmm_price_code_id path int true "gmm_price_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code/{gmm_price_code_id} [patch]
 func (c *GmmPriceCodeControllerImpl) ChangeStatusGmmPriceCode(writer http.ResponseWriter, request *http.Request) {
 	gmmPriceCodeId, errA := strconv.Atoi(chi.URLParam(request, "gmm_price_code_id"))
 	if errA != nil {
@@ -163,6 +216,15 @@ func (c *GmmPriceCodeControllerImpl) ChangeStatusGmmPriceCode(writer http.Respon
 	payloads.NewHandleSuccess(writer, status, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Delete Gmm Price Code
+// @Description REST API Gmm Price Code
+// @Accept json
+// @Produce json
+// @Tags Master : Gmm Price Code
+// @Param gmm_price_code_id path int true "gmm_price_code_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/gmm-price-code/{gmm_price_code_id} [delete]
 func (c *GmmPriceCodeControllerImpl) DeleteGmmPriceCode(writer http.ResponseWriter, request *http.Request) {
 	gmmPriceCodeId, errA := strconv.Atoi(chi.URLParam(request, "gmm_price_code_id"))
 	if errA != nil {

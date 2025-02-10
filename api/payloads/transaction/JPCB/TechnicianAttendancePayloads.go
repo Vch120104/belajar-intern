@@ -7,6 +7,7 @@ type TechnicianAttendanceGetAllResponse struct {
 	CompanyId              int       `json:"company_id"`
 	ServiceDate            time.Time `json:"service_date"`
 	UserId                 int       `json:"user_id"`
+	EmployeeName           string    `json:"employee_name"`
 	Attendance             bool      `json:"attendance"`
 }
 
