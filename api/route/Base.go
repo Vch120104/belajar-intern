@@ -1716,6 +1716,21 @@ func LicenseOwnerChangeRouter(
 	return router
 }
 
+func PrintGatePassRouter(
+	PrintGatePassController transactionworkshopcontroller.PrintGatePassController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", PrintGatePassController.GetAll)
+
+	return router
+}
+
 func ClaimSupplierRouter(
 	ClaimSupplierController transactionsparepartcontroller.ClaimSupplierController,
 ) chi.Router {
