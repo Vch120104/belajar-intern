@@ -38,7 +38,7 @@ func NewClaimSupplierControllerImpl(service transactionsparepartservice.ClaimSup
 // @Param InsertItemClaim body transactionsparepartpayloads.ClaimSupplierInsertPayload true "Insert Item Claim"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/cliam-supplier [post]
+// @Router /v1/claim-supplier [post]
 func (controller *ClaimSupplierControllerImpl) InsertItemClaim(writer http.ResponseWriter, request *http.Request) {
 	var claimSupplierInsertPayload transactionsparepartpayloads.ClaimSupplierInsertPayload
 	helper.ReadFromRequestBody(request, &claimSupplierInsertPayload)
@@ -58,7 +58,7 @@ func (controller *ClaimSupplierControllerImpl) InsertItemClaim(writer http.Respo
 // @Param InsertItemClaimDetail body transactionsparepartpayloads.ClaimSupplierInsertDetailPayload true "Insert Item Claim Detail"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/cliam-supplier/detail [post]
+// @Router /v1/claim-supplier/detail [post]
 func (controller *ClaimSupplierControllerImpl) InsertItemClaimDetail(writer http.ResponseWriter, request *http.Request) {
 	var claimSupplierDetailInsertPayload transactionsparepartpayloads.ClaimSupplierInsertDetailPayload
 	helper.ReadFromRequestBody(request, &claimSupplierDetailInsertPayload)
@@ -80,7 +80,7 @@ func (controller *ClaimSupplierControllerImpl) InsertItemClaimDetail(writer http
 // @Param claim_system_number path string true "Claim System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/cliam-supplier/{claim_system_number} [get]
+// @Router /v1/claim-supplier/{claim_system_number} [get]
 func (controller *ClaimSupplierControllerImpl) GetItemClaimById(writer http.ResponseWriter, request *http.Request) {
 	claimIdStr := chi.URLParam(request, "claim_system_number")
 	claimId, errs := strconv.Atoi(claimIdStr)
@@ -104,7 +104,7 @@ func (controller *ClaimSupplierControllerImpl) GetItemClaimById(writer http.Resp
 // @Param claim_system_number path string true "Claim System Number"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/cliam-supplier/submit/{claim_system_number} [post]
+// @Router /v1/claim-supplier/submit/{claim_system_number} [post]
 func (controller *ClaimSupplierControllerImpl) SubmitItemClaim(writer http.ResponseWriter, request *http.Request) {
 	claimId := chi.URLParam(request, "claim_system_number")
 	claimIds, err := strconv.Atoi(claimId)
@@ -139,7 +139,7 @@ func (controller *ClaimSupplierControllerImpl) SubmitItemClaim(writer http.Respo
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.ResponsePagination
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/cliam-supplier [get]
+// @Router /v1/claim-supplier [get]
 func (controller *ClaimSupplierControllerImpl) GetAllItemClaim(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -179,7 +179,7 @@ func (controller *ClaimSupplierControllerImpl) GetAllItemClaim(writer http.Respo
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.ResponsePagination
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/cliam-supplier/detail [get]
+// @Router /v1/claim-supplier/detail [get]
 func (controller *ClaimSupplierControllerImpl) GetItemClaimDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{

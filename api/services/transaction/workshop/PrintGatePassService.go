@@ -8,4 +8,5 @@ import (
 
 type PrintGatePassService interface {
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	PrintById(id int) ([]byte, *exceptions.BaseErrorResponse)
 }

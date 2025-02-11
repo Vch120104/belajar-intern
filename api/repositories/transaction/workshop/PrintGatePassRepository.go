@@ -10,4 +10,5 @@ import (
 
 type PrintGatePassRepository interface {
 	GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	PrintById(tx *gorm.DB, id int) (map[string]string, *exceptions.BaseErrorResponse)
 }

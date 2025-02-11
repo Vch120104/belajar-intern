@@ -341,6 +341,7 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Get("/by-item-id/{item_package_id}", ItemPackageController.GetItemPackageByItemId)
 	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 	router.Get("/by-code/{item_package_code}", ItemPackageController.GetItemPackageByCode)
 
@@ -1727,6 +1728,7 @@ func PrintGatePassRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", PrintGatePassController.GetAll)
+	router.Get("/{gate_pass_system_number}", PrintGatePassController.PrintById)
 
 	return router
 }

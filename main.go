@@ -18,7 +18,7 @@ import (
 //	@description	This is a DMS After-Sales API Server.
 //
 // @BasePath /aftersales-service
-// @schemes http https
+// @schemes https
 func main() {
 	args := os.Args
 	env := ""

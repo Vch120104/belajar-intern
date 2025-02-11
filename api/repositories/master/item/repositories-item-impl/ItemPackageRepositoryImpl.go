@@ -208,3 +208,46 @@ func (r *ItemPackageRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int)
 
 	return true, nil
 }
+
+func (r *ItemPackageRepositoryImpl) GetItemPackageByItemId(tx *gorm.DB, itemId int) (masteritempayloads.GetItemPackageItemResponse, *exceptions.BaseErrorResponse) {
+
+	entities := masteritementities.ItemPackage{}
+	response := masteritempayloads.GetItemPackageItemResponse{}
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+		mtr_item_package.item_package_id,
+		mtr_item_package.item_package_code,
+		mtr_item_package.item_package_name,
+		mtr_item.item_code AS accesories_code,
+		mtr_item_package_detail.quantity,
+		mtr_uom.uom_id,
+		mtr_uom.uom_code,
+		mtr_item_group.item_group_id,
+		mtr_item_group.item_group_code,
+		mtr_item_group.item_group_name
+	`).
+		Joins("INNER JOIN mtr_item_package_detail ON mtr_item_package_detail.item_package_id = mtr_item_package.item_package_id").
+		Joins("INNER JOIN mtr_item ON mtr_item.item_id = mtr_item_package_detail.item_id").
+		Joins("LEFT JOIN mtr_item_group ON mtr_item_group.item_group_id = mtr_item.item_group_id").
+		Joins("LEFT JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
+		Where("mtr_item_package.item_package_id = ?", itemId)
+
+	err := baseModelQuery.First(&response).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item package not found",
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch item package",
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}

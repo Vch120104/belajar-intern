@@ -9,6 +9,7 @@ import (
 	"after-sales/api/utils"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 			"trx_gate_pass.delivery_address",
 			"trx_gate_pass.customer_id",
 			"trx_gate_pass.vehicle_id",
-			"trx_gate_pass.vehicle_brand_id",
+			"trx_gate_pass.brand_id",
 			"trx_gate_pass.model_id",
 			"trx_work_order.work_order_system_number",
 			"trx_work_order.work_order_document_number",
@@ -57,7 +58,6 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 
 	var enrichedResponses []map[string]interface{}
 	for _, response := range responses {
-		// Get customer data from external API
 		customerData, customerErr := generalserviceapiutils.GetCustomerMasterById(response.CustomerId)
 		if customerErr != nil {
 			return pages, &exceptions.BaseErrorResponse{
@@ -67,7 +67,6 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 			}
 		}
 
-		// Map the data including customer information
 		responseMap := map[string]interface{}{
 			"work_order_system_number":   response.WorkOrderSystemNumber,
 			"work_order_document_number": response.WorkOrderDocumentNumber,
@@ -87,7 +86,6 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 		enrichedResponses = append(enrichedResponses, responseMap)
 	}
 
-	// Handle pagination
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(enrichedResponses, &pages)
 
 	pages.Rows = paginatedData
@@ -95,4 +93,67 @@ func (p *PrintGatePassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []util
 	pages.TotalPages = totalPages
 
 	return pages, nil
+}
+
+func (p *PrintGatePassRepositoryImpl) PrintById(tx *gorm.DB, id int) (map[string]string, *exceptions.BaseErrorResponse) {
+	var response transactionworkshoppayloads.PrintGatePassResponse
+
+	// Query data dari database
+	err := tx.Model(&transactionworkshopentities.PrintGatePass{}).
+		Select(
+			"trx_gate_pass.gate_pass_system_number",
+			"trx_gate_pass.gate_pass_document_number",
+			"trx_gate_pass.gate_pass_date",
+			"trx_gate_pass.delivery_name",
+			"trx_gate_pass.delivery_address",
+			"trx_gate_pass.customer_id",
+			"trx_gate_pass.vehicle_id",
+			"trx_gate_pass.brand_id",
+			"trx_gate_pass.model_id",
+			"trx_work_order.work_order_system_number",
+			"trx_work_order.work_order_document_number",
+			"trx_work_order.work_order_date",
+		).
+		Joins("LEFT JOIN trx_work_order ON trx_gate_pass.company_id = trx_work_order.company_id").
+		Where("trx_gate_pass.gate_pass_system_number = ?", id).
+		Scan(&response).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch gate pass data",
+			Err:        err,
+		}
+	}
+
+	// Validasi apakah data ditemukan
+	if response.GatePassSystemNumber == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Gate pass data not found",
+		}
+	}
+
+	// Konversi int ke string
+	dataMap := map[string]string{
+		"GATEPASS_NO":      response.GatePassDocumentNumber,
+		"POLICE_NO":        strconv.Itoa(response.GatePassSystemNumber),
+		"MODEL":            strconv.Itoa(response.ModelId),
+		"VARIANT":          strconv.Itoa(response.VehicleBrandId),
+		"COLOR":            response.GatePassDate, // Jika ini juga int, gunakan strconv.Itoa()
+		"WO_NO":            strconv.Itoa(response.WorkOrderSystemNumber),
+		"WO_DATE":          response.WorkOrderDate, // Jika ini juga int, gunakan strconv.Itoa()
+		"SERVICE_TYPE":     "External",
+		"PAYMENT_TYPE":     "Cash / Transfer",
+		"INVOICE_NO":       "INV12345",
+		"INVOICE_DATE":     "2025-02-08",
+		"CONDITION":        "Service Completed",
+		"NOTES":            "DIIJINKAN MENINGGALKAN AREA BENGKEL",
+		"CUSTOMER_NAME":    "PT. INDOMOBIL TRADA NASIONAL",
+		"CUSTOMER_ADDRESS": "Jl. Raya Siliwangi Km 9, Bojong Menteng, Rawa Lumbu, Bekasi, Jawa Barat 17117",
+		"PHONE_NO":         "021-82600729",
+		"FAX_NO":           "021-82600827",
+	}
+
+	return dataMap, nil
 }

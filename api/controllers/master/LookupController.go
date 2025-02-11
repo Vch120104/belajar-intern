@@ -165,14 +165,14 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
-// @Param item_code path string true "Item Code"
+// @Param opr_item_code path string true "Item Code"
 // @Param limit query int false "Limit"
 // @Param page query int false "Page"
 // @Param sort_of query string false "Sort Of"
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/lookup/item-opr-code/{line_type_id}/{param+} [get]
+// @Router /v1/lookup/item-opr-code/{line_type_id}/{opr_item_code} [get]
 func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
@@ -1870,7 +1870,7 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/lookup/item-opr-code-with-price/{line_type_id}/by-code/{param+} [get]
+// @Router /v1/lookup/item-opr-code-with-price/{line_type_id}/by-code/{opr_item_code} [get]
 func (r *LookupControllerImpl) ItemOprCodeWithPriceByCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
