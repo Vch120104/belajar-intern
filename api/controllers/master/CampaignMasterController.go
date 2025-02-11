@@ -299,7 +299,7 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 // @Param campaign_code path string true "Campaign Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/campaign-master/by-code/{param+} [get]
+// @Router /v1/campaign-master/by-code/{campaign_code} [get]
 func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 
 	encodedcampaignCode := chi.URLParam(request, "*")
