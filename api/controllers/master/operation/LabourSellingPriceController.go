@@ -34,6 +34,25 @@ func NewLabourSellingPriceController(LabourSellingPriceService masteroperationse
 	}
 }
 
+// @Summary Get All Selling Price
+// @Description Get All Selling Price
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param effective_date_from query string false "Effective Date From"
+// @Param effective_date_to query string false "Effective Date To"
+// @Param bill_to_id query string false "Bill To ID"
+// @Param job_type_id query string false "Job Type ID"
+// @Param description query string false "Description"
+// @Param brand_id query string false "Brand ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price [get]
 func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -75,6 +94,15 @@ func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.Respon
 
 }
 
+// @Summary Get Selling Price By ID
+// @Description Get Selling Price By ID
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param labour_selling_price_id path int true "Labour Selling Price ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price/{labour_selling_price_id} [get]
 func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request) {
 
 	labourSellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
@@ -93,6 +121,15 @@ func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Labour Selling Price
+// @Description Save Labour Selling Price
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param request body masteroperationpayloads.LabourSellingPriceRequest true "Labour Selling Price Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price [post]
 func (r *LabourSellingPriceControllerImpl) SaveLabourSellingPrice(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteroperationpayloads.LabourSellingPriceRequest

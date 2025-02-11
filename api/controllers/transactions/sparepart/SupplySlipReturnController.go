@@ -35,6 +35,15 @@ func NewSupplySlipReturnController(supplySlipReturnService transactionspareparts
 	}
 }
 
+// @Summary Save Supply Slip Return
+// @Description Save Supply Slip Return
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param body body transactionsparepartentities.SupplySlipReturn true "Supply Slip Return Object"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return [post]
 func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturn(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest transactionsparepartentities.SupplySlipReturn
@@ -56,6 +65,15 @@ func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturn(writer http.Respon
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Save Supply Slip Return Detail
+// @Description Save Supply Slip Return Detail
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param body body transactionsparepartentities.SupplySlipReturnDetail true "Supply Slip Return Detail Object"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return/detail [post]
 func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturnDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest transactionsparepartentities.SupplySlipReturnDetail
@@ -77,6 +95,25 @@ func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturnDetail(writer http.
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Get All Supply Slip Detail
+// @Description Get All Supply Slip Detail
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param supply_return_document_number query string false "Supply Return Document Number"
+// @Param supply_return_date_from query string false "Supply Return Date From"
+// @Param supply_return_date_to query string false "Supply Return Date To"
+// @Param supply_document_number query string false "Supply Document Number"
+// @Param work_order_document_number query string false "Work Order Document Number"
+// @Param customer_name query string false "Customer Name"
+// @Param approval_status_id query string false "Approval Status Id"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return [get]
 func (r *SupplySlipReturnControllerImpl) GetAllSupplySlipDetail(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -123,6 +160,19 @@ func (r *SupplySlipReturnControllerImpl) GetAllSupplySlipDetail(writer http.Resp
 	)
 }
 
+// @Summary Get Supply Slip Return By Id
+// @Description Get Supply Slip Return By Id
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param supply_return_system_number path int true "Supply Return System Number"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return/{supply_return_system_number} [get]
 func (r *SupplySlipReturnControllerImpl) GetSupplySlipReturnById(writer http.ResponseWriter, request *http.Request) {
 
 	supplyReturnId, _ := strconv.Atoi(chi.URLParam(request, "supply_return_system_number"))
@@ -146,6 +196,15 @@ func (r *SupplySlipReturnControllerImpl) GetSupplySlipReturnById(writer http.Res
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Supply Slip Return Detail By Id
+// @Description Get Supply Slip Return Detail By Id
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param supply_return_detail_system_number path int true "Supply Return Detail System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return/detail/{supply_return_detail_system_number} [get]
 func (r *SupplySlipReturnControllerImpl) GetSupplySlipReturnDetailById(writer http.ResponseWriter, request *http.Request) {
 
 	supplyReturnDetailId, _ := strconv.Atoi(chi.URLParam(request, "supply_return_detail_system_number"))
@@ -160,6 +219,16 @@ func (r *SupplySlipReturnControllerImpl) GetSupplySlipReturnDetailById(writer ht
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Supply Slip Return
+// @Description Update Supply Slip Return
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param supply_return_system_number path int true "Supply Return System Number"
+// @Param body body transactionsparepartentities.SupplySlipReturn true "Supply Slip Return Object"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return/{supply_return_system_number} [put]
 func (r *SupplySlipReturnControllerImpl) UpdateSupplySlipReturn(writer http.ResponseWriter, request *http.Request) {
 	supplyReturnId, _ := strconv.Atoi(chi.URLParam(request, "supply_return_system_number"))
 	var formRequest transactionsparepartentities.SupplySlipReturn
@@ -177,6 +246,16 @@ func (r *SupplySlipReturnControllerImpl) UpdateSupplySlipReturn(writer http.Resp
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Supply Slip Return Detail
+// @Description Update Supply Slip Return Detail
+// @Tags Transaction Spare Part : Supply Slip Return
+// @Accept json
+// @Produce json
+// @Param supply_return_detail_system_number path int true "Supply Return Detail System Number"
+// @Param body body transactionsparepartentities.SupplySlipReturnDetail true "Supply Slip Return Detail Object"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip-return/detail/{supply_return_detail_system_number} [put]
 func (r *SupplySlipReturnControllerImpl) UpdateSupplySlipReturnDetail(writer http.ResponseWriter, request *http.Request) {
 	supplyReturnDetailId, _ := strconv.Atoi(chi.URLParam(request, "supply_return_detail_system_number"))
 	var formRequest transactionsparepartentities.SupplySlipReturnDetail

@@ -6,6 +6,7 @@ import (
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	transactionunitentities "after-sales/api/entities/transaction/Unit"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
@@ -14,12 +15,13 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -2324,12 +2326,19 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
-		whsGroup, whsGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(workOrderReq.WarehouseGroupId)
-		if whsGroupErr != nil {
+		var whsGroup masterwarehouseentities.WarehouseGroup
+		if err := tx.Where("warehouse_group_id = ?", workOrderReq.WarehouseGroupId).First(&whsGroup).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Warehouse group not found",
+					Err:        fmt.Errorf("warehouse group with ID %d not found", workOrderReq.WarehouseGroupId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: whsGroupErr.StatusCode,
-				Message:    "Failed to retrieve warehouse group from the external API",
-				Err:        whsGroupErr.Err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Warehouse group",
+				Err:        err,
 			}
 		}
 
@@ -2356,33 +2365,48 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		var OperationItemCode string
 		var Description string
 
-		operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, workOrderReq.OperationItemId)
+		operationItemResponse, operationItemErr := r.GetOperationItemById(workOrderReq.LineTypeId, workOrderReq.OperationItemId)
 		if operationItemErr != nil {
 			return pages, operationItemErr
 		}
 
-		OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+		OperationItemCode, Description, errResp := r.HandleLineTypeResponse(workOrderReq.LineTypeId, operationItemResponse)
 		if errResp != nil {
 			return pages, errResp
 		}
 
 		// fetch data item
-		itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(workOrderReq.OperationItemId)
-		if itemErr != nil {
+		var itemResponse masteritementities.Item
+		if err := tx.Where("item_id = ?", workOrderReq.OperationItemId).First(&itemResponse).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item not found",
+					Err:        fmt.Errorf("item with ID %d not found", workOrderReq.OperationItemId),
+				}
+			}
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve item data from the external API",
-				Err:        itemErr.Err,
+				Message:    "Failed to fetch Item",
+				Err:        err,
 			}
 		}
 
 		// Fetch data UOM from external API
-		uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
-		if uomErr != nil {
+		var uomItems masteritementities.Uom
+		if err := tx.Where("uom_id = ?", itemResponse.UnitOfMeasurementStockId).First(&uomItems).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "UOM not found",
+					Err:        fmt.Errorf("uom with ID %d not found", itemResponse.UnitOfMeasurementStockId),
+				}
+
+			}
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve UOM data from the external API",
-				Err:        uomErr.Err,
+				Message:    "Failed to fetch UOM",
+				Err:        err,
 			}
 		}
 
@@ -2561,12 +2585,19 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		}
 	}
 
-	whsGroup, whsGroupErr := aftersalesserviceapiutils.GetWarehouseGroupById(entity.WarehouseGroupId)
-	if whsGroupErr != nil {
+	var whsGroup masterwarehouseentities.WarehouseGroup
+	if err := tx.Where("warehouse_group_id = ?", entity.WarehouseGroupId).First(&whsGroup).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Warehouse group not found",
+				Err:        fmt.Errorf("warehouse group with ID %d not found", entity.WarehouseGroupId),
+			}
+		}
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: whsGroupErr.StatusCode,
-			Message:    "Failed to retrieve warehouse group from the external API",
-			Err:        whsGroupErr.Err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Warehouse group",
+			Err:        err,
 		}
 	}
 
@@ -2593,33 +2624,48 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	var OperationItemCode string
 	var Description string
 
-	operationItemResponse, operationItemErr := aftersalesserviceapiutils.GetOperationItemById(lineTypeResponse.LineTypeCode, entity.OperationItemId)
+	operationItemResponse, operationItemErr := r.GetOperationItemById(entity.LineTypeId, entity.OperationItemId)
 	if operationItemErr != nil {
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, operationItemErr
 	}
 
-	OperationItemCode, Description, errResp := aftersalesserviceapiutils.HandleLineTypeResponse(lineTypeResponse.LineTypeCode, operationItemResponse)
+	OperationItemCode, Description, errResp := r.HandleLineTypeResponse(entity.LineTypeId, operationItemResponse)
 	if errResp != nil {
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, errResp
 	}
 
 	// fetch data item
-	itemResponse, itemErr := aftersalesserviceapiutils.GetItemId(entity.OperationItemId)
-	if itemErr != nil {
+	var itemResponse masteritementities.Item
+	if err := tx.Where("item_id = ?", entity.OperationItemId).First(&itemResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item not found",
+				Err:        fmt.Errorf("item with ID %d not found", entity.OperationItemId),
+			}
+		}
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve item data from the external API",
-			Err:        itemErr.Err,
+			Message:    "Failed to fetch Item",
+			Err:        err,
 		}
 	}
 
 	// Fetch data UOM from external API
-	uomItems, uomErr := aftersalesserviceapiutils.GetUomById(itemResponse.UomStockId)
-	if uomErr != nil {
+	var uomItems masteritementities.Uom
+	if err := tx.Where("uom_id = ?", itemResponse.UnitOfMeasurementStockId).First(&uomItems).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "UOM not found",
+				Err:        fmt.Errorf("uom with ID %d not found", itemResponse.UnitOfMeasurementStockId),
+			}
+
+		}
 		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve UOM data from the external API",
-			Err:        uomErr.Err,
+			Message:    "Failed to fetch UOM",
+			Err:        err,
 		}
 	}
 
@@ -4663,7 +4709,7 @@ func (r *WorkOrderRepositoryImpl) SaveAffiliated(tx *gorm.DB, IdWorkorder int, i
 	return true, nil
 }
 
-func (s *WorkOrderRepositoryImpl) DeleteVehicleServiceMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) DeleteVehicleServiceMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderServiceVehicle
 	err := tx.Model(&transactionworkshopentities.WorkOrderServiceVehicle{}).Where("work_order_system_number = ? AND work_order_service_id IN (?)", Id, DetailIds).First(&entity).Error
 	if err != nil {
@@ -4692,7 +4738,7 @@ func (s *WorkOrderRepositoryImpl) DeleteVehicleServiceMultiId(tx *gorm.DB, Id in
 	return true, nil
 }
 
-func (s *WorkOrderRepositoryImpl) DeleteDetailWorkOrderMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) DeleteDetailWorkOrderMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderDetail
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).Where("work_order_system_number = ? AND work_order_detail_id = ? IN (?)", Id, DetailIds).First(&entity).Error
 	if err != nil {
@@ -4720,7 +4766,7 @@ func (s *WorkOrderRepositoryImpl) DeleteDetailWorkOrderMultiId(tx *gorm.DB, Id i
 	return true, nil
 }
 
-func (s *WorkOrderRepositoryImpl) DeleteRequestMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) DeleteRequestMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderService
 	err := tx.Model(&transactionworkshopentities.WorkOrderService{}).Where("work_order_system_number = ? AND work_order_service_id IN (?)", Id, DetailIds).First(&entity).Error
 	if err != nil {
@@ -4762,7 +4808,7 @@ func (s *WorkOrderRepositoryImpl) DeleteRequestMultiId(tx *gorm.DB, Id int, Deta
 // uspg_wtWorkOrder0_Update
 // IF @Option = 8
 // --USE FOR : * WORK ORDER CHANGE BILL TO
-func (s *WorkOrderRepositoryImpl) ChangeBillTo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) ChangeBillTo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse) {
 	var existingWorkOrder struct {
 		WorkOrderOperationItemLine int
 	}
@@ -4823,7 +4869,7 @@ func (s *WorkOrderRepositoryImpl) ChangeBillTo(tx *gorm.DB, workOrderId int, req
 // IF @Option = 13
 //
 //	--USE FOR : * WORK ORDER CHANGE PHONE NO
-func (s *WorkOrderRepositoryImpl) ChangePhoneNo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) ChangePhoneNo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", workOrderId).First(&entity).Error
 	if err != nil {
@@ -4859,7 +4905,7 @@ func (s *WorkOrderRepositoryImpl) ChangePhoneNo(tx *gorm.DB, workOrderId int, re
 // uspg_wtWorkOrder2_Update
 // IF @Option = 14
 // --USE FOR : CONFIRM PRICE
-func (s *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	var response transactionworkshopentities.WorkOrderDetail
 	var markupPercentage, totalPackage, totalOpr, totalPart, totalOil, totalMaterial, totalConsumableMaterial, totalSublet, totalAccs, totalSouvenir float64
@@ -5166,7 +5212,7 @@ func (s *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idw
 // uspg_wtWorkOrder2_Update
 // IF @Option = 6
 // --USE FOR : CHECK DETAIL
-func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	var detailentity transactionworkshopentities.WorkOrderDetail
 
@@ -5228,7 +5274,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				if supplyQty == 0 {
 					var qtyAvail float64
 
-					qtyAvail, errResponse := s.lookupRepo.SelectLocationStockItem(tx, 1, entity.CompanyId, time.Now(), 0, "", detailentity.OperationItemId, detailentity.WarehouseGroupId, "S")
+					qtyAvail, errResponse := r.lookupRepo.SelectLocationStockItem(tx, 1, entity.CompanyId, time.Now(), 0, "", detailentity.OperationItemId, detailentity.WarehouseGroupId, "S")
 					if errResponse != nil {
 						return false, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -5411,7 +5457,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									// }
 
 									// Fetch Opr_Item_Price
-									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+									oprItemPrice, _ = r.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 									// Apply markup to the item price
 									oprItemPrice = oprItemPrice + 10.00 + (oprItemPrice * (5.00 / 100))
@@ -5461,7 +5507,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+				oprItemPrice, _ = r.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -5472,7 +5518,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 				// Fetch Opr_Item_Disc_Percent
-				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, linetypechecks.LineTypeCode, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
+				oprItemPriceDisc, _ = r.lookupRepo.GetOprItemDisc(tx, linetypechecks.LineTypeCode, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
 
 			} else {
 
@@ -5483,7 +5529,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
+				oprItemPrice, _ = r.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -5494,7 +5540,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 				// Fetch Opr_Item_Disc_Percent
-				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, linetypechecks.LineTypeCode, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
+				oprItemPriceDisc, _ = r.lookupRepo.GetOprItemDisc(tx, linetypechecks.LineTypeCode, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
 
 			}
 
@@ -5824,7 +5870,7 @@ func checkOperationAllocation(tx *gorm.DB, workOrderId int, woTrxTypeId int) (bo
 
 // uspg_wtWorkOrder0_Update
 // IF @Option = 7
-func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
 	campaignId, err := checkCampaignExistence(tx, workOrderId)
 	if err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
@@ -6076,7 +6122,7 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 // uspg_wtWorkOrder2_Insert
 // IF @Option = 1
 // --USE FOR : * INSERT NEW DATA FROM PACKAGE IN CONTRACT SERVICE
-func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 
 	type ContractServiceData struct {
 		ContractServSysNo float64 `gorm:"column:contract_service_system_number"`
@@ -6552,7 +6598,7 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 // uspg_wtWorkOrder2_Insert
 // IF @Option = 2
 // --USE FOR : * INSERT NEW DATA FROM PACKAGE MASTER
-func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderDetail
 	var result struct {
 		CompanyCode int
@@ -6610,7 +6656,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 	}
 
 	// Step 3: Fetch Whs_Group based on company code
-	whsGroupValue, err := s.lookupRepo.GetWhsGroup(tx, result.CompanyCode)
+	whsGroupValue, err := r.lookupRepo.GetWhsGroup(tx, result.CompanyCode)
 	if err != nil {
 		return entity, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -6751,7 +6797,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 		// }
 
 		// Fetch operation item price and discount percent
-		oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+		oprItemPrice, err := r.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
 		if err != nil {
 			return entity, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -6764,7 +6810,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 		oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 		// Fetch item discount percent (You need to define or fix GetOprItemDiscPercent method)
-		oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*csrFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+		oprItemDiscPercent, err := r.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*csrFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
 		if err != nil {
 			return entity, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -6900,7 +6946,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 			uomType := "UOM_TYPE_SELL" // get variable value for UOM_TYPE_SELL
 
 			// Fetch line type by item code
-			getLineTypeByItemCode, err := s.lookupRepo.GetLineTypeByItemCode(tx, csrOprItemCode)
+			getLineTypeByItemCode, err := r.lookupRepo.GetLineTypeByItemCode(tx, csrOprItemCode)
 			if err != nil {
 				return entity, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -6946,7 +6992,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 			var currentDate = time.Now()
 
 			// Execute the stored procedure `SelectLocationStockItem`
-			qtyAvailable, err := s.lookupRepo.SelectLocationStockItem(tx, 1, result.CompanyCode, currentDate, 0, "", csrOprItemId, whsGroup, uomType)
+			qtyAvailable, err := r.lookupRepo.SelectLocationStockItem(tx, 1, result.CompanyCode, currentDate, 0, "", csrOprItemId, whsGroup, uomType)
 			if err != nil {
 				return entity, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -7053,7 +7099,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 					// }
 
 					// Fetch operation item price and discount percent
-					oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
+					oprItemPrice, err := r.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
 					if err != nil {
 						return entity, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -7066,7 +7112,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 					oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 					// Fetch item discount percent (You need to define or fix GetOprItemDiscPercent method)
-					oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*newFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+					oprItemDiscPercent, err := r.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*newFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
 					if err != nil {
 						return entity, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -7222,7 +7268,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 						// }
 
 						// Fetch operation item price and discount percent
-						oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+						oprItemPrice, err := r.lookupRepo.GetOprItemPrice(tx, csrLineTypeId, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
 						if err != nil {
 							return entity, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -7235,7 +7281,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 						oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 						// Fetch item discount percent
-						oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*substitute.SupplyQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+						oprItemDiscPercent, err := r.lookupRepo.GetOprItemDisc(tx, strconv.Itoa(result.LinetypeId), result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*substitute.SupplyQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
 						if err != nil {
 							return entity, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -7448,7 +7494,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 // ////////////////////////////////////////////////////////////////////////////////
 // uspg_wtWorkOrder2_Insert
 // IF @Option = 3
-func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderFieldActionRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderFieldActionRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderDetail
 	var result transactionworkshopentities.WorkOrder
 	var recdettype transactionworkshopentities.RecallDetailType
@@ -7541,7 +7587,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 
 			billCode := utils.TrxTypeWoWarranty.Code
 			jobTypeId := utils.JobTypeWarranty.ID
-			WhsGroup, err := s.lookupRepo.GetWhsGroup(tx, companyCode)
+			WhsGroup, err := r.lookupRepo.GetWhsGroup(tx, companyCode)
 			if err != nil {
 				return entity, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -7563,7 +7609,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 			// 	return entity, linetypeErr
 			// }
 
-			oprItemPrice, err := s.lookupRepo.GetOprItemPrice(
+			oprItemPrice, err := r.lookupRepo.GetOprItemPrice(
 				tx, recallRecord.LineTypeId, companyCode, vehicleBrand, recallRecord.OprItemId, agreementNo,
 				entity.JobTypeId, utils.TrxTypeWoWarranty.ID,
 				int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(variantCode),
@@ -7614,7 +7660,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 					}
 				}
 
-				frtQty, err := s.lookupRepo.GetOprItemFrt(tx, recallRecord.OprItemId, vehicleBrand, modelCode, variantCode, vehicleChassisNo)
+				frtQty, err := r.lookupRepo.GetOprItemFrt(tx, recallRecord.OprItemId, vehicleBrand, modelCode, variantCode, vehicleChassisNo)
 				if err != nil {
 					return entity, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
@@ -7667,7 +7713,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 					}
 				}
 
-				lineTypeStr, err := s.lookupRepo.GetLineTypeByItemCode(tx, recallRecord.OprItemCode)
+				lineTypeStr, err := r.lookupRepo.GetLineTypeByItemCode(tx, recallRecord.OprItemCode)
 				if err != nil {
 					return entity, err
 				}
@@ -8005,7 +8051,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 				}
 			} else {
 				//-- LINE TYPE <> 1 , NEED SUBSTITUTE
-				linetypecode, err := s.lookupRepo.GetLineTypeByItemCode(tx, recallRecord.OprItemCode)
+				linetypecode, err := r.lookupRepo.GetLineTypeByItemCode(tx, recallRecord.OprItemCode)
 				if err != nil {
 					return entity, err
 				}
@@ -8031,7 +8077,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 				UomType := utils.UomTypeService
 
 				var qtyAvail float64
-				qtyAvail, errResponse := s.lookupRepo.SelectLocationStockItem(tx, 1, companyCode, time.Now(), 0, "", recallRecord.OprItemId, WhsGroup, UomType)
+				qtyAvail, errResponse := r.lookupRepo.SelectLocationStockItem(tx, 1, companyCode, time.Now(), 0, "", recallRecord.OprItemId, WhsGroup, UomType)
 				if errResponse != nil {
 					return entity, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
@@ -8315,7 +8361,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							var markupAmount, markupPercentage float64
 
 							// Fetch operation item price and discount percent  utils.LinetypeSublet
-							oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, 9, result.CompanyId, result.BrandId, recallRecord.OprItemId, agreementNo, utils.TrxTypeWoFreeService.ID, utils.TrxTypeWoFreeService.ID, int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(result.VariantId))
+							oprItemPrice, err := r.lookupRepo.GetOprItemPrice(tx, 9, result.CompanyId, result.BrandId, recallRecord.OprItemId, agreementNo, utils.TrxTypeWoFreeService.ID, utils.TrxTypeWoFreeService.ID, int(recallRecord.FrtQty), WhsGroup, strconv.Itoa(result.VariantId))
 							if err != nil {
 								return entity, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,
@@ -8328,7 +8374,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 							// Fetch item discount percent
-							oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, utils.LinetypeSublet, utils.TrxTypeWoFreeService.ID, recallRecord.OprItemId, agreementNo, 00002, oprItemPrice*substitute.SupplyQty, result.CompanyId, result.BrandId, 0, WhsGroup, 0)
+							oprItemDiscPercent, err := r.lookupRepo.GetOprItemDisc(tx, utils.LinetypeSublet, utils.TrxTypeWoFreeService.ID, recallRecord.OprItemId, agreementNo, 00002, oprItemPrice*substitute.SupplyQty, result.CompanyId, result.BrandId, 0, WhsGroup, 0)
 							if err != nil {
 								return entity, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,
@@ -8773,4 +8819,177 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 	}
 
 	return entity, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetOperationItemById(LineTypeId int, OperationItemId int) (interface{}, *exceptions.BaseErrorResponse) {
+	// Validate LineType
+	if LineTypeId < 0 || LineTypeId > 9 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid LineType",
+			Err:        fmt.Errorf("invalid LineType: %d", LineTypeId),
+		}
+	}
+
+	// URL for the request
+	url := fmt.Sprintf("%slookup/item-opr-code/%d/by-id/%d", config.EnvConfigs.AfterSalesServiceUrl, LineTypeId, OperationItemId)
+	log.Printf("Requesting URL: %s", url)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to create request",
+			Err:        err,
+		}
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to make request",
+			Err:        err,
+		}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: resp.StatusCode,
+			Message:    "Failed to get operation item",
+			Err:        errors.New("failed to get operation item"),
+		}
+	}
+
+	var body []byte
+	body, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to read response body",
+			Err:        err,
+		}
+	}
+
+	//log.Printf("Raw Response: %s", string(body))
+
+	var apiResponse transactionworkshoppayloads.ApiResponse
+	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to decode API response",
+			Err:        err,
+		}
+	}
+
+	if apiResponse.StatusCode != http.StatusOK {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: apiResponse.StatusCode,
+			Message:    apiResponse.Message,
+			Err:        errors.New(apiResponse.Message),
+		}
+	}
+
+	// Handle data according to LineType
+	var responseData interface{}
+	switch LineTypeId {
+	case 2, 3, 4, 5, 6, 7, 8, 9:
+		var response transactionworkshoppayloads.LineType2To9Response
+		if err := r.mapToStruct(apiResponse.Data, &response); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error unmarshaling 'data' into LineType2To9Response",
+				Err:        err,
+			}
+		}
+		responseData = response
+	case 1:
+		var response transactionworkshoppayloads.LineType1Response
+		if err := r.mapToStruct(apiResponse.Data, &response); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error unmarshaling 'data' into LineType1Response",
+				Err:        err,
+			}
+		}
+		responseData = response
+	case 0:
+		var response transactionworkshoppayloads.LineType0Response
+		if err := r.mapToStruct(apiResponse.Data, &response); err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error unmarshaling 'data' into LineType0Response",
+				Err:        err,
+			}
+		}
+		responseData = response
+	default:
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Unknown line type in operation item response",
+			Err:        fmt.Errorf("unexpected line type %d", LineTypeId),
+		}
+	}
+
+	return responseData, nil
+}
+
+// Helper function to map data into the correct struct
+func (r *WorkOrderRepositoryImpl) mapToStruct(data map[string]interface{}, result interface{}) error {
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("error marshaling data: %v", err)
+	}
+
+	if err := json.Unmarshal(dataBytes, result); err != nil {
+		return fmt.Errorf("error unmarshaling into struct: %v", err)
+	}
+	return nil
+}
+
+// aftersalesserviceapiutils/response_utils.go
+func (r *WorkOrderRepositoryImpl) HandleLineTypeResponse(lineTypeId int, operationItemResponse interface{}) (string, string, *exceptions.BaseErrorResponse) {
+	var OperationItemCode, Description string
+
+	switch lineTypeId {
+	case 1:
+		if response, ok := operationItemResponse.(transactionworkshoppayloads.LineType0Response); ok {
+			OperationItemCode = response.PackageCode
+			Description = response.PackageName
+		} else {
+			return "", "", &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to decode LineType0 response",
+				Err:        errors.New("failed to decode LineType0 response"),
+			}
+		}
+
+	case 2:
+		if response, ok := operationItemResponse.(transactionworkshoppayloads.LineType1Response); ok {
+			OperationItemCode = response.OperationCode
+			Description = response.OperationName
+		} else {
+			return "", "", &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to decode LineType1 response",
+				Err:        errors.New("failed to decode LineType1 response"),
+			}
+		}
+
+	default:
+		if response, ok := operationItemResponse.(transactionworkshoppayloads.LineType2To9Response); ok {
+			OperationItemCode = response.ItemCode
+			Description = response.ItemName
+		} else {
+			return "", "", &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to decode LineType2-9 response",
+				Err:        errors.New("failed to decode LineType2-9 response"),
+			}
+		}
+	}
+
+	return OperationItemCode, Description, nil
 }

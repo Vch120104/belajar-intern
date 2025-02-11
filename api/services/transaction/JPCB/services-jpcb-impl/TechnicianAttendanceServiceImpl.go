@@ -61,7 +61,38 @@ func (s *TechnicianAttendanceImpl) GetAllTechnicianAttendance(filterCondition []
 	return result, nil
 }
 
-func (s *TechnicianAttendanceImpl) SaveTechnicianAttendance(req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) (transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
+func (s *TechnicianAttendanceImpl) GetAddLineTechnician(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TechnicianAttendanceRepository.GetAddLineTechnician(tx, filterCondition, pages)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *TechnicianAttendanceImpl) SaveTechnicianAttendance(req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) ([]transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 

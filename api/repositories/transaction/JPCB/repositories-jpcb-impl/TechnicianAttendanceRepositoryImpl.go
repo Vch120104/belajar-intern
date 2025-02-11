@@ -7,7 +7,10 @@ import (
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -35,21 +38,107 @@ func (t *TechnicianAttendanceImpl) GetAllTechnicianAttendance(tx *gorm.DB, filte
 		}
 	}
 
+	for i, data := range responses {
+		employeeResp, employeeErr := generalserviceapiutils.GetEmployeeMasterById(data.UserId)
+		if employeeErr != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching employee master data",
+				Err:        employeeErr,
+			}
+		}
+		responses[i].EmployeeName = employeeResp.EmployeeName
+	}
+
 	pages.Rows = responses
 
 	return pages, nil
 }
 
-func (t *TechnicianAttendanceImpl) SaveTechnicianAttendance(tx *gorm.DB, req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) (transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
-	serviceDate := req.ServiceDate.Truncate(24 * time.Hour)
-	entities := transactionjpcbentities.TechnicianAttendance{
-		CompanyId:   req.CompanyId,
-		ServiceDate: serviceDate,
-		UserId:      req.UserId,
-		Attendance:  req.Attendance,
+func (t *TechnicianAttendanceImpl) GetAddLineTechnician(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var serviceDate string
+	var companyId int
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "service_date") {
+			serviceDate = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "company_id") {
+			id, parseErr := strconv.Atoi(filter.ColumnValue)
+			if parseErr != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Error parsing company_id",
+					Err:        parseErr,
+				}
+			}
+			companyId = id
+			continue
+		}
 	}
 
-	err := tx.Save(&entities).Error
+	entities := transactionjpcbentities.TechnicianAttendance{}
+	userIds := []int{}
+	err := tx.Model(&entities).Where("service_date = ?", serviceDate).Pluck("user_id", &userIds).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching technician attendance data",
+			Err:        err,
+		}
+	}
+
+	params := generalserviceapiutils.UserDetailParams{
+		Page:        pages.Page,
+		Limit:       10000000,
+		UserIdNotIn: utils.IntSliceToString(userIds),
+		CompanyId:   companyId,
+		RoleName:    "Technician",
+	}
+	employeeResponse, _ := generalserviceapiutils.GetAllUserDetail(params)
+
+	result, totalPages, totalRows := pagination.NewDataFramePaginate(employeeResponse, &pages)
+	pages.Rows = result
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
+}
+
+func (t *TechnicianAttendanceImpl) SaveTechnicianAttendance(tx *gorm.DB, req transactionjpcbpayloads.TechnicianAttendanceSaveRequest) ([]transactionjpcbentities.TechnicianAttendance, *exceptions.BaseErrorResponse) {
+	serviceDate := req.ServiceDate.Truncate(24 * time.Hour)
+	userIdStr := strings.Split(req.UserIds, ",")
+
+	entities := []transactionjpcbentities.TechnicianAttendance{}
+	for _, userIdStr := range userIdStr {
+		userId, convErr := strconv.Atoi(userIdStr)
+		if convErr != nil {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error converting user_id into integer",
+				Err:        convErr,
+			}
+		}
+
+		_, employeeErr := generalserviceapiutils.GetEmployeeMasterById(userId)
+		if employeeErr != nil {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching employee data",
+				Err:        employeeErr.Err,
+			}
+		}
+
+		entity := transactionjpcbentities.TechnicianAttendance{
+			CompanyId:   req.CompanyId,
+			ServiceDate: serviceDate,
+			UserId:      userId,
+			Attendance:  true,
+		}
+		entities = append(entities, entity)
+	}
+
+	err := tx.Create(&entities).Error
 
 	if err != nil {
 		return entities, &exceptions.BaseErrorResponse{

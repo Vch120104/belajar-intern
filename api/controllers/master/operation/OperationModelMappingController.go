@@ -60,7 +60,7 @@ func NewOperationModelMappingController(operationModelMappingservice masteropera
 // @Description Retrieve operation model mapping lookup with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param is_active query string false "Is Active"
 // @Param operation_group_code query string false "Operation Group Code"
 // @Param operation_name query string false "Operation Name"
@@ -115,7 +115,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(wri
 // @Description Retrieve an operation model mapping by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -141,7 +141,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingById(write
 // @Description Retrieve an operation model mapping by brand, model, and operation codes
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param brand_id query int true "Brand ID"
 // @Param model_id query int true "Model ID"
 // @Param operation_id query int true "Operation ID"
@@ -184,11 +184,11 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandMod
 // @Description Create or update an operation model mapping
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param reqBody body masteroperationpayloads.OperationModelMappingResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/ [post]
+// @Router /v1/operation-model-mapping [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingResponse
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -217,7 +217,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer h
 // @Description Change the status of an operation model mapping by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -242,11 +242,11 @@ func (r *OperationModelMappingControllerImpl) ChangeStatusOperationModelMapping(
 // @Description Create or update an operation model mapping FRT (Fixed Repair Time)
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param reqBody body masteroperationpayloads.OperationModelMappingFrtRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/frt [post]
+// @Router /v1/operation-model-mapping/operation-frt [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingFrtRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -271,6 +271,15 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Delete Operation Level
+// @Description Delete one or more operation levels by their IDs
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_level_id path string true "Operation Level ID(s) to delete, comma-separated"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-level/delete/{operation_level_id} [delete]
 func (r *OperationModelMappingControllerImpl) DeleteOperationLevel(writer http.ResponseWriter, request *http.Request) {
 	operationLevelIds := chi.URLParam(request, "operation_level_id")
 	operationLevelIds = strings.Trim(operationLevelIds, "[]")
@@ -298,11 +307,11 @@ func (r *OperationModelMappingControllerImpl) DeleteOperationLevel(writer http.R
 // @Description Deactivate one or more operation FRTs by their IDs
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_frt_id path string true "Operation FRT ID(s) to deactivate, comma-separated"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/frt/deactivate/{operation_frt_id} [patch]
+// @Router /v1/operation-model-mapping/operation-frt/deactivate/{operation_frt_id} [patch]
 func (r *OperationModelMappingControllerImpl) DeactivateOperationFrt(writer http.ResponseWriter, request *http.Request) {
 
 	OperationFrtIds := chi.URLParam(request, "operation_frt_id")
@@ -320,11 +329,11 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationFrt(writer http
 // @Description Activate one or more deactivated operation FRTs by their IDs
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_frt_id path string true "Operation FRT ID(s) to activate, comma-separated"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/frt/activate/{operation_frt_id} [patch]
+// @Router /v1/operation-model-mapping/operation-frt/activate/{operation_frt_id} [patch]
 func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.ResponseWriter, request *http.Request) {
 
 	OperationFrtIds := chi.URLParam(request, "operation_frt_id")
@@ -342,7 +351,7 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.R
 // @Description Retrieve all operation document requirements associated with a specific operation model mapping
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -350,7 +359,7 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.R
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/{operation_model_mapping_id}/document-requirements [get]
+// @Router /v1/operation-model-mapping/operation-document-requirement/{operation_model_mapping_id} [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	headerId, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
@@ -380,7 +389,7 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement
 // @Description Retrieve all operation FRTs associated with a specific operation model mapping
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -388,7 +397,7 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/{operation_model_mapping_id}/frt [get]
+// @Router /v1/operation-model-mapping/operation-frt/{operation_model_mapping_id} [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	headerId, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
@@ -418,11 +427,11 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.Res
 // @Description Retrieve an operation document requirement by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_document_requirement_id path int true "Operation Document Requirement ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/document-requirements/{operation_document_requirement_id} [get]
+// @Router /v1/operation-model-mapping/operation-document-requirement/by-id/{operation_document_requirement_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationDocumentRequirementById(writer http.ResponseWriter, request *http.Request) {
 	operationDocumentRequirementId, errA := strconv.Atoi(chi.URLParam(request, "operation_document_requirement_id"))
 
@@ -444,11 +453,11 @@ func (r *OperationModelMappingControllerImpl) GetOperationDocumentRequirementByI
 // @Description Retrieve an operation FRT by its ID
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param operation_frt_id path int true "Operation FRT ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/frt/{operation_frt_id} [get]
+// @Router /v1/operation-model-mapping/operation-frt/by-id/{operation_frt_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.ResponseWriter, request *http.Request) {
 	OperationFrtId, errA := strconv.Atoi(chi.URLParam(request, "operation_frt_id"))
 
@@ -470,11 +479,11 @@ func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.Re
 // @Description Create or update an operation model mapping document requirement
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Model Mapping
+// @Tags Master Operation : Operation Model Mapping
 // @Param reqBody body masteroperationpayloads.OperationModelMappingDocumentRequirementRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/document-requirements [post]
+// @Router /v1/operation-model-mapping/operation-document-requirement [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -498,6 +507,16 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
+
+// @Summary Deactivate Operation Document Requirement
+// @Description Deactivate one or more operation document requirements by their IDs
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_document_requirement_id path string true "Operation Document Requirement ID(s) to deactivate, comma-separated"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-document-requirement/deactivate/{operation_document_requirement_id} [patch]
 func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
 	OperationDocReqIds := chi.URLParam(request, "operation_document_requirement_id")
@@ -510,6 +529,16 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequire
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
+
+// @Summary Activate Operation Document Requirement
+// @Description Activate one or more deactivated operation document requirements by their IDs
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_document_requirement_id path string true "Operation Document Requirement ID(s) to activate, comma-separated"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-document-requirement/activate/{operation_document_requirement_id} [patch]
 func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
 	OperationDocReqIds := chi.URLParam(request, "operation_document_requirement_id")
@@ -523,6 +552,15 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequireme
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Operation Level
+// @Description Create or update an operation level
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param reqBody body masteroperationpayloads.OperationLevelRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-level [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationLevel(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationLevelRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -547,6 +585,19 @@ func (r *OperationModelMappingControllerImpl) SaveOperationLevel(writer http.Res
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Get All Operation Level
+// @Description Retrieve all operation levels associated with a specific operation model mapping
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-level/{operation_model_mapping_id} [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationLevel(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	headerId, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
@@ -572,6 +623,15 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationLevel(writer http.R
 	payloads.NewHandleSuccessPagination(writer, results.Rows, "Get Data Successfully!", 200, paginate.Limit, paginate.Page, results.TotalRows, results.TotalPages)
 }
 
+// @Summary Get Operation Level By ID
+// @Description Retrieve an operation level by its ID
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_level_id path int true "Operation Level ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-level/by-id/{operation_level_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationLevelById(writer http.ResponseWriter, request *http.Request) {
 	operationlevelid, errA := strconv.Atoi(chi.URLParam(request, "operation_level_id"))
 
@@ -589,6 +649,15 @@ func (r *OperationModelMappingControllerImpl) GetOperationLevelById(writer http.
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Deactivate Operation Level
+// @Description Deactivate one or more operation levels by their IDs
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_level_id path string true "Operation Level ID(s) to deactivate, comma-separated"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-level/deactivate/{operation_level_id} [patch]
 func (r *OperationModelMappingControllerImpl) DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request) {
 
 	OperationLevelIds := chi.URLParam(request, "operation_level_id")
@@ -601,6 +670,16 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationLevel(writer ht
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
+
+// @Summary Activate Operation Level
+// @Description Activate one or more deactivated operation levels by their IDs
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_level_id path string true "Operation Level ID(s) to activate, comma-separated"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-level/activate/{operation_level_id} [patch]
 func (r *OperationModelMappingControllerImpl) ActivateOperationLevel(writer http.ResponseWriter, request *http.Request) {
 
 	OperationLevelIds := chi.URLParam(request, "operation_level_id")
@@ -614,6 +693,16 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationLevel(writer http
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Operation Model Mapping
+// @Description Update an operation model mapping by its ID
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
+// @Param reqBody body masteroperationpayloads.OperationModelMappingUpdate true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/{operation_model_mapping_id} [put]
 func (r *OperationModelMappingControllerImpl) UpdateOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
 
 	operationModelMappingId, err := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
@@ -642,6 +731,16 @@ func (r *OperationModelMappingControllerImpl) UpdateOperationModelMapping(writer
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Operation FRT
+// @Description Update an operation FRT by its ID
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_frt_id path int true "Operation FRT ID"
+// @Param reqBody body masteroperationpayloads.OperationFrtUpdate true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/operation-frt/{operation_frt_id} [put]
 func (r *OperationModelMappingControllerImpl) UpdateOperationFrt(writer http.ResponseWriter, request *http.Request) {
 
 	operationFrtId, err := strconv.Atoi(chi.URLParam(request, "operation_frt_id"))
@@ -670,6 +769,15 @@ func (r *OperationModelMappingControllerImpl) UpdateOperationFrt(writer http.Res
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Operation Model Mapping And FRT
+// @Description Create or update an operation model mapping and its FRT (Fixed Repair Time)
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param reqBody body masteroperationpayloads.OperationModelMappingAndFRTRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/with-frt [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingAndFRT(writer http.ResponseWriter, request *http.Request) {
 	var combinedRequest masteroperationpayloads.OperationModelMappingAndFRTRequest
 	helper.ReadFromRequestBody(request, &combinedRequest)
@@ -694,6 +802,16 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingAndFRT(wr
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Copy Operation Model Mapping To Other Model
+// @Description Copy an operation model mapping to another model
+// @Accept json
+// @Produce json
+// @Tags Master Operation : Operation Model Mapping
+// @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
+// @Param reqBody body masteroperationpayloads.OperationModelMappingCopyRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-model-mapping/copy-to-other-model/{operation_model_mapping_id} [post]
 func (r *OperationModelMappingControllerImpl) CopyOperationModelMappingToOtherModel(writer http.ResponseWriter, request *http.Request) {
 	operationModelMappingID, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
 

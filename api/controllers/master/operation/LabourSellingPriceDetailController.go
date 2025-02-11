@@ -36,7 +36,15 @@ func NewLabourSellingPriceDetailController(LabourSellingPriceService masteropera
 	}
 }
 
-// GetSellingPriceDetailById implements LabourSellingPriceDetailController.
+// @Summary Get Selling Price Detail By ID
+// @Description Get Selling Price Detail By ID
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param labour_selling_price_detail_id path int true "Labour Selling Price Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price-detail/{labour_selling_price_detail_id} [get]
 func (r *LabourSellingPriceDetailControllerImpl) GetSellingPriceDetailById(writer http.ResponseWriter, request *http.Request) {
 	detailId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_detail_id"))
 
@@ -54,7 +62,15 @@ func (r *LabourSellingPriceDetailControllerImpl) GetSellingPriceDetailById(write
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-// SaveDuplicate implements LabourSellingPriceDetailController.
+// @Summary Save Duplicate
+// @Description Save Duplicate
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param req body masteroperationpayloads.SaveDuplicateLabourSellingPrice true "Save Duplicate Labour Selling Price"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price/save-duplicate [post]
 func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.SaveDuplicateLabourSellingPrice
 
@@ -81,7 +97,15 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.Respo
 	payloads.NewHandleSuccess(writer, create, "Save Duplicate", http.StatusOK)
 }
 
-// Duplicate implements LabourSellingPriceDetailController.
+// @Summary Duplicate
+// @Description Duplicate
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param labour_selling_price_id path int true "Labour Selling Price ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price/duplicate/{labour_selling_price_id} [get]
 func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseWriter, request *http.Request) {
 	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
 
@@ -99,6 +123,19 @@ func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "success", 200)
 }
 
+// @Summary Get All Selling Price Detail By Header ID
+// @Description Get All Selling Price Detail By Header ID
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param labour_selling_price_id path int true "Labour Selling Price ID"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price-detail/{labour_selling_price_id} [get]
 func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
@@ -132,6 +169,15 @@ func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeade
 	)
 }
 
+// @Summary Save Labour Selling Price Detail
+// @Description Save Labour Selling Price Detail
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param req body masteroperationpayloads.LabourSellingPriceDetailRequest true "Save Labour Selling Price Detail"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price-detail [post]
 func (r *LabourSellingPriceDetailControllerImpl) SaveLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteroperationpayloads.LabourSellingPriceDetailRequest
@@ -160,6 +206,15 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveLabourSellingPriceDetail(wr
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Delete Labour Selling Price Detail
+// @Description Delete Labour Selling Price Detail
+// @Tags Master Operation : Labour Selling Price
+// @Accept json
+// @Produce json
+// @Param multi_id path string true "Multi ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/labour-selling-price-detail/{multi_id} [delete]
 func (r *LabourSellingPriceDetailControllerImpl) DeleteLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request) {
 
 	multiId := chi.URLParam(request, "multi_id")

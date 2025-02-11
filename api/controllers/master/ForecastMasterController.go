@@ -173,6 +173,16 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	)
 }
 
+// @Summary Update Forecast Master
+// @Description REST API Forecast Master
+// @Accept json
+// @Produce json
+// @Tags Master : Forecast Master
+// @param forecast_master_id path int true "forecast_master_id"
+// @param reqBody body masterpayloads.ForecastMasterResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/forecast-master/{forecast_master_id} [put]
 func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.ResponseWriter, request *http.Request) {
 	forecast_master_id, errA := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
 	if errA != nil {

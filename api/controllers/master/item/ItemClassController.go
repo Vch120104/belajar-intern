@@ -37,7 +37,15 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 	}
 }
 
-// GetItemClassDropDownbyGroupId implements ItemClassController.
+// @Summary Get ItemClass DropDownbyGroupId
+// @Description REST API Item Class
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Class
+// @Param item_group_id path int true "item_group_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-class/drop-down/by-group-id/{item_group_id} [get]
 func (r *ItemClassControllerImpl) GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request) {
 	itemGroupId, errA := strconv.Atoi(chi.URLParam(request, "item_group_id"))
 
@@ -56,7 +64,15 @@ func (r *ItemClassControllerImpl) GetItemClassDropDownbyGroupId(writer http.Resp
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetItemClassByCode implements ItemClassController.
+// @Summary Get Item Class By Code
+// @Description REST API Item Class
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Class
+// @Param item_class_code path string true "item_class_code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-class/by-code/{item_class_code} [get]
 func (r *ItemClassControllerImpl) GetItemClassByCode(writer http.ResponseWriter, request *http.Request) {
 	itemClassCode := chi.URLParam(request, "item_class_code")
 
@@ -70,7 +86,15 @@ func (r *ItemClassControllerImpl) GetItemClassByCode(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetItemClassbyId implements ItemClassController.
+// @Summary Get Item Class By ID
+// @Description REST API Item Class
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Class
+// @Param item_class_id path int true "item_class_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-class/{item_class_id} [get]
 func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, request *http.Request) {
 	itemClassId, errA := strconv.Atoi(chi.URLParam(request, "item_class_id"))
 
@@ -93,7 +117,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 // @Description REST API Item Class
 // @Accept json
 // @Produce json
-// @Tags Master : Item Class
+// @Tags Master Item : Item Class
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -106,7 +130,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-class/pop-up [get]
+// @Router /v1/item-class [get]
 func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	internalFilter := map[string]string{
@@ -148,7 +172,7 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 // @Description REST API Item Class
 // @Accept json
 // @Produce json
-// @Tags Master : Item Class
+// @Tags Master Item : Item Class
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param item_class_id query int false "item_class_id"
 // @Param item_class_code query string false "item_class_code"
@@ -157,7 +181,7 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 // @Param line_type_code query string false "line_type_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-class/ [get]
+// @Router /v1/item-class/drop-down [get]
 func (r *ItemClassControllerImpl) GetItemClassDropdown(writer http.ResponseWriter, request *http.Request) {
 	result, err := r.ItemClassService.GetItemClassDropDown()
 
@@ -168,6 +192,14 @@ func (r *ItemClassControllerImpl) GetItemClassDropdown(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
+// @Summary Get Item Class Mfg Dropdown
+// @Description REST API Item Class
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Class
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-class/mfg/drop-down [get]
 func (r *ItemClassControllerImpl) GetItemClassMfgDropdown(writer http.ResponseWriter, request *http.Request) {
 	result, err := r.ItemClassService.GetItemClassMfgDropdown()
 	if err != nil {
@@ -182,11 +214,11 @@ func (r *ItemClassControllerImpl) GetItemClassMfgDropdown(writer http.ResponseWr
 // @Description REST API Item Class
 // @Accept json
 // @Produce json
-// @Tags Master : Item Class
+// @Tags Master Item : Item Class
 // @param reqBody body masteritempayloads.ItemClassResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-class/ [post]
+// @Router /v1/item-class [post]
 func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemClassResponse
@@ -224,7 +256,7 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 // @Description REST API Item Class
 // @Accept json
 // @Produce json
-// @Tags Master : Item Class
+// @Tags Master Item : Item Class
 // @param item_class_id path int true "item_class_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

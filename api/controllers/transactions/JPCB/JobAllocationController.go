@@ -33,6 +33,19 @@ func NewJobAllocationController(jobAllocationService transactionjpcbservice.JobA
 	}
 }
 
+// @Summary Get All Job Allocation
+// @Description Get All Job Allocation
+// @Tags Transaction JPCB: Job Allocation
+// @Accept json
+// @Produce json
+// @Param company_id query string false "Company ID"
+// @Param technician_id query string false "Technician ID"
+// @Param service_date query string false "Service Date"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/job-allocation [get]
 func (r *JobAllocationControllerImpl) GetAllJobAllocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -56,6 +69,15 @@ func (r *JobAllocationControllerImpl) GetAllJobAllocation(writer http.ResponseWr
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get Job Allocation By ID
+// @Description Get Job Allocation By ID
+// @Tags Transaction JPCB: Job Allocation
+// @Accept json
+// @Produce json
+// @Param technician_allocation_system_number path string true "Technician Allocation System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/job-allocation/{technician_allocation_system_number} [get]
 func (r *JobAllocationControllerImpl) GetJobAllocationById(writer http.ResponseWriter, request *http.Request) {
 	technicianAllocationSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
 
@@ -67,6 +89,16 @@ func (r *JobAllocationControllerImpl) GetJobAllocationById(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
 
+// @Summary Update Job Allocation
+// @Description Update Job Allocation
+// @Tags Transaction JPCB: Job Allocation
+// @Accept json
+// @Produce json
+// @Param technician_allocation_system_number path string true "Technician Allocation System Number"
+// @Param body body transactionjpcbpayloads.JobAllocationUpdateRequest true "Job Allocation Update Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/job-allocation/{technician_allocation_system_number} [put]
 func (r *JobAllocationControllerImpl) UpdateJobAllocation(writer http.ResponseWriter, request *http.Request) {
 	technicianAllocationSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
 
@@ -91,6 +123,15 @@ func (r *JobAllocationControllerImpl) UpdateJobAllocation(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully", http.StatusOK)
 }
 
+// @Summary Delete Job Allocation
+// @Description Delete Job Allocation
+// @Tags Transaction JPCB: Job Allocation
+// @Accept json
+// @Produce json
+// @Param technician_allocation_system_number path string true "Technician Allocation System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/job-allocation/{technician_allocation_system_number} [delete]
 func (r *JobAllocationControllerImpl) DeleteJobAllocation(writer http.ResponseWriter, request *http.Request) {
 	technicianAllocationSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
 

@@ -11,7 +11,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -571,7 +570,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -579,21 +578,43 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 	)
 
 	// Fetch item type from external service
-	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchGoods masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "G").First(&itemTypeFetchGoods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
-	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchServices masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "S").First(&itemTypeFetchServices).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "S"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -607,7 +628,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -624,21 +645,41 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
 			}
-		} // "SP"
+		}
+
+		// fetch item class from external service
+		var itemClassResp masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SP").First(&itemClassResp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SP"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		}
+		// "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -670,19 +711,37 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				true).
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
-	case "3":
+	case 4:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassOL masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "OL").First(&itemClassOL).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "OL"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -713,28 +772,53 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassMT masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "MT").First(&itemClassMT).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "MT"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "MT"
 		// fetch item class from external service
-		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
-		if itmClsErr != nil {
+		var itemClassSB masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SB").First(&itemClassSB).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SB"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -765,25 +849,54 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassWF masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "WF").First(&itemClassWF).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "WF"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "WF"
 		// Fetch item group from external service
-		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
+		var itemGrpOJFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "OJ").First(&itemGrpOJFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "OJ"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
 		} // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -814,19 +927,37 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassAC masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "AC").First(&itemClassAC).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "AC"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -857,19 +988,37 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassCM masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "CM").First(&itemClassCM).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "CM"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -900,19 +1049,37 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassSV masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SV").First(&itemClassSV).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SV"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -953,7 +1120,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 
 	// Apply manual filters based on linetype
 	for _, filter := range filters {
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -976,7 +1143,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 			case "variant_id":
 				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -1002,7 +1169,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
 			}
 
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -1067,7 +1234,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeStr string, pagi
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		currentTime = time.Now()
@@ -1075,21 +1242,43 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 	)
 
 	// Fetch item type from external service
-	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchGoods masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "G").First(&itemTypeFetchGoods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
-	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchServices masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "S").First(&itemTypeFetchServices).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "S"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -1104,7 +1293,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -1122,19 +1311,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassResp masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SP").First(&itemClassResp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SP"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1170,19 +1377,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassOL masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "OL").First(&itemClassOL).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "OL"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1214,28 +1439,53 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassMT masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "MT").First(&itemClassMT).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "MT"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "MT"
 		// fetch item class from external service
-		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
-		if itmClsErr != nil {
+		var itemClassSB masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SB").First(&itemClassSB).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SB"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1267,25 +1517,54 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassWF masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "WF").First(&itemClassWF).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "WF"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "WF"
 		// Fetch item group from external service
-		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
+		var itemGrpOJFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "OJ").First(&itemGrpOJFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "OJ"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
 		} // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1317,19 +1596,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassAC masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "AC").First(&itemClassAC).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "AC"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1361,19 +1658,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassCM masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "CM").First(&itemClassCM).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "CM"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1405,19 +1720,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassSV masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SV").First(&itemClassSV).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SV"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1460,7 +1793,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 	// apply filter manual baseon linetype
 	for _, filter := range filters {
 
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -1477,7 +1810,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -1496,7 +1829,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -1555,7 +1888,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeStr string
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var (
 		companyCode = 473
 		year        string
@@ -1583,21 +1916,43 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 	month = mtrLocationStock.PeriodMonth
 
 	// Fetch item type from external service
-	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchGoods masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "G").First(&itemTypeFetchGoods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
-	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchServices masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "S").First(&itemTypeFetchServices).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "S"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
 	// Base Query
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -1612,7 +1967,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
 			Order("A.package_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -1630,19 +1985,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 				"ok.operation_key_code, ok.operation_key_description").
 			Order("omm.operation_id")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassResp masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SP").First(&itemClassResp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SP"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1678,19 +2051,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassOL masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "OL").First(&itemClassOL).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "OL"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1722,28 +2113,53 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassMT masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "MT").First(&itemClassMT).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "MT"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "MT"
 		// fetch item class from external service
-		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
-		if itmClsErr != nil {
+		var itemClassSB masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SB").First(&itemClassSB).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SB"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1775,25 +2191,54 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassWF masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "WF").First(&itemClassWF).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "WF"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "WF"
 		// Fetch item group from external service
-		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
+		var itemGrpOJFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "OJ").First(&itemGrpOJFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "OJ"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
 		} // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1825,19 +2270,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassAC masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "AC").First(&itemClassAC).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "AC"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1869,19 +2332,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassCM masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "CM").First(&itemClassCM).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "CM"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1913,19 +2394,37 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
 			Order("A.item_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassSV masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SV").First(&itemClassSV).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SV"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -1968,7 +2467,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 	// apply filter manual baseon linetype
 	for _, filter := range filters {
 
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -1985,7 +2484,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			case "package_price":
 				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -2004,7 +2503,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 			case "operation_key_description":
 				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
 			}
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -2063,7 +2562,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeStr string, 
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
-func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, trxTypeId int, jobTypeId int, variantId int, currencyId int, whsGroup string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var (
 		currentTime = time.Now()
@@ -2071,14 +2570,36 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	)
 
 	// Fetch item type from external service
-	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchGoods masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "G").First(&itemTypeFetchGoods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
-	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchServices masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "S").First(&itemTypeFetchServices).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "S"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
@@ -2121,17 +2642,35 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 3:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassResp masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SP").First(&itemClassResp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SP"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2168,17 +2707,35 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 4:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassOL masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "OL").First(&itemClassOL).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "OL"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2211,26 +2768,51 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 5:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassMT masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "MT").First(&itemClassMT).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "MT"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "MT"
 		// fetch item class from external service
-		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
-		if itmClsErr != nil {
+		var itemClassSB masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SB").First(&itemClassSB).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SB"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2263,23 +2845,52 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 6:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassWF masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "WF").First(&itemClassWF).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "WF"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "WF"
 		// Fetch item group from external service
-		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
+		var itemGrpOJFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "OJ").First(&itemGrpOJFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "OJ"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
 		} // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2312,17 +2923,35 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 7:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassAC masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "AC").First(&itemClassAC).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "AC"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2355,17 +2984,35 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 8:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassCM masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "CM").First(&itemClassCM).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "CM"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2398,17 +3045,35 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	case 9:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassSV masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SV").First(&itemClassSV).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SV"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2639,28 +3304,49 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
-func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr string, companyId int, OprItemCode int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeId int, OprItemCode int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var (
-		currentTime = time.Now()
-		year, month = currentTime.Year(), int(currentTime.Month() - 1)
+		companyId = 426
 	)
 
 	// Fetch item type from external service
-	itemTypeFetchGoods, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchGoods masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "G").First(&itemTypeFetchGoods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
-	itemTypeFetchServices, itemTypeErr := aftersalesserviceapiutils.GetItemTypeByCode("S")
-	if itemTypeErr != nil {
-		return pagination.Pagination{}, itemTypeErr
+	var itemTypeFetchServices masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "S").First(&itemTypeFetchServices).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "S"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
 
 	baseQuery := tx.Session(&gorm.Session{NewDB: true})
 
-	switch linetypeStr {
-	case "0":
+	switch linetypeId {
+	case 1:
 		baseQuery = baseQuery.Table("mtr_package A").
 			Select("A.package_id, A.package_code, A.package_name, "+
 				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
@@ -2672,10 +3358,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Where("A.is_active = ?", 1).
 			Where("A.package_id = ?", OprItemCode).
 			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
-				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id").
-			Order("A.package_id")
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id")
 
-	case "1":
+	case 2:
 		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
 			Select("omm.operation_id AS operation_id, "+
 				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
@@ -2690,22 +3375,39 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Where("omm.operation_id = ?", OprItemCode).
 			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
 				"oe.operation_entries_code, oe.operation_entries_description, " +
-				"ok.operation_key_code, ok.operation_key_description").
-			Order("omm.operation_id")
+				"ok.operation_key_code, ok.operation_key_description")
 
-	case "2":
+	case 3:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassResp, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SP")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassResp masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SP").First(&itemClassResp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SP"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2716,7 +3418,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 					B.brand_id AS brand_id,
 					B.model_id AS model_id,
 					B.variant_id AS variant_id,
-					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 					A.item_level_1_id AS item_level_1,
 					mil1.item_level_1_code AS item_level_1_code, 
 					A.item_level_2_id AS item_level_2,
@@ -2731,29 +3432,45 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?",
 				itemGrpFetch.ItemGroupId,
 				itemTypeFetchGoods.ItemTypeId,
 				itemClassResp.ItemClassId,
 				true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "3":
+	case 4:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassOL, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("OL")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassOL masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "OL").First(&itemClassOL).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "OL"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2764,7 +3481,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			B.brand_id AS brand_id,
 			B.model_id AS model_id,
 			B.variant_id AS variant_id,
-			COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 			A.item_level_1_id AS item_level_1,
 			mil1.item_level_1_code AS item_level_1_code, 
 			A.item_level_2_id AS item_level_2,
@@ -2779,34 +3495,57 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "4":
+	case 5:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassMT, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("MT")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassMT masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "MT").First(&itemClassMT).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "MT"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "MT"
 		// fetch item class from external service
-		itemClassSB, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SB")
-		if itmClsErr != nil {
+		var itemClassSB masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SB").First(&itemClassSB).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SB"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2817,7 +3556,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 					B.brand_id AS brand_id,
 					B.model_id AS model_id,
 					B.variant_id AS variant_id,
-					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 					A.item_level_1_id AS item_level_1,
 					mil1.item_level_1_code AS item_level_1_code, 
 					A.item_level_2_id AS item_level_2,
@@ -2832,31 +3570,58 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "5":
+	case 6:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassWF, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("WF")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassWF masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "WF").First(&itemClassWF).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "WF"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "WF"
 		// Fetch item group from external service
-		itemGrpOJFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("OJ")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
+		var itemGrpOJFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "OJ").First(&itemGrpOJFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "OJ"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
 		} // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2867,7 +3632,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 						B.brand_id AS brand_id,
 						B.model_id AS model_id,
 						B.variant_id AS variant_id,
-						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 						A.item_level_1_id AS item_level_1,
 						mil1.item_level_1_code AS item_level_1_code, 
 						A.item_level_2_id AS item_level_2,
@@ -2882,25 +3646,41 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "6":
+	case 7:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassAC, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("AC")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassAC masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "AC").First(&itemClassAC).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "AC"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2911,7 +3691,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 							B.brand_id AS brand_id,
 							B.model_id AS model_id,
 							B.variant_id AS variant_id,
-							COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 							A.item_level_1_id AS item_level_1,
 							mil1.item_level_1_code AS item_level_1_code, 
 							A.item_level_2_id AS item_level_2,
@@ -2926,24 +3705,41 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Where("A.item_id = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "7":
+	case 8:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassCM, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("CM")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassCM masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "CM").First(&itemClassCM).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "CM"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2954,7 +3750,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 						B.brand_id AS brand_id,
 						B.model_id AS model_id,
 						B.variant_id AS variant_id,
-						COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 						A.item_level_1_id AS item_level_1,
 						mil1.item_level_1_code AS item_level_1_code, 
 						A.item_level_2_id AS item_level_2,
@@ -2969,25 +3764,41 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 
-	case "9":
+	case 9:
 		// Fetch item group from external service
-		itemGrpFetch, itmgrpErr := aftersalesserviceapiutils.GetItemGroupByCode("IN")
-		if itmgrpErr != nil {
-			return pagination.Pagination{}, itmgrpErr
-		}
-		// fetch item class from external service
-		itemClassSV, itmClsErr := aftersalesserviceapiutils.GetItemClassByCode("SV")
-		if itmClsErr != nil {
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch item class data from external service",
-				Err:        itmClsErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassSV masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SV").First(&itemClassSV).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SV"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
 			}
 		} // "SV"
 		baseQuery = baseQuery.Table("mtr_item A").
@@ -2998,7 +3809,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 					B.brand_id AS brand_id,
 					B.model_id AS model_id,
 					B.variant_id AS variant_id,
-					COALESCE(SUM(V.quantity_allocated), 0) AS available_qty, 
 					A.item_level_1_id AS item_level_1,
 					mil1.item_level_1_code AS item_level_1_code, 
 					A.item_level_2_id AS item_level_2,
@@ -3013,11 +3823,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
 			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
-			Joins("LEFT JOIN mtr_location_stock V ON V.item_id = A.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?", year, month, companyId).
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
 			Where("A.item_id = ?", OprItemCode).
-			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id").
-			Order("A.item_id")
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
 	default:
 		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -3027,7 +3835,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 	}
 
 	for _, filter := range filters {
-		if linetypeStr == "0" {
+		if linetypeId == 1 {
 			switch filter.ColumnField {
 			case "package_id":
 				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
@@ -3050,7 +3858,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			case "variant_id":
 				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
 			}
-		} else if linetypeStr == "1" {
+		} else if linetypeId == 2 {
 			switch filter.ColumnField {
 			case "operation_id":
 				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
@@ -3076,7 +3884,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
 			}
 
-		} else if linetypeStr == "2" || linetypeStr == "3" || linetypeStr == "4" || linetypeStr == "5" || linetypeStr == "6" || linetypeStr == "7" || linetypeStr == "9" {
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
 			switch filter.ColumnField {
 			case "item_id":
 				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
@@ -3119,17 +3927,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 	baseQuery = baseQuery.Scopes(paginateFunc)
 
 	type LineType0Response struct {
-		Description      string  `json:"description"`
-		FRT              float64 `json:"frt"`
-		ModelCode        string  `json:"model_code"`
-		PackageCode      string  `json:"package_code"`
 		PackageID        int     `json:"package_id"`
 		PackageName      string  `json:"package_name"`
+		PackageCode      string  `json:"package_code"`
+		Description      string  `json:"description"`
+		FRT              float64 `json:"frt"`
+		ModelId          int     `json:"model_id"`
+		ModelCode        string  `json:"model_code"`
 		Price            int     `json:"price"`
 		ProfitCenter     int     `json:"profit_center"`
 		ProfitCenterName string  `json:"profit_center_name"`
 		BrandId          int     `json:"brand_id"`
-		ModelId          int     `json:"model_id"`
 	}
 
 	type LineType1Response struct {
@@ -3147,7 +3955,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 	}
 
 	type LineType2To9Response struct {
-		AvailableQty   int     `json:"available_qty"`
 		ItemCode       string  `json:"item_code"`
 		ItemID         int     `json:"item_id"`
 		ItemLevel1     int     `json:"item_level_1"`
@@ -3164,21 +3971,25 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 		ModelId        int     `json:"model_id"`
 	}
 
-	switch linetypeStr {
-	case "0":
-		var results []LineType0Response
-		if err := baseQuery.Find(&results).Error; err != nil {
+	var results interface{}
+	switch linetypeId {
+	case 1:
+
+		var result LineType0Response
+		if err := baseQuery.Find(&result).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch data",
 				Err:        err,
 			}
 		}
+		results = result
 		paginate.Rows = results
 
-	case "1":
-		var results []LineType1Response
-		if err := baseQuery.Find(&results).Error; err != nil {
+	case 2:
+
+		var result LineType1Response
+		if err := baseQuery.Find(&result).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch data",
@@ -3186,27 +3997,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			}
 		}
 
-		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
-		if linetypeErr != nil {
-			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error fetching line type code",
-				Err:        linetypeErr.Err,
-			}
+		price, err := r.GetOprItemPrice(tx, linetypeId, companyId, result.OperationID, result.BrandId, result.ModelId, 2, 1, 11, 6, "")
+		if err != nil {
+			return pagination.Pagination{}, err
 		}
-
-		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].OperationID, results[i].BrandId, results[i].ModelId, 2, 1, 11, 6, "")
-			if err != nil {
-				return pagination.Pagination{}, err
-			}
-			results[i].Price = price
-		}
+		result.Price = price
+		results = result
 		paginate.Rows = results
 
-	case "2", "3", "4", "5", "6", "7", "9":
-		var results []LineType2To9Response
-		if err := baseQuery.Find(&results).Error; err != nil {
+	case 3, 4, 5, 6, 7, 8, 9:
+		var result LineType2To9Response
+		if err := baseQuery.Find(&result).Error; err != nil {
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch data",
@@ -3214,22 +4015,743 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeStr
 			}
 		}
 
-		linetypeId, linetypeErr := generalserviceapiutils.GetLineTypeByCode(linetypeStr)
-		if linetypeErr != nil {
+		price, err := r.GetOprItemPrice(tx, linetypeId, companyId, result.ItemID, result.BrandId, result.ModelId, 2, 1, 11, 6, "")
+		if err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		result.Price = price
+		results = result
+		paginate.Rows = results
+	}
+
+	paginate.TotalRows = totalRows
+	paginate.TotalPages = totalPages
+
+	return paginate, nil
+
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ItemOprCodeWithPrice'--OPERATION MASTER & ITEM MASTER WITH PRICELIST
+func (r *LookupRepositoryImpl) ItemOprCodeWithPriceByCode(tx *gorm.DB, linetypeId int, OprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	var (
+		companyId = 426
+	)
+
+	// Fetch item type from external service
+	var itemTypeFetchGoods masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "G").First(&itemTypeFetchGoods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
+	}
+
+	var itemTypeFetchServices masteritementities.ItemType
+	if err := tx.Where("item_type_code = ?", "S").First(&itemTypeFetchServices).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "S"),
+			}
+		}
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
+	}
+
+	baseQuery := tx.Session(&gorm.Session{NewDB: true})
+
+	switch linetypeId {
+	case 1:
+		baseQuery = baseQuery.Table("mtr_package A").
+			Select("A.package_id, A.package_code, A.package_name, "+
+				"COALESCE(SUM(mtr_package_master_detail.frt_quantity), 0) AS frt, "+
+				"B.profit_center_name, C.model_code, C.model_description, A.package_price, "+
+				"A.model_id, A.brand_id, A.variant_id").
+			Joins("INNER JOIN mtr_package_master_detail ON A.package_id = mtr_package_master_detail.package_id").
+			Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
+			Where("A.package_code = ?", OprItemCode).
+			Group("A.package_id, A.package_code, A.package_name, B.profit_center_name, " +
+				"C.model_code, C.model_description, A.package_price, A.model_id, A.brand_id, A.variant_id")
+
+	case 2:
+		baseQuery = baseQuery.Table("mtr_operation_model_mapping AS omm").
+			Select("omm.operation_id AS operation_id, "+
+				"oc.operation_code AS operation_code, oc.operation_name AS operation_name, "+
+				"MAX(ofrt.frt_hour) AS frt_hour, "+
+				"oe.operation_entries_code AS operation_entries_code, oe.operation_entries_description AS operation_entries_description, "+
+				"ok.operation_key_code AS operation_key_code, ok.operation_key_description AS operation_key_description").
+			Joins("INNER JOIN mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+			Joins("LEFT OUTER JOIN mtr_operation_code AS oc ON omm.operation_id = oc.operation_id").
+			Joins("LEFT OUTER JOIN mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
+			Joins("LEFT OUTER JOIN mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
+			Where("omm.is_active = ?", true).
+			Where("omm.operation_code = ?", OprItemCode).
+			Group("omm.operation_id, oc.operation_code, oc.operation_name, " +
+				"oe.operation_entries_code, oe.operation_entries_description, " +
+				"ok.operation_key_code, ok.operation_key_description")
+
+	case 3:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
 			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "error fetching line type code",
-				Err:        linetypeErr.Err,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassResp masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SP").First(&itemClassResp).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SP"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "SP"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?",
+				itemGrpFetch.ItemGroupId,
+				itemTypeFetchGoods.ItemTypeId,
+				itemClassResp.ItemClassId,
+				true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+
+	case 4:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassOL masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "OL").First(&itemClassOL).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "OL"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "OL"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+			A.item_id AS item_id, 
+			A.item_code AS item_code, 
+			A.item_name AS item_name,
+			B.brand_id AS brand_id,
+			B.model_id AS model_id,
+			B.variant_id AS variant_id,
+			A.item_level_1_id AS item_level_1,
+			mil1.item_level_1_code AS item_level_1_code, 
+			A.item_level_2_id AS item_level_2,
+			mil2.item_level_2_code AS item_level_2_code, 
+			A.item_level_3_id AS item_level_3,
+			mil3.item_level_3_code AS item_level_3_code, 
+			A.item_level_4_id AS item_level_4,
+			mil4.item_level_4_code AS item_level_4_code
+					`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassOL.ItemClassId, true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+
+	case 5:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassMT masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "MT").First(&itemClassMT).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "MT"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "MT"
+		// fetch item class from external service
+		var itemClassSB masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SB").First(&itemClassSB).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SB"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "SB"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassMT.ItemClassId, itemClassSB.ItemClassId, true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+
+	case 6:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassWF masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "WF").First(&itemClassWF).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "WF"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "WF"
+		// Fetch item group from external service
+		var itemGrpOJFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "OJ").First(&itemGrpOJFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "OJ"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		} // "OJ"
+
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", itemGrpOJFetch.ItemGroupId, itemGrpFetch.ItemGroupId, itemClassWF.ItemClassId, itemTypeFetchServices.ItemTypeId, true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+
+	case 7:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassAC masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "AC").First(&itemClassAC).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "AC"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "AC"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+							A.item_id AS item_id, 
+							A.item_code AS item_code, 
+							A.item_name AS item_name,
+							B.brand_id AS brand_id,
+							B.model_id AS model_id,
+							B.variant_id AS variant_id,
+							A.item_level_1_id AS item_level_1,
+							mil1.item_level_1_code AS item_level_1_code, 
+							A.item_level_2_id AS item_level_2,
+							mil2.item_level_2_code AS item_level_2_code, 
+							A.item_level_3_id AS item_level_3,
+							mil3.item_level_3_code AS item_level_3_code, 
+							A.item_level_4_id AS item_level_4,
+							mil4.item_level_4_code AS item_level_4_code
+							`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassAC.ItemClassId, itemGrpFetch.ItemGroupId, true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+
+	case 8:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassCM masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "CM").First(&itemClassCM).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "CM"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "CM"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name,
+						B.brand_id AS brand_id,
+						B.model_id AS model_id,
+						B.variant_id AS variant_id,
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+								`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", itemGrpFetch.ItemGroupId, itemTypeFetchGoods.ItemTypeId, itemClassCM.ItemClassId, true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+
+	case 9:
+		// Fetch item group from external service
+		var itemGrpFetch masteritementities.ItemGroup
+		if err := tx.Where("item_group_code = ?", "IN").First(&itemGrpFetch).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item group not found",
+					Err:        fmt.Errorf("item group with code %s not found", "IN"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item group code",
+				Err:        err,
+			}
+		}
+		// fetch item class from external service
+		var itemClassSV masteritementities.ItemClass
+		if err := tx.Where("item_class_code = ?", "SV").First(&itemClassSV).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "Item class not found",
+					Err:        fmt.Errorf("item class with code %s not found", "SV"),
+				}
+			}
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Item class code",
+				Err:        err,
+			}
+		} // "SV"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name,
+					B.brand_id AS brand_id,
+					B.model_id AS model_id,
+					B.variant_id AS variant_id,
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`).
+			Joins("INNER JOIN mtr_item_detail B ON B.item_id = A.item_id").
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", itemClassSV.ItemClassId, itemGrpFetch.ItemGroupId, true).
+			Where("A.item_code = ?", OprItemCode).
+			Group("A.item_id, A.item_code, A.item_name, A.item_level_1_id, mil1.item_level_1_code, A.item_level_2_id, mil2.item_level_2_code, A.item_level_3_id, mil3.item_level_3_code, A.item_level_4_id, mil4.item_level_4_code, B.brand_Id, B.model_id, B.variant_id")
+	default:
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid line type",
+			Err:        errors.New("invalid line type"),
+		}
+	}
+
+	for _, filter := range filters {
+		if linetypeId == 1 {
+			switch filter.ColumnField {
+			case "package_id":
+				baseQuery = baseQuery.Where("A.package_id = ?", filter.ColumnValue)
+			case "package_code":
+				baseQuery = baseQuery.Where("A.package_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "package_name":
+				baseQuery = baseQuery.Where("A.package_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "profit_center_name":
+				baseQuery = baseQuery.Where("B.profit_center_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_code":
+				baseQuery = baseQuery.Where("C.model_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_description":
+				baseQuery = baseQuery.Where("C.model_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "package_price":
+				baseQuery = baseQuery.Where("A.package_price = ?", filter.ColumnValue)
+			case "model_id":
+				baseQuery = baseQuery.Where("A.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("A.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("A.variant_id = ?", filter.ColumnValue)
+			}
+		} else if linetypeId == 2 {
+			switch filter.ColumnField {
+			case "operation_id":
+				baseQuery = baseQuery.Where("oc.operation_id = ?", filter.ColumnValue)
+			case "operation_code":
+				baseQuery = baseQuery.Where("oc.operation_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_name":
+				baseQuery = baseQuery.Where("oc.operation_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "frt_hour":
+				baseQuery = baseQuery.Where("ofrt.frt_hour = ?", filter.ColumnValue)
+			case "operation_entries_code":
+				baseQuery = baseQuery.Where("oe.operation_entries_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_entries_description":
+				baseQuery = baseQuery.Where("oe.operation_entries_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_key_code":
+				baseQuery = baseQuery.Where("ok.operation_key_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "operation_key_description":
+				baseQuery = baseQuery.Where("ok.operation_key_description LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("omm.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("omm.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("ofrt.variant_id = ?", filter.ColumnValue)
+			}
+
+		} else if linetypeId == 3 || linetypeId == 4 || linetypeId == 5 || linetypeId == 6 || linetypeId == 7 || linetypeId == 8 || linetypeId == 9 {
+			switch filter.ColumnField {
+			case "item_id":
+				baseQuery = baseQuery.Where("A.item_id = ?", filter.ColumnValue)
+			case "item_code":
+				baseQuery = baseQuery.Where("A.item_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_name":
+				baseQuery = baseQuery.Where("A.item_name LIKE ?", "%"+filter.ColumnValue+"%")
+			case "available_qty":
+				baseQuery = baseQuery.Where("available_qty = ?", filter.ColumnValue)
+			case "item_level_1_code":
+				baseQuery = baseQuery.Where("mil1.item_level_1_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_2_code":
+				baseQuery = baseQuery.Where("mil2.item_level_2_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_3_code":
+				baseQuery = baseQuery.Where("mil3.item_level_3_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "item_level_4_code":
+				baseQuery = baseQuery.Where("mil4.item_level_4_code LIKE ?", "%"+filter.ColumnValue+"%")
+			case "model_id":
+				baseQuery = baseQuery.Where("B.model_id = ?", filter.ColumnValue)
+			case "brand_id":
+				baseQuery = baseQuery.Where("B.brand_id = ?", filter.ColumnValue)
+			case "variant_id":
+				baseQuery = baseQuery.Where("B.variant_id = ?", filter.ColumnValue)
+			}
+		}
+	}
+
+	var totalRows int64
+	if err := baseQuery.Count(&totalRows).Error; err != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total rows",
+			Err:        err,
+		}
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
+
+	paginateFunc := pagination.Paginate(&paginate, baseQuery)
+	baseQuery = baseQuery.Scopes(paginateFunc)
+
+	type LineType0Response struct {
+		PackageID        int     `json:"package_id"`
+		PackageName      string  `json:"package_name"`
+		PackageCode      string  `json:"package_code"`
+		Description      string  `json:"description"`
+		FRT              float64 `json:"frt"`
+		ModelId          int     `json:"model_id"`
+		ModelCode        string  `json:"model_code"`
+		Price            int     `json:"price"`
+		ProfitCenter     int     `json:"profit_center"`
+		ProfitCenterName string  `json:"profit_center_name"`
+		BrandId          int     `json:"brand_id"`
+	}
+
+	type LineType1Response struct {
+		FrtHour                     float64 `json:"frt_hour"`
+		OperationCode               string  `json:"operation_code"`
+		OperationEntriesCode        *string `json:"operation_entries_code"`
+		OperationEntriesDescription *string `json:"operation_entries_description"`
+		OperationID                 int     `json:"operation_id"`
+		OperationKeyCode            *string `json:"operation_key_code"`
+		OperationKeyDescription     *string `json:"operation_key_description"`
+		OperationName               string  `json:"operation_name"`
+		Price                       float64 `json:"price"`
+		BrandId                     int     `json:"brand_id"`
+		ModelId                     int     `json:"model_id"`
+	}
+
+	type LineType2To9Response struct {
+		ItemCode       string  `json:"item_code"`
+		ItemID         int     `json:"item_id"`
+		ItemLevel1     int     `json:"item_level_1"`
+		ItemLevel1Code string  `json:"item_level_1_code"`
+		ItemLevel2     int     `json:"item_level_2"`
+		ItemLevel2Code string  `json:"item_level_2_code"`
+		ItemLevel3     int     `json:"item_level_3"`
+		ItemLevel3Code string  `json:"item_level_3_code"`
+		ItemLevel4     int     `json:"item_level_4"`
+		ItemLevel4Code string  `json:"item_level_4_code"`
+		ItemName       string  `json:"item_name"`
+		Price          float64 `json:"price"`
+		BrandId        int     `json:"brand_id"`
+		ModelId        int     `json:"model_id"`
+	}
+
+	var results interface{}
+	switch linetypeId {
+	case 1:
+
+		var result LineType0Response
+		if err := baseQuery.Find(&result).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+		results = result
+		paginate.Rows = results
+
+	case 2:
+
+		var result LineType1Response
+		if err := baseQuery.Find(&result).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
 			}
 		}
 
-		for i := range results {
-			price, err := r.GetOprItemPrice(tx, linetypeId.LineTypeId, companyId, results[i].ItemID, results[i].BrandId, results[i].ModelId, 2, 1, 11, 6, "")
-			if err != nil {
-				return pagination.Pagination{}, err
-			}
-			results[i].Price = price
+		price, err := r.GetOprItemPrice(tx, linetypeId, companyId, result.OperationID, result.BrandId, result.ModelId, 2, 1, 11, 6, "")
+		if err != nil {
+			return pagination.Pagination{}, err
 		}
+		result.Price = price
+		results = result
+		paginate.Rows = results
+
+	case 3, 4, 5, 6, 7, 8, 9:
+		var result LineType2To9Response
+		if err := baseQuery.Find(&result).Error; err != nil {
+			return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch data",
+				Err:        err,
+			}
+		}
+
+		price, err := r.GetOprItemPrice(tx, linetypeId, companyId, result.ItemID, result.BrandId, result.ModelId, 2, 1, 11, 6, "")
+		if err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		result.Price = price
+		results = result
 		paginate.Rows = results
 	}
 

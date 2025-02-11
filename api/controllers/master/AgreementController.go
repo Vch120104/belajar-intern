@@ -806,7 +806,7 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 // @Param agreement_code path string true "Agreement Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/agreement/by-code/{agreement_code} [get]
+// @Router /v1/agreement/by-code/{param+} [get]
 func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter, request *http.Request) {
 
 	encodedAgreementCode := chi.URLParam(request, "*")
@@ -845,7 +845,7 @@ func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter,
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/agreement/{agreement_id}/discount/group [get]
+// @Router /v1/agreement/{agreement_id}/discount/group-header [get]
 func (r *AgreementControllerImpl) GetDiscountGroupAgreementByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
 	if errA != nil {
@@ -898,7 +898,7 @@ func (r *AgreementControllerImpl) GetDiscountGroupAgreementByHeaderId(writer htt
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/agreement/{agreement_id}/discount/item [get]
+// @Router /v1/agreement/{agreement_id}/discount/item-header [get]
 func (r *AgreementControllerImpl) GetDiscountItemAgreementByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
 	if errA != nil {
@@ -951,7 +951,7 @@ func (r *AgreementControllerImpl) GetDiscountItemAgreementByHeaderId(writer http
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/agreement/{agreement_id}/discount/value [get]
+// @Router /v1/agreement/{agreement_id}/discount/value-header [get]
 func (r *AgreementControllerImpl) GetDiscountValueAgreementByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
 	if errA != nil {

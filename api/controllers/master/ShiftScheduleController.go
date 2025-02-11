@@ -173,6 +173,16 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Update Shift Schedule
+// @Description REST API Shift Schedule
+// @Accept json
+// @Produce json
+// @Tags Master : Shift Schedule
+// @param shift_schedule_id path int true "shift_schedule_id"
+// @param reqBody body masterpayloads.ShiftScheduleUpdate true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/shift-schedule/{shift_schedule_id} [put]
 func (r *ShiftScheduleControllerImpl) UpdateShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 	ShiftScheduleIds, errA := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
 	if errA != nil {
@@ -218,6 +228,14 @@ func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.Resp
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Shift Schedule Dropdown
+// @Description REST API Shift Schedule
+// @Accept json
+// @Produce json
+// @Tags Master : Shift Schedule
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/shift-schedule/drop-down [get]
 func (r *ShiftScheduleControllerImpl) GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request) {
 	result, err := r.ShiftScheduleService.GetShiftScheduleDropDown()
 

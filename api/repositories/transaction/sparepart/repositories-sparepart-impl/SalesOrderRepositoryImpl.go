@@ -9,9 +9,10 @@ import (
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
+	masterrepository "after-sales/api/repositories/master"
+	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
-	aftersalesserviceapiutils "after-sales/api/utils/aftersales-service"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
@@ -28,10 +29,12 @@ import (
 )
 
 type SalesOrderRepositoryImpl struct {
+	locationStockImpl masterrepository.LocationStockRepository
 }
 
 func StartSalesOrderRepositoryImpl() transactionsparepartrepository.SalesOrderRepository {
-	return &SalesOrderRepositoryImpl{}
+	locationStockRepoImpl := masterwarehouserepository.NewLocationStockRepositoryImpl()
+	return &SalesOrderRepositoryImpl{locationStockImpl: locationStockRepoImpl}
 }
 
 // [dbo].[uspg_atSalesOrder0_Insert] option = 0
@@ -724,14 +727,26 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 			Message:    "Item has technical defect",
 		}
 	}
-	ItemTypeGoods, ItemTypeGoodsErr := aftersalesserviceapiutils.GetItemTypeByCode("G")
-	if ItemTypeGoodsErr != nil {
-		return entities, ItemTypeGoodsErr
+	var itemTypeResponse masteritementities.ItemType
+	if err := db.Where("item_type_code = ?", "G").First(&itemTypeResponse).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Item type not found",
+				Err:        fmt.Errorf("item type with code %s not found", "G"),
+			}
+		}
+		return entities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item type code",
+			Err:        err,
+		}
 	}
+
 	//check if exist with item goods
 	isItemExist = false
 	err = db.Model(&masteritementities.Item{}).
-		Where(masteritementities.Item{ItemId: payload.ItemId, ItemTypeId: ItemTypeGoods.ItemTypeId}).
+		Where(masteritementities.Item{ItemId: payload.ItemId, ItemTypeId: itemTypeResponse.ItemTypeId}).
 		Select("1").
 		Scan(&isItemExist).Error
 	if err != nil {
@@ -753,23 +768,29 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderDetail(db *gorm.DB, payload t
 		//@Whs_Group = @WHS_GROUP ,
 		//@UoM_Type = @UoM_Type ,
 		//@QtyResult = @QTY_AVAIL OUTPUT
-		availableItem, errStockLocation := aftersalesserviceapiutils.GetAvailableItemLocationStock(masterwarehousepayloads.GetAvailableQuantityPayload{
+		avaibleItem, errStockLocations := r.locationStockImpl.GetAvailableQuantity(db, masterwarehousepayloads.GetAvailableQuantityPayload{
 			CompanyId:        soEntities.CompanyID,
 			PeriodDate:       soEntities.SalesOrderDate,
 			WarehouseId:      169,
 			LocationId:       0,
 			ItemId:           payload.ItemId,
-			WarehouseGroupId: soEntities.WarehouseGroupID,
+			WarehouseGroupId: payload.ItemId,
 			UomTypeId:        1,
 		})
-		if errStockLocation != nil {
-			return entities, errStockLocation
+		//availableItem, errStockLocation := aftersalesserviceapiutils.GetAvailableItemLocationStock(masterwarehousepayloads.GetAvailableQuantityPayload{
+		//	CompanyId:        soEntities.CompanyID,
+		//	PeriodDate:       soEntities.SalesOrderDate,
+		//	WarehouseId:      169,
+		//	LocationId:       0,
+		//	ItemId:           payload.ItemId,
+		//	WarehouseGroupId: soEntities.WarehouseGroupID,
+		//	UomTypeId:        1,
+		//})
+		if errStockLocations != nil {
+			return entities, errStockLocations
 		}
-		availableQuantity = availableItem.QuantityAvailable
+		availableQuantity = avaibleItem.QuantityAvailable
 	} else {
-		//BEGIN
-		//SET @QTY_AVAIL = 1
-		//END
 		availableQuantity = 1
 	}
 	//

@@ -154,3 +154,15 @@ type OperationLevelByIdResponse struct {
 	OperationSectionCode        string `json:"operation_section_code"`
 	OperationSectionDescription string `json:"operation_section_description"`
 }
+
+type OperationModelMappingLookupView struct {
+	IsActive                bool   `json:"is_active"`
+	OperationModelMappingId int    `json:"operation_model_mapping_id" `
+	OperationId             int    `json:"operation_id"`
+	OperationName           string `json:"operation_name"`
+	OperationCode           string `json:"operation_code"`
+	BrandId                 int    `json:"brand_id"`
+	BrandName               string `json:"brand_name"`
+	ModelId                 int    `json:"model_id"`
+	ModelCode               string `json:"model_code"`
+}

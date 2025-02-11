@@ -61,7 +61,7 @@ func NewBookingEstimationController(BookingEstimationService transactionworkshop
 // @Description Retrieve all booking estimations with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Param brand_id query string false "Brand ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -115,7 +115,7 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Description Create a new booking estimation
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation [post]
@@ -128,7 +128,7 @@ func (r *BookingEstimationControllerImpl) New(writer http.ResponseWriter, reques
 // @Description Create a new booking estimation for booking
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/booking [post]
@@ -141,7 +141,7 @@ func (r *BookingEstimationControllerImpl) NewBooking(writer http.ResponseWriter,
 // @Description Create a new affiliated booking estimation
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/affiliated [post]
@@ -154,7 +154,7 @@ func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWrit
 // @Description Retrieve a booking estimation by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Param work_order_system_number path string true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -175,7 +175,7 @@ func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Description Save a new booking estimation
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationRequest true "Booking Estimation Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -209,7 +209,7 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Description Submit a new booking estimation
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/submit [post]
@@ -222,7 +222,7 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 // @Description Cancel an existing booking estimation
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Param booking_estimation_id path string true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -243,7 +243,7 @@ func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, reque
 // @Description Close an existing booking estimation
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Booking Estimation
+// @Tags Transaction Workshop : Booking Estimation
 // @Param booking_estimation_id path string true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

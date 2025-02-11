@@ -1,7 +1,6 @@
 package transactionsparepartrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -10,8 +9,10 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
+	masterrepository "after-sales/api/repositories/master"
+	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
+	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
-	"after-sales/api/utils"
 	"errors"
 	"fmt"
 	"net/http"
@@ -22,10 +23,15 @@ import (
 )
 
 type StockTransactionRepositoryImpl struct {
+	LocationStockRepository masterrepository.LocationStockRepository
+	ItemCycleRepository     masterrepository.ItemCycleRepository
 }
 
 func StartStockTransactionRepositoryImpl() transactionsparepartrepository.StockTransactionRepository {
-	return &StockTransactionRepositoryImpl{}
+	NewLocationStockRepository := masterwarehouserepository.NewLocationStockRepositoryImpl()
+	NewItemCycleRepository := masterrepositoryimpl.NewItemCycleRepositoryImpl()
+	return &StockTransactionRepositoryImpl{LocationStockRepository: NewLocationStockRepository,
+		ItemCycleRepository: NewItemCycleRepository}
 }
 func ConvertMonth(month string) string {
 	if len(month) == 0 {
@@ -230,15 +236,9 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 		//var responseApi transactionsparepartpayloads.LocationUpdateResponse
 		//langsung execure karena setiap reason wo, nl,back order semua sama sama hit
 		RequestBodyLocationStock.QuantityPurchase = payloads.ReferenceQuantity
-		urlLocationStock := config.EnvConfigs.AfterSalesServiceUrl + "location-stock"
-		errCrossService := utils.CallAPI("PUT", urlLocationStock, &RequestBodyLocationStock, nil)
-		//utils.Put(urlLocationStock, &RequestBodyLocationStock, nil)
-		if errCrossService != nil {
-			fmt.Println("cross service pertama gagal")
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    errCrossService.Error(),
-			}
+		LocationStock, LocationStockErr := s.LocationStockRepository.UpdateLocationStock(db, RequestBodyLocationStock)
+		if LocationStockErr != nil || !LocationStock {
+			return false, LocationStockErr
 		}
 		//if responseApi.StatusCode != 200 {
 		//	fmt.Println("cross service pertama gagal failed false" + responseApi.Message)
@@ -305,14 +305,9 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 				QuantityOnOrder:   referenceQuantityNegative,
 				QuantityBackOrder: 0,
 			}
-			var responseApi transactionsparepartpayloads.LocationUpdateResponse
-			ItemCycleUrl := config.EnvConfigs.AfterSalesServiceUrl + "item-cycle"
-			errCrossService := utils.Post(ItemCycleUrl, &ItemCyclePayloads, &responseApi)
-			if errCrossService != nil {
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Message:    errCrossService.Error(),
-				}
+			ItemCycle, ItemCycleErr := s.ItemCycleRepository.InsertItemCycle(db, ItemCyclePayloads)
+			if !ItemCycle || ItemCycleErr != nil {
+				return false, ItemCycleErr
 			}
 		}
 		if stockTransactionReason.StockTransactionReasonCode == "BO" {
@@ -325,14 +320,9 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 				QuantityOnOrder:   referenceQuantityNegative,
 				QuantityBackOrder: referenceQuantityNegative,
 			}
-			var responseApi transactionsparepartpayloads.LocationUpdateResponse
-			ItemCycleUrl := config.EnvConfigs.AfterSalesServiceUrl + "item-cycle"
-			errCrossService := utils.Post(ItemCycleUrl, &ItemCyclePayloads, &responseApi)
-			if errCrossService != nil {
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Message:    errCrossService.Error(),
-				}
+			ItemCycle, ItemCycleErr := s.ItemCycleRepository.InsertItemCycle(db, ItemCyclePayloads)
+			if !ItemCycle || ItemCycleErr != nil {
+				return false, ItemCycleErr
 			}
 		}
 		if stockTransactionReason.StockTransactionReasonCode != "WP" {
@@ -441,13 +431,9 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 	if stockTransactionType.StockTransactionTypeCode == "CI" &&
 		stockTransactionReason.StockTransactionReasonCode == "AP" {
 		RequestBodyLocationStock.QuantityClaimIn = payloads.ReferenceQuantity
-		urlLocationStock := config.EnvConfigs.AfterSalesServiceUrl + "location-stock"
-		errCrossService := utils.CallAPI("PUT", urlLocationStock, &RequestBodyLocationStock, nil)
-		if errCrossService != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    errCrossService.Error(),
-			}
+		LocationStock, LocationStockErr := s.LocationStockRepository.UpdateLocationStock(db, RequestBodyLocationStock)
+		if LocationStockErr != nil || !LocationStock {
+			return false, LocationStockErr
 		}
 	}
 	//}

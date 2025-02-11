@@ -20,7 +20,6 @@ type UnitOfMeasurementRepositoryImpl struct {
 }
 
 func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementItem(tx *gorm.DB, Payload masteritempayloads.UomItemRequest) (masteritempayloads.UomItemResponses, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.UomItem{}
 	response := masteritempayloads.UomItemResponses{}
 
 	// rows, err := tx.Model(&entities).
@@ -43,6 +42,7 @@ func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementItem(tx *gorm.DB, 
 	// }
 
 	// refactored empty branch
+	entities := masteritementities.UomItem{}
 	err := tx.Model(&entities).
 		Where(masteritementities.UomItem{ItemId: Payload.ItemId, UomSourceTypeCode: Payload.SourceType}).
 		First(&response).Error
