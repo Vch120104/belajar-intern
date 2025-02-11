@@ -2084,13 +2084,29 @@ func ItemWarehouseTransferRequestRouter(
 	router.Get("/", itemWarehouseTransferRequestController.GetAllWhTransferRequest)
 	router.Get("/detail/{id}", itemWarehouseTransferRequestController.GetByIdTransferRequestDetail)
 	router.Get("/detail", itemWarehouseTransferRequestController.GetAllDetailTransferRequest)
+	router.Get("/look-up", itemWarehouseTransferRequestController.GetTransferRequestLookUp)
+	router.Get("/detail/look-up/{id}", itemWarehouseTransferRequestController.GetTransferRequestLookUpDetail)
 
 	router.Put("/receipt/accept/{id}", itemWarehouseTransferRequestController.Accept)
 	router.Put("/receipt/reject/{id}", itemWarehouseTransferRequestController.Reject)
+	router.Get("/receipt", itemWarehouseTransferRequestController.GetAllWhTransferReceipt)
 
 	router.Post("/upload", itemWarehouseTransferRequestController.Upload)
 	router.Post("/process", itemWarehouseTransferRequestController.ProcessUpload)
 	router.Get("/download", itemWarehouseTransferRequestController.DownloadTemplate)
+
+	return router
+}
+
+func ItemWarehouseTransferOutRouter(
+	itemWarehouseTransferOutController transactionsparepartcontroller.ItemWarehouseTransferOutController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Post("/", itemWarehouseTransferOutController.InsertHeader)
 
 	return router
 }

@@ -408,6 +408,11 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	ItemWarehouseTransferRequestService := transactionsparepartserviceimpl.NewWhTransferRequestImpl(ItemWarehouseTransferRequestRepository, db, rdb, itemRepository, unitOfMeasurementRepository, ItemWarehouseTransferReceiptRepository)
 	ItemWarehouseTransferRequestController := transactionsparepartcontroller.NewItemWarehouseTransferRequestControllerImpl(ItemWarehouseTransferRequestService)
 
+	//Item Warehouse Transfer Out
+	ItemWarehouseTransferOutRepository := transactionsparepartrepositoryimpl.NewItemWarehouseTransferOutRepositoryImpl()
+	ItemWarehouseTransferOutService := transactionsparepartserviceimpl.NewWhTransferOutImpl(ItemWarehouseTransferOutRepository, db, rdb)
+	ItemWarehouseTransferOutController := transactionsparepartcontroller.NewItemWarehouseTransferOutControllerImpl(ItemWarehouseTransferOutService)
+
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -575,6 +580,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	ItemQueryAllCompanyRouter := ItemQueryAllCompanyRouter(ItemQueryAllCompanyController)
 	ItemWarehouseTransferRequestRouter := ItemWarehouseTransferRequestRouter(ItemWarehouseTransferRequestController)
+	ItemWarehouseTransferOutRouter := ItemWarehouseTransferOutRouter(ItemWarehouseTransferOutController)
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
@@ -690,6 +696,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/goods-receive", GoodsReceiveRouter)
 		r.Mount("/claim-supplier", ClaimSupplierRoute)
 		r.Mount("/transfer-request", ItemWarehouseTransferRequestRouter)
+		r.Mount("/transfer-out", ItemWarehouseTransferOutRouter)
 		r.Mount("/stock-transaction", StockTransactionRouter)
 		r.Mount("/binning-list", BinningListRouter)
 		r.Mount("/item-location-transfer", ItemLocationTransferRouter)

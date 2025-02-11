@@ -43,3 +43,25 @@ func GetEventById(id int) (EventResponse, *exceptions.BaseErrorResponse) {
 	}
 	return event, nil
 }
+
+func GetEventByCode(eventNo string, transactionType string, processCode string) (EventResponse, *exceptions.BaseErrorResponse) {
+	EventUrl := config.EnvConfigs.FinanceServiceUrl + "event/code-process-id-transaction-type-id?event_no=" + eventNo + "&transaction_type_code=" + transactionType + "&process_code=" + processCode
+	event := EventResponse{}
+	err := utils.CallAPI("GET", EventUrl, nil, &event)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve event due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "event service is temporarily unavailable"
+		}
+
+		return event, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting event by id"),
+		}
+	}
+	return event, nil
+}
