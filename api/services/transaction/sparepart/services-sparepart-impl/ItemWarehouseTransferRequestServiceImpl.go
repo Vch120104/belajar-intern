@@ -41,6 +41,102 @@ type WhTransferRequestServiceImpl struct {
 	RedisClient         *redis.Client
 }
 
+// GetTransferRequestDetailLookUp implements transactionsparepartservice.ItemWarehouseTransferRequestService.
+func (s *WhTransferRequestServiceImpl) GetTransferRequestDetailLookUp(number int, pages pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TransferRequestRepo.GetTransferRequestDetailLookUp(tx, number, pages, filter)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// GetAllWhTransferReceipt implements transactionsparepartservice.ItemWarehouseTransferRequestService.
+func (s *WhTransferRequestServiceImpl) GetAllWhTransferReceipt(pages pagination.Pagination, filter []utils.FilterCondition, dateParams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TransferReceiptRepo.GetAll(tx, pages, filter, dateParams)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// GetTransferRequestLookUp implements transactionsparepartservice.ItemWarehouseTransferRequestService.
+func (s *WhTransferRequestServiceImpl) GetTransferRequestLookUp(pages pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TransferRequestRepo.GetTransferRequestLookUp(tx, pages, filter)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 // AcceptTransferReceipt implements transactionsparepartservice.ItemWarehouseTransferRequestService.
 func (s *WhTransferRequestServiceImpl) AcceptTransferReceipt(number int, request transactionsparepartpayloads.AcceptWarehouseTransferRequestRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
