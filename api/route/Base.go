@@ -1727,6 +1727,7 @@ func PrintGatePassRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", PrintGatePassController.GetAll)
+	router.Get("/{gate_pass_system_number}", PrintGatePassController.PrintById)
 
 	return router
 }

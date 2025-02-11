@@ -589,7 +589,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
 	LicenseOwnerChangeRouter := LicenseOwnerChangeRouter(LicenseOwnerChangeController)
-	PrintGatePassRouter := PrintGatePassRouter(*PrintGatePassController)
+	PrintGatePassRouter := PrintGatePassRouter(PrintGatePassController)
 
 	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	AtpmClaimRegistrationRouter := AtpmClaimRegistrationRouter(AtpmClaimRegistrationController)
