@@ -138,3 +138,23 @@ type RejectWarehouseTransferRequestRequest struct {
 	ApprovalDate   time.Time `json:"approval_date"`
 	ApprovalRemark string    `json:"approval_remark"`
 }
+
+type GetAllItemWarehouseLookUp struct {
+	TransferRequestSystemNumber   int       `json:"transfer_request_system_number"`
+	TransferRequestDocumentNumber string    `json:"transfer_request_document_number"`
+	TransferRequestDate           time.Time `json:"transfer_request_date"`
+	TransferRequestById           int       `json:"transfer_request_by_id"`
+	TransferRequestByName         string    `json:"transfer_request_by_name"`
+	RequestFromWarehouseId        int       `json:"request_from_warehouse_id"`
+	RequestFromWarehouseName      string    `json:"request_from_warehouse_name"`
+	RequestFromWarehouseGroupId   int       `json:"request_from_warehouse_group_id"`
+	RequestFromWarehouseGroupName string    `json:"request_from_warehouse_group_name"`
+}
+
+type GetAllItemWarehouseDetailLookUp struct {
+	ItemId            int     `json:"transfer_request_system_number"`
+	ItemCode          string  `json:"transfer_request_document_number"`
+	ItemDescription   string  `json:"item_description"`
+	RequestQuantity   float64 `json:"request_quantity"`
+	UnitOfMeasurement string  `json:"unit_of_measurement"`
+}
