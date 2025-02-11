@@ -22,6 +22,7 @@ type ItemPackageController interface {
 	GetAllItemPackage(writer http.ResponseWriter, request *http.Request)
 	SaveItemPackage(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageById(writer http.ResponseWriter, request *http.Request)
+	GetItemPackageByItemId(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageByCode(writer http.ResponseWriter, request *http.Request)
 }
@@ -214,4 +215,30 @@ func (r *ItemPackageControllerImpl) ChangeStatusItemPackage(writer http.Response
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
+}
+
+// @Summary Get Item Package By Item ID
+// @Description Retrieve an item package by its item ID
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Package
+// @Param item_package_id path int true "Item ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-package/item/{item_package_id} [get]
+func (r *ItemPackageControllerImpl) GetItemPackageByItemId(writer http.ResponseWriter, request *http.Request) {
+
+	itemId, errA := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.ItemPackageService.GetItemPackageByItemId(itemId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
