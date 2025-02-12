@@ -22,6 +22,7 @@ type ItemPackageController interface {
 	GetAllItemPackage(writer http.ResponseWriter, request *http.Request)
 	SaveItemPackage(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageById(writer http.ResponseWriter, request *http.Request)
+	GetAllByItemPackageId(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageByItemId(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageByCode(writer http.ResponseWriter, request *http.Request)
@@ -241,4 +242,61 @@ func (r *ItemPackageControllerImpl) GetItemPackageByItemId(writer http.ResponseW
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get All By Item Package ID
+// @Description Retrieve all item packages by its item package ID
+// @Accept json
+// @Produce json
+// @Tags Master Item : Item Package
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-package/by-item-package-id [get]
+func (r *ItemPackageControllerImpl) GetAllByItemPackageId(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	internalFilterCondition := map[string]string{
+		"mtr_item_package.item_package_code": queryValues.Get("item_package_code"),
+		"mtr_item_package.item_package_name": queryValues.Get("item_package_name"),
+		"mtr_item_package.item_package_set":  queryValues.Get("item_package_set"),
+		"mtr_item_package.description":       queryValues.Get("description"),
+		"mtr_item_package.is_active":         queryValues.Get("is_active"),
+		"mtr_item_group.item_group_code":     queryValues.Get("item_group_code"),
+	}
+	externalFilterCondition := map[string]string{
+
+		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
+
+	paginatedData, err := r.ItemPackageService.GetAllByItemPackageId(internalCriteria, externalCriteria, paginate)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		utils.ModifyKeysInResponse(paginatedData.Rows),
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }

@@ -251,3 +251,52 @@ func (r *ItemPackageRepositoryImpl) GetItemPackageByItemId(tx *gorm.DB, itemId i
 
 	return response, nil
 }
+
+func (r *ItemPackageRepositoryImpl) GetAllByItemPackageId(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	responses := []masteritempayloads.GetItemPackageItemResponse{}
+
+	query := tx.Table("mtr_item_package_detail AS ipd").
+		Select(`
+			ip.item_package_id,
+			ip.item_package_code,
+			ip.item_package_name,
+			i.item_code AS accesories_code,
+			ipd.quantity,
+			u.uom_id,
+			u.uom_code,
+			ig.item_group_id,
+			ig.item_group_code,
+			ig.item_group_name
+		`).
+		Joins("INNER JOIN mtr_item_package AS ip ON ip.item_package_id = ipd.item_package_id").
+		Joins("INNER JOIN mtr_item AS i ON i.item_id = ipd.item_id").
+		Joins("LEFT JOIN mtr_item_group AS ig ON ig.item_group_id = i.item_group_id").
+		Joins("LEFT JOIN mtr_uom AS u ON i.unit_of_measurement_stock_id = u.uom_id")
+
+	queryFilter := utils.ApplyFilter(query, internalFilterCondition)
+
+	for _, filter := range externalFilterCondition {
+		if filter.ColumnField == "ig.item_group_code" {
+			queryFilter = queryFilter.Where("ig.item_group_code = ?", filter.ColumnValue)
+		}
+	}
+
+	queryFilter = queryFilter.Scopes(pagination.Paginate(&pages, queryFilter))
+	queryFilter = queryFilter.Order("ipd.item_package_detail_id")
+
+	err := queryFilter.Scan(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		pages.Rows = []masteritempayloads.GetItemPackageItemResponse{}
+		return pages, nil
+	}
+
+	pages.Rows = responses
+	return pages, nil
+}
