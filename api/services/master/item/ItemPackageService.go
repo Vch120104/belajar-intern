@@ -13,7 +13,7 @@ type ItemPackageService interface {
 	SaveItemPackage(request masteritempayloads.SaveItemPackageRequest) (masteritementities.ItemPackage, *exceptions.BaseErrorResponse)
 	GetItemPackageById(Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 	GetAllByItemPackageId(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetItemPackageByItemId(itemId int) (masteritempayloads.GetItemPackageItemResponse, *exceptions.BaseErrorResponse)
+	GetItemPackageByItemId(itemId int) ([]masteritempayloads.GetItemPackageItemResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(id int) (bool, *exceptions.BaseErrorResponse)
 	GetItemPackageByCode(itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 }

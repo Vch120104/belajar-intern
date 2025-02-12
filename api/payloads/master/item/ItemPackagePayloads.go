@@ -44,6 +44,7 @@ type GetItemPackageItemResponse struct {
 	ItemPackageCode string  `json:"item_package_code"`
 	ItemPackageName string  `json:"item_package_name"`
 	AccesoriesCode  string  `json:"accesories_code"`
+	Description     string  `json:"description"`
 	Quantity        int     `json:"quantity"`
 	UomId           int     `json:"uom_id"`
 	UomCode         string  `json:"uom_code"`

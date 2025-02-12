@@ -194,7 +194,7 @@ func (s *ItemPackageServiceImpl) ChangeStatusItemPackage(Id int) (bool, *excepti
 	return results, nil
 }
 
-func (s *ItemPackageServiceImpl) GetItemPackageByItemId(itemId int) (masteritempayloads.GetItemPackageItemResponse, *exceptions.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) GetItemPackageByItemId(itemId int) ([]masteritempayloads.GetItemPackageItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
