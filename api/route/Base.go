@@ -341,7 +341,8 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
-	router.Get("/by-item-id/{item_package_id}", ItemPackageController.GetItemPackageByItemId)
+	router.Get("/by-item-package-id", ItemPackageController.GetAllByItemPackageId)
+	router.Get("/by-item-package-id/{item_package_id}", ItemPackageController.GetItemPackageByItemId)
 	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 	router.Get("/by-code/{item_package_code}", ItemPackageController.GetItemPackageByCode)
 
