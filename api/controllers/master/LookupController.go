@@ -2174,26 +2174,30 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccsByCode(writer http.ResponseW
 // @Tags Master Lookup :
 // @Accept json
 // @Produce json
-// @Param company_id path int true "Company ID"
-// @Param brand_id path int true "Brand ID"
-// @Param item_id query int true "Item ID"
+// @Param item_id path int true "Item ID"
+// @Param company_id query int true "Company ID"
+// @Param brand_id query int true "Brand ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/lookup/item-freeaccs/by-brand-id/{company_id}/{item_id}/{brand_id} [get]
+// @Router /v1/lookup/item-freeaccs/by-company-brand/{item_id} [get]
 func (r *LookupControllerImpl) ItemMasterForFreeAccsByBrand(writer http.ResponseWriter, request *http.Request) {
-	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Company ", http.StatusBadRequest)
-		return
-	}
 	itemId, err := strconv.Atoi(chi.URLParam(request, "item_id"))
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Item ", http.StatusBadRequest)
+		payloads.NewHandleError(writer, "Invalid Item ID", http.StatusBadRequest)
 		return
 	}
-	brandId, err := strconv.Atoi(chi.URLParam(request, "brand_id"))
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Brand ", http.StatusBadRequest)
+
+	companyIdStr := request.URL.Query().Get("company_id")
+	companyId, err := strconv.Atoi(companyIdStr)
+	if err != nil || companyIdStr == "" {
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
+		return
+	}
+
+	brandIdStr := request.URL.Query().Get("brand_id")
+	brandId, err := strconv.Atoi(brandIdStr)
+	if err != nil || brandIdStr == "" {
+		payloads.NewHandleError(writer, "Invalid Brand ID", http.StatusBadRequest)
 		return
 	}
 
@@ -2202,5 +2206,6 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccsByBrand(writer http.Response
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
+
 	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
 }
