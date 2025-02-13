@@ -45,4 +45,5 @@ type LookupService interface {
 	ItemMasterForFreeAccs(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ItemMasterForFreeAccsById(companyId int, itemId int) (masterpayloads.ItemMasterForFreeAccsResponse, *exceptions.BaseErrorResponse)
 	ItemMasterForFreeAccsByCode(companyId int, itemCode string) (masterpayloads.ItemMasterForFreeAccsResponse, *exceptions.BaseErrorResponse)
+	ItemMasterForFreeAccsByBrand(companyId int, itemId int, brandId int) (masterpayloads.ItemMasterForFreeAccsBrandResponse, *exceptions.BaseErrorResponse)
 }

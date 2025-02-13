@@ -138,3 +138,12 @@ type ItemMasterForFreeAccsResponse struct {
 	PriceListAmount float64 `json:"price_list_amount"`
 	IsActive        bool    `json:"is_active"`
 }
+
+type ItemMasterForFreeAccsBrandResponse struct {
+	ItemId          int     `json:"item_id"`
+	ItemCode        string  `json:"item_code"`
+	ItemName        string  `json:"item_name"`
+	UomId           int     `json:"uom_id"`
+	UomCode         string  `json:"uom_code"`
+	PriceListAmount float64 `json:"price_list_amount"`
+}
