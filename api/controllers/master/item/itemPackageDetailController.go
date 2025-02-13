@@ -41,7 +41,7 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 // @Description Activate an item package detail by its ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -63,7 +63,7 @@ func (r *ItemPackageDetailControllerImpl) ActivateItemPackageDetail(writer http.
 // @Description Deactivate an item package detail by its ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -85,7 +85,7 @@ func (r *ItemPackageDetailControllerImpl) DeactivateItemPackageDetail(writer htt
 // @Description Change the status of an item package detail by its ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -112,7 +112,7 @@ func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer h
 // @Description Retrieve all item package details by their package ID with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param item_package_id path int true "Item Package ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -151,7 +151,7 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(wr
 // @Description Retrieve an item package detail by its ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -179,7 +179,7 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.R
 // @Description Create a new item package detail under a specific package ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -215,7 +215,7 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 // @Description Update an existing item package detail under a specific package ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Package Detail
+// @Tags Master : Item Package Detail
 // @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

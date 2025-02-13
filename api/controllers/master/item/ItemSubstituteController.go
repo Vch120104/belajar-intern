@@ -47,7 +47,7 @@ func NewItemSubstituteController(itemSubstituteService masteritemservice.ItemSub
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param substitute_type_id query string false "substitute_type_id"
@@ -104,7 +104,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param item_substitute_id path int true "item_substitute_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -134,7 +134,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.Respons
 // @Description REST API Item Substitute Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param item_substitute_id path int true "item_substitute_id"
 // @Param page query string true "page"
 // @Param limit query string true "limit"
@@ -178,7 +178,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -207,7 +207,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.R
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @param reqBody body masteritempayloads.ItemSubstitutePostPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -242,7 +242,7 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstitute(writer http.ResponseWr
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param item_substitute_id path int true "item_substitute_id"
 // @param reqBody body masteritempayloads.ItemSubstituteDetailPostPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -286,7 +286,7 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @param reqBody body masteritempayloads.ItemSubstituteDetailUpdatePayloads true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -314,7 +314,7 @@ func (r *ItemSubstituteControllerImpl) UpdateItemSubstituteDetail(writer http.Re
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @param item_substitute_id path int true "item_substitute_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -342,7 +342,7 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -364,7 +364,7 @@ func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -387,7 +387,7 @@ func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer htt
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param item_code query string false "item_code"
 // @Param item_name query string false "item_name"
 // @Param item_class query string false "item_class"
@@ -439,7 +439,7 @@ func (r *ItemSubstituteControllerImpl) GetallItemForFilter(writer http.ResponseW
 // @Description REST API Item Substitute
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Substitute
+// @Tags Master : Item Substitute
 // @Param item_substitute_id path int true "item_substitute_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

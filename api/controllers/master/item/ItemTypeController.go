@@ -39,7 +39,7 @@ func NewItemTypeController(itemTypeService masteritemservice.ItemTypeService) It
 
 // @Summary Get All ItemType
 // @Description Get All ItemType
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @Success 200 {object} payloads.Response
@@ -58,7 +58,7 @@ func (r *ItemTypeControllerImpl) GetItemTypeDropDown(writer http.ResponseWriter,
 
 // @Summary Get ItemType By Code
 // @Description Get ItemType By Code
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @Param item_type_code path string true "Item Type Code"
@@ -80,7 +80,7 @@ func (r *ItemTypeControllerImpl) GetItemTypeByCode(writer http.ResponseWriter, r
 
 // @Summary Get ItemType By Id
 // @Description Get ItemType By Id
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @Param item_type_id path string true "Item Type Id"
@@ -107,7 +107,7 @@ func (r *ItemTypeControllerImpl) GetItemTypeById(writer http.ResponseWriter, req
 
 // @Summary Get All ItemType
 // @Description Get All ItemType
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @Param item_type_id query string false "Item Type Id"
@@ -158,7 +158,7 @@ func (r *ItemTypeControllerImpl) GetAllItemType(writer http.ResponseWriter, requ
 
 // @Summary Create ItemType
 // @Description Create ItemType
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @param reqBody body masteritempayloads.ItemTypeRequest true "Form Request"
@@ -192,7 +192,7 @@ func (r *ItemTypeControllerImpl) CreateItemType(writer http.ResponseWriter, requ
 
 // @Summary Save ItemType
 // @Description Save ItemType
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @Param item_type_id path string true "Item Type Id"
@@ -234,7 +234,7 @@ func (r *ItemTypeControllerImpl) SaveItemType(writer http.ResponseWriter, reques
 
 // @Summary Change Status ItemType
 // @Description Change Status ItemType
-// @Tags Master Item : Item Type
+// @Tags Master : Item Type
 // @Accept json
 // @Produce json
 // @Param item_type_id path string true "Item Type Id"

@@ -34,7 +34,7 @@ func NewOutstandingJobAllocationController(outstandingJobAllocationService trans
 
 // @Summary Get All Outstanding Job Allocation
 // @Description Get All Outstanding Job Allocation
-// @Tags Transaction JPCB: Outstanding Job Allocation
+// @Tags Transaction : JPCB Outstanding Job Allocation
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -77,7 +77,7 @@ func (r *OutstandingJobAllocationControllerImpl) GetAllOutstandingJobAllocation(
 
 // @Summary Get Outstanding Job Allocation By Type ID
 // @Description Get Outstanding Job Allocation By Type ID
-// @Tags Transaction JPCB: Outstanding Job Allocation
+// @Tags Transaction : JPCB Outstanding Job Allocation
 // @Accept json
 // @Produce json
 // @Param reference_document_type path string true "Reference Document Type"
@@ -99,7 +99,7 @@ func (r *OutstandingJobAllocationControllerImpl) GetByTypeIdOutstandingJobAlloca
 
 // @Summary Save Outstanding Job Allocation
 // @Description Save Outstanding Job Allocation
-// @Tags Transaction JPCB: Outstanding Job Allocation
+// @Tags Transaction : JPCB Outstanding Job Allocation
 // @Accept json
 // @Produce json
 // @Param reference_document_type path string true "Reference Document Type"

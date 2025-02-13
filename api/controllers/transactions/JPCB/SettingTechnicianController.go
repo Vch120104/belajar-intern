@@ -39,7 +39,7 @@ func NewSettingTechnicianController(SettingTechnicianServ transactionjpcbservice
 
 // @Summary Get All Setting Technician
 // @Description Get All Setting Technician
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -78,7 +78,7 @@ func (r *SettingTechnicianControllerImpl) GetAllSettingTechnician(writer http.Re
 
 // @Summary Get All Setting Technician Detail
 // @Description Get All Setting Technician Detail
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param setting_technician_system_number query string false "Setting Technician System Number"
@@ -109,7 +109,7 @@ func (r *SettingTechnicianControllerImpl) GetAllSettingTechinicianDetail(writer 
 
 // @Summary Get Setting Technician By ID
 // @Description Get Setting Technician By ID
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param setting_technician_system_number path string true "Setting Technician System Number"
@@ -130,7 +130,7 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianById(writer http.R
 
 // @Summary Get Setting Technician Detail By ID
 // @Description Get Setting Technician Detail By ID
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param setting_technician_detail_system_number path string true "Setting Technician Detail System Number"
@@ -151,7 +151,7 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianDetailById(writer 
 
 // @Summary Get Setting Technician By Company Date
 // @Description Get Setting Technician By Company Date
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param company_id path string true "Company ID"
@@ -173,7 +173,7 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianByCompanyDate(writ
 
 // @Summary Save Setting Technician Detail
 // @Description Save Setting Technician Detail
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.SettingTechnicianDetailSaveRequest true "Setting Technician Detail Save Request"
@@ -204,7 +204,7 @@ func (r *SettingTechnicianControllerImpl) SaveSettingTechnicianDetail(writer htt
 
 // @Summary Update Setting Technician Detail
 // @Description Update Setting Technician Detail
-// @Tags Transaction JPCB: Setting Technician
+// @Tags Transaction : JPCB Setting Technician
 // @Accept json
 // @Produce json
 // @Param setting_technician_detail_system_number path string true "Setting Technician Detail System Number"

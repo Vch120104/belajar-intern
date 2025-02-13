@@ -43,7 +43,7 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 // @Description REST API Operation Group
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Group
+// @Tags Master : Operation Group
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_group_code query string false "operation_group_code"
@@ -85,7 +85,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Description REST API Operation Group
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Group
+// @Tags Master : Operation Group
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/drop-down [get]
@@ -103,7 +103,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupDropDown(writer http.Res
 // @Description REST API Operation Group
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Group
+// @Tags Master : Operation Group
 // @Param operation_group_code path string true "operation_group_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -124,7 +124,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.Respo
 // @Description REST API Operation Group
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Group
+// @Tags Master : Operation Group
 // @param reqBody body masteroperationpayloads.OperationGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -165,7 +165,7 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 // @Description REST API Operation Group
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Group
+// @Tags Master : Operation Group
 // @param operation_group_id path int true "operation_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -193,7 +193,7 @@ func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.Re
 // @Description REST API Operation Group
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Group
+// @Tags Master : Operation Group
 // @param operation_group_id path int true "operation_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

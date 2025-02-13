@@ -39,7 +39,7 @@ func NewContractServiceDetailController(contractServiceDetailService transaction
 // @Description Retrieve all contract service detail with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Contract Service Detail
+// @Tags Transaction : Workshop Contract Service Detail
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Param limit query string true "Items per page"
 // @Param page query string true "Page number"
@@ -95,7 +95,7 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 // @Description Retrieve contract service detail by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Contract Service Detail
+// @Tags Transaction : Workshop Contract Service Detail
 // @Param contract_service_package_detail_system_number path string true "Contract Service Package Detail System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -116,7 +116,7 @@ func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter
 // @Description Save contract service detail
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Contract Service Detail
+// @Tags Transaction : Workshop Contract Service Detail
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -149,7 +149,7 @@ func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWri
 // @Description Update contract service detail
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Contract Service Detail
+// @Tags Transaction : Workshop Contract Service Detail
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Param contract_service_line path string true "Contract Service Line"
 // @Success 200 {object} payloads.Response
@@ -203,7 +203,7 @@ func (c *ContractServiceDetailControllerImpl) UpdateDetail(writer http.ResponseW
 // @Description Delete contract service detail
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Contract Service Detail
+// @Tags Transaction : Workshop Contract Service Detail
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Param package_code path string true "Package Code"
 // @Success 200 {object} payloads.Response

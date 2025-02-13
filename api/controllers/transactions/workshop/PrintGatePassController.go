@@ -33,7 +33,7 @@ func NewPrintGatePassController(service transactionworkshopservice.PrintGatePass
 // @Description Retrieve all print gate pass with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Print Gate Pass
+// @Tags Transaction : Workshop Print Gate Pass
 // @Param work_order_system_number query string false "Work Order System Number"
 // @Param work_order_date query string false "Work Order Date"
 // @Param customer_id query string false "Customer ID"
@@ -89,7 +89,7 @@ func (r *PrintGatePassControllerImpl) GetAll(writer http.ResponseWriter, request
 // @Description Generate PDF for print gate pass by id
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Print Gate Pass
+// @Tags Transaction : Workshop Print Gate Pass
 // @Param id path string true "Print Gate Pass ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
