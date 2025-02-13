@@ -35,7 +35,7 @@ func NewJobAllocationController(jobAllocationService transactionjpcbservice.JobA
 
 // @Summary Get All Job Allocation
 // @Description Get All Job Allocation
-// @Tags Transaction JPCB: Job Allocation
+// @Tags Transaction : JPCB Job Allocation
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -71,7 +71,7 @@ func (r *JobAllocationControllerImpl) GetAllJobAllocation(writer http.ResponseWr
 
 // @Summary Get Job Allocation By ID
 // @Description Get Job Allocation By ID
-// @Tags Transaction JPCB: Job Allocation
+// @Tags Transaction : JPCB Job Allocation
 // @Accept json
 // @Produce json
 // @Param technician_allocation_system_number path string true "Technician Allocation System Number"
@@ -91,7 +91,7 @@ func (r *JobAllocationControllerImpl) GetJobAllocationById(writer http.ResponseW
 
 // @Summary Update Job Allocation
 // @Description Update Job Allocation
-// @Tags Transaction JPCB: Job Allocation
+// @Tags Transaction : JPCB Job Allocation
 // @Accept json
 // @Produce json
 // @Param technician_allocation_system_number path string true "Technician Allocation System Number"
@@ -125,7 +125,7 @@ func (r *JobAllocationControllerImpl) UpdateJobAllocation(writer http.ResponseWr
 
 // @Summary Delete Job Allocation
 // @Description Delete Job Allocation
-// @Tags Transaction JPCB: Job Allocation
+// @Tags Transaction : JPCB Job Allocation
 // @Accept json
 // @Produce json
 // @Param technician_allocation_system_number path string true "Technician Allocation System Number"

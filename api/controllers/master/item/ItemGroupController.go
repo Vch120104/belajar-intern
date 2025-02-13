@@ -33,7 +33,7 @@ type ItemGroupControllerImpl struct {
 
 // @Summary Get All Item Group With Pagination
 // @Description Get All Item Group With Pagination
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_code query string false "Item Group Code"
@@ -73,7 +73,7 @@ func (i *ItemGroupControllerImpl) GetAllItemGroupWithPagination(writer http.Resp
 
 // @Summary Get All Item Group
 // @Description Get All Item Group
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_code query string false "Item Group Code"
@@ -93,7 +93,7 @@ func (i *ItemGroupControllerImpl) GetAllItemGroup(writer http.ResponseWriter, re
 
 // @Summary Get Item Group By Id
 // @Description Get Item Group By Id
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_id path int true "Item Group Id"
@@ -122,7 +122,7 @@ func (i *ItemGroupControllerImpl) GetItemGroupById(writer http.ResponseWriter, r
 
 // @Summary Delete Item Group By Id
 // @Description Delete Item Group By Id
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_id path int true "Item Group Id"
@@ -151,7 +151,7 @@ func (i *ItemGroupControllerImpl) DeleteItemGroupById(writer http.ResponseWriter
 
 // @Summary Update Item Group By Id
 // @Description Update Item Group By Id
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_id path int true "Item Group Id"
@@ -193,7 +193,7 @@ func (i *ItemGroupControllerImpl) UpdateItemGroupById(writer http.ResponseWriter
 
 // @Summary Update Status Item Group By Id
 // @Description Update Status Item Group By Id
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_id path int true "Item Group Id"
@@ -232,7 +232,7 @@ func (i *ItemGroupControllerImpl) GetItemGroupByMultiId(writer http.ResponseWrit
 
 // @Summary Create New Item Group
 // @Description Create New Item Group
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_name body string true "Item Group Name"
@@ -263,7 +263,7 @@ func (i *ItemGroupControllerImpl) NewItemGroup(writer http.ResponseWriter, reque
 
 // @Summary Get Item Group By Code
 // @Description Get Item Group By Code
-// @Tags Master Item : Item Group
+// @Tags Master : Item Group
 // @Accept json
 // @Produce json
 // @Param item_group_code path string true "Item Group Code"

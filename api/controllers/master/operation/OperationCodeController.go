@@ -40,7 +40,7 @@ func NewOperationCodeController(operationCodeservice masteroperationservice.Oper
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_code query string false "operation_code"
@@ -81,7 +81,7 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @Param operation_id path int true "operation_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -108,7 +108,7 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @Param operation_code path string true "operation_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -130,7 +130,7 @@ func (r *OperationCodeControllerImpl) GetByCodeOperationCode(writer http.Respons
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @param reqBody body masteroperationpayloads.OperationCodeSave true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -157,7 +157,7 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 // @Description REST API Patch Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @param operation_id path int true "operation_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -185,7 +185,7 @@ func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.Resp
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @param operation_id path int true "operation_id"
 // @param reqBody body masteroperationpayloads.OperationCodeUpdate true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -219,7 +219,7 @@ func (r *OperationCodeControllerImpl) UpdateOperationCode(writer http.ResponseWr
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Code
+// @Tags Master : Operation Code
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-code/dropdown [get]

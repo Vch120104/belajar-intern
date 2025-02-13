@@ -46,7 +46,7 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Markup Master
+// @Tags Master : Markup Master
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param markup_master_code query string false "markup_master_code"
@@ -88,7 +88,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Markup Master
+// @Tags Master : Markup Master
 // @Param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -116,7 +116,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWri
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Markup Master
+// @Tags Master : Markup Master
 // @Param markup_master_code path string true "markup_master_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -139,7 +139,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Markup Master
+// @Tags Master : Markup Master
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/markup-master/dropdown [get]
@@ -159,7 +159,7 @@ func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.Resp
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Markup Master
+// @Tags Master : Markup Master
 // @param reqBody body masteritempayloads.MarkupMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -200,7 +200,7 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Description REST API Markup Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Markup Master
+// @Tags Master : Markup Master
 // @param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

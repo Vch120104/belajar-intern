@@ -37,7 +37,7 @@ func NewDiscountPercentController(discountPercentService masteritemservice.Disco
 // @Description REST API Discount Percent
 // @Accept json
 // @Produce json
-// @Tags Master Item : Discount Percent
+// @Tags Master : Discount Percent
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -87,7 +87,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 // @Description REST API Discount Percent
 // @Accept json
 // @Produce json
-// @Tags Master Item : Discount Percent
+// @Tags Master : Discount Percent
 // @Param discount_percent_id path int true "discount_percent_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -114,7 +114,7 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 // @Description REST API Discount Percent
 // @Accept json
 // @Produce json
-// @Tags Master Item : Discount Percent
+// @Tags Master : Discount Percent
 // @param reqBody body masteritempayloads.DiscountPercentResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -155,7 +155,7 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 // @Description REST API Discount Percent
 // @Accept json
 // @Produce json
-// @Tags Master Item : Discount Percent
+// @Tags Master : Discount Percent
 // @param discount_percent_id path int true "discount_percent_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

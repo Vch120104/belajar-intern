@@ -32,7 +32,7 @@ type ItemModelMappingControllerImpl struct {
 // @Description REST API to get item model mapping by item id
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Model Mapping
+// @Tags Master : Item Model Mapping
 // @Param item_id path int true "Item ID"
 // @Param page query int false "Page number"
 // @Param limit query int false "Items per page"
@@ -79,7 +79,7 @@ func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http
 // @Description REST API to update item model mapping
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Model Mapping
+// @Tags Master : Item Model Mapping
 // @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -115,7 +115,7 @@ func (r *ItemModelMappingControllerImpl) UpdateItemModelMapping(writer http.Resp
 // @Description REST API to create item model mapping
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Model Mapping
+// @Tags Master : Item Model Mapping
 // @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

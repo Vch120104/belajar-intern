@@ -51,7 +51,7 @@ type ItemWarehouseTransferRequestControllerImpl struct {
 
 // @Summary Accept Item Warehouse Transfer Request
 // @Description Accept Item Warehouse Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"
@@ -84,7 +84,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) Accept(writer http.Response
 
 // @Summary Reject Item Warehouse Transfer Request
 // @Description Reject Item Warehouse Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"
@@ -117,7 +117,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) Reject(writer http.Response
 
 // @Summary Download Template
 // @Description Download Template
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Success 200 {object} payloads.Response
@@ -167,7 +167,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DownloadTemplate(writer htt
 
 // @Summary Process Upload
 // @Description Process Upload
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number query int true "Transfer Request System Number"
@@ -269,7 +269,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) ProcessUpload(writer http.R
 
 // @Summary Upload
 // @Description Upload
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Success 201 {object} payloads.Response
@@ -344,7 +344,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) Upload(writer http.Response
 
 // @Summary Insert Item Warehouse Transfer Request Detail
 // @Description Insert Item Warehouse Transfer Request Detail
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"
@@ -365,7 +365,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetByIdTransferRequestDetai
 
 // @Summary Update Item Warehouse Transfer Request Detail
 // @Description Update Item Warehouse Transfer Request Detail
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request Detail System Number"
@@ -394,7 +394,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) UpdateWhTransferRequestDeta
 
 // @Summary Delete Detail
 // @Description Delete Detail
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path string true "Detail Multi ID"
@@ -439,7 +439,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DeleteDetail(writer http.Re
 
 // @Summary Delete Header Transfer Request
 // @Description Delete Header Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"
@@ -460,7 +460,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) DeleteHeaderTransferRequest
 
 // @Summary Get All Detail Transfer Request
 // @Description Get All Detail Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number query int true "Transfer Request System Number"
@@ -492,7 +492,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllDetailTransferRequest
 
 // @Summary Get All Warehouse Transfer Request
 // @Description Get All Warehouse Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param transfer_request_status_id query int false "Transfer Request Status ID"
@@ -540,7 +540,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferRequest(wri
 
 // @Summary Get By ID Transfer Request
 // @Description Get By ID Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"
@@ -560,7 +560,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetByIdTransferRequest(writ
 
 // @Summary Insert Item Warehouse Transfer Request Detail
 // @Description Insert Item Warehouse Transfer Request Detail
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param InsertItemWarehouseTransferRequest body transactionsparepartpayloads.InsertItemWarehouseTransferRequest true "Insert Item Warehouse Transfer Request"
@@ -586,7 +586,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestDeta
 
 // @Summary Insert Item Warehouse Transfer Request Header
 // @Description Insert Item Warehouse Transfer Request Header
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param InsertItemWarehouseTransferRequest body transactionsparepartpayloads.InsertItemWarehouseTransferRequest true "Insert Item Warehouse Transfer Request"
@@ -612,7 +612,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) InsertWhTransferRequestHead
 
 // @Summary Submit Item Warehouse Transfer Request
 // @Description Submit Item Warehouse Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"
@@ -645,7 +645,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) SubmitWhTransferRequest(wri
 
 // @Summary Update Item Warehouse Transfer Request
 // @Description Update Item Warehouse Transfer Request
-// @Tags Transaction Sparepart: Item Warehouse Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Request System Number"

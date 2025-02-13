@@ -51,7 +51,7 @@ func NewPurchaseRequestController(PurchaseRequestService transactionsparepartser
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -111,7 +111,7 @@ func (controller *PurchaseRequestControllerImpl) GetAllItemTypePr(writer http.Re
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -185,7 +185,7 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequest(writer ht
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
 //	@Success		200								{object}	transactionsparepartpayloads.PurchaseRequestGetAllListResponses
@@ -210,7 +210,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequest(writer h
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			page							query		string	true	"page"
 //	@Param			limit							query		string	true	"limit"
@@ -251,7 +251,7 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequestDetail(wri
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			purchase_request_system_number_detail	path		int	true	"purchase_request_system_number_detail"
 //	@Success		200										{object}	transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads
@@ -277,7 +277,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequestDetail(wr
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -308,7 +308,7 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestHeader(writer
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -340,7 +340,7 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestDetail(writer
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest	true	"Purchase Request Header Data"
@@ -372,7 +372,7 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestHeader(wri
 // @Description	Update Purchase Request Detail
 // @Accept			json
 // @Produce		json
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 // @Param			purchase_request_detail_system_number	path		int	true	"purchase_request_detail_system_number"
 // @Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads	true	"Purchase Request Header Data"
 // @Success		201						{object}	transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
@@ -402,7 +402,7 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestDetail(wri
 // @Description	Void Request Detail
 // @Accept			json
 // @Produce		json
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 // @Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
 // @Success		201						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -439,7 +439,7 @@ func (controller *PurchaseRequestControllerImpl) Void(writer http.ResponseWriter
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
 //	@Success		201						{object}	payloads.Response
@@ -493,7 +493,7 @@ func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestDetail(wri
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			company_id		path		int	true	"company_id"
 //	@Param			item_id			path		int	true	"item_id"
@@ -519,7 +519,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdItemTypePr(writer http.R
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 //
 //	@Param			company_id		path		int	true	"company_id"
 //	@Param			item_code		path		string	true	"item_code"
@@ -550,7 +550,7 @@ func (controller *PurchaseRequestControllerImpl) GetByCodeItemTypePr(writer http
 // @Description	Void Request Purchase Detail Multi Id
 // @Accept			json
 // @Produce		json
-// @Tags Transaction Sparepart: Purchase Request
+// @Tags Transaction : Sparepart Purchase Request
 // @Param			purchase_request_detail_system_number	path		string true	"purchase_request_detail_system_number"
 // @Success		201						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse

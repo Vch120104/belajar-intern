@@ -36,7 +36,7 @@ func NewWorkOrderBypassController(WorkOrderBypassService transactionworkshopserv
 // @Description Retrieve all work orders with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Work Order Bypass
+// @Tags Transaction : Workshop Work Order Bypass
 // @Param work_order_system_number query string false "Work Order System Number"
 // @Param work_order_document_number query string false "Work Order Document Number"
 // @Param page query string true "Page number"
@@ -87,7 +87,7 @@ func (r *WorkOrderBypassControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Description Retrieve a work order by id
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Work Order Bypass
+// @Tags Transaction : Workshop Work Order Bypass
 // @Param work_order_system_number path int true "Work Order System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -110,7 +110,7 @@ func (r *WorkOrderBypassControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Description Bypass a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : Work Order Bypass
+// @Tags Transaction : Workshop Work Order Bypass
 // @Param work_order_system_number path int true "Work Order System Number"
 // @Param body body transactionworkshoppayloads.WorkOrderBypassRequestDetail true "Work Order Bypass Request"
 // @Success 200 {object} payloads.Response

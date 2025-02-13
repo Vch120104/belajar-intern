@@ -36,6 +36,7 @@ type setupDatabase struct {
 	ReportServiceUrl     string `mapstructure:"REPORT_SERVICE"`
 	FinanceServiceUrl    string `mapstructure:"FINANCE_SERVICE"`
 	CommonServiceUrl     string `mapstructure:"COMMON_SERVICE"`
+	UserServiceUrl       string `mapstructure:"USER_SERVICE"`
 }
 
 var EnvConfigs *setupDatabase

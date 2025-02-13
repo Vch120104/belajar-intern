@@ -36,7 +36,7 @@ func NewLabourSellingPriceController(LabourSellingPriceService masteroperationse
 
 // @Summary Get All Selling Price
 // @Description Get All Selling Price
-// @Tags Master Operation : Labour Selling Price
+// @Tags Master : Labour Selling Price
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -96,7 +96,7 @@ func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.Respon
 
 // @Summary Get Selling Price By ID
 // @Description Get Selling Price By ID
-// @Tags Master Operation : Labour Selling Price
+// @Tags Master : Labour Selling Price
 // @Accept json
 // @Produce json
 // @Param labour_selling_price_id path int true "Labour Selling Price ID"
@@ -123,7 +123,7 @@ func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http
 
 // @Summary Save Labour Selling Price
 // @Description Save Labour Selling Price
-// @Tags Master Operation : Labour Selling Price
+// @Tags Master : Labour Selling Price
 // @Accept json
 // @Produce json
 // @Param request body masteroperationpayloads.LabourSellingPriceRequest true "Labour Selling Price Request"

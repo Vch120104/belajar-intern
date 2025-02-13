@@ -44,7 +44,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Description Get Warehouse Group By Group Code
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @Param warehouse_group_code path string true "warehouse_group_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -64,7 +64,7 @@ func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter
 // @Description Get Warehouse Group Dropdown By Id
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -89,7 +89,7 @@ func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http
 // @Description Get Warehouse Group Dropdown
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-group/drop-down [get]
@@ -107,7 +107,7 @@ func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropDown(writer http.Res
 // @Description Get All Warehouse Group
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -147,7 +147,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Description Get Warehouse Group By Id
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -174,7 +174,7 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 // @Description Save Warehouse Group
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -208,7 +208,7 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Description Change Warehouse Group Status By Id
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Group
+// @Tags Master : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

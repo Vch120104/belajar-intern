@@ -54,7 +54,7 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param brand_id query int true "brand_id"
 // @Param currency_id query int true "currency_id"
 // @Param effective_date query string true "effective_date"
@@ -102,7 +102,7 @@ func (r *PriceListControllerImpl) Duplicate(writer http.ResponseWriter, request 
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param brand_id query int true "brand_id"
 // @Param currency_id query int true "currency_id"
 // @Param effective_date query string true "effective_date"
@@ -155,7 +155,7 @@ func (r *PriceListControllerImpl) Download(writer http.ResponseWriter, request *
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param brand_id query int true "brand_id"
 // @Param currency_id query int true "currency_id"
 // @Param effective_date query string true "effective_date"
@@ -212,7 +212,7 @@ func (r *PriceListControllerImpl) CheckPriceListItem(writer http.ResponseWriter,
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param data formData string true "data"
 // @Param PriceList-File formData file true "PriceList-File"
 // @Success 200 {object} payloads.Response
@@ -286,7 +286,7 @@ func (r *PriceListControllerImpl) UploadFile(writer http.ResponseWriter, request
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/price-list/download-template [get]
@@ -319,7 +319,7 @@ func (r *PriceListControllerImpl) GenerateDownloadTemplateFile(writer http.Respo
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -353,7 +353,7 @@ func (r *PriceListControllerImpl) GetPriceListById(writer http.ResponseWriter, r
 // @Param item_class_id query int false "item_class_id"
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/price-list/pop-up/ [get]
@@ -416,7 +416,7 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @param reqBody body masteritempayloads.PriceListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -453,7 +453,7 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -476,7 +476,7 @@ func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWrit
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param brand_id query int false "brand_id"
 // @Param item_group_id query int false "item_group_id"
 // @Param price_list_code_id query int false "price_list_code_id"
@@ -542,7 +542,7 @@ func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -561,7 +561,7 @@ func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, 
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -580,7 +580,7 @@ func (r *PriceListControllerImpl) DeactivatePriceList(writer http.ResponseWriter
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -599,7 +599,7 @@ func (r *PriceListControllerImpl) DeletePriceList(writer http.ResponseWriter, re
 // @Description REST API Price List
 // @Accept json
 // @Produce json
-// @Tags Master Item : Price List
+// @Tags Master : Price List
 // @Param price_list_code_id path string true "price_list_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

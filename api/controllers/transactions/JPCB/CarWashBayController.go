@@ -38,7 +38,7 @@ func NewCarWashBayController(bayMasterService transactionjpcbservice.BayMasterSe
 }
 
 // @Summary Get All Car Wash Bay
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -85,7 +85,7 @@ func (r *BayMasterControllerImpl) GetAllCarWashBay(writer http.ResponseWriter, r
 }
 
 // @Summary Get All Active Car Wash Bay
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -127,7 +127,7 @@ func (r *BayMasterControllerImpl) GetAllActiveCarWashBay(writer http.ResponseWri
 }
 
 // @Summary Get All Deactive Car Wash Bay
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -153,7 +153,7 @@ func (r *BayMasterControllerImpl) GetAllDeactiveCarWashBay(writer http.ResponseW
 }
 
 // @Summary Change Status Car Wash Bay
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -198,7 +198,7 @@ func (r *BayMasterControllerImpl) ChangeStatusCarWashBay(writer http.ResponseWri
 }
 
 // @Summary Get All Car Wash Bay Drop Down
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -224,7 +224,7 @@ func (r *BayMasterControllerImpl) GetAllCarWashBayDropDown(writer http.ResponseW
 }
 
 // @Summary Post Car Wash Bay
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.CarWashBayPostRequest true "Car Wash Bay Post Request"
@@ -244,7 +244,7 @@ func (r *BayMasterControllerImpl) PostCarWashBay(writer http.ResponseWriter, req
 }
 
 // @Summary Put Car Wash Bay
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.CarWashBayPutRequest true "Car Wash Bay Put Request"
@@ -264,7 +264,7 @@ func (r *BayMasterControllerImpl) PutCarWashBay(writer http.ResponseWriter, requ
 }
 
 // @Summary Get Car Wash Bay By Id
-// @Tags Transaction JPCB: Car Wash Bay
+// @Tags Transaction : JPCB Car Wash Bay
 // @Accept json
 // @Produce json
 // @Param car_wash_bay_id path string true "Car Wash Bay ID"

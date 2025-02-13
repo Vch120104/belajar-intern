@@ -31,7 +31,7 @@ func NewVehicleHistoryController(VehicleHIstoryService transactionworkshopservic
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Workshop : Vehicle History
+// @Tags Transaction : Workshop Vehicle History
 //
 //	@Param			page					query		string	true	"page"
 //	@Param			limit					query		string	true	"limit"
@@ -71,7 +71,7 @@ func (r *VehicleHistoryControllerImpl) GetAllFieldVehicleHistory(writer http.Res
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Workshop : Vehicle History
+// @Tags Transaction : Workshop Vehicle History
 //
 //	@Param			work_order_system_number_id	path		int true	"work_order_system_number_id"
 //	@Success		200							{object}	transactionworkshoppayloads.VehicleHistoryByIdResponses

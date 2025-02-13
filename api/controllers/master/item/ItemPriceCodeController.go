@@ -41,7 +41,7 @@ func NewItemPriceCodeController(itemPriceCodeService masteritemservice.ItemPrice
 // @Description Get all item price code
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param is_active query string false "Is Active"
 // @Param item_price_code query string false "Item Price Code"
 // @Param item_price_code_id query string false "Item Price Code ID"
@@ -92,7 +92,7 @@ func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWr
 // @Description Get item price code by ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -120,7 +120,7 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseW
 // @Description Get item price code by code
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param item_price_code path string true "Item Price Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -141,7 +141,7 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.Respons
 // @Description Save item price code
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param body body masteritempayloads.SaveItemPriceCode true "Save Item Price Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -167,7 +167,7 @@ func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWrit
 // @Description Delete item price code
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -195,7 +195,7 @@ func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWr
 // @Description Update item price code
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Param body body masteritempayloads.UpdateItemPriceCode true "Update Item Price Code"
 // @Success 200 {object} payloads.Response
@@ -230,7 +230,7 @@ func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWr
 // @Description Change status item price code
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -258,7 +258,7 @@ func (r *ItemPriceCodeControllerImpl) ChangeStatusItemPriceCode(writer http.Resp
 // @Description Get item price code drop down
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Price Code
+// @Tags Master : Item Price Code
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-price-code/drop-down [get]
