@@ -2011,7 +2011,7 @@ func LookupRouter(
 	router.Get("/item-freeaccs", LookupController.ItemMasterForFreeAccs)
 	router.Get("/item-freeaccs/by-id/{company_id}/{item_id}", LookupController.ItemMasterForFreeAccsById)
 	router.Get("/item-freeaccs/by-code/{company_id}", LookupController.ItemMasterForFreeAccsByCode)
-	router.Get("/item-freeaccs/by-brand-id/{company_id}/{item_id}/{brand_id}", LookupController.ItemMasterForFreeAccsByBrand)
+	router.Get("/item-freeaccs/by-company-brand/{item_id}", LookupController.ItemMasterForFreeAccsByBrand)
 
 	return router
 }
