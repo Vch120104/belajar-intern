@@ -7217,7 +7217,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsById(tx *gorm.DB, companyId 
 			"AND mtr_item_price_list.price_list_code_id = 1").
 		Where("mtr_item.item_id = ?", itemId)
 
-	err := baseModelQuery.Scan(&response).Error
+	err := baseModelQuery.First(&response).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
@@ -7254,7 +7254,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByCode(tx *gorm.DB, companyI
 			"AND mtr_item_price_list.price_list_code_id = 1").
 		Where("mtr_item.item_code = ?", itemCode)
 
-	err := baseModelQuery.Scan(&response).Error
+	err := baseModelQuery.First(&response).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
@@ -7266,6 +7266,46 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByCode(tx *gorm.DB, companyI
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "error fetching lookup data 'ItemMasterForFreeAccsByCode'",
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ItemMasterForFreeAccs'
+func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByBrand(tx *gorm.DB, companyId int, itemId int, brandId int) (masterpayloads.ItemMasterForFreeAccsBrandResponse, *exceptions.BaseErrorResponse) {
+
+	response := masterpayloads.ItemMasterForFreeAccsBrandResponse{}
+
+	baseModelQuery := tx.Table("mtr_item").
+		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
+				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
+				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
+				 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
+		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
+		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
+		Joins("INNER JOIN mtr_item_price_list ON mtr_item.item_id = mtr_item_price_list.item_id "+
+			"AND mtr_item_detail.brand_id = mtr_item_price_list.brand_id "+
+			"AND mtr_item_price_list.price_list_code_id = 1").
+		Where("mtr_item_price_list.brand_id = ?", brandId).
+		Where("mtr_item.item_id = ?", itemId).
+		Where("mtr_item_price_list.company_id = ?", companyId)
+
+	err := baseModelQuery.First(&response).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "data not found",
+				Err:        err,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching lookup data 'ItemMasterForFreeAccsByBrand'",
 			Err:        err,
 		}
 	}
