@@ -7174,7 +7174,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccs(tx *gorm.DB, filterConditio
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
                  mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
                  mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-                 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+                 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
@@ -7208,7 +7208,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsById(tx *gorm.DB, companyId 
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
 				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
 				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-				 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+				 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
@@ -7245,7 +7245,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByCode(tx *gorm.DB, companyI
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
 				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
 				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-				 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+				 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
@@ -7283,7 +7283,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByBrand(tx *gorm.DB, company
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
 				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
 				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-				 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+				 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
