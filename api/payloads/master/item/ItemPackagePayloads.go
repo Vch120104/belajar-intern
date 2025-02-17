@@ -42,15 +42,10 @@ type GetItemGroupResponse struct {
 type GetItemPackageItemResponse struct {
 	ItemPackageId   int     `json:"item_package_id"`
 	ItemPackageCode string  `json:"item_package_code"`
-	ItemPackageName string  `json:"item_package_name"`
 	AccesoriesCode  string  `json:"accesories_code"`
 	Description     string  `json:"description"`
 	Quantity        int     `json:"quantity"`
-	UomId           int     `json:"uom_id"`
 	UomCode         string  `json:"uom_code"`
 	Price           float64 `json:"price"`
 	Amount          float64 `json:"amount"`
-	ItemGroupId     int     `json:"item_group_id"`
-	ItemGroupName   string  `json:"item_group_name"`
-	ItemGroupCode   string  `json:"item_group_code"`
 }
