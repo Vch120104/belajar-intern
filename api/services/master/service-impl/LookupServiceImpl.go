@@ -194,7 +194,7 @@ func (s *LookupServiceImpl) GetVehicleUnitMaster(brandId int, modelId int, pages
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -219,7 +219,7 @@ func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.P
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.GetVehicleUnitByID(tx, vehicleID, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.GetVehicleUnitByID(tx, vehicleID)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
@@ -227,7 +227,7 @@ func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.P
 	return lookup, nil
 }
 
-func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -252,7 +252,7 @@ func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, 
 		}
 	}()
 
-	lookup, baseErr := s.LookupRepo.GetVehicleUnitByChassisNumber(tx, chassisNumber, pages, filterCondition)
+	lookup, baseErr := s.LookupRepo.GetVehicleUnitByChassisNumber(tx, chassisNumber)
 	if baseErr != nil {
 		return lookup, baseErr
 	}
