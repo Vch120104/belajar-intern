@@ -72,19 +72,19 @@ func (*ItemWarehouseTransferInRepositoryImpl) Submit(tx *gorm.DB, number int) (t
 		}
 	}
 
-	errGetEntitiesReq := tx.Model(&entitiesRequest).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestSystemNumber: entitiesOut.TransferRequestSystemNumbers}).First(&entitiesOut).Error
+	errGetEntitiesReq := tx.Model(&entitiesRequest).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestSystemNumber: entitiesOut.TransferRequestSystemNumbers}).First(&entitiesRequest).Error
 	if errGetEntitiesReq != nil {
 		if errors.Is(errGetEntitiesReq, gorm.ErrRecordNotFound) {
 			return transactionsparepartentities.ItemWarehouseTransferIn{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errGetEntities,
-				Message:    "transfer in with that id is not found",
+				Message:    "transfer request with that id is not found",
 			}
 		}
 		return transactionsparepartentities.ItemWarehouseTransferIn{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errGetEntitiesReq,
-			Message:    "failed to get transfer in entity",
+			Message:    "failed to request transfer in entity",
 		}
 	}
 
@@ -194,7 +194,6 @@ func (*ItemWarehouseTransferInRepositoryImpl) Submit(tx *gorm.DB, number int) (t
 				Err:        errGetLocStock,
 			}
 		}
-
 		if locationStock.QuantityEnding == 0 {
 			year, errYear := strconv.Atoi(getPeriod.PeriodYear)
 			if errYear != nil {
@@ -463,7 +462,7 @@ func (*ItemWarehouseTransferInRepositoryImpl) InsertDetail(tx *gorm.DB, request 
 		}
 	}
 
-	errGetEntitiesOutDetail := tx.Model(&entitiesOut).Where(transactionsparepartentities.ItemWarehouseTransferOutDetail{TransferOutSystemNumber: request.TransferOutSystemNumber}).
+	errGetEntitiesOutDetail := tx.Model(&entitiesOutDetail).Where(transactionsparepartentities.ItemWarehouseTransferOutDetail{TransferOutSystemNumber: request.TransferOutSystemNumber}).
 		Find(&entitiesOutDetail).Error
 	if errGetEntitiesOutDetail != nil {
 		if errors.Is(errGetEntitiesOutDetail, gorm.ErrRecordNotFound) {
@@ -496,6 +495,7 @@ func (*ItemWarehouseTransferInRepositoryImpl) InsertDetail(tx *gorm.DB, request 
 	}
 
 	for _, detail := range entitiesOutDetail {
+		entitiesDetail.TransferInDetailSystemNumber = 0
 		entitiesDetail.TransferInSystemNumberId = entities.TransferInSystemNumber
 		entitiesDetail.TransferOutDetailSystemNumberId = detail.TransferOutDetailSystemNumber
 		entitiesDetail.QuantityReceived = 0

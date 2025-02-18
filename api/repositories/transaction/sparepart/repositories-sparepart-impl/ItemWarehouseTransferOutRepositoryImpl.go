@@ -3,6 +3,7 @@ package transactionsparepartrepositoryimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -220,13 +221,13 @@ func (*ItemWarehouseTransferOutRepositoryImpl) SubmitTransferOut(tx *gorm.DB, nu
 	}
 
 	for _, detail := range entitiesDetailOut {
-		if *detail.LocationIdFrom != 0 || detail.LocationIdFrom == nil {
+		if *detail.LocationIdFrom == 0 || detail.LocationIdFrom == nil {
 			return transactionsparepartentities.ItemWarehouseTransferOut{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errors.New("location from is null"),
 				Message:    "location origin are empty!",
 			}
-		} else if *detail.LocationIdTo != 0 || detail.LocationIdTo == nil {
+		} else if *detail.LocationIdTo == 0 || detail.LocationIdTo == nil {
 			return transactionsparepartentities.ItemWarehouseTransferOut{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errors.New("location to is null"),
@@ -302,8 +303,8 @@ func (*ItemWarehouseTransferOutRepositoryImpl) SubmitTransferOut(tx *gorm.DB, nu
 		var gse masterentities.GroupStock
 		errGse := tx.Model(&gse).
 			Where("company_id = ?", entities.CompanyId).
-			Where("warehouse_group_id = ?").
-			Where("item_id = ?", detail.Item).
+			Where("warehouse_group_id = ?", getWarehouse.WarehouseGroupId).
+			Where("item_id = ?", detail.ItemId).
 			Where("period_year = ?", periodYear).
 			Where("period_month = ?", periodMonth).
 			Find(&gse)
@@ -425,7 +426,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) SubmitTransferOut(tx *gorm.DB, nu
 		}
 		errUpdate := tx.Model(&transactionsparepartentities.ItemWarehouseTransferInDetail{}).
 			Where("transfer_in_system_number = ?", transIn.TransferInSystemNumber).
-			Where("transfer_out_system_number = ?", out.TransferOutSystemNumber).
+			Where("transfer_out_detail_system_number = ?", out.TransferOutDetailSystemNumber).
 			Where("item_id = ?", out.ItemId).
 			Updates(updates).Error
 
@@ -448,10 +449,27 @@ func (*ItemWarehouseTransferOutRepositoryImpl) SubmitTransferOut(tx *gorm.DB, nu
 // InsertDetailFromReceipt implements transactionsparepartrepository.ItemWarehouseTransferOutRepository.
 func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetailFromReceipt(tx *gorm.DB, request transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailCopyReceiptRequest) (transactionsparepartentities.ItemWarehouseTransferOutDetail, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.ItemWarehouseTransferRequest
+	var entitiesOut transactionsparepartentities.ItemWarehouseTransferOut
 	var entitiesDetail []transactionsparepartentities.ItemWarehouseTransferRequestDetail
 	var entitiesDetailOut transactionsparepartentities.ItemWarehouseTransferOutDetail
 
-	errGetEntities := tx.Model(&entities).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestSystemNumber: request.TransferRequestSystemNumber}).First(&entities).Error
+	errEntities := tx.Model(&entitiesOut).Where(transactionsparepartentities.ItemWarehouseTransferOut{TransferOutSystemNumber: request.TransferOutSystemNumber}).First(&entitiesOut).Error
+	if errEntities != nil {
+		if errors.Is(errEntities, gorm.ErrRecordNotFound) {
+			return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errEntities,
+				Message:    "transfer out with that id is not found",
+			}
+		}
+		return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errEntities,
+			Message:    "failed to get transfer request entity",
+		}
+	}
+
+	errGetEntities := tx.Model(&entities).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestSystemNumber: entitiesOut.TransferRequestSystemNumbers}).First(&entities).Error
 	if errGetEntities != nil {
 		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
 			return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
@@ -467,7 +485,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetailFromReceipt(tx *gorm.
 		}
 	}
 
-	errGetEntitiesDetail := tx.Model(&entitiesDetail).Where(transactionsparepartentities.ItemWarehouseTransferRequestDetail{TransferRequestSystemNumberId: request.TransferOutSystemNumber}).Find(&entitiesDetail).Error
+	errGetEntitiesDetail := tx.Model(&entitiesDetail).Where(transactionsparepartentities.ItemWarehouseTransferRequestDetail{TransferRequestSystemNumberId: entitiesOut.TransferRequestSystemNumbers}).Find(&entitiesDetail).Error
 	if errGetEntitiesDetail != nil {
 		if errors.Is(errGetEntitiesDetail, gorm.ErrRecordNotFound) {
 			return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
@@ -498,10 +516,10 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetailFromReceipt(tx *gorm.
 			Select(
 				"TOP 1 item_location_id",
 			).
-			Joins("mtr_warehouse wr on wr.warhouse_id = ?", entities.RequestFromWarehouseId).
+			Joins("LEFT JOIN mtr_warehouse_master wr on wr.warehouse_id = ?", entities.RequestFromWarehouseId).
 			// Where("company_id = ?").
-			Where("warehouse_id = ?", entities.RequestFromWarehouseId).
-			Where("warehouse_group_id = wr.warehouse_group_id").
+			Where("mtr_location_item.warehouse_id = ?", entities.RequestFromWarehouseId).
+			Where("mtr_location_item.warehouse_group_id = wr.warehouse_group_id"). //warehoouse can be deleted?
 			Where("item_id = ?", detail.ItemId).
 			Find(&locationItemFrom)
 		if errGet.Error != nil {
@@ -515,10 +533,10 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetailFromReceipt(tx *gorm.
 			Select(
 				"TOP 1 item_location_id",
 			).
-			Joins("mtr_warehouse wr on wr.warhouse_id = ?", entities.RequestToWarehouseId).
+			Joins("LEFT JOIN mtr_warehouse_master wr on wr.warehouse_id = ?", entities.RequestToWarehouseId).
 			// Where("company_id = ?").
-			Where("warehouse_id = ?", entities.RequestToWarehouseId).
-			Where("warehouse_group_id = wr.warehouse_group_id").
+			Where("mtr_location_item.warehouse_id = ?", entities.RequestToWarehouseId).
+			Where("mtr_location_item.warehouse_group_id = wr.warehouse_group_id").
 			Where("item_id = ?", detail.ItemId).
 			Find(&locationItemTo)
 		if errGetTo.Error != nil {
@@ -528,14 +546,21 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetailFromReceipt(tx *gorm.
 			}
 		}
 
+		entitiesDetailOut.TransferOutDetailSystemNumber = 0
 		entitiesDetailOut.TransferOutSystemNumber = request.TransferOutSystemNumber
 		entitiesDetailOut.TransferRequestDetailSystemNumber = detail.TransferRequestDetailSystemNumber
 		entitiesDetailOut.LocationIdFrom = &locationItemFrom.ItemLocationId
 		entitiesDetailOut.LocationIdTo = &locationItemTo.ItemLocationId
+		if locationItemFrom.ItemLocationId == 0 {
+			entitiesDetailOut.LocationIdFrom = nil
+		}
+		if locationItemTo.ItemLocationId == 0 {
+			entitiesDetailOut.LocationIdTo = nil
+		}
 		entitiesDetailOut.ItemId = detail.ItemId
 		entitiesDetailOut.QuantityOut = detail.RequestQuantity
 
-		errCreate := tx.Create(&entitiesDetail).Error
+		errCreate := tx.Create(&entitiesDetailOut).Error
 		if errCreate != nil {
 			return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -573,19 +598,25 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetAllTransferOutDetail(tx *gorm.
 		Select(
 			"transfer_out_system_number",
 			"transfer_out_detail_system_number",
-			"item_id",
-			"stat.item_transfer_status_code location_id_from",
-			"stat.item_transfer_status_description location_code_from",
-			"stat.item_transfer_status_code location_id_to",
-			"stat.item_transfer_status_description location_code_to",
-			"quantity_available",
-			"request_quantity",
-			"wmf.warehouse_id quantity_out",
+			"trx_item_warehouse_transfer_out_detail.item_id",
+			"trx_item_warehouse_transfer_out_detail.location_id_from location_id_from",
+			"locF.warehouse_location_code location_code_from",
+			"trx_item_warehouse_transfer_out_detail.location_id_to location_id_to",
+			"locT.warehouse_location_code location_code_to",
+			"it.item_name",
+			"uom.uom_code unit_of_measurement",
+			// "quantity_available",
+			"det.request_quantity request_quantity",
+			"quantity_out",
 			"cost_of_goods_sold",
-			"unit_of_measurement",
 			"wmf.warehouse_group_id",
 		).
+		Joins("LEFT JOIN mtr_item it on it.item_id = trx_item_warehouse_transfer_out_detail.item_id").
+		Joins("LEFT JOIN mtr_uom uom on uom.uom_id = it.unit_of_measurement_stock_id").
+		Joins("LEFT JOIN trx_item_warehouse_transfer_request_detail det on det.transfer_request_detail_system_number = trx_item_warehouse_transfer_out_detail.transfer_request_detail_system_number").
 		Joins("LEFT JOIN mtr_warehouse_master wmf on wmf.warehouse_id = ?", entitiesHeader.WarehouseId).
+		Joins("LEFT JOIN mtr_warehouse_location locF on trx_item_warehouse_transfer_out_detail.location_id_from = locF.warehouse_location_id").
+		Joins("LEFT JOIN mtr_warehouse_location locT on trx_item_warehouse_transfer_out_detail.location_id_to = locT.warehouse_location_id").
 		Where("transfer_out_system_number = ?", number)
 
 	err := joinTable.Scopes(pagination.Paginate(&pages, joinTable)).Find(&responses).Error
@@ -628,7 +659,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetAllTransferOut(tx *gorm.DB, fi
 
 	joinTable := tx.Model(&entities).
 		Select(
-			"company_id",
+			"trx_item_warehouse_transfer_out.company_id",
 			"transfer_out_system_number",
 			"transfer_out_document_number",
 			"transfer_out_status_id",
@@ -640,9 +671,9 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetAllTransferOut(tx *gorm.DB, fi
 			"wmf.warehouse_name",
 			"wgf.warehouse_group_id",
 			"wgf.warehouse_group_name",
-			"profit_center_id",
+			"trx_item_warehouse_transfer_out.profit_center_id",
 		).
-		Joins("LEFT JOIN mtr_warehouse_master wmf on wmf.warehouse_id = trx_item_warehouse_transfer_request.warehouse_id").
+		Joins("LEFT JOIN mtr_warehouse_master wmf on wmf.warehouse_id = trx_item_warehouse_transfer_out.warehouse_id").
 		Joins("LEFT JOIN mtr_item_transfer_status stat on stat.item_transfer_status_id = transfer_out_status_id").
 		Joins("LEFT JOIN mtr_warehouse_group wgf on wgf.warehouse_group_id = wmf.warehouse_group_id")
 
@@ -679,6 +710,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetAllTransferOut(tx *gorm.DB, fi
 // GetTransferOutById implements transactionsparepartrepository.ItemWarehouseTransferOutRepository.
 func (*ItemWarehouseTransferOutRepositoryImpl) GetTransferOutById(tx *gorm.DB, number int) (transactionsparepartpayloads.GetTransferOutByIdResponse, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.ItemWarehouseTransferOut
+	var warehouseEntities masterwarehouseentities.WarehouseMaster
 	var responses transactionsparepartpayloads.GetTransferOutByIdResponse
 	errGetEntities := tx.Model(&entities).Where(transactionsparepartentities.ItemWarehouseTransferOut{TransferOutSystemNumber: number}).First(&entities).Error
 	if errGetEntities != nil {
@@ -713,6 +745,15 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetTransferOutById(tx *gorm.DB, n
 		}
 	}
 
+	errWarehouse := tx.Model(&warehouseEntities).Where(masterwarehouseentities.WarehouseMaster{WarehouseId: *entities.WarehouseId}).Find(&warehouseEntities)
+	if errWarehouse.Error != nil {
+		return transactionsparepartpayloads.GetTransferOutByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errWarehouse.Error,
+			Message:    "failed to get warehouse",
+		}
+	}
+
 	responses.CompanyId = entities.CompanyId
 	responses.TransferOutSystemNumber = entities.TransferOutSystemNumber
 	responses.TransferOutDate = entities.TransferOutDate
@@ -720,7 +761,9 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetTransferOutById(tx *gorm.DB, n
 	responses.TransferRequestSystemNumber = entities.TransferOutSystemNumber
 	responses.ProfitCenterId = entities.ProfitCenterId
 	responses.WarehouseId = *entities.WarehouseId
-	// responses.WarehouseGroupId =
+	responses.WarehouseCode = warehouseEntities.WarehouseCode
+	responses.WarehouseName = warehouseEntities.WarehouseName
+	responses.WarehouseGroupId = warehouseEntities.WarehouseGroupId
 	responses.TransferStatusId = entities.TransferOutStatusId
 
 	return responses, nil
@@ -794,7 +837,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetail(tx *gorm.DB, request
 	entitiesDetail.TransferOutDetailSystemNumber = request.TransferRequestDetailSystemNumber
 	entitiesDetail.QuantityOut = request.QuantityOut
 
-	errCreate := tx.Create(&entitiesDetail).Scan(&entities).Error
+	errCreate := tx.Create(&entitiesDetail).Scan(&entitiesDetail).Error
 	if errCreate != nil {
 		return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -808,7 +851,24 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetail(tx *gorm.DB, request
 // InsertHeader implements transactionsparepartrepository.ItemWarehouseTransferOutRepository.
 func (*ItemWarehouseTransferOutRepositoryImpl) InsertHeader(tx *gorm.DB, request transactionsparepartpayloads.InsertItemWarehouseHeaderTransferOutRequest) (transactionsparepartentities.ItemWarehouseTransferOut, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.ItemWarehouseTransferOut
+	var entitiesRequest transactionsparepartentities.ItemWarehouseTransferRequest
 	var status masteritementities.ItemTransferStatus
+
+	errGetEntities := tx.Model(&entitiesRequest).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestSystemNumber: request.TransferRequestSystemNumber}).First(&entitiesRequest).Error
+	if errGetEntities != nil {
+		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
+			return transactionsparepartentities.ItemWarehouseTransferOut{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errGetEntities,
+				Message:    "transfer request with that id is not found",
+			}
+		}
+		return transactionsparepartentities.ItemWarehouseTransferOut{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetEntities,
+			Message:    "failed to get transfer request entity",
+		}
+	}
 
 	errGetStatus := tx.Model(&status).Where("item_transfer_status_code = ?", 10).Find(&status)
 	if errGetStatus.Error != nil {
@@ -821,7 +881,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertHeader(tx *gorm.DB, request
 	entities.CompanyId = request.CompanyId
 	entities.TransferOutDate = request.TransferOutDate
 	entities.TransferRequestSystemNumbers = request.TransferRequestSystemNumber
-	entities.WarehouseId = request.WarehouseId
+	entities.WarehouseId = &entitiesRequest.RequestFromWarehouseId
 	entities.TransferOutStatusId = status.ItemTransferStatusId
 
 	errCreate := tx.Create(&entities).Scan(&entities).Error

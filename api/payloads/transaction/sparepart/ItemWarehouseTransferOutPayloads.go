@@ -6,8 +6,6 @@ type InsertItemWarehouseHeaderTransferOutRequest struct {
 	CompanyId                   int       `json:"company_id"`
 	TransferOutDate             time.Time `json:"transfer_out_date"`
 	TransferRequestSystemNumber int       `json:"transfer_request_system_number"`
-	WarehouseId                 *int      `json:"warehouse_id"`
-	WarehouseGroupId            *int      `json:"warehouse_group_id"`
 }
 
 type InsertItemWarehouseTransferOutDetailRequest struct {
@@ -15,8 +13,6 @@ type InsertItemWarehouseTransferOutDetailRequest struct {
 	TransferOutDate                   time.Time `json:"transfer_out_date"`
 	TransferRequestDetailSystemNumber int       `json:"transfer_request_detail_system_number"`
 	QuantityOut                       float64   `json:"quantity_out"`
-	WarehouseId                       *int      `json:"warehouse_id"`
-	WarehouseGroupId                  *int      `json:"warehouse_group_id"`
 }
 
 type GetTransferOutByIdResponse struct {
@@ -27,6 +23,8 @@ type GetTransferOutByIdResponse struct {
 	TransferOutDate                 time.Time `json:"transfer_out_date"`
 	TransferRequestSystemNumber     int       `json:"transfer_request_system_number"`
 	WarehouseId                     int       `json:"warehouse_id"`
+	WarehouseCode                   string    `json:"warehouse_code"`
+	WarehouseName                   string    `json:"warehouse_name"`
 	WarehouseGroupId                int       `json:"warehouse_group_id"`
 	ProfitCenterId                  int       `json:"profit_center_id"`
 }
@@ -35,9 +33,9 @@ type GetAllTransferOutResponse struct {
 	CompanyId                       int       `json:"company_id"`
 	TransferOutSystemNumber         int       `json:"transfer_out_system_number"`
 	TransferOutDocumentSystemNumber string    `json:"transfer_out_document_number"`
-	TransferStatusId                int       `json:"transfer_out_status_id"`
+	TransferOutStatusId             int       `json:"transfer_out_status_id"`
 	TransferOutStatusCode           string    `json:"transfer_out_status_code"`
-	TransferOutstatusDescription    string    `json:"transfer_out_status_description"`
+	TransferOutStatusDescription    string    `json:"transfer_out_status_description"`
 	TransferOutDate                 time.Time `json:"transfer_out_date"`
 	TransferRequestSystemNumber     int       `json:"transfer_request_system_number"`
 	WarehouseId                     int       `json:"warehouse_id"`
@@ -65,8 +63,7 @@ type GetAllDetailTransferOutResponse struct {
 }
 
 type InsertItemWarehouseTransferOutDetailCopyReceiptRequest struct {
-	TransferOutSystemNumber     int `json:"transfer_out_system_number"`
-	TransferRequestSystemNumber int `json:"transfer_request_system_number"`
+	TransferOutSystemNumber int `json:"transfer_out_system_number"`
 }
 
 type UpdateItemWarehouseTransferOutDetailRequest struct {

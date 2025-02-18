@@ -17,6 +17,6 @@ type ItemWarehouseTransferOutService interface {
 	GetAllTransferOutDetail(int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SubmitTransferOut(int) (transactionsparepartentities.ItemWarehouseTransferOut, *exceptions.BaseErrorResponse)
 	UpdateTransferOutDetail(transactionsparepartpayloads.UpdateItemWarehouseTransferOutDetailRequest, int) (transactionsparepartentities.ItemWarehouseTransferOutDetail, *exceptions.BaseErrorResponse)
-	DeleteTransferOutDetail(int) (bool, *exceptions.BaseErrorResponse)
+	DeleteTransferOutDetail([]int) (bool, *exceptions.BaseErrorResponse)
 	DeleteTransferOut(int) (bool, *exceptions.BaseErrorResponse)
 }

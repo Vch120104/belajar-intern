@@ -17,7 +17,11 @@ import (
 )
 
 func NewWhTransferOutImpl(transferOutRepo transactionsparepartrepository.ItemWarehouseTransferOutRepository, db *gorm.DB, redis *redis.Client) transactionsparepartservice.ItemWarehouseTransferOutService {
-	return &WhTransferOutServiceImpl{}
+	return &WhTransferOutServiceImpl{
+		TransferOutRepo: transferOutRepo,
+		DB:              db,
+		RedisClient:     redis,
+	}
 }
 
 type WhTransferOutServiceImpl struct {
@@ -59,10 +63,10 @@ func (s *WhTransferOutServiceImpl) DeleteTransferOut(number int) (bool, *excepti
 }
 
 // DeleteTransferOutDetail implements transactionsparepartservice.ItemWarehouseTransferOutService.
-func (s *WhTransferOutServiceImpl) DeleteTransferOutDetail(number int) (bool, *exceptions.BaseErrorResponse) {
+func (s *WhTransferOutServiceImpl) DeleteTransferOutDetail(number []int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
+	var result bool
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -83,10 +87,13 @@ func (s *WhTransferOutServiceImpl) DeleteTransferOutDetail(number int) (bool, *e
 			}
 		}
 	}()
-	result, err := s.TransferOutRepo.DeleteTransferOutDetail(tx, number)
-	if err != nil {
-		return result, err
+	for _, num := range number {
+		result, err = s.TransferOutRepo.DeleteTransferOutDetail(tx, num)
+		if err != nil {
+			return result, err
+		}
 	}
+
 	return result, nil
 }
 
