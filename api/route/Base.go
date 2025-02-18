@@ -2117,19 +2117,6 @@ func ItemWarehouseTransferRequestRouter(
 	return router
 }
 
-func ItemWarehouseTransferOutRouter(
-	itemWarehouseTransferOutController transactionsparepartcontroller.ItemWarehouseTransferOutController,
-) chi.Router {
-	router := chi.NewRouter()
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Post("/", itemWarehouseTransferOutController.InsertHeader)
-
-	return router
-}
-
 func AtpmReimbursementRouter(
 	atpmReimbursementController transactionworkshopcontroller.AtpmReimbursementController,
 ) chi.Router {
@@ -2142,6 +2129,27 @@ func AtpmReimbursementRouter(
 	router.Post("/", atpmReimbursementController.New)
 	router.Put("/{claim_system_number}", atpmReimbursementController.Save)
 	router.Patch("/submit/{claim_system_number}", atpmReimbursementController.Submit)
+
+	return router
+}
+
+func ItemWarehouseTransferOutRouter(
+	itemWarehouseTransferOutController transactionsparepartcontroller.ItemWarehouseTransferOutController) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Post("/", itemWarehouseTransferOutController.InsertHeader)
+	router.Post("/detail/copy-receipt", itemWarehouseTransferOutController.InsertDetailFromReceipt)
+	router.Post("/detail", itemWarehouseTransferOutController.InsertDetail)
+	router.Get("/", itemWarehouseTransferOutController.GetAllTransferOut)
+	router.Get("/detail", itemWarehouseTransferOutController.GetAllTransferOutDetail)
+	router.Get("/{id}", itemWarehouseTransferOutController.GetTransferOutById)
+	router.Delete("/detail/{id}", itemWarehouseTransferOutController.DeleteTransferOutDetail)
+	router.Delete("/{id}", itemWarehouseTransferOutController.DeleteTransferOut)
+	router.Put("/detail/{id}", itemWarehouseTransferOutController.UpdateTransferOutDetail)
+	router.Put("/submit/{id}", itemWarehouseTransferOutController.SubmitTransferOut)
 
 	return router
 }

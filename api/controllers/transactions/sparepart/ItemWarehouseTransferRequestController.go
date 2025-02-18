@@ -587,7 +587,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllDetailTransferRequest
 // @Accept json
 // @Produce json
 // @Param transfer_request_status_id query int false "Transfer Request Status ID"
-// @Param transfer_request_document_number query int false "Transfer Request Document Number"
+// @Param transfer_request_document_number query string false "Transfer Request Document Number"
 // @Param transfer_request_warehouse_group_id query int false "Transfer Request Warehouse Group ID"
 // @Param company_id query int false "Company ID"
 // @Param transfer_request_date_from query string false "Transfer Request Date From"
@@ -603,7 +603,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferRequest(wri
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"transfer_request_status_id":                     queryValues.Get("transfer_request_status_id"),
-		"transfer_request_document_number":               queryValues.Get("item_group_id"),
+		"transfer_request_document_number":               queryValues.Get("transfer_request_document_number"),
 		"wmt.warehouse_group_id":                         queryValues.Get("transfer_request_warehouse_group_id"),
 		"trx_item_warehouse_transfer_request.company_id": queryValues.Get("company_id"),
 	}
