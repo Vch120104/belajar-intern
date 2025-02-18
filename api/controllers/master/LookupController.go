@@ -436,8 +436,8 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 // @Tags Master Lookup :
 // @Accept json
 // @Produce json
-// @Param brand_id path int true "Brand ID"
-// @Param model_id path int true "Model ID"
+// @Param brand_id query int true "Brand ID"
+// @Param model_id query int true "Model ID"
 // @Param limit query int false "Limit"
 // @Param page query int false "Page"
 // @Param sort_of query string false "Sort Of"
@@ -446,21 +446,22 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/lookup/vehicle-unit-master/{brand_id}/{model_id} [get]
 func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, request *http.Request) {
-	brandStrId := chi.URLParam(request, "brand_id")
-	brandId, err := strconv.Atoi(brandStrId)
-	if err != nil {
+	queryValues := request.URL.Query()
+
+	brandIdStr := request.URL.Query().Get("brand_id")
+	brandId, err := strconv.Atoi(brandIdStr)
+	if err != nil || brandIdStr == "" {
 		payloads.NewHandleError(writer, "Invalid Brand ID", http.StatusBadRequest)
 		return
 	}
 
-	modelStrId := chi.URLParam(request, "model_id")
+	modelStrId := request.URL.Query().Get("model_id")
 	modelId, err := strconv.Atoi(modelStrId)
-	if err != nil {
+	if err != nil || modelStrId == "" {
 		payloads.NewHandleError(writer, "Invalid Model ID", http.StatusBadRequest)
 		return
 	}
 
-	queryValues := request.URL.Query()
 	queryParams := map[string]string{}
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),

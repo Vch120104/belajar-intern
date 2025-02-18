@@ -85,7 +85,7 @@ func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworks
 			}
 		}
 	}()
-	_, err = s.structBookingEstimationRepo.Save(tx, request)
+	_, err = s.structBookingEstimationRepo.Post(tx, request)
 	if err != nil {
 		return false, err
 	}
@@ -123,8 +123,8 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, 
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
-	tx = s.DB.Begin()
+func (s *BookingEstimationServiceImpl) Save(request transactionworkshoppayloads.BookingEstimationRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -147,11 +147,11 @@ func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionwork
 			}
 		}
 	}()
-	post, err := s.structBookingEstimationRepo.Post(tx, request)
+	save, err := s.structBookingEstimationRepo.Save(tx, request, id)
 	if err != nil {
 		return transactionworkshopentities.BookingEstimation{}, err
 	}
-	return post, nil
+	return save, nil
 }
 
 func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
