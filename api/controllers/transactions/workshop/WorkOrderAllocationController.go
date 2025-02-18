@@ -300,9 +300,9 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnician(writer http.Respo
 // @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
-// @Param service_date query string true "Service Request Date"
-// @Param foreman_id query int true "Foreman ID"
-// @Param assign_technician_id query int true "Assign Technician ID"
+// @Param service_date path string true "Service Request Date"
+// @Param foreman_id path int true "Foreman ID"
+// @Param assign_technician_id path int true "Assign Technician ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -357,7 +357,7 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnicianById(writer http.R
 // @Param request body transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest true "Request body"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order-allocation/assign-technician/ [post]
+// @Router /v1/work-order-allocation/assign-technician [post]
 func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.ResponseWriter, request *http.Request) {
 	var req transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest
 	helper.ReadFromRequestBody(request, &req)

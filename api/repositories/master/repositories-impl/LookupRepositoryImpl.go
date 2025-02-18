@@ -4788,20 +4788,23 @@ func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, mo
 			V.vehicle_chassis_number AS vehicle_chassis_number, 
 			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
 			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
-			UM.model_variant_colour_name AS Vehicle, 
+			CONCAT(B.brand_name,' ',VA.variant_description,' ')  AS vehicle, 
 			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
 			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
 			V.vehicle_last_km AS vehicle_last_km, 
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS Status
+			END AS status
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
 									UM.model_id = V.vehicle_model_id AND 
 									UM.colour_id = V.vehicle_colour_id AND 
 									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
 		Where(filterQuery, filterValues...).
 		Where("V.vehicle_brand_id = ?", brandId).
 		Where("V.vehicle_model_id = ?", modelId)
@@ -4860,20 +4863,23 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, pa
 			V.vehicle_chassis_number AS vehicle_chassis_number, 
 			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
 			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
-			UM.model_variant_colour_name AS Vehicle, 
+			CONCAT(B.brand_name,' ',VA.variant_description,' ')  AS vehicle,
 			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
 			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
 			V.vehicle_last_km AS vehicle_last_km, 
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS Status
+			END AS status
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
 									UM.model_id = V.vehicle_model_id AND 
 									UM.colour_id = V.vehicle_colour_id AND 
 									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
 		Where(filterQuery, filterValues...).
 		Where("V.vehicle_id = ?", vehicleID)
 
@@ -4931,20 +4937,23 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassi
 			V.vehicle_chassis_number AS vehicle_chassis_number, 
 			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
 			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
-			UM.model_variant_colour_name AS Vehicle, 
+			CONCAT(B.brand_name,' ',VA.variant_description,' ')  AS vehicle,  
 			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
 			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
 			V.vehicle_last_km AS vehicle_last_km, 
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS Status
+			END AS status
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
 									UM.model_id = V.vehicle_model_id AND 
 									UM.colour_id = V.vehicle_colour_id AND 
 									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
 		Where(filterQuery, filterValues...).
 		Where("V.vehicle_chassis_number = ?", chassisNumber)
 

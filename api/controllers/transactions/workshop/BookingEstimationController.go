@@ -1,7 +1,6 @@
 package transactionworkshopcontroller
 
 import (
-	"after-sales/api/config"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
@@ -10,7 +9,6 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -118,7 +116,7 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Tags Transaction : Workshop Booking Estimation
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/booking-estimation [post]
+// @Router /v1/booking-estimation/normal [post]
 func (r *BookingEstimationControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
 	// Create new booking estimation
 }
@@ -155,10 +153,10 @@ func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
-// @Param work_order_system_number path string true "Booking Estimation ID"
+// @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/booking-estimation/find/{work_order_system_number} [get]
+// @Router /v1/booking-estimation/normal/{batch_system_number} [get]
 func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 	bookestimid, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))
 
@@ -176,32 +174,35 @@ func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Param batch_system_number path int true "Booking Estimation ID"
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationRequest true "Booking Estimation Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/booking-estimation [put]
+// @Router /v1/booking-estimation/normal/{batch_system_number} [put]
 func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
-	db := config.InitDB()
-
-	// Mendekode payload request ke struct WorkOrderRequest
-	var bookingEstimationRequest transactionworkshoppayloads.BookingEstimationRequest
-	if err := json.NewDecoder(request.Body).Decode(&bookingEstimationRequest); err != nil {
-		// Tangani kesalahan jika tidak dapat mendekode payload
-		payloads.NewHandleError(writer, "Failed to decode request payload", http.StatusBadRequest)
-		return
-	}
-
-	// Panggil fungsi Save dari layanan untuk menyimpan data booking estimation
-	created, err := r.bookingEstimationService.Save(db, bookingEstimationRequest)
+	// Get the Work Order ID from URL parameters and convert to int
+	batchSystemNumberIdStr := chi.URLParam(request, "batch_system_number")
+	batchSystemNumberId, err := strconv.Atoi(batchSystemNumberIdStr)
 	if err != nil {
-		// Tangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, err)
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
 		return
 	}
 
-	// Kirim respons ke klien sesuai hasil penyimpanan
-	payloads.NewHandleSuccess(writer, created, "Work order saved successfully", http.StatusOK)
+	var BookingEstimationRequest transactionworkshoppayloads.BookingEstimationRequest
+	helper.ReadFromRequestBody(request, &BookingEstimationRequest)
+	if validationErr := validation.ValidationForm(writer, request, &BookingEstimationRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	success, baseErr := r.bookingEstimationService.Save(BookingEstimationRequest, batchSystemNumberId)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Booking saved successfully", http.StatusOK)
+
 }
 
 // Submit submits a new booking estimation
@@ -210,9 +211,10 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/booking-estimation/submit [post]
+// @Router /v1/booking-estimation/submit/{batch_system_number} [post]
 func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
 	// Create new booking estimation
 }
@@ -223,13 +225,13 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
-// @Param booking_estimation_id path string true "Booking Estimation ID"
+// @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/booking-estimation/{booking_estimation_id} [delete]
+// @Router /v1/booking-estimation/void/{batch_system_number} [delete]
 func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	// Cancel booking estimation
-	batchSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	batchSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))
 	delete, err := r.bookingEstimationService.Void(batchSystemNumber)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -244,10 +246,10 @@ func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
-// @Param booking_estimation_id path string true "Booking Estimation ID"
+// @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/booking-estimation/{booking_estimation_id}/close [put]
+// @Router /v1/booking-estimation/close/{batch_system_number} [patch]
 func (r *BookingEstimationControllerImpl) CloseOrder(writer http.ResponseWriter, request *http.Request) {
 	// Close booking estimation
 }
