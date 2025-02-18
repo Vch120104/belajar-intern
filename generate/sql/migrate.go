@@ -293,7 +293,7 @@ func Migrate() {
 		// &transactionsparepartentities.ItemWarehouseTransferOut{},
 		// &transactionsparepartentities.ItemWarehouseTransferOutDetail{},
 		// &transactionsparepartentities.ItemWarehouseTransferIn{},
-		&transactionsparepartentities.ItemWarehouseTransferInDetail{},
+		// &transactionsparepartentities.ItemWarehouseTransferInDetail{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)
