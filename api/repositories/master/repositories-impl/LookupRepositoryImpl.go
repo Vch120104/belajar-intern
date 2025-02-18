@@ -4839,23 +4839,8 @@ func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, mo
 
 // usp_comLookUp
 // IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
-func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var (
-		vehicleMasters []map[string]interface{}
-		totalRows      int64
-	)
-
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
+func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var vehicleMaster map[string]interface{}
 
 	query := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle V").
 		Select(`
@@ -4874,62 +4859,30 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, pa
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
-									UM.model_id = V.vehicle_model_id AND 
-									UM.colour_id = V.vehicle_colour_id AND 
-									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+							UM.model_id = V.vehicle_model_id AND 
+							UM.colour_id = V.vehicle_colour_id AND 
+							ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
 		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
 		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
 		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
-		Where(filterQuery, filterValues...).
 		Where("V.vehicle_id = ?", vehicleID)
 
-	err := query.Count(&totalRows).Error
+	err := query.Take(&vehicleMaster).Error
 	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count total vehicle units",
-			Err:        err,
-		}
-	}
-
-	err = query.
-		Scopes(pagination.Paginate(&paginate, query)).
-		Find(&vehicleMasters).Error
-
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get vehicle unit master data",
 			Err:        err,
 		}
 	}
 
-	paginate.Rows = vehicleMasters
-	paginate.TotalRows = totalRows
-	paginate.TotalPages = int(math.Ceil(float64(totalRows) / float64(paginate.GetLimit())))
-
-	return paginate, nil
+	return vehicleMaster, nil
 }
 
 // usp_comLookUp
 // IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
-func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var (
-		vehicleMasters []map[string]interface{}
-		totalRows      int64
-	)
-
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
+func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var vehicleMaster map[string]interface{}
 
 	query := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle V").
 		Select(`
@@ -4948,42 +4901,24 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassi
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
-									UM.model_id = V.vehicle_model_id AND 
-									UM.colour_id = V.vehicle_colour_id AND 
-									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+						UM.model_id = V.vehicle_model_id AND 
+						UM.colour_id = V.vehicle_colour_id AND 
+						ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
 		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
 		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
 		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
-		Where(filterQuery, filterValues...).
 		Where("V.vehicle_chassis_number = ?", chassisNumber)
 
-	err := query.Count(&totalRows).Error
+	err := query.Take(&vehicleMaster).Error
 	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count total vehicle units",
-			Err:        err,
-		}
-	}
-
-	err = query.
-		Scopes(pagination.Paginate(&paginate, query)).
-		Find(&vehicleMasters).Error
-
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get vehicle unit master data",
 			Err:        err,
 		}
 	}
 
-	paginate.Rows = vehicleMasters
-	paginate.TotalRows = totalRows
-	paginate.TotalPages = int(math.Ceil(float64(totalRows) / float64(paginate.GetLimit())))
-
-	return paginate, nil
-
+	return vehicleMaster, nil
 }
 
 // usp_comLookUp

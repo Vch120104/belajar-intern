@@ -511,16 +511,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 		return
 	}
 
-	queryValues := request.URL.Query()
-	queryParams := map[string]string{}
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, baseErr := r.LookupService.GetVehicleUnitByID(vehicleId, paginate, criteria)
+	lookup, baseErr := r.LookupService.GetVehicleUnitByID(vehicleId)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -530,15 +521,11 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
+	payloads.NewHandleSuccess(
 		writer,
-		lookup.Rows,
+		lookup,
 		"Get Data Successfully!",
 		http.StatusOK,
-		lookup.Limit,
-		lookup.Page,
-		int64(lookup.TotalRows),
-		lookup.TotalPages,
 	)
 }
 
@@ -558,17 +545,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request) {
 	chassisNumber := chi.URLParam(request, "vehicle_chassis_number")
 
-	queryValues := request.URL.Query()
-	queryParams := map[string]string{}
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, baseErr := r.LookupService.GetVehicleUnitByChassisNumber(chassisNumber, paginate, criteria)
+	lookup, baseErr := r.LookupService.GetVehicleUnitByChassisNumber(chassisNumber)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -578,15 +555,11 @@ func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.Respons
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
+	payloads.NewHandleSuccess(
 		writer,
-		lookup.Rows,
+		lookup,
 		"Get Data Successfully!",
 		http.StatusOK,
-		lookup.Limit,
-		lookup.Page,
-		int64(lookup.TotalRows),
-		lookup.TotalPages,
 	)
 }
 
