@@ -206,23 +206,31 @@ func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (map[string]interfa
 	return joinedData3[0], nil
 }
 
-func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
-	var bookingEstimationEntities = transactionworkshopentities.BookingEstimation{
-		BrandId:                request.BrandId,
-		ModelId:                request.ModelId,
-		VehicleId:              request.VehicleId,
-		DealerRepresentativeId: request.DealerRepresentativeId,
-	}
-
-	// Create a new record
-	err := tx.Create(&bookingEstimationEntities).Error
+func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.BookingEstimation
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
+		Where("batch_system_number = ?", id).
+		First(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking from the database",
 			Err:        err,
 		}
 	}
-	return true, nil
+
+	entity.CompanyId = request.CompanyId
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save the updated booking",
+			Err:        err,
+		}
+	}
+
+	return entity, nil
 }
 
 func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {

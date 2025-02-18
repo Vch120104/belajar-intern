@@ -44,7 +44,7 @@ func NewWorkOrderAllocationController(service transactionworkshopservice.WorkOrd
 // GetAll gets all datagrid workorder allocation
 // @Summary Get all datagrid workorder allocation
 // @Description Get all datagrid workorder allocation
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param page query string true "Page number"
@@ -119,7 +119,7 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 // GetAllocate gets all allocated work orders
 // @Summary Get all allocated work orders
 // @Description Get all allocated work orders
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -195,7 +195,7 @@ func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWrite
 // GetAllocateDetail gets all allocated work orders detail
 // @Summary Get all allocated work orders detail
 // @Description Get all allocated work orders detail
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -245,7 +245,7 @@ func (r *WorkOrderAllocationControllerImp) GetAllocateDetail(writer http.Respons
 // GetAssignTechnician gets all assigned technicians
 // @Summary Get all assigned technicians
 // @Description Get all assigned technicians
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -297,12 +297,12 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnician(writer http.Respo
 // GetAssignTechnicianById gets all assigned technicians by ID
 // @Summary Get all assigned technicians by ID
 // @Description Get all assigned technicians by ID
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
-// @Param service_date query string true "Service Request Date"
-// @Param foreman_id query int true "Foreman ID"
-// @Param assign_technician_id query int true "Assign Technician ID"
+// @Param service_date path string true "Service Request Date"
+// @Param foreman_id path int true "Foreman ID"
+// @Param assign_technician_id path int true "Assign Technician ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -351,13 +351,13 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnicianById(writer http.R
 // NewAssignTechnician assigns a new technician
 // @Summary Assign a new technician
 // @Description Assign a new technician
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param request body transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest true "Request body"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order-allocation/assign-technician/ [post]
+// @Router /v1/work-order-allocation/assign-technician [post]
 func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.ResponseWriter, request *http.Request) {
 	var req transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest
 	helper.ReadFromRequestBody(request, &req)
@@ -379,7 +379,7 @@ func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.Respo
 // SaveAssignTechnician saves assigned technician
 // @Summary Save assigned technician
 // @Description Save assigned technician
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param assign_technician_id query int true "Assign Technician ID"
@@ -415,7 +415,7 @@ func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.Resp
 // GetWorkOrderAllocationHeaderData gets all work order allocation header data
 // @Summary Get all work order allocation header data
 // @Description Get all work order allocation header data
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Success 200 {object}  payloads.Response
@@ -461,7 +461,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 // SaveAllocateDetail saves allocated work order detail
 // @Summary Save allocated work order detail
 // @Description Save allocated work order detail
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -524,7 +524,7 @@ func (r *WorkOrderAllocationControllerImp) SaveAllocateDetail(writer http.Respon
 // GetAllocateByWorkOrderSystemNumber gets allocated work order by system number
 // @Summary Get allocated work order by system number
 // @Description Get allocated work order by system number
-// @Tags Transaction Workshop : Work Order Allocation
+// @Tags Transaction : Workshop Work Order Allocation
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"

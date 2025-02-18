@@ -18,9 +18,6 @@ func TestSaveBookingEstimation(t *testing.T) {
 	bookingEstimationRepo := transactionworkshoprepositoryimpl.OpenBookingEstimationRepositoryImpl()
 	bookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(bookingEstimationRepo, nil, nil)
 
-	// Initialize the database connection
-	db := config.InitDB()
-
 	// Create a request object for booking estimation
 	request := transactionworkshoppayloads.BookingEstimationRequest{
 		BatchSystemNumber:              1,
@@ -55,7 +52,7 @@ func TestSaveBookingEstimation(t *testing.T) {
 	}
 
 	// Call the Save method and capture the return values
-	result, err := bookingEstimationService.Save(db, request)
+	result, err := bookingEstimationService.Save(request, 1)
 
 	// Check if there was an error
 	if err != nil {

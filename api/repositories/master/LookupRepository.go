@@ -18,8 +18,8 @@ type LookupRepository interface {
 	ItemOprCodeWithPriceByID(tx *gorm.DB, linetypeId int, oprItemCode int, paginate pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ItemOprCodeWithPriceByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetVehicleUnitMaster(tx *gorm.DB, brandId int, modelId int, paginate pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetVehicleUnitByID(tx *gorm.DB, vehicleID int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetVehicleUnitByID(tx *gorm.DB, vehicleID int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (string, *exceptions.BaseErrorResponse)
 	GetOprItemPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse)
 	GetOprItemDisc(tx *gorm.DB, lineTypeStr string, billCodeId int, oprItemCode int, agreementId int, profitCenterId int, minValue float64, companyId int, brandId int, contractServSysNo int, whsGroup int, orderTypeId int) (float64, *exceptions.BaseErrorResponse)
@@ -53,4 +53,5 @@ type LookupRepository interface {
 	ItemMasterForFreeAccs(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ItemMasterForFreeAccsById(tx *gorm.DB, companyId int, itemId int) (masterpayloads.ItemMasterForFreeAccsResponse, *exceptions.BaseErrorResponse)
 	ItemMasterForFreeAccsByCode(tx *gorm.DB, companyId int, itemCode string) (masterpayloads.ItemMasterForFreeAccsResponse, *exceptions.BaseErrorResponse)
+	ItemMasterForFreeAccsByBrand(tx *gorm.DB, companyId int, itemId int, brandId int) (masterpayloads.ItemMasterForFreeAccsBrandResponse, *exceptions.BaseErrorResponse)
 }

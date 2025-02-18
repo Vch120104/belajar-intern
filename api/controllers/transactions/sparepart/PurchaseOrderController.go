@@ -43,7 +43,7 @@ func NewPurchaseOrderControllerImpl(PurchaseOrderService transactionsparepartser
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -105,7 +105,7 @@ func (controller *PurchaseOrderControllerImpl) GetAllPurchaserOrderWithPaginatio
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			purchase_order_system_number		path		string	false	"purchase_order_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.PurchaseOrderGetByIdResponses
@@ -129,7 +129,7 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrder(writer http.
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -164,7 +164,7 @@ func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailByHeaderId(
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -195,7 +195,7 @@ func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderHeader(writer htt
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			purchase_order_system_number	path		int	true	"purchase_order_system_number"
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads	true	"Purchase Request Header Data"
@@ -226,7 +226,7 @@ func (controller *PurchaseOrderControllerImpl) UpdatePurchaseOrderHeader(writer 
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			purchase_order_detail_system_number	path		int	true	"purchase_order_detail_system_number"	true	"Purchase Request Header Data"
 //	@Success		200						{object}	transactionsparepartpayloads.PurchaseOrderGetDetail
@@ -252,7 +252,7 @@ func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailById(writer
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderDetailPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities
@@ -311,7 +311,7 @@ func (controller *PurchaseOrderControllerImpl) DeletePurchaseOrderDetailMultiId(
 //	@Accept			json
 //	@Produce		json
 //
-// @Tags Transaction Sparepart: Purchase Order
+// @Tags Transaction : Sparepart Purchase Order
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads	true	"Purchase Request Detail Data"
 //	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities

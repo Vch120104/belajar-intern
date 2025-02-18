@@ -38,3 +38,14 @@ type GetItemGroupResponse struct {
 	ItemGroupId   int    `json:"item_group_id"`
 	ItemGroupCode string `json:"item_group_code"`
 }
+
+type GetItemPackageItemResponse struct {
+	ItemPackageId   int     `json:"item_package_id"`
+	ItemPackageCode string  `json:"item_package_code"`
+	AccesoriesCode  string  `json:"accesories_code"`
+	Description     string  `json:"description"`
+	Quantity        int     `json:"quantity"`
+	UomCode         string  `json:"uom_code"`
+	Price           float64 `json:"price"`
+	Amount          float64 `json:"amount"`
+}

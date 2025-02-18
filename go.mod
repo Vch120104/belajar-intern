@@ -7,6 +7,7 @@ toolchain go1.22.0
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-gota/gota v0.12.0
+	github.com/go-pdf/fpdf v0.9.0
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/labstack/gommon v0.4.2

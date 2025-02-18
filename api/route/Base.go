@@ -231,7 +231,7 @@ func ItemRouter(
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
-	router.Get("/by-code", itemController.GetItemByCode)
+	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Post("/", itemController.SaveItem)
@@ -341,6 +341,8 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Get("/by-item-package-id", ItemPackageController.GetAllByItemPackageId)
+	router.Get("/by-item-package-id/{item_package_id}", ItemPackageController.GetItemPackageByItemId)
 	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 	router.Get("/by-code/{item_package_code}", ItemPackageController.GetItemPackageByCode)
 
@@ -1466,11 +1468,12 @@ func BookingEstimationRouter(
 
 	router.Get("/", BookingEstimationController.GetAll)
 	router.Get("/normal", BookingEstimationController.New)
-	router.Get("/find/{batch_system_number}", BookingEstimationController.GetById)
-	router.Post("/", BookingEstimationController.Save)
-	router.Post("/submit", BookingEstimationController.Submit)
-	router.Delete("/{id}", BookingEstimationController.Void)
-	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
+	router.Get("/normal/{batch_system_number}", BookingEstimationController.GetById)
+	router.Post("/normal/{batch_system_number}", BookingEstimationController.Save)
+	router.Post("/normal/submit/{batch_system_number}", BookingEstimationController.Submit)
+	router.Delete("/normal/void/{batch_system_number}", BookingEstimationController.Void)
+	router.Put("/normal/close/{batch_system_number}", BookingEstimationController.CloseOrder)
+
 	router.Post("/request/{booking_system_number}", BookingEstimationController.SaveBookEstimReq)
 	router.Put("/request/{booking_system_number}", BookingEstimationController.UpdateBookEstimReq)
 	router.Get("/request/{booking_system_number}", BookingEstimationController.GetByIdBookEstimReq)
@@ -1727,6 +1730,7 @@ func PrintGatePassRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", PrintGatePassController.GetAll)
+	router.Get("/{gate_pass_system_number}", PrintGatePassController.PrintById)
 
 	return router
 }
@@ -1981,7 +1985,7 @@ func LookupRouter(
 	router.Get("/item-opr-code-with-price", LookupController.ItemOprCodeWithPrice)
 	router.Get("/item-opr-code-with-price/{line_type_id}/by-id/{opr_item_id}", LookupController.ItemOprCodeWithPriceByID)
 	router.Get("/item-opr-code-with-price/{line_type_id}/by-code/*", LookupController.ItemOprCodeWithPriceByCode)
-	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
+	router.Get("/vehicle-unit-master", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
 	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
 	router.Get("/new-bill-to", LookupController.CustomerByTypeAndAddress)
@@ -2008,6 +2012,7 @@ func LookupRouter(
 	router.Get("/item-freeaccs", LookupController.ItemMasterForFreeAccs)
 	router.Get("/item-freeaccs/by-id/{company_id}/{item_id}", LookupController.ItemMasterForFreeAccsById)
 	router.Get("/item-freeaccs/by-code/{company_id}", LookupController.ItemMasterForFreeAccsByCode)
+	router.Get("/item-freeaccs/by-company-brand/{item_id}", LookupController.ItemMasterForFreeAccsByBrand)
 
 	return router
 }

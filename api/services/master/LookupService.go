@@ -15,8 +15,8 @@ type LookupService interface {
 	ItemOprCodeWithPriceByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ItemOprCodeWithPriceByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetVehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetVehicleUnitByID(vehicleID int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetVehicleUnitByChassisNumber(chassisNumber string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetVehicleUnitByID(vehicleID int) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetVehicleUnitByChassisNumber(chassisNumber string) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetCampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetLineTypeByItemCode(itemCode string) (string, *exceptions.BaseErrorResponse)
 	GetOprItemPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse)
@@ -45,4 +45,5 @@ type LookupService interface {
 	ItemMasterForFreeAccs(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ItemMasterForFreeAccsById(companyId int, itemId int) (masterpayloads.ItemMasterForFreeAccsResponse, *exceptions.BaseErrorResponse)
 	ItemMasterForFreeAccsByCode(companyId int, itemCode string) (masterpayloads.ItemMasterForFreeAccsResponse, *exceptions.BaseErrorResponse)
+	ItemMasterForFreeAccsByBrand(companyId int, itemId int, brandId int) (masterpayloads.ItemMasterForFreeAccsBrandResponse, *exceptions.BaseErrorResponse)
 }

@@ -58,7 +58,7 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Description REST API Bom Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -113,7 +113,7 @@ func (r *BomControllerImpl) GetBomList(writer http.ResponseWriter, request *http
 // @Description REST API Bom Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -138,7 +138,7 @@ func (r *BomControllerImpl) GetBomById(writer http.ResponseWriter, request *http
 // @Description REST API Bom Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @param item_id path int true "item_id"
 // @param effective_date path string true "effective_date"
 // @Success 200 {object} payloads.Response
@@ -170,7 +170,7 @@ func (r *BomControllerImpl) GetBomByUn(writer http.ResponseWriter, request *http
 // @Description REST API Bom Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -200,7 +200,7 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Detail
+// @Tags Master : Bom Detail
 // @Param bom_id path int true "bom_id"
 // @Param page query string true "page"
 // @Param limit query string true "limit"
@@ -246,7 +246,7 @@ func (r *BomControllerImpl) GetBomDetailByMasterId(writer http.ResponseWriter, r
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Detail
+// @Tags Master : Bom Detail
 // @Param item_id path int true "item_id"
 // @Param effective_date path string true "effective_date"
 // @Param page query string true "page"
@@ -299,7 +299,7 @@ func (r *BomControllerImpl) GetBomDetailByMasterUn(writer http.ResponseWriter, r
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Detail
+// @Tags Master : Bom Detail
 // @Param bom_detail_id path int true "bom_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -324,7 +324,7 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Detail
+// @Tags Master : Bom Detail
 // @Param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -349,7 +349,7 @@ func (r *BomControllerImpl) GetBomDetailMaxSeq(writer http.ResponseWriter, reque
 // @Description REST API Bom Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @param reqBody body masteritempayloads.BomMasterNewRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -375,7 +375,7 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @Description REST API Bom Master
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Param bom_id path int true "bom_id"
 // @Param reqBody body masteritempayloads.BomMasterSaveRequest true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -412,7 +412,7 @@ func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request 
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Detail
+// @Tags Master : Bom Detail
 // @Param reqBody body masteritempayloads.BomDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -448,7 +448,7 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Detail
+// @Tags Master : Bom Detail
 // @Param bom_detail_ids path int true "bom_detail_ids"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -483,7 +483,7 @@ func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request 
 // @Description REST API Download Template
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/bom/download-template [get]
@@ -535,7 +535,7 @@ func (r *BomControllerImpl) DownloadTemplate(writer http.ResponseWriter, request
 // @Description REST API Upload
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Param file formData file true "file"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -612,7 +612,7 @@ func (r *BomControllerImpl) Upload(writer http.ResponseWriter, request *http.Req
 // @Description REST API Process Data Upload
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Param reqBody body masteritempayloads.BomDetailUpload true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -639,7 +639,7 @@ func (r *BomControllerImpl) ProcessDataUpload(writer http.ResponseWriter, reques
 // @Description REST API Bom Total Percentage
 // @Accept json
 // @Produce json
-// @Tags Master Item : Bom Master
+// @Tags Master : Bom Master
 // @Param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

@@ -4788,20 +4788,23 @@ func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, mo
 			V.vehicle_chassis_number AS vehicle_chassis_number, 
 			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
 			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
-			UM.model_variant_colour_name AS Vehicle, 
+			CONCAT(B.brand_name,' ',VA.variant_description,' ')  AS vehicle, 
 			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
 			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
 			V.vehicle_last_km AS vehicle_last_km, 
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS Status
+			END AS status
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
 									UM.model_id = V.vehicle_model_id AND 
 									UM.colour_id = V.vehicle_colour_id AND 
 									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
 		Where(filterQuery, filterValues...).
 		Where("V.vehicle_brand_id = ?", brandId).
 		Where("V.vehicle_model_id = ?", modelId)
@@ -4836,23 +4839,8 @@ func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, mo
 
 // usp_comLookUp
 // IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
-func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var (
-		vehicleMasters []map[string]interface{}
-		totalRows      int64
-	)
-
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
+func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var vehicleMaster map[string]interface{}
 
 	query := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle V").
 		Select(`
@@ -4860,70 +4848,41 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, pa
 			V.vehicle_chassis_number AS vehicle_chassis_number, 
 			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
 			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
-			UM.model_variant_colour_name AS Vehicle, 
+			CONCAT(B.brand_name,' ',VA.variant_description,' ')  AS vehicle,
 			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
 			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
 			V.vehicle_last_km AS vehicle_last_km, 
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS Status
+			END AS status
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
-									UM.model_id = V.vehicle_model_id AND 
-									UM.colour_id = V.vehicle_colour_id AND 
-									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
-		Where(filterQuery, filterValues...).
+							UM.model_id = V.vehicle_model_id AND 
+							UM.colour_id = V.vehicle_colour_id AND 
+							ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
 		Where("V.vehicle_id = ?", vehicleID)
 
-	err := query.Count(&totalRows).Error
+	err := query.Take(&vehicleMaster).Error
 	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count total vehicle units",
-			Err:        err,
-		}
-	}
-
-	err = query.
-		Scopes(pagination.Paginate(&paginate, query)).
-		Find(&vehicleMasters).Error
-
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get vehicle unit master data",
 			Err:        err,
 		}
 	}
 
-	paginate.Rows = vehicleMasters
-	paginate.TotalRows = totalRows
-	paginate.TotalPages = int(math.Ceil(float64(totalRows) / float64(paginate.GetLimit())))
-
-	return paginate, nil
+	return vehicleMaster, nil
 }
 
 // usp_comLookUp
 // IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
-func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var (
-		vehicleMasters []map[string]interface{}
-		totalRows      int64
-	)
-
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
+func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var vehicleMaster map[string]interface{}
 
 	query := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle V").
 		Select(`
@@ -4931,50 +4890,35 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassi
 			V.vehicle_chassis_number AS vehicle_chassis_number, 
 			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
 			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
-			UM.model_variant_colour_name AS Vehicle, 
+			CONCAT(B.brand_name,' ',VA.variant_description,' ')  AS vehicle,  
 			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
 			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
 			V.vehicle_last_km AS vehicle_last_km, 
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS Status
+			END AS status
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
-									UM.model_id = V.vehicle_model_id AND 
-									UM.colour_id = V.vehicle_colour_id AND 
-									ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
-		Where(filterQuery, filterValues...).
+						UM.model_id = V.vehicle_model_id AND 
+						UM.colour_id = V.vehicle_colour_id AND 
+						ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_brand B ON B.brand_id = V.vehicle_brand_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_model M ON M.model_id = V.vehicle_model_id`).
+		Joins(`INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant VA ON VA.variant_id = V.vehicle_variant_id`).
 		Where("V.vehicle_chassis_number = ?", chassisNumber)
 
-	err := query.Count(&totalRows).Error
+	err := query.Take(&vehicleMaster).Error
 	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count total vehicle units",
-			Err:        err,
-		}
-	}
-
-	err = query.
-		Scopes(pagination.Paginate(&paginate, query)).
-		Find(&vehicleMasters).Error
-
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get vehicle unit master data",
 			Err:        err,
 		}
 	}
 
-	paginate.Rows = vehicleMasters
-	paginate.TotalRows = totalRows
-	paginate.TotalPages = int(math.Ceil(float64(totalRows) / float64(paginate.GetLimit())))
-
-	return paginate, nil
-
+	return vehicleMaster, nil
 }
 
 // usp_comLookUp
@@ -7174,7 +7118,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccs(tx *gorm.DB, filterConditio
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
                  mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
                  mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-                 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+                 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
@@ -7208,7 +7152,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsById(tx *gorm.DB, companyId 
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
 				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
 				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-				 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+				 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
@@ -7217,7 +7161,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsById(tx *gorm.DB, companyId 
 			"AND mtr_item_price_list.price_list_code_id = 1").
 		Where("mtr_item.item_id = ?", itemId)
 
-	err := baseModelQuery.Scan(&response).Error
+	err := baseModelQuery.First(&response).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
@@ -7245,7 +7189,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByCode(tx *gorm.DB, companyI
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
 				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
 				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-				 mtr_item_price_list.price_list_amount, mtr_item.is_active`).
+				 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
@@ -7254,7 +7198,7 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByCode(tx *gorm.DB, companyI
 			"AND mtr_item_price_list.price_list_code_id = 1").
 		Where("mtr_item.item_code = ?", itemCode)
 
-	err := baseModelQuery.Scan(&response).Error
+	err := baseModelQuery.First(&response).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
@@ -7266,6 +7210,46 @@ func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByCode(tx *gorm.DB, companyI
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "error fetching lookup data 'ItemMasterForFreeAccsByCode'",
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ItemMasterForFreeAccs'
+func (r *LookupRepositoryImpl) ItemMasterForFreeAccsByBrand(tx *gorm.DB, companyId int, itemId int, brandId int) (masterpayloads.ItemMasterForFreeAccsBrandResponse, *exceptions.BaseErrorResponse) {
+
+	response := masterpayloads.ItemMasterForFreeAccsBrandResponse{}
+
+	baseModelQuery := tx.Table("mtr_item").
+		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
+				 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
+				 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
+				 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
+		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
+		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
+		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
+		Joins("INNER JOIN mtr_item_price_list ON mtr_item.item_id = mtr_item_price_list.item_id "+
+			"AND mtr_item_detail.brand_id = mtr_item_price_list.brand_id "+
+			"AND mtr_item_price_list.price_list_code_id = 1").
+		Where("mtr_item_price_list.brand_id = ?", brandId).
+		Where("mtr_item.item_id = ?", itemId).
+		Where("mtr_item_price_list.company_id = ?", companyId)
+
+	err := baseModelQuery.First(&response).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "data not found",
+				Err:        err,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching lookup data 'ItemMasterForFreeAccsByBrand'",
 			Err:        err,
 		}
 	}

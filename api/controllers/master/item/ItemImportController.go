@@ -42,7 +42,7 @@ type ItemImportControllerImpl struct {
 // @Description Process data upload
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportUploadRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -78,7 +78,7 @@ func (r *ItemImportControllerImpl) ProcessDataUpload(writer http.ResponseWriter,
 // @Description Upload template
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param ItemImportMaster-File formData file true "File to upload"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -133,7 +133,7 @@ func (r *ItemImportControllerImpl) UploadTemplate(writer http.ResponseWriter, re
 // @Description Download template
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/download-template [get]
@@ -168,7 +168,7 @@ func (r *ItemImportControllerImpl) DownloadTemplate(writer http.ResponseWriter, 
 // @Description Retrieve an item import by its item ID and supplier ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param item_id path int true "Item ID"
 // @Param supplier_id path int true "Supplier ID"
 // @Success 200 {object} payloads.Response
@@ -201,7 +201,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyItemIdandSupplierId(writer htt
 // @Description Retrieve an item import by its ID
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param item_import_id path int true "Item Import ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -230,7 +230,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 // @Description Retrieve all item imports with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param item_code query string false "Item code"
@@ -291,7 +291,7 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 // @Description Create a new item import
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -327,7 +327,7 @@ func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, re
 // @Description Update an existing item import
 // @Accept json
 // @Produce json
-// @Tags Master Item : Item Import
+// @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

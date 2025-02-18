@@ -42,7 +42,7 @@ func NewSupplySlipController(supplyslipservice transactionsparepartservice.Suppl
 // @Description Retrieve a supply slip by its ID
 // @Accept json
 // @Produce json
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Param supply_slip_id path int true "Supply Slip ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -72,7 +72,7 @@ func (r *SupplySlipControllerImpl) GetSupplySlipByID(writer http.ResponseWriter,
 
 // @Summary Get All Supply Slip
 // @Description Get All Supply Slip
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param supply_document_number query string false "Supply Document Number"
@@ -135,7 +135,7 @@ func (r *SupplySlipControllerImpl) GetAllSupplySlip(writer http.ResponseWriter, 
 
 // @Summary Save Supply Slip
 // @Description Save Supply Slip
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param SupplySlip body transactionsparepartentities.SupplySlip true "Supply Slip"
@@ -165,7 +165,7 @@ func (r *SupplySlipControllerImpl) SaveSupplySlip(writer http.ResponseWriter, re
 
 // @Summary Save Supply Slip Detail
 // @Description Save Supply Slip Detail
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param SupplySlipDetail body transactionsparepartentities.SupplySlipDetail true "Supply Slip Detail"
@@ -195,7 +195,7 @@ func (r *SupplySlipControllerImpl) SaveSupplySlipDetail(writer http.ResponseWrit
 
 // @Summary Get Supply Slip Detail By ID
 // @Description Get Supply Slip Detail By ID
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param supply_detail_system_number path int true "Supply Detail System Number"
@@ -218,7 +218,7 @@ func (r *SupplySlipControllerImpl) GetSupplySlipDetailByID(writer http.ResponseW
 
 // @Summary Update Supply Slip
 // @Description Update Supply Slip
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param supply_system_number path int true "Supply System Number"
@@ -245,7 +245,7 @@ func (r *SupplySlipControllerImpl) UpdateSupplySlip(writer http.ResponseWriter, 
 
 // @Summary Update Supply Slip Detail
 // @Description Update Supply Slip Detail
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param supply_detail_system_number path int true "Supply Detail System Number"
@@ -268,7 +268,7 @@ func (r *SupplySlipControllerImpl) UpdateSupplySlipDetail(writer http.ResponseWr
 
 // @Summary Submit Supply Slip
 // @Description Submit Supply Slip
-// @Tags Transaction Spare Part : Supply Slip
+// @Tags Transaction : Sparepart Supply Slip
 // @Accept json
 // @Produce json
 // @Param supply_system_number path int true "Supply System Number"

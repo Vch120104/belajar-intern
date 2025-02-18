@@ -54,7 +54,7 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 // @Description Process Warehouse Location Template
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @param company_id path int true "Company Id"
 // @param reqBody body masterwarehousepayloads.ProcessWarehouseLocationTemplate true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -100,7 +100,7 @@ func (r *WarehouseLocationControllerImpl) ProcessWarehouseLocationTemplate(write
 // @Description Upload Preview File
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @param company_id path int true "Company Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -162,7 +162,7 @@ func (r *WarehouseLocationControllerImpl) UploadPreviewFile(writer http.Response
 // @Description Download Template
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/download-template [get]
@@ -195,7 +195,7 @@ func (r *WarehouseLocationControllerImpl) DownloadTemplate(writer http.ResponseW
 // @Description Get All Warehouse Location
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -257,7 +257,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Description Get Warehouse Location By Id
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @Param warehouse_location_id path int true "warehouse_location_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -285,7 +285,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Description Get Warehouse Location By Code
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @Param warehouse_location_code path string true "warehouse_location_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -305,7 +305,7 @@ func (r *WarehouseLocationControllerImpl) GetByCode(writer http.ResponseWriter, 
 // @Description Save Warehouse Location
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @param reqBody body masterwarehousepayloads.GetWarehouseLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -335,7 +335,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Description Change Warehouse Location Status By Id
 // @Accept json
 // @Produce json
-// @Tags Master Warehouse : Warehouse Location
+// @Tags Master : Warehouse Location
 // @Param warehouse_location_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

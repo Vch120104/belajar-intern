@@ -14,7 +14,7 @@ type BookingEstimationService interface {
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse)
 	GetById(id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
-	Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
+	Save(request transactionworkshoppayloads.BookingEstimationRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
 	Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 	Void(Id int) (bool, *exceptions.BaseErrorResponse)
 	CloseOrder(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse

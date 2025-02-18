@@ -38,7 +38,7 @@ func NewQualityControlBodyshopController(QualityControlBodyshopService transacti
 // @Description Retrieve all quality controls with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction Bodyshop : Workshop Quality Control
+// @Tags Transaction : Bodyshop Quality Control
 // @Param quality_control_system_number query string false "Quality Control System Number"
 // @Param quality_control_document_number query string false "Quality Control Document Number"
 // @Param page query string true "Page number"
@@ -88,7 +88,7 @@ func (r *QualityControlBodyshopControllerImpl) GetAll(writer http.ResponseWriter
 // @Description Retrieve quality control by id
 // @Accept json
 // @Produce json
-// @Tags Transaction Bodyshop : Workshop Quality Control
+// @Tags Transaction : Bodyshop Quality Control
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -142,7 +142,7 @@ func (r *QualityControlBodyshopControllerImpl) GetById(writer http.ResponseWrite
 // @Description Bypass quality control
 // @Accept json
 // @Produce json
-// @Tags Transaction Bodyshop : Workshop Quality Control
+// @Tags Transaction : Bodyshop Quality Control
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -184,7 +184,7 @@ func (r *QualityControlBodyshopControllerImpl) Qcpass(writer http.ResponseWriter
 // @Description Reorder quality control
 // @Accept json
 // @Produce json
-// @Tags Transaction Bodyshop : Workshop Quality Control
+// @Tags Transaction : Bodyshop Quality Control
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

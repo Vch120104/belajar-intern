@@ -59,3 +59,47 @@ func (s *PrintGatePassServiceImpl) GetAll(filterCondition []utils.FilterConditio
 
 	return pages, nil
 }
+
+func (s *PrintGatePassServiceImpl) PrintById(id int) ([]byte, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	// Ambil data dari repository
+	dataMap, repoErr := s.PrintGatePassRepository.PrintById(tx, id)
+	if repoErr != nil {
+		return nil, repoErr
+	}
+
+	// Generate PDF menggunakan `GeneratePDFGatePass`
+	pdfBytes, pdfErr := utils.GeneratePDFGatePass(dataMap)
+	if pdfErr != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to generate PDF",
+			Err:        pdfErr,
+		}
+	}
+
+	return pdfBytes, nil
+}

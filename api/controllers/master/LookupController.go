@@ -52,6 +52,7 @@ type LookupController interface {
 	ItemMasterForFreeAccs(writer http.ResponseWriter, request *http.Request)
 	ItemMasterForFreeAccsById(writer http.ResponseWriter, request *http.Request)
 	ItemMasterForFreeAccsByCode(writer http.ResponseWriter, request *http.Request)
+	ItemMasterForFreeAccsByBrand(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -165,14 +166,14 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 // @Accept json
 // @Produce json
 // @Param line_type_id path int true "Line Type ID"
-// @Param item_code path string true "Item Code"
+// @Param opr_item_code path string true "Item Code"
 // @Param limit query int false "Limit"
 // @Param page query int false "Page"
 // @Param sort_of query string false "Sort Of"
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/lookup/item-opr-code/{line_type_id}/{param+} [get]
+// @Router /v1/lookup/item-opr-code/{line_type_id}/{opr_item_code} [get]
 func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
 	linetypeIdStr := chi.URLParam(request, "line_type_id")
 	linetypeId, err := strconv.Atoi(linetypeIdStr)
@@ -435,8 +436,8 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 // @Tags Master Lookup :
 // @Accept json
 // @Produce json
-// @Param brand_id path int true "Brand ID"
-// @Param model_id path int true "Model ID"
+// @Param brand_id query int true "Brand ID"
+// @Param model_id query int true "Model ID"
 // @Param limit query int false "Limit"
 // @Param page query int false "Page"
 // @Param sort_of query string false "Sort Of"
@@ -445,21 +446,22 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/lookup/vehicle-unit-master/{brand_id}/{model_id} [get]
 func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, request *http.Request) {
-	brandStrId := chi.URLParam(request, "brand_id")
-	brandId, err := strconv.Atoi(brandStrId)
-	if err != nil {
+	queryValues := request.URL.Query()
+
+	brandIdStr := request.URL.Query().Get("brand_id")
+	brandId, err := strconv.Atoi(brandIdStr)
+	if err != nil || brandIdStr == "" {
 		payloads.NewHandleError(writer, "Invalid Brand ID", http.StatusBadRequest)
 		return
 	}
 
-	modelStrId := chi.URLParam(request, "model_id")
+	modelStrId := request.URL.Query().Get("model_id")
 	modelId, err := strconv.Atoi(modelStrId)
-	if err != nil {
+	if err != nil || modelStrId == "" {
 		payloads.NewHandleError(writer, "Invalid Model ID", http.StatusBadRequest)
 		return
 	}
 
-	queryValues := request.URL.Query()
 	queryParams := map[string]string{}
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -509,16 +511,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 		return
 	}
 
-	queryValues := request.URL.Query()
-	queryParams := map[string]string{}
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, baseErr := r.LookupService.GetVehicleUnitByID(vehicleId, paginate, criteria)
+	lookup, baseErr := r.LookupService.GetVehicleUnitByID(vehicleId)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -528,15 +521,11 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
+	payloads.NewHandleSuccess(
 		writer,
-		lookup.Rows,
+		lookup,
 		"Get Data Successfully!",
 		http.StatusOK,
-		lookup.Limit,
-		lookup.Page,
-		int64(lookup.TotalRows),
-		lookup.TotalPages,
 	)
 }
 
@@ -556,17 +545,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, re
 func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request) {
 	chassisNumber := chi.URLParam(request, "vehicle_chassis_number")
 
-	queryValues := request.URL.Query()
-	queryParams := map[string]string{}
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, baseErr := r.LookupService.GetVehicleUnitByChassisNumber(chassisNumber, paginate, criteria)
+	lookup, baseErr := r.LookupService.GetVehicleUnitByChassisNumber(chassisNumber)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -576,15 +555,11 @@ func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.Respons
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(
+	payloads.NewHandleSuccess(
 		writer,
-		lookup.Rows,
+		lookup,
 		"Get Data Successfully!",
 		http.StatusOK,
-		lookup.Limit,
-		lookup.Page,
-		int64(lookup.TotalRows),
-		lookup.TotalPages,
 	)
 }
 
@@ -1870,7 +1845,7 @@ func (r *LookupControllerImpl) ItemOprCodeWithPriceByID(writer http.ResponseWrit
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/lookup/item-opr-code-with-price/{line_type_id}/by-code/{param+} [get]
+// @Router /v1/lookup/item-opr-code-with-price/{line_type_id}/by-code/{opr_item_code} [get]
 func (r *LookupControllerImpl) ItemOprCodeWithPriceByCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -2165,5 +2140,46 @@ func (r *LookupControllerImpl) ItemMasterForFreeAccsByCode(writer http.ResponseW
 		}
 		return
 	}
+	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Item Master For Free Accs By Brand
+// @Description Item Master For Free Accs By Brand
+// @Tags Master Lookup :
+// @Accept json
+// @Produce json
+// @Param item_id path int true "Item ID"
+// @Param company_id query int true "Company ID"
+// @Param brand_id query int true "Brand ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/item-freeaccs/by-company-brand/{item_id} [get]
+func (r *LookupControllerImpl) ItemMasterForFreeAccsByBrand(writer http.ResponseWriter, request *http.Request) {
+	itemId, err := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Item ID", http.StatusBadRequest)
+		return
+	}
+
+	companyIdStr := request.URL.Query().Get("company_id")
+	companyId, err := strconv.Atoi(companyIdStr)
+	if err != nil || companyIdStr == "" {
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
+		return
+	}
+
+	brandIdStr := request.URL.Query().Get("brand_id")
+	brandId, err := strconv.Atoi(brandIdStr)
+	if err != nil || brandIdStr == "" {
+		payloads.NewHandleError(writer, "Invalid Brand ID", http.StatusBadRequest)
+		return
+	}
+
+	item, baseErr := r.LookupService.ItemMasterForFreeAccsByBrand(companyId, itemId, brandId)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
 	payloads.NewHandleSuccess(writer, item, "Get Data Successfully!", http.StatusOK)
 }

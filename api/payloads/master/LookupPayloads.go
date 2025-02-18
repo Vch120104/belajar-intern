@@ -126,15 +126,19 @@ type ItemLocUOMResponse struct {
 }
 
 type ItemMasterForFreeAccsResponse struct {
-	ItemId          int     `json:"item_id"`
-	ItemCode        string  `json:"item_code"`
-	ItemName        string  `json:"item_name"`
-	ItemClassId     int     `json:"item_class_id"`
-	ItemClassCode   string  `json:"item_class_code"`
-	ItemClassName   string  `json:"item_class_name"`
-	UomId           int     `json:"uom_id"`
-	UomCode         string  `json:"uom_code"`
-	UomDescription  string  `json:"uom_description"`
-	PriceListAmount float64 `json:"price_list_amount"`
-	IsActive        bool    `json:"is_active"`
+	ItemId        int     `json:"item_id"`
+	ItemCode      string  `json:"item_code"`
+	ItemName      string  `json:"item_name"`
+	ItemClassCode string  `json:"item_class_code"`
+	UomCode       string  `json:"uom_code"`
+	Price         float64 `json:"price"`
+	IsActive      bool    `json:"is_active"`
+}
+
+type ItemMasterForFreeAccsBrandResponse struct {
+	ItemId   int     `json:"item_id"`
+	ItemCode string  `json:"item_code"`
+	ItemName string  `json:"item_name"`
+	UomCode  string  `json:"uom_code"`
+	Price    float64 `json:"price"`
 }

@@ -22,7 +22,7 @@ func NewWarehouseCostingTypeController(CostingService masterwarehouseservice.War
 
 // @Summary Get Warehouse Costing Type By Code
 // @Description Get Warehouse Costing Type By Code
-// @Tags Master Warehouse : Costing Type
+// @Tags Master : Costing Type
 // @Accept json
 // @Produce json
 // @Param warehouse-costing-type-code path string true "Warehouse Costing Type Code"

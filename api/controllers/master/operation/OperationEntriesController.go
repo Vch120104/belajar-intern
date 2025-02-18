@@ -41,7 +41,7 @@ func NewOperationEntriesController(operationEntriesService masteroperationservic
 // @Description REST API Operation Entries
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Entries
+// @Tags Master : Operation Entries
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_section_description query string false "operation_section_description"
@@ -91,7 +91,7 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 // @Description REST API Operation Entries
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Entries
+// @Tags Master : Operation Entries
 // @Param operation_entries_id path int true "operation_entries_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -116,7 +116,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.Res
 // @Description REST API Operation Entries
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Entries
+// @Tags Master : Operation Entries
 // @Param operation_group_id query int true "operation_group_id"
 // @Param operation_section_id query int true "operation_section_id"
 // @Param operation_key_id query int true "operation_key_id"
@@ -151,7 +151,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.Res
 // @Description REST API Operation Entries
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Entries
+// @Tags Master : Operation Entries
 // @param reqBody body masteroperationpayloads.OperationEntriesResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -186,7 +186,7 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 // @Description REST API Operation Entries
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Entries
+// @Tags Master : Operation Entries
 // @param operation_entries_id path int true "operation_entries_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

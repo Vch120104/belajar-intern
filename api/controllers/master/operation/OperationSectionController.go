@@ -43,7 +43,7 @@ func NewOperationSectionController(operationSectionService masteroperationservic
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_section_code query string false "operation_section_code"
@@ -93,7 +93,7 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @Param operation_section_id path int true "operation_section_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -119,7 +119,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.Res
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @Param operation_group_id query int true "operation_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -146,7 +146,7 @@ func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.Res
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @Param operation_group_id query int true "operation_group_id"
 // @Param operation_section_code query string true "operation_section_code"
 // @Success 200 {object} payloads.Response
@@ -171,7 +171,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @param reqBody body masteroperationpayloads.OperationSectionRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -206,7 +206,7 @@ func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.Respon
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @param operation_section_id path int true "operation_section_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -234,7 +234,7 @@ func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer htt
 // @Description REST API Operation Section
 // @Accept json
 // @Produce json
-// @Tags Master Operation : Operation Section
+// @Tags Master : Operation Section
 // @Param operation_group_id path int true "operation_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

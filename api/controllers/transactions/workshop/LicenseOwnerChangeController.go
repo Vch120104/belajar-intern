@@ -29,7 +29,7 @@ func NewLicenseOwnerChangeController(LicenseOwnerChangeService transactionworksh
 // @Description Retrieve all license owner change with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : License Owner Change
+// @Tags Transaction : Workshop License Owner Change
 // @Param vehicle_brand query string false "Vehicle Brand"
 // @Param model_code query string false "Model Code"
 // @Param vehicle_id query string false "Vehicle ID"
@@ -93,7 +93,7 @@ func (l *LicenseOwnerChangeControllerImpl) GetAll(writer http.ResponseWriter, re
 // @Description Retrieve license owner change history by chassis number with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction Workshop : License Owner Change
+// @Tags Transaction : Workshop License Owner Change
 // @Param vehicle_chassis_number path string true "Vehicle Chassis Number"
 // @Param change_type query string false "Change Type"
 // @Param limit query string true "Items per page"
