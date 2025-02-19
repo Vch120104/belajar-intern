@@ -142,3 +142,9 @@ type ItemMasterForFreeAccsBrandResponse struct {
 	UomCode  string  `json:"uom_code"`
 	Price    float64 `json:"price"`
 }
+
+type LocationItemGoodsReceiveResponse struct {
+	WarehouseLocationId   int    `json:"warehouse_location_id"`
+	WarehouseLocationCode string `json:"warehouse_location_code"`
+	WarehouseLocationName string `json:"warehouse_location_name"`
+}
