@@ -147,8 +147,10 @@ type GetAllItemWarehouseLookUp struct {
 	TransferRequestByName         string    `json:"transfer_request_by_name"`
 	RequestFromWarehouseId        int       `json:"request_from_warehouse_id"`
 	RequestFromWarehouseName      string    `json:"request_from_warehouse_name"`
+	RequestFromWarehouseCode      string    `json:"request_from_warehouse_code"`
 	RequestFromWarehouseGroupId   int       `json:"request_from_warehouse_group_id"`
 	RequestFromWarehouseGroupName string    `json:"request_from_warehouse_group_name"`
+	RequestFromWarehouseGroupCode string    `json:"request_from_warehouse_group_code"`
 }
 
 type GetAllItemWarehouseDetailLookUp struct {
