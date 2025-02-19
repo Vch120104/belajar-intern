@@ -30,13 +30,17 @@ type ItemWarehouseTransferRequestController interface {
 	GetByIdTransferRequest(writer http.ResponseWriter, request *http.Request)
 	GetByIdTransferRequestDetail(writer http.ResponseWriter, request *http.Request)
 	GetAllWhTransferRequest(writer http.ResponseWriter, request *http.Request)
+	GetTransferRequestLookUp(writer http.ResponseWriter, request *http.Request)
+	GetTransferRequestLookUpDetail(writer http.ResponseWriter, request *http.Request)
 	DeleteHeaderTransferRequest(writer http.ResponseWriter, request *http.Request)
 	DeleteDetail(writer http.ResponseWriter, request *http.Request)
 	Upload(writer http.ResponseWriter, request *http.Request)
 	ProcessUpload(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+
 	Accept(writer http.ResponseWriter, request *http.Request)
 	Reject(writer http.ResponseWriter, request *http.Request)
+	GetAllWhTransferReceipt(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewItemWarehouseTransferRequestControllerImpl(itemWarehouseTransferRequestService transactionsparepartservice.ItemWarehouseTransferRequestService) ItemWarehouseTransferRequestController {
@@ -47,6 +51,93 @@ func NewItemWarehouseTransferRequestControllerImpl(itemWarehouseTransferRequestS
 
 type ItemWarehouseTransferRequestControllerImpl struct {
 	ItemWarehouseTransferRequestService transactionsparepartservice.ItemWarehouseTransferRequestService
+}
+
+// GetTransferRequestLookUpDetail implements ItemWarehouseTransferRequestController.
+func (r *ItemWarehouseTransferRequestControllerImpl) GetTransferRequestLookUpDetail(writer http.ResponseWriter, request *http.Request) {
+	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"it.item_code":     queryValues.Get("item_code"),
+		"it.item_name":     queryValues.Get("item_name"),
+		"uom.uom_code":     queryValues.Get("unit_of_measurement"),
+		"request_quantity": queryValues.Get("request_quantity"),
+	}
+
+	paginations := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	filterCondition := utils.BuildFilterCondition(queryParams)
+	res, err := r.ItemWarehouseTransferRequestService.GetTransferRequestDetailLookUp(transferRequestSystemNumber, paginations, filterCondition)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", 200, res.Limit, res.Page, res.TotalRows, res.TotalPages)
+}
+
+// GetAllWhTransferReceipt implements ItemWarehouseTransferRequestController.
+func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferReceipt(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"transfer_request_status_id":                     queryValues.Get("transfer_request_status_id"),
+		"transfer_request_document_number":               queryValues.Get("item_group_id"),
+		"wmt.warehouse_group_id":                         queryValues.Get("transfer_request_warehouse_group_id"),
+		"trx_item_warehouse_transfer_request.company_id": queryValues.Get("company_id"),
+	}
+
+	dateParams := map[string]string{
+		"transfer_request_date_from": queryValues.Get("transfer_request_date_from"),
+		"transfer_request_date_to":   queryValues.Get("transfer_request_date_to"),
+	}
+
+	paginations := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	filterCondition := utils.BuildFilterCondition(queryParams)
+	res, err := r.ItemWarehouseTransferRequestService.GetAllWhTransferReceipt(paginations, filterCondition, dateParams)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", 200, res.Limit, res.Page, res.TotalRows, res.TotalPages)
+}
+
+// GetTransferRequestLookUp implements ItemWarehouseTransferRequestController.
+func (r *ItemWarehouseTransferRequestControllerImpl) GetTransferRequestLookUp(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"b.company_id":                          queryValues.Get("company_id"),
+		"b.transfer_request_document_number":    queryValues.Get("transfer_request_document_number"),
+		"b.transfer_request_date":               queryValues.Get("transfer_request_date"),
+		"b.transfer_request_by_id":              queryValues.Get("transfer_request_by_id"),
+		"wmf.request_from_warehouse_name":       queryValues.Get("request_from_warehouse_name"),
+		"wgf.request_from_warehouse_group_name": queryValues.Get("request_from_warehouse_group_name"),
+		// "b.transfer_request_date": queryValues.Get("transfer_request_date"),
+	}
+
+	paginations := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	filterCondition := utils.BuildFilterCondition(queryParams)
+	res, err := r.ItemWarehouseTransferRequestService.GetTransferRequestLookUp(paginations, filterCondition)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", 200, res.Limit, res.Page, res.TotalRows, res.TotalPages)
 }
 
 // @Summary Accept Item Warehouse Transfer Request
@@ -496,7 +587,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllDetailTransferRequest
 // @Accept json
 // @Produce json
 // @Param transfer_request_status_id query int false "Transfer Request Status ID"
-// @Param transfer_request_document_number query int false "Transfer Request Document Number"
+// @Param transfer_request_document_number query string false "Transfer Request Document Number"
 // @Param transfer_request_warehouse_group_id query int false "Transfer Request Warehouse Group ID"
 // @Param company_id query int false "Company ID"
 // @Param transfer_request_date_from query string false "Transfer Request Date From"
@@ -512,7 +603,7 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferRequest(wri
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"transfer_request_status_id":                     queryValues.Get("transfer_request_status_id"),
-		"transfer_request_document_number":               queryValues.Get("item_group_id"),
+		"transfer_request_document_number":               queryValues.Get("transfer_request_document_number"),
 		"wmt.warehouse_group_id":                         queryValues.Get("transfer_request_warehouse_group_id"),
 		"trx_item_warehouse_transfer_request.company_id": queryValues.Get("company_id"),
 	}

@@ -20,12 +20,15 @@ type ItemWarehouseTransferRequestService interface {
 	GetByIdTransferRequest(int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse)
 	GetByIdTransferRequestDetail(int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestDetailResponse, *exceptions.BaseErrorResponse)
 	GetAllWhTransferRequest(pagination.Pagination, []utils.FilterCondition, map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetTransferRequestLookUp(pagination.Pagination, []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetTransferRequestDetailLookUp(int, pagination.Pagination, []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	DeleteHeaderTransferRequest(int) (bool, *exceptions.BaseErrorResponse)
 	DeleteDetail([]int, transactionsparepartpayloads.DeleteDetailItemWarehouseTransferRequest) (bool, *exceptions.BaseErrorResponse)
 	PreviewUploadData([][]string) ([]transactionsparepartpayloads.UploadPreviewItemWarehouseTransferRequestPayloads, *exceptions.BaseErrorResponse)
 	ProcessUploadData(transactionsparepartpayloads.UploadProcessItemWarehouseTransferRequestPayloads) ([]transactionsparepartentities.ItemWarehouseTransferRequestDetail, *exceptions.BaseErrorResponse)
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
 
+	GetAllWhTransferReceipt(pagination.Pagination, []utils.FilterCondition, map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	AcceptTransferReceipt(int, transactionsparepartpayloads.AcceptWarehouseTransferRequestRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse)
 	RejectTransferReceipt(int, transactionsparepartpayloads.RejectWarehouseTransferRequestRequest) (transactionsparepartentities.ItemWarehouseTransferRequest, *exceptions.BaseErrorResponse)
 }

@@ -27,6 +27,104 @@ func NewItemWarehouseTransferRequestRepositoryImpl() transactionsparepartreposit
 type ItemWarehouseTransferRequestRepositoryImpl struct {
 }
 
+// GetTransferRequestDetailLookUp implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
+func (*ItemWarehouseTransferRequestRepositoryImpl) GetTransferRequestDetailLookUp(tx *gorm.DB, number int, pages pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var responses []transactionsparepartpayloads.GetAllItemWarehouseDetailLookUp
+
+	joinTable := tx.Table("trx_item_warehouse_transfer_request_detail as det").
+		Select(
+			"transfer_request_detail_system_number",
+			"det.transfer_request_system_number",
+			"det.item_id",
+			"it.item_code",
+			"it.item_name",
+			"uom.uom_code unit_of_measurement",
+			"request_quantity",
+		).
+		Where("det.transfer_request_system_number = ?", number).
+		Joins("INNER JOIN trx_item_warehouse_transfer_request req on req.transfer_request_system_number = det.transfer_request_system_number").
+		Joins("LEFT JOIN mtr_item it on it.item_id = det.item_id").
+		Joins("LEFT JOIN mtr_uom uom on uom.uom_id = it.unit_of_measurement_stock_id")
+
+	whereQuery := utils.ApplyFilter(joinTable, filter)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.Rows = responses
+	return pages, nil
+}
+
+// GetTransferRequestLookUp implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
+func (*ItemWarehouseTransferRequestRepositoryImpl) GetTransferRequestLookUp(tx *gorm.DB, pages pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	// var entities transactionsparepartentities.ItemWarehouseTransferRequest
+	var responses []transactionsparepartpayloads.GetAllItemWarehouseLookUp
+	var status masteritementities.ItemTransferStatus
+	var status2 masteritementities.ItemTransferStatus
+
+	errGetStatus := tx.Model(&status).Where("item_transfer_status_code = ?", 20).Find(&status)
+	if errGetStatus.Error != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetStatus.Error,
+		}
+	}
+
+	errGetStatus2 := tx.Model(&status2).Where("item_transfer_status_code = ?", 40).Find(&status2)
+	if errGetStatus2.Error != nil {
+		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetStatus2.Error,
+		}
+	}
+
+	joinTable := tx.Table("trx_item_warehouse_transfer_request as b").
+		Select(
+			"b.transfer_request_system_number",
+			"b.transfer_request_document_number",
+			"b.transfer_request_date",
+			"b.transfer_request_by_id transfer_request_by_id",
+			"b.request_from_warehouse_id",
+			"wmf.warehouse_name request_from_warehouse_name",
+			"wmf.warehouse_group_id request_from_warehouse_group_id",
+			"wgf.warehouse_group_name request_from_warehouse_group_name",
+		).
+		Where("transfer_request_status_id in (? , ?)", status.ItemTransferStatusId, status2.ItemTransferStatusId).
+		Joins("LEFT JOIN mtr_warehouse_master wmf on wmf.warehouse_id = b.request_from_warehouse_id").
+		Joins("LEFT JOIN mtr_warehouse_group wgf on wgf.warehouse_group_id = wmf.warehouse_group_id")
+
+	whereQuery := utils.ApplyFilter(joinTable, filter)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
+
+	for i, respon := range responses {
+		get, errUser := generalserviceapiutils.GetUserDetailsByID(respon.TransferRequestById)
+		if errUser != nil {
+			return pages, nil
+		}
+		responses[i].TransferRequestByName = get.EmployeeName
+	}
+
+	pages.Rows = responses
+	return pages, nil
+}
+
 // GetByIdTransferRequestDetail implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
 func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequestDetail(tx *gorm.DB, number int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestDetailResponse, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.ItemWarehouseTransferRequestDetail
