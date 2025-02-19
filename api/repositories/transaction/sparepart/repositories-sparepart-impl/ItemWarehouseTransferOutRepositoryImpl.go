@@ -16,6 +16,7 @@ import (
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -204,21 +205,21 @@ func (*ItemWarehouseTransferOutRepositoryImpl) SubmitTransferOut(tx *gorm.DB, nu
 		}
 	}
 
-	openPeriodResponse, openPeriodErr := financeserviceapiutils.GetOpenPeriodByCompany(entities.CompanyId, "SP")
-	if openPeriodErr != nil {
-		return transactionsparepartentities.ItemWarehouseTransferOut{}, openPeriodErr
-	}
+	// openPeriodResponse, openPeriodErr := financeserviceapiutils.GetOpenPeriodByCompany(entities.CompanyId, "SP")
+	// if openPeriodErr != nil {
+	// 	return transactionsparepartentities.ItemWarehouseTransferOut{}, openPeriodErr
+	// }
 
 	periodYear := entities.TransferOutDate.Format("2006")
 	periodMonth := entities.TransferOutDate.Format("01")
 
-	if openPeriodResponse.PeriodYear != periodYear || openPeriodResponse.PeriodMonth != periodMonth {
-		return transactionsparepartentities.ItemWarehouseTransferOut{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Period is closed",
-			Err:        errors.New("period is closed"),
-		}
-	}
+	// if openPeriodResponse.PeriodYear != periodYear || openPeriodResponse.PeriodMonth != periodMonth {
+	// 	return transactionsparepartentities.ItemWarehouseTransferOut{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Period is closed",
+	// 		Err:        errors.New("period is closed"),
+	// 	}
+	// }
 
 	for _, detail := range entitiesDetailOut {
 		if *detail.LocationIdFrom == 0 || detail.LocationIdFrom == nil {
@@ -285,7 +286,7 @@ func (*ItemWarehouseTransferOutRepositoryImpl) SubmitTransferOut(tx *gorm.DB, nu
 			"location_id_from": detail.LocationIdFrom,
 		}
 		errUpdate := tx.Model(&transactionsparepartentities.ItemWarehouseTransferRequestDetail{}).
-			Where("transfer_request_detail_system_number = ?", detail.TransferOutDetailSystemNumber).
+			Where("transfer_request_detail_system_number = ?", detail.TransferRequestDetailSystemNumber).
 			Updates(updates).Scan(&entitiesDetailRequest).Error
 
 		if errUpdate != nil {
@@ -775,19 +776,21 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetail(tx *gorm.DB, request
 	var entitiesDetail transactionsparepartentities.ItemWarehouseTransferOutDetail
 	var entitiesTransferRequest transactionsparepartentities.ItemWarehouseTransferRequestDetail
 
+	fmt.Println(request.TransferOutSystemNumber)
+
 	errGetEntities := tx.Model(&entities).Where(transactionsparepartentities.ItemWarehouseTransferOut{TransferOutSystemNumber: request.TransferOutSystemNumber}).First(&entities).Error
 	if errGetEntities != nil {
 		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
 			return entitiesDetail, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errGetEntities,
-				Message:    "transfer request with that id is not found",
+				Message:    "transfer out with that id is not found",
 			}
 		}
 		return entitiesDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errGetEntities,
-			Message:    "failed to get transfer request entity",
+			Message:    "failed to get transfer out entity",
 		}
 	}
 
@@ -807,16 +810,19 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetail(tx *gorm.DB, request
 		}
 	}
 
-	errGetEntitiesDetail := tx.Model(&entitiesDetail).Where(transactionsparepartentities.ItemWarehouseTransferRequestDetail{ItemId: entitiesTransferRequest.ItemId}).First(&entitiesDetail).Error
+	errGetEntitiesDetail := tx.Model(&entitiesDetail).Where("transfer_out_system_number = ?", request.TransferOutSystemNumber).
+		Where(transactionsparepartentities.ItemWarehouseTransferOutDetail{ItemId: entitiesTransferRequest.ItemId}).First(&entitiesDetail).Error
 	if errGetEntitiesDetail != nil {
 		if !errors.Is(errGetEntitiesDetail, gorm.ErrRecordNotFound) {
 			return entitiesDetail, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errGetEntitiesDetail,
-				Message:    "failed to get transfer request entity",
+				Message:    "failed to get transfer out detail entity",
 			}
 		}
 	}
+
+	fmt.Println(entitiesDetail.TransferOutDetailSystemNumber)
 
 	if entitiesDetail.TransferOutDetailSystemNumber != 0 {
 		return transactionsparepartentities.ItemWarehouseTransferOutDetail{}, &exceptions.BaseErrorResponse{
@@ -834,8 +840,10 @@ func (*ItemWarehouseTransferOutRepositoryImpl) InsertDetail(tx *gorm.DB, request
 
 	entitiesDetail.ItemId = entitiesTransferRequest.ItemId
 	entitiesDetail.TransferOutSystemNumber = request.TransferOutSystemNumber
-	entitiesDetail.TransferOutDetailSystemNumber = request.TransferRequestDetailSystemNumber
+	entitiesDetail.TransferRequestDetailSystemNumber = request.TransferRequestDetailSystemNumber
 	entitiesDetail.QuantityOut = request.QuantityOut
+	entitiesDetail.LocationIdFrom = &request.LocationIdFrom
+	entitiesDetail.LocationIdTo = &request.LocationIdTo
 
 	errCreate := tx.Create(&entitiesDetail).Scan(&entitiesDetail).Error
 	if errCreate != nil {

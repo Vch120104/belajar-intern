@@ -49,7 +49,7 @@ type ItemWarehouseTransferOutControllerImpl struct {
 // @Param id path int true "Transfer Out System Number"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/{id} [delete]
+// @Router /v1/item-warehouse-transfer-out/{id} [delete]
 func (r *ItemWarehouseTransferOutControllerImpl) DeleteTransferOut(writer http.ResponseWriter, request *http.Request) {
 	transferOutSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
 
@@ -70,7 +70,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) DeleteTransferOut(writer http.R
 // @Param id path string true "Detail Multi ID"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/detail/{id} [delete]
+// @Router /v1/item-warehouse-transfer-out/detail/{id} [delete]
 func (r *ItemWarehouseTransferOutControllerImpl) DeleteTransferOutDetail(writer http.ResponseWriter, request *http.Request) {
 	multiId := chi.URLParam(request, "id")
 	if multiId == "[]" {
@@ -117,7 +117,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) DeleteTransferOutDetail(writer 
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out [get]
+// @Router /v1/item-warehouse-transfer-out [get]
 func (r *ItemWarehouseTransferOutControllerImpl) GetAllTransferOut(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -162,7 +162,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) GetAllTransferOut(writer http.R
 // @Param sort_by query string false "Sort By"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/detail [get]
+// @Router /v1/item-warehouse-transfer-out/detail [get]
 func (r *ItemWarehouseTransferOutControllerImpl) GetAllTransferOutDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	paginations := pagination.Pagination{
@@ -190,7 +190,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) GetAllTransferOutDetail(writer 
 // @Param id path int true "Transfer Out System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/{id} [get].
+// @Router /v1/item-warehouse-transfer-out/{id} [get].
 func (r *ItemWarehouseTransferOutControllerImpl) GetTransferOutById(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	if errA != nil {
@@ -212,10 +212,10 @@ func (r *ItemWarehouseTransferOutControllerImpl) GetTransferOutById(writer http.
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
 // @Accept json
 // @Produce json
-// @Param InsertItemWarehouseTransferOut body transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailRequest true "Insert Item Warehouse Transfer Out Detail"
+// @Param InsertItemWarehouseTransferOutDetail body transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailRequest true "Insert Item Warehouse Transfer Out Detail"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/detail [post]
+// @Router /v1/item-warehouse-transfer-out/detail [post]
 func (r *ItemWarehouseTransferOutControllerImpl) InsertDetail(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailRequest
 	helper.ReadFromRequestBody(request, &transferRequest)
@@ -224,7 +224,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertDetail(writer http.Respon
 		return
 	}
 
-	success, err := r.ItemWarehouseTransferOutService.InsertDetail(transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailRequest{})
+	success, err := r.ItemWarehouseTransferOutService.InsertDetail(transferRequest)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -242,7 +242,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertDetail(writer http.Respon
 // @Param InsertItemWarehouseTransferOut body transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailCopyReceiptRequest true "Insert Item Warehouse Transfer Out Detail From Receipt"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/detail/copy-receipt [post]
+// @Router /v1/item-warehouse-transfer-out/detail/copy-receipt [post]
 func (r *ItemWarehouseTransferOutControllerImpl) InsertDetailFromReceipt(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailCopyReceiptRequest
 
@@ -269,10 +269,10 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertDetailFromReceipt(writer 
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
 // @Accept json
 // @Produce json
-// @Param InsertItemWarehouseTransferRequest body transactionsparepartpayloads.InsertItemWarehouseHeaderTransferOutRequest true "Insert Item Warehouse Transfer Out"
+// @Param InsertItemWarehouseTransferOut body transactionsparepartpayloads.InsertItemWarehouseHeaderTransferOutRequest true "Insert Item Warehouse Transfer Out"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out [post]
+// @Router /v1/item-warehouse-transfer-out [post]
 func (r *ItemWarehouseTransferOutControllerImpl) InsertHeader(writer http.ResponseWriter, request *http.Request) {
 	var transferRequest transactionsparepartpayloads.InsertItemWarehouseHeaderTransferOutRequest
 
@@ -298,7 +298,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertHeader(writer http.Respon
 // @Param id path int true "Transfer Out System Number"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/submit/{id} [put]
+// @Router /v1/item-warehouse-transfer-out/submit/{id} [put]
 func (r *ItemWarehouseTransferOutControllerImpl) SubmitTransferOut(writer http.ResponseWriter, request *http.Request) {
 	transferOutSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "id"))
 	if errA != nil {
@@ -324,7 +324,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) SubmitTransferOut(writer http.R
 // @Param UpdateItemWarehouseTransferOut body transactionsparepartpayloads.UpdateItemWarehouseTransferOutDetailRequest true "Update Item Warehouse Transfer Out"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/transfer-out/detail/{id} [put]
+// @Router /v1/item-warehouse-transfer-out/detail/{id} [put]
 func (r *ItemWarehouseTransferOutControllerImpl) UpdateTransferOutDetail(writer http.ResponseWriter, request *http.Request) {
 	var transferOut transactionsparepartpayloads.UpdateItemWarehouseTransferOutDetailRequest
 

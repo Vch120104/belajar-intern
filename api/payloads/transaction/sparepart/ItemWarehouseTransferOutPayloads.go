@@ -13,6 +13,8 @@ type InsertItemWarehouseTransferOutDetailRequest struct {
 	TransferOutDate                   time.Time `json:"transfer_out_date"`
 	TransferRequestDetailSystemNumber int       `json:"transfer_request_detail_system_number"`
 	QuantityOut                       float64   `json:"quantity_out"`
+	LocationIdFrom                    int       `json:"location_id_from"`
+	LocationIdTo                      int       `json:"location_id_to"`
 }
 
 type GetTransferOutByIdResponse struct {
