@@ -1467,17 +1467,18 @@ func BookingEstimationRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", BookingEstimationController.GetAll)
-	router.Get("/normal", BookingEstimationController.New)
+	router.Post("/normal", BookingEstimationController.New)
 	router.Get("/normal/{batch_system_number}", BookingEstimationController.GetById)
 	router.Post("/normal/{batch_system_number}", BookingEstimationController.Save)
 	router.Post("/normal/submit/{batch_system_number}", BookingEstimationController.Submit)
 	router.Delete("/normal/void/{batch_system_number}", BookingEstimationController.Void)
 	router.Put("/normal/close/{batch_system_number}", BookingEstimationController.CloseOrder)
 
-	router.Post("/request/{booking_system_number}", BookingEstimationController.SaveBookEstimReq)
-	router.Put("/request/{booking_system_number}", BookingEstimationController.UpdateBookEstimReq)
-	router.Get("/request/{booking_system_number}", BookingEstimationController.GetByIdBookEstimReq)
-	router.Get("/request/all/{booking_system_number}", BookingEstimationController.GetAllBookEstimReq)
+	router.Post("/normal/{booking_system_number}/request", BookingEstimationController.SaveBookEstimReq)
+	router.Put("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.UpdateBookEstimReq)
+	router.Get("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.GetByIdBookEstimReq)
+	router.Get("/normal/request", BookingEstimationController.GetAllBookEstimReq)
+
 	router.Post("/reminder-service/{booking_estimation_id}", BookingEstimationController.SaveBookEstimReminderServ)
 	router.Post("/detail/{estimation_system_number}", BookingEstimationController.SaveDetailBookEstim)
 	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)
@@ -1490,6 +1491,7 @@ func BookingEstimationRouter(
 	router.Post("/book-estim-service-request/{service_request_system_number}", BookingEstimationController.SaveBookingEstimationFromServiceRequest)
 	router.Post("/allocation/{batch_system_number}", BookingEstimationController.SaveBookingEstimationAllocation)
 	router.Post("/copy/{batch_system_number}", BookingEstimationController.CopyFromHistory)
+
 	return router
 }
 

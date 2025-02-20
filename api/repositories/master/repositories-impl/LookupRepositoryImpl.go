@@ -4795,7 +4795,10 @@ func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, mo
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS status
+			END AS status,
+			V.user_customer_id as customer_id,
+			V.vehicle_variant_id as variant_id,
+			V.vehicle_colour_id as colour_id
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
@@ -4855,7 +4858,10 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int) (m
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS status
+			END AS status,
+			V.user_customer_id as customer_id,
+			V.vehicle_variant_id as variant_id,
+			V.vehicle_colour_id as colour_id
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
@@ -4897,7 +4903,11 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassi
 			CASE 
 				WHEN V.is_active = 1 THEN 'Active' 
 				WHEN V.is_active = 0 THEN 'Deactive' 
-			END AS status
+			END AS status,
+			,
+			V.user_customer_id as customer_id,
+			V.vehicle_variant_id as variant_id,
+			V.vehicle_colour_id as colour_id
 		`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
 		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 

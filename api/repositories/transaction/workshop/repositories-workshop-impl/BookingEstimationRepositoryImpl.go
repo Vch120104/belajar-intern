@@ -11,8 +11,9 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
-	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -29,6 +30,9 @@ func OpenBookingEstimationRepositoryImpl() transactionworkshoprepository.Booking
 	return &BookingEstimationImpl{}
 }
 
+// uspg_wtBookEstim0_Select
+// IF @Option = 0
+// --USE FOR : * SELECT DATA BY KEY
 func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.BookingEstimation
 
@@ -89,128 +93,211 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 	return pages, nil
 }
 
-func (r *BookingEstimationImpl) Post(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
-	var agreement masterentities.Agreement
-	var contractService transactionworkshopentities.ContractService
-	var id int
-	var id2 int
-	err := tx.Select("mtr_agreement.agreement_id").Model(agreement).Where("customer_id = ?", strconv.Itoa(request.CustomerId)).Scan(&id).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+// uspg_wtBookEstim0_Insert
+// IF @Option = 0
+// --USE FOR : * INSERT NEW DATA
+func (r *BookingEstimationImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationNormalRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+	var agreementId int
+	var contractSystemNumber int
+
+	// Fetch Agreement ID based on Customer ID
+	err := tx.Model(&masterentities.Agreement{}).
+		Select("agreement_id").
+		Where("customer_id = ?", request.CustomerId).
+		Scan(&agreementId).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Agreement not found for the given customer",
+		}
+	} else if err != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve agreement from the database",
 			Err:        err,
 		}
 	}
-	err2 := tx.Select("trx_contract_service.contract_service_system_number").Model(contractService).Where("vehicle_id = ?", strconv.Itoa(request.VehicleId)).Scan(&id2).Error
-	if err2 != nil && !errors.Is(err2, gorm.ErrRecordNotFound) {
+
+	// Fetch Contract System Number based on Vehicle ID
+	err = tx.Model(&transactionworkshopentities.ContractService{}).
+		Select("contract_service_system_number").
+		Where("vehicle_id = ?", request.VehicleId).
+		Scan(&contractSystemNumber).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err2,
+			Message:    "Contract service not found for the given vehicle",
 		}
 	}
 
-	entities := transactionworkshopentities.BookingEstimation{
+	if err != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve contract service from the database",
+			Err:        err,
+		}
+	}
+
+	// Validation: request date
+	loc, _ := time.LoadLocation("Asia/Jakarta") // UTC+7
+	currentDate := time.Now().In(loc).Format("2006-01-02T15:04:05Z")
+	parsedTime, _ := time.Parse(time.RFC3339, currentDate)
+
+	entity := transactionworkshopentities.BookingEstimation{
 		BrandId:                    request.BrandId,
 		ModelId:                    request.ModelId,
 		VariantId:                  request.VariantId,
 		VehicleId:                  request.VehicleId,
-		ContractSystemNumber:       id2,
-		AgreementId:                id,
+		ContractSystemNumber:       request.ContractSystemNumber,
+		AgreementId:                agreementId,
 		CampaignId:                 request.CampaignId,
 		CompanyId:                  request.CompanyId,
 		ProfitCenterId:             request.ProfitCenterId,
 		DealerRepresentativeId:     request.DealerRepresentativeId,
 		CustomerId:                 request.CustomerId,
-		DocumentStatusId:           request.DocumentStatusId,
-		BookingEstimationBatchDate: time.Now(),
-		IsUnregistered:             request.IsUnregistered,
+		BookingEstimationBatchDate: parsedTime,
+		IsUnregistered:             request.Unregistered,
 		InsurancePolicyNo:          request.InsurancePolicyNo,
-		InsuranceExpiredDate:       request.InsuranceExpiredDate,
+		InsuranceExpiredDate:       request.InsuranceExpired,
 		InsuranceClaimNo:           request.InsuranceClaimNo,
 		InsurancePic:               request.InsurancePic,
-		ContactPersonName:          request.ContactPersonName,
-		ContactPersonPhone:         request.ContactPersonPhone,
-		ContactPersonMobile:        request.ContactPersonMobile,
-		ContactPersonViaId:         request.ContactPersonViaId,
+		ContactPersonName:          request.NameCust,
+		ContactPersonPhone:         request.PhoneCust,
+		ContactPersonMobile:        request.MobileCust,
+		ContactPersonViaId:         request.CallActivityId,
 	}
-	err3 := tx.Save(&entities).Error // Menggunakan method Save dari receiver saat ini, yaitu r
+
+	if err = tx.Create(&entity).Error; err != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save the new booking estimation",
+			Err:        err,
+		}
+	}
+
+	return entity, nil
+}
+
+// uspg_wtBookEstim0_Select
+// IF @Option = 2
+// --USE FOR : * SELECT DATA FOR SEARCHING
+func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.BookingEstimationResponseDetail, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.BookingEstimation
+	err := tx.Where("batch_system_number = ?", Id).First(&entity).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking estimation",
+			Err:        err,
+		}
+	}
+
+	brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
+	if brandErr != nil {
+		return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve brand data",
+			Err:        brandErr.Err,
+		}
+	}
+
+	modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
+	if modelErr != nil {
+		return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve model data",
+			Err:        modelErr.Err,
+		}
+	}
+
+	variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
+	if variantErr != nil {
+		return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve variant data",
+			Err:        variantErr.Err,
+		}
+	}
+
+	var bookingEstimationCampaigns []transactionworkshoppayloads.BookingEstimationCampaignResponse
+	if err := tx.Model(&masterentities.CampaignMaster{}).
+		Where("campaign_id = ? and campaign_id != 0", entity.CampaignId).
+		Find(&bookingEstimationCampaigns).Error; err != nil {
+		return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order campaigns from the database",
+			Err:        err,
+		}
+	}
+
+	// Fetch work order agreements
+	var bookingEstimationAgreements []transactionworkshoppayloads.BookingEstimationAgreementResponse
+	if err := tx.Model(&masterentities.Agreement{}).
+		Where("agreement_id = ? and agreement_id != 0", entity.AgreementId).
+		Find(&bookingEstimationAgreements).Error; err != nil {
+		return transactionworkshoppayloads.BookingEstimationResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order agreements from the database",
+			Err:        err,
+		}
+	}
+
+	response := transactionworkshoppayloads.BookingEstimationResponseDetail{
+		BrandId:                    entity.BrandId,
+		BrandName:                  brandResponse.BrandName,
+		ModelId:                    entity.ModelId,
+		ModelDescription:           modelResponse.ModelName,
+		VariantId:                  entity.VariantId,
+		VariantDescription:         variantResponse.VariantDescription,
+		VehicleId:                  entity.VehicleId,
+		ContractSystemNumber:       entity.ContractSystemNumber,
+		AgreementId:                entity.AgreementId,
+		CampaignId:                 entity.CampaignId,
+		CompanyId:                  entity.CompanyId,
+		ProfitCenterId:             entity.ProfitCenterId,
+		DealerRepresentativeId:     entity.DealerRepresentativeId,
+		CustomerId:                 entity.CustomerId,
+		NameCust:                   entity.ContactPersonName,
+		PhoneCust:                  entity.ContactPersonPhone,
+		MobileCust:                 entity.ContactPersonMobile,
+		CallActivityId:             entity.ContactPersonViaId,
+		BookingEstimationBatchDate: entity.BookingEstimationBatchDate,
+
+		BookingEstimationCampaign: transactionworkshoppayloads.BookingEstimationCampaignDetail{
+			DataCampaign: bookingEstimationCampaigns,
+		},
+		BookingEstimationAgreement: transactionworkshoppayloads.BookingEstimationAgreement{
+			DataAgreement: bookingEstimationAgreements,
+		},
+	}
+
+	return response, nil
+}
+
+// uspg_wtBookEstim0_Update
+// IF @Option = 0
+// --USE FOR : * UPDATE DATA BY KEY
+func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationSaveRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.BookingEstimation
+
+	err := tx.Where("batch_system_number = ?", id).First(&entity).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err3}
-	}
-
-	return entities, nil
-}
-
-func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var payloads transactionworkshoppayloads.GetBookingById
-	var brand masterpayloads.BrandResponse
-	var model masterpayloads.GetModelResponse
-	var vehicle transactionworkshoppayloads.VehicleDetailPayloads
-	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
-		Select("trx_booking_estimation.batch_system_number, trx_booking_estimation.brand_id, trx_contract_service.contract_service_system_number, trx_contract_service.contract_service_date, mtr_agreement.agreement_code, mtr_agreement.agreement_date_to, mtr_agreement.company_id").
-		Joins("JOIN trx_contract_service on trx_contract_service.vehicle_id = trx_booking_estimation.vehicle_id").
-		Joins("JOIN mtr_agreement on mtr_agreement.customer_id = trx_booking_estimation.customer_id").
-		Where("batch_system_number = ?", Id).
-		First(&payloads).Error
-	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err}
-	}
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(payloads.BrandId), brand, nil)
-	if errUrlBrand != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("brand undefined"),
-		}
-	}
-	joinedData1, errdf := utils.DataFrameInnerJoin([]transactionworkshoppayloads.GetBookingById{payloads}, []masterpayloads.BrandResponse{brand}, "BrandId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errdf,
-		}
-	}
-	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(payloads.ModelId), model, nil)
-	if errUrlModel != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("model undefined"),
-		}
-	}
-	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.GetModelResponse{model}, "ModelId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errdf,
-		}
-	}
-	errurlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(payloads.VehicleId), &vehicle, nil)
-	if errurlVehicle != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("vehicle undefined"),
-		}
-	}
-	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []transactionworkshoppayloads.VehicleDetailPayloads{vehicle}, "VehicleId")
-
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errdf,
+			Message:    "Booking estimation not found",
+			Err:        err,
 		}
 	}
 
-	return joinedData3[0], nil
-}
-
-func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.BookingEstimation
-	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
-		Where("batch_system_number = ?", id).
-		First(&entity).Error
 	if err != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -220,6 +307,16 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 	}
 
 	entity.CompanyId = request.CompanyId
+	entity.DealerRepresentativeId = request.DealerRepresentativeId
+	entity.CampaignId = request.CampaignId
+	entity.ContactPersonName = request.NameCust
+	entity.ContactPersonPhone = request.PhoneCust
+	entity.ContactPersonMobile = request.MobileCust
+	entity.ContactPersonViaId = request.ContactViaId
+	entity.InsurancePolicyNo = request.InsurancePolicyNo
+	entity.InsuranceExpiredDate = request.InsuranceExpired
+	entity.InsuranceClaimNo = request.InsuranceClaimNo
+	entity.InsurancePic = request.InsurancePic
 
 	err = tx.Save(&entity).Error
 	if err != nil {
@@ -253,21 +350,187 @@ func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.B
 	return true, nil
 }
 
+// uspg_wtBookEstim0_Delete
+// IF @Option = 0
+// --USE FOR : * DELETE DATA BY KEY
 func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
-	// Retrieve the booking estimation by Id
-	var entity transactionworkshopentities.BookingEstimation
-	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("batch_system_number = ?", Id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+	type BookingEstimation struct {
+		BatchSystemNumber          int `gorm:"column:batch_system_number"`
+		ServiceRequestSystemNumber int `gorm:"column:service_request_system_number"`
+		PdiSystemNumber            int `gorm:"column:pdi_system_number"`
+		PdiLine                    int `gorm:"column:pdi_line"`
+		BookingSystemNumber        int `gorm:"column:booking_system_number"`
+		EstimationSystemNumber     int `gorm:"column:estimation_system_number"`
 	}
 
-	// Perform the necessary operations to void the booking estimation
-	// ...
+	var booking BookingEstimation
+	err := tx.Table("trx_booking_estimation").
+		Select("service_request_system_number, pdi_system_number, pdi_line, booking_system_number, estimation_system_number").
+		Where("batch_system_number = ?", Id).
+		First(&booking).Error
 
-	// Save the updated booking estimation
-	err = tx.Delete(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking not found",
+				Err:        err,
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking details",
+			Err:        err,
+		}
+	}
+
+	var bookAllocSysNo int
+	err = tx.Table("trx_booking_estimation_allocation").
+		Where("booking_system_number = ?", booking.BookingSystemNumber).
+		Select("COALESCE(booking_allocation_system_number, 0)").
+		Scan(&bookAllocSysNo).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking allocation",
+			Err:        err,
+		}
+	}
+
+	var estimDiscStatus int
+	err = tx.Table("trx_booking_estimation_service_discount").
+		Where("estimation_system_number = ?", booking.EstimationSystemNumber).
+		Select("estimation_discount_approval_status").
+		Scan(&estimDiscStatus).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve estimation status",
+			Err:        err,
+		}
+	}
+
+	// Cek apakah booking sudah dialokasikan
+	var existingAlloc int
+	err = tx.Table("trx_work_order_allocation").
+		Where("booking_system_number = ?", booking.BookingSystemNumber).
+		Select("COUNT(1)").
+		Scan(&existingAlloc).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check booking allocation",
+			Err:        err,
+		}
+	}
+	if existingAlloc > 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Can't void document, document already allocated",
+		}
+	}
+
+	// Cek apakah estimasi masih dalam status approval
+	if estimDiscStatus == 2 { //"APPROVAL_WAITAPPROVED"
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Document still waiting for approval",
+		}
+	}
+
+	// Update service request
+	if booking.ServiceRequestSystemNumber != 0 {
+		err = tx.Table("trx_service_request").
+			Where("service_request_system_number = ?", booking.ServiceRequestSystemNumber).
+			Updates(map[string]interface{}{
+				"booking_system_number":     0,
+				"service_request_status_id": 3, // "SERV_REQ_STAT_ACCEPT"
+			}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update service request",
+				Err:        err,
+			}
+		}
+	}
+
+	// Update PDI jika ada
+	if booking.PdiSystemNumber != 0 && booking.PdiLine != 0 {
+		err = tx.Table("dms_microservices_sales_dev.dbo.trx_pdi_request_detail").
+			Where("pdi_request_system_number = ? AND pdi_request_detail_line_number = ?", booking.PdiSystemNumber, booking.PdiLine).
+			Updates(map[string]interface{}{
+				"booking_system_number":             0,
+				"service_date":                      nil,
+				"service_time":                      "",
+				"pdi_request_detail_line_status_id": 3, // "PDI_REQ_DET_STAT_ACCEPT"
+			}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update PDI records",
+				Err:        err,
+			}
+		}
+	}
+
+	// Hapus booking allocation
+	if bookAllocSysNo != 0 {
+		err = tx.Table("trx_booking_allocation").
+			Where("booking_allocation_system_number = ?", bookAllocSysNo).
+			Delete(nil).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to delete booking allocation",
+				Err:        err,
+			}
+		}
+	}
+
+	err = tx.Table("trx_booking_estimation").Where("batch_system_number = ?", Id).Delete(nil).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete records from trx_booking_estimation",
+			Err:        err,
+		}
+	}
+
+	err = tx.Table("trx_booking_estimation_allocation").Where("booking_system_number = ?", booking.BookingSystemNumber).Delete(nil).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete records from trx_booking_estimation_allocation",
+			Err:        err,
+		}
+	}
+
+	err = tx.Table("trx_booking_estimation_request").Where("booking_system_number = ?", booking.BookingSystemNumber).Delete(nil).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete records from trx_booking_estimation_request",
+			Err:        err,
+		}
+	}
+
+	err = tx.Table("trx_booking_estimation_service_discount").Where("estimation_system_number = ?", booking.EstimationSystemNumber).Delete(nil).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete records from trx_booking_estimation_service_discount",
+			Err:        err,
+		}
+	}
+
+	err = tx.Table("trx_booking_estimation_detail").Where("estimation_system_number = ?", booking.EstimationSystemNumber).Delete(nil).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete records from trx_booking_estimation_detail",
+			Err:        err,
+		}
 	}
 
 	return true, nil
@@ -294,88 +557,115 @@ func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptions.Base
 }
 
 func (r *BookingEstimationImpl) SaveBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
-	var count int64
-	err := tx.Table("trx_booking_estimation_request").Where("booking_system_number =?", id).Count(&count).Error
+	var maxBookingLine *int
+
+	err := tx.Model(&transactionworkshopentities.BookingEstimationRequest{}).
+		Where("booking_system_number = ?", id).
+		Select("MAX(booking_line)").
+		Scan(&maxBookingLine).Error
 	if err != nil {
 		return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve max booking line",
 			Err:        err,
 		}
 	}
-	total := count + 1
-	entities := transactionworkshopentities.BookingEstimationRequest{
-		BookingEstimationRequestCode: int(total),
-		BookingSystemNumber:          id,
-		BookingServiceRequest:        req.BookingServiceRequest,
+
+	newBookingLine := 1
+	if maxBookingLine != nil {
+		newBookingLine = *maxBookingLine + 1
 	}
-	err2 := tx.Save(&entities).Error
-	if err2 != nil {
+
+	newBooking := transactionworkshopentities.BookingEstimationRequest{
+		BookingLine:           newBookingLine,
+		BookingSystemNumber:   id,
+		BookingServiceRequest: req.BookingServiceRequest,
+		IsActive:              true,
+	}
+
+	if err := tx.Create(&newBooking).Error; err != nil {
 		return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save booking estimation request",
 			Err:        err,
 		}
 	}
-	return entities, nil
+
+	return newBooking, nil
 }
 
-func (r *BookingEstimationImpl) UpdateBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse) {
-	model := transactionworkshopentities.BookingEstimationRequest{}
-	result := tx.Model(&model).Where(transactionworkshopentities.BookingEstimationRequest{BookingEstimationRequestID: id}).First(&model).Updates(req)
-	if result.Error != nil {
-		return 0, &exceptions.BaseErrorResponse{
+func (r *BookingEstimationImpl) UpdateBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, booksysno int, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
+	var model transactionworkshopentities.BookingEstimationRequest
+
+	if err := tx.Where("booking_system_number = ? AND booking_estimation_request_id = ?", booksysno, id).
+		First(&model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation request not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
+			Message:    "Failed to retrieve booking estimation request",
+			Err:        err,
 		}
 	}
 
-	if model == (transactionworkshopentities.BookingEstimationRequest{}) {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+	if err := tx.Model(&model).
+		Where("booking_system_number = ? AND booking_estimation_request_id = ?", booksysno, id).
+		Updates(map[string]interface{}{
+			"booking_service_request": req.BookingServiceRequest,
+		}).Error; err != nil {
+		return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update booking estimation request",
+			Err:        err,
 		}
 	}
 
-	return id, nil
+	return model, nil
 }
 
 func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, ids string) ([]string, *exceptions.BaseErrorResponse) {
-	// Split the ids string into a slice of individual IDs
+
 	idSlice := strings.Split(ids, ",")
 
-	// Prepare a slice to hold successfully deleted IDs
-	deletedIds := []string{}
-
-	// Iterate over each ID and delete the corresponding record
-	for _, id := range idSlice {
-		model := transactionworkshopentities.BookingEstimationRequest{}
-
-		// Retrieve the record to ensure it exists
-		if err := tx.First(&model, id).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				continue // If the record is not found, skip to the next ID
-			}
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+	var models []transactionworkshopentities.BookingEstimationRequest
+	if err := tx.Where("booking_estimation_request_id IN (?)", idSlice).Find(&models).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch booking estimation requests",
+			Err:        err,
 		}
-
-		// Delete the record
-		if err := tx.Delete(&model).Error; err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		// Append the deleted ID to the deletedIds slice
-		deletedIds = append(deletedIds, id)
 	}
 
-	// Update line numbers for the remaining records
+	if len(models) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No booking estimation requests found to delete",
+			Err:        nil,
+		}
+	}
+
+	var deletedIds []string
+	for _, model := range models {
+		deletedIds = append(deletedIds, strconv.Itoa(model.BookingEstimationRequestID))
+	}
+
+	if err := tx.Delete(&models).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete booking estimation requests",
+			Err:        err,
+		}
+	}
+
 	if err := updateLineNumbers(tx); err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update line numbers",
 			Err:        err,
 		}
 	}
@@ -386,15 +676,18 @@ func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, ids string) ([]s
 func updateLineNumbers(tx *gorm.DB) error {
 	var records []transactionworkshopentities.BookingEstimationRequest
 
-	// Retrieve all remaining records, ordered by their current line numbers
-	if err := tx.Order("booking_estimation_request_code asc").Find(&records).Error; err != nil {
+	if err := tx.Model(&transactionworkshopentities.BookingEstimationRequest{}).
+		Order("booking_estimation_request_code ASC").
+		Find(&records).Error; err != nil {
 		return err
 	}
 
-	// Update line numbers sequentially
-	for i, record := range records {
-		record.BookingEstimationRequestCode = i + 1
-		if err := tx.Save(&record).Error; err != nil {
+	for i := range records {
+		records[i].BookingLine = i + 1
+	}
+
+	if len(records) > 0 {
+		if err := tx.Save(&records).Error; err != nil {
 			return err
 		}
 	}
@@ -402,40 +695,44 @@ func updateLineNumbers(tx *gorm.DB) error {
 	return nil
 }
 
-func (r *BookingEstimationImpl) GetByIdBookEstimReq(tx *gorm.DB, id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) GetByIdBookEstimReq(tx *gorm.DB, booksysno int, id int) (transactionworkshoppayloads.BookEstimRemarkResponse, *exceptions.BaseErrorResponse) {
 	var model transactionworkshopentities.BookingEstimationRequest
-	var payloads transactionworkshoppayloads.BookEstimRemarkRequest
 
-	// Query the database
-	err := tx.Model(&model).Where("booking_estimation_request_id = ?", id).Scan(&payloads).Error
-
-	// Check if there was an error during the query
-	if err != nil {
-		return payloads, &exceptions.BaseErrorResponse{
+	if err := tx.Where("booking_system_number = ? AND booking_estimation_request_id = ?", booksysno, id).
+		First(&model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.BookEstimRemarkResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation request not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshoppayloads.BookEstimRemarkResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking estimation request",
 			Err:        err,
 		}
 	}
 
-	// Check if the payload is empty
-	if (payloads == transactionworkshoppayloads.BookEstimRemarkRequest{}) {
-		return payloads, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("data not found"),
-		}
+	payloads := transactionworkshoppayloads.BookEstimRemarkResponse{
+		BookingServiceRequest: model.BookingServiceRequest,
+		BookingDocumentNumber: model.BookingDocumentNumber,
+		BookingLine:           model.BookingLine,
+		IsActive:              model.IsActive,
 	}
 
 	return payloads, nil
 }
 
-func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionworkshopentities.BookingEstimationRequest
+	pages.Rows = []transactionworkshopentities.BookingEstimationRequest{}
 
-	baseModelQuery := tx.Model(&transactionworkshopentities.BookingEstimationRequest{})
-	whereQuery := utils.ApplyFilter(baseModelQuery.Where("booking_system_number = ?", id), filterCondition)
+	baseQuery := tx.Model(&transactionworkshopentities.BookingEstimationRequest{})
+	filteredQuery := utils.ApplyFilter(baseQuery, filterCondition)
 
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
-	if err != nil {
+	if err := filteredQuery.Scopes(pagination.Paginate(&pages, filteredQuery)).
+		Find(&responses).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve booking estimation requests from the database",
@@ -443,39 +740,40 @@ func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, filterCondition 
 		}
 	}
 
-	if len(responses) == 0 {
-		pages.Rows = []transactionworkshopentities.BookingEstimationRequest{}
-		return pages, nil
-	}
-
 	pages.Rows = responses
 	return pages, nil
 }
 
-func (r *BookingEstimationImpl) SaveBookEstimReminderServ(tx *gorm.DB, req transactionworkshoppayloads.ReminderServicePost, id int) (int, *exceptions.BaseErrorResponse) {
-	var count int64
-	err := tx.Select("trx_booking_estimation_request.*").Where("booking_system_number =?", id).Count(&count).Error
+func (r *BookingEstimationImpl) SaveBookEstimReminderServ(tx *gorm.DB, req transactionworkshoppayloads.ReminderServicePost, id int) (transactionworkshopentities.BookingEstimationServiceReminder, *exceptions.BaseErrorResponse) {
+	var maxBookingLine int
+
+	err := tx.Model(&transactionworkshopentities.BookingEstimationServiceReminder{}).
+		Where("booking_system_number = ?", id).
+		Select("COALESCE(MAX(booking_line_number), 0)").
+		Scan(&maxBookingLine).Error
 	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
+		return transactionworkshopentities.BookingEstimationServiceReminder{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve max booking line number",
 			Err:        err,
 		}
 	}
-	count32 := int32(count)
-	total := count32 + 1
-	entities := transactionworkshopentities.BookingEstimationServiceReminder{
-		BookingLineNumber:      int(total),
+
+	newEntity := transactionworkshopentities.BookingEstimationServiceReminder{
+		BookingLineNumber:      maxBookingLine + 1,
 		BookingSystemNumber:    id,
 		BookingServiceReminder: req.BookingServiceReminder,
 	}
-	err2 := tx.Save(&entities).Error
-	if err2 != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
+
+	if err := tx.Create(&newEntity).Error; err != nil {
+		return transactionworkshopentities.BookingEstimationServiceReminder{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save booking estimation reminder service",
 			Err:        err,
 		}
 	}
-	return entities.BookingSystemNumber, nil
+
+	return newEntity, nil
 }
 
 func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailReq, id int) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
@@ -557,19 +855,28 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transaction
 
 func (r *BookingEstimationImpl) UpdateBookEstimDetail(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailUpdate, id int, LineTypeId int) (bool, *exceptions.BaseErrorResponse) {
 	var model transactionworkshopentities.BookingEstimationDetail
-	err := tx.Model(&model).Where("estimation_line_id =?", id).Updates(map[string]interface{}{
+
+	if err := tx.First(&model, "estimation_line_id = ?", id).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Booking estimation detail not found",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Model(&model).Where("estimation_line_id = ?", id).Updates(map[string]interface{}{
 		"frt_quantity":             req.FRTQuantity,
 		"discount_request_percent": req.DiscountRequestPercent,
-	}).Error
-	if err != nil {
+	}).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
-	_, err2 := r.PutBookingEstimationCalculation(tx, model.EstimationSystemNumber)
-	if err2 != nil {
-		return false, err2
+
+	_, err := r.PutBookingEstimationCalculation(tx, model.EstimationSystemNumber)
+	if err != nil {
+		return false, err
 	}
 
 	return true, nil
@@ -577,13 +884,40 @@ func (r *BookingEstimationImpl) UpdateBookEstimDetail(tx *gorm.DB, req transacti
 
 func (r *BookingEstimationImpl) DeleteBookEstimDetail(tx *gorm.DB, id int, linetypeid int) (bool, *exceptions.BaseErrorResponse) {
 	var model transactionworkshopentities.BookingEstimationDetail
-	err := tx.Delete(&model).Where("estimation_line_id =?", id).Error
-	if err != nil {
+
+	result := tx.Where("estimation_line_id = ? AND line_type_id = ?", id, linetypeid).First(&model)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation detail not found",
+				Err:        result.Error,
+			}
+		}
 		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check booking estimation detail",
+			Err:        result.Error,
 		}
 	}
+
+	deleteResult := tx.Where("estimation_line_id = ? AND line_type_id = ?", id, linetypeid).Delete(&model)
+	if deleteResult.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete booking estimation detail",
+			Err:        deleteResult.Error,
+		}
+	}
+
+	if deleteResult.RowsAffected == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No booking estimation detail deleted",
+			Err:        errors.New("no rows affected"),
+		}
+	}
+
 	return true, nil
 }
 
@@ -1047,51 +1381,46 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 }
 
 func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var taxfare float64
-	time := time.Now()
-	errUrlGetTax := utils.Get(config.EnvConfigs.FinanceServiceUrl+"tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date="+time.String(), taxfare, nil)
-	if errUrlGetTax != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errUrlGetTax,
-		}
-	}
-	const (
-		LineTypePackage            = 0 // Package Bodyshop
-		LineTypeOperation          = 1 // Operation
-		LineTypeSparePart          = 2 // Spare Part
-		LineTypeOil                = 3 // Oil
-		LineTypeMaterial           = 4 // Material
-		LineTypeAccessories        = 6 // Accessories
-		LineTypeConsumableMaterial = 7 // Consumable Material
-		LineTypeSublet             = 8 // Sublet
-	)
 
+	currentTime := time.Now()
+	taxResponse, errTax := financeserviceapiutils.GetTaxPercent("PPN", "PPN", currentTime)
+	if errTax != nil {
+		return nil, errTax
+	}
+	taxfare := taxResponse.TaxPercent
+
+	const (
+		LineTypePackage            = 0
+		LineTypeOperation          = 1
+		LineTypeSparePart          = 2
+		LineTypeOil                = 3
+		LineTypeMaterial           = 4
+		LineTypeAccessories        = 6
+		LineTypeConsumableMaterial = 7
+		LineTypeSublet             = 8
+	)
 	type Result struct {
 		TotalPackage            float64
 		TotalOperation          float64
 		TotalSparePart          float64
 		TotalOil                float64
 		TotalMaterial           float64
-		TotalFee                float64
 		TotalAccessories        float64
 		TotalConsumableMaterial float64
 		TotalSublet             float64
-		TotalSouvenir           float64
 	}
 
 	var result Result
 
-	// Calculate totals for each line type
 	err := tx.Model(&transactionworkshopentities.BookingEstimationServiceDiscount{}).
-		Select(`SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_package,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_operation,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_spare_part,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_oil,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_material,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_accessories,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_consumable_material,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_sublet`,
+		Select(`SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_package,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_operation,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_spare_part,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_oil,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_material,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_accessories,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_consumable_material,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(trx_booking_estimation_detail.operation_item_price, 0) * COALESCE(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_sublet`,
 			LineTypePackage,
 			LineTypeOperation,
 			LineTypeSparePart,
@@ -1105,14 +1434,18 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id 
 		Scan(&result).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to calculate totals: %v", err)}
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to calculate totals",
+			Err:        err,
+		}
 	}
 
 	// Calculate grand total
-	Total := result.TotalPackage + result.TotalOperation + result.TotalSparePart + result.TotalOil + result.TotalMaterial + result.TotalFee + result.TotalAccessories + result.TotalConsumableMaterial + result.TotalSublet + result.TotalSouvenir
-	tax := Total * (taxfare) / 100
-	grandTotal := Total + tax
-	// Update Work Order with the calculated totals
+	total := result.TotalPackage + result.TotalOperation + result.TotalSparePart + result.TotalOil + result.TotalMaterial + result.TotalAccessories + result.TotalConsumableMaterial + result.TotalSublet
+	tax := total * (taxfare / 100)
+	grandTotal := total + tax
+
 	err = tx.Model(&transactionworkshopentities.BookingEstimationServiceDiscount{}).
 		Where("batch_system_number = ?", id).
 		Updates(map[string]interface{}{
@@ -1129,28 +1462,47 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id 
 		}).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to update work order: %v", err)}
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update work order",
+			Err:        err,
+		}
 	}
 
-	// Prepare response
-	BookingEstimationResponse := []map[string]interface{}{
+	bookingEstimationResponse := []map[string]interface{}{
 		{"total_package": result.TotalPackage},
 		{"total_operation": result.TotalOperation},
-		{"total_part": result.TotalSparePart},
+		{"total_spare_part": result.TotalSparePart},
 		{"total_oil": result.TotalOil},
 		{"total_material": result.TotalMaterial},
-		{"total_price_accessories": result.TotalAccessories},
+		{"total_accessories": result.TotalAccessories},
 		{"total_consumable_material": result.TotalConsumableMaterial},
 		{"total_sublet": result.TotalSublet},
+		{"total_vat": tax},
 		{"total_after_vat": grandTotal},
 	}
 
-	return BookingEstimationResponse, nil
+	return bookingEstimationResponse, nil
 }
 
 func (r *BookingEstimationImpl) SaveBookingEstimationAllocation(tx *gorm.DB, id int, req transactionworkshoppayloads.BookEstimationAllocation) (transactionworkshopentities.BookingEstimationAllocation, *exceptions.BaseErrorResponse) {
+
+	if id <= 0 {
+		return transactionworkshopentities.BookingEstimationAllocation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid batch system number",
+		}
+	}
+
+	if req.BookingStatusID == 0 || req.CompanyID == 0 || req.BookingDocumentNumber == "" {
+		return transactionworkshopentities.BookingEstimationAllocation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Missing required fields: BookingStatusID, CompanyID, or BookingDocumentNumber",
+		}
+	}
+
 	entities := transactionworkshopentities.BookingEstimationAllocation{
-		DocumentStatusID:      req.DocumentStatusID,
+		BookingStatusID:       req.BookingStatusID,
 		BatchSystemNumber:     id,
 		CompanyID:             req.CompanyID,
 		PdiSystemNumber:       req.PdiSystemNumber,
@@ -1162,10 +1514,12 @@ func (r *BookingEstimationImpl) SaveBookingEstimationAllocation(tx *gorm.DB, id 
 		BookingServiceTime:    req.BookingServiceTime,
 		BookingEstimationTime: req.BookingEstimationTime,
 	}
-	err := tx.Save(&entities).Error
+
+	err := tx.Create(&entities).Error
 	if err != nil {
 		return transactionworkshopentities.BookingEstimationAllocation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
+			Message:    "Failed to save booking estimation allocation",
 			Err:        err,
 		}
 	}
@@ -1522,7 +1876,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 		}
 	}
 	entities8 := transactionworkshopentities.BookingEstimationAllocation{
-		DocumentStatusID:      documentstatus.DocumentStatusId, //document status new
+		BookingStatusID:       documentstatus.DocumentStatusId, //document status new
 		BatchSystemNumber:     entity.BatchSystemNumber,
 		CompanyID:             initialpayloads.CompanyId,
 		PdiSystemNumber:       idservreq,
@@ -1745,7 +2099,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, idpdi 
 	}
 
 	entities8 := transactionworkshopentities.BookingEstimationAllocation{
-		DocumentStatusID:      15, //document status new
+		BookingStatusID:       1, //document status new
 		BatchSystemNumber:     entities.BatchSystemNumber,
 		CompanyID:             pdipayload.CompanyID,
 		PdiSystemNumber:       idpdi,
