@@ -19,6 +19,7 @@ type ItemWarehouseTransferRequestService interface {
 	GetAllDetailTransferRequest(int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdTransferRequest(int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse)
 	GetByIdTransferRequestDetail(int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestDetailResponse, *exceptions.BaseErrorResponse)
+	GetByCodeTransferRequest(string) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse)
 	GetAllWhTransferRequest(pagination.Pagination, []utils.FilterCondition, map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetTransferRequestLookUp(pagination.Pagination, []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetTransferRequestDetailLookUp(int, pagination.Pagination, []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)

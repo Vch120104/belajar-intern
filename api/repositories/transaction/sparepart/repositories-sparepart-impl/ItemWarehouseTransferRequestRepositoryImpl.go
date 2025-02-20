@@ -14,7 +14,6 @@ import (
 	"after-sales/api/utils"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -25,6 +24,181 @@ func NewItemWarehouseTransferRequestRepositoryImpl() transactionsparepartreposit
 }
 
 type ItemWarehouseTransferRequestRepositoryImpl struct {
+}
+
+// GetByCodeTransferRequest implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
+func (*ItemWarehouseTransferRequestRepositoryImpl) GetByCodeTransferRequest(tx *gorm.DB, code string) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse) {
+	var entities transactionsparepartentities.ItemWarehouseTransferRequest
+	var warehouseFrom masterwarehouseentities.WarehouseMaster
+	var warehouseGroupFrom masterwarehouseentities.WarehouseGroup
+	var warehouseTo masterwarehouseentities.WarehouseMaster
+	var warehouseGroupTo masterwarehouseentities.WarehouseGroup
+	var response transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse
+
+	errGetEntities := tx.Model(&entities).Where(transactionsparepartentities.ItemWarehouseTransferRequest{TransferRequestDocumentNumber: code}).First(&entities).Error
+	if errGetEntities != nil {
+		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "item claim with that code is not found please check input",
+				Err:        errGetEntities,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetEntities,
+			Message:    "failed to get item claim please check input",
+		}
+	}
+
+	errGetWarehouseFrom := tx.Model(&warehouseFrom).Where(masterwarehouseentities.WarehouseMaster{WarehouseId: entities.RequestFromWarehouseId}).First(&warehouseFrom).Error
+	if errGetWarehouseFrom != nil {
+		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "warehouse from with that id is not found please check input",
+				Err:        errGetWarehouseFrom,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetWarehouseFrom,
+			Message:    "failed to get warehouse from please check input",
+		}
+	}
+
+	errGetWarehouseGroupFrom := tx.Model(&warehouseGroupFrom).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupId: warehouseFrom.WarehouseGroupId}).First(&warehouseGroupFrom).Error
+	if errGetWarehouseGroupFrom != nil {
+		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "warehouse group from with that id is not found please check input",
+				Err:        errGetWarehouseGroupFrom,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetWarehouseGroupFrom,
+			Message:    "failed to get warehouse group from please check input",
+		}
+	}
+
+	errGetWarehouseTo := tx.Model(&warehouseTo).Where(masterwarehouseentities.WarehouseMaster{WarehouseId: entities.RequestToWarehouseId}).First(&warehouseTo).Error
+	if errGetWarehouseTo != nil {
+		if errors.Is(errGetWarehouseTo, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "warehouse to with that id is not found please check input",
+				Err:        errGetWarehouseTo,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetWarehouseTo,
+			Message:    "failed to get warehouse to please check input",
+		}
+	}
+
+	errGetWarehouseGroupTo := tx.Model(&warehouseGroupTo).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupId: warehouseTo.WarehouseGroupId}).First(&warehouseGroupTo).Error
+	if errGetWarehouseGroupTo != nil {
+		if errors.Is(errGetEntities, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "warehouse group to with that id is not found please check input",
+				Err:        errGetWarehouseGroupTo,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetWarehouseGroupTo,
+			Message:    "failed to get warehouse group to please check input",
+		}
+	}
+
+	var transferRequestStatus masteritementities.ItemTransferStatus
+	errGetTransferStatus := tx.Model(&transferRequestStatus).Where(masteritementities.ItemTransferStatus{ItemTransferStatusId: entities.TransferRequestStatusId}).First(&transferRequestStatus).Error
+	if errGetTransferStatus != nil {
+		if errors.Is(errGetTransferStatus, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "transfer status with that id is not found please check input",
+				Err:        errGetTransferStatus,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errGetTransferStatus,
+			Message:    "failed to get transfer status please check input",
+		}
+	}
+
+	if *entities.TransferRequestById != 0 {
+		getUser, errGetUser := generalserviceapiutils.GetUserDetailsByID(*entities.TransferRequestById)
+		if errGetUser != nil {
+			if errors.Is(errGetUser, gorm.ErrRecordNotFound) {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "user with that id is not found please check input",
+					Err:        errGetUser,
+				}
+			}
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errGetUser,
+				Message:    "failed to get user please check input",
+			}
+		}
+
+		response.CreatedById = getUser.UserId
+		response.CreatedByName = getUser.Username + " - " + getUser.EmployeeName
+	}
+
+	if entities.ModifiedById != 0 {
+		getUserModified, errGetUserModified := generalserviceapiutils.GetUserDetailsByID(entities.ModifiedById)
+		if errGetUserModified != nil {
+			if errors.Is(errGetUserModified, gorm.ErrRecordNotFound) {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "user with that id is not found please check input",
+					Err:        errGetUserModified,
+				}
+			}
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errGetUserModified,
+				Message:    "failed to get user please check input",
+			}
+		}
+
+		response.ModifiedById = getUserModified.UserId
+		response.ModifiedByName = getUserModified.Username + " - " + getUserModified.EmployeeName
+	}
+
+	response.TransferRequestSystemNumber = entities.TransferRequestSystemNumber
+	response.TransferRequestDocumentNumber = entities.TransferRequestDocumentNumber
+	response.TransferRequestStatusId = entities.TransferRequestStatusId
+	response.TransferRequestStatusCode = transferRequestStatus.ItemTransferStatusCode
+	response.TransferRequestStatusDescription = transferRequestStatus.ItemTransferStatusDescription
+	response.TransferRequestDate = *entities.TransferRequestDate
+	response.RequestFromWarehouseId = entities.RequestFromWarehouseId
+	response.RequestFromWarehouseCode = warehouseFrom.WarehouseCode
+	response.RequestFromWarehouseName = warehouseFrom.WarehouseName
+	response.RequestFromWarehouseGroupId = warehouseFrom.WarehouseGroupId
+	response.RequestFromWarehouseGroupCode = warehouseGroupFrom.WarehouseGroupCode
+	response.RequestFromWarehouseGroupName = warehouseGroupFrom.WarehouseGroupName
+	response.RequestToWarehouseId = entities.RequestToWarehouseId
+	response.RequestToWarehouseCode = warehouseTo.WarehouseCode
+	response.RequestToWarehouseName = warehouseTo.WarehouseName
+	response.RequestToWarehouseGroupId = warehouseTo.WarehouseGroupId
+	response.RequestToWarehouseGroupCode = warehouseGroupTo.WarehouseGroupCode
+	response.RequestToWarehouseGroupName = warehouseGroupTo.WarehouseGroupName
+	response.RequestToWarehouseName = warehouseGroupTo.WarehouseGroupName
+	response.Purpose = entities.Purpose
+	response.ApprovalById = entities.ApprovalById
+	response.ApprovalDate = entities.ApprovalDate
+	response.ApprovalRemark = entities.ApprovalRemark
+
+	return response, nil
 }
 
 // GetTransferRequestDetailLookUp implements transactionsparepartrepository.ItemWarehouseTransferRequestRepository.
@@ -91,8 +265,10 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetTransferRequestLookUp(tx *
 			"b.transfer_request_by_id transfer_request_by_id",
 			"b.request_from_warehouse_id",
 			"wmf.warehouse_name request_from_warehouse_name",
+			"wmf.warehouse_code request_from_warehouse_code",
 			"wmf.warehouse_group_id request_from_warehouse_group_id",
 			"wgf.warehouse_group_name request_from_warehouse_group_name",
+			"wgf.warehouse_group_code request_from_warehouse_group_code",
 		).
 		Where("transfer_request_status_id in (? , ?)", status.ItemTransferStatusId, status2.ItemTransferStatusId).
 		Joins("LEFT JOIN mtr_warehouse_master wmf on wmf.warehouse_id = b.request_from_warehouse_id").
@@ -312,8 +488,6 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) DeleteDetail(tx *gorm.DB, num
 			Message:    "failed to get transfer request please check input",
 		}
 	}
-
-	fmt.Println(entities)
 
 	errDeleteDetail := tx.Model(&entitiesDetail).Where("transfer_request_detail_system_number = ?", number).Delete(&entitiesDetail)
 	if errDeleteDetail.Error != nil {
@@ -554,20 +728,24 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequest(tx *go
 		}
 	}
 
-	getUserModified, errGetUserModified := generalserviceapiutils.GetUserDetailsByID(entities.ModifiedById)
-	if errGetUserModified != nil {
-		if errors.Is(errGetUserModified, gorm.ErrRecordNotFound) {
+	if entities.ModifiedById != 0 {
+		getUserModified, errGetUserModified := generalserviceapiutils.GetUserDetailsByID(entities.ModifiedById)
+		if errGetUserModified != nil {
+			if errors.Is(errGetUserModified, gorm.ErrRecordNotFound) {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Message:    "user with that id is not found please check input",
+					Err:        errGetUserModified,
+				}
+			}
 			return response, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "user with that id is not found please check input",
+				StatusCode: http.StatusInternalServerError,
 				Err:        errGetUserModified,
+				Message:    "failed to get user please check input",
 			}
 		}
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errGetUserModified,
-			Message:    "failed to get user please check input",
-		}
+		response.ModifiedById = getUserModified.UserId
+		response.ModifiedByName = getUserModified.Username + " - " + getUserModified.EmployeeName
 	}
 
 	response.TransferRequestSystemNumber = number
@@ -595,8 +773,6 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) GetByIdTransferRequest(tx *go
 	response.ApprovalRemark = entities.ApprovalRemark
 	response.CreatedById = getUser.UserId
 	response.CreatedByName = getUser.Username + " - " + getUser.EmployeeName
-	response.ModifiedById = getUserModified.UserId
-	response.ModifiedByName = getUserModified.Username + " - " + getUserModified.EmployeeName
 
 	return response, nil
 }
@@ -832,9 +1008,6 @@ func (*ItemWarehouseTransferRequestRepositoryImpl) SubmitWhTransferRequest(tx *g
 	if errTo != nil {
 		return transactionsparepartentities.ItemWarehouseTransferRequest{}, errTo
 	}
-
-	fmt.Println(warehouseFrom.WarehouseCostingTypeId)
-	fmt.Println(warehouseTo.WarehouseCostingTypeId)
 
 	if warehouseFrom.WarehouseCostingTypeId != warehouseTo.WarehouseCostingTypeId {
 		return transactionsparepartentities.ItemWarehouseTransferRequest{}, &exceptions.BaseErrorResponse{

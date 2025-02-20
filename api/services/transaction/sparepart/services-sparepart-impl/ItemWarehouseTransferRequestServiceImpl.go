@@ -41,6 +41,38 @@ type WhTransferRequestServiceImpl struct {
 	RedisClient         *redis.Client
 }
 
+// GetByCodeTransferRequest implements transactionsparepartservice.ItemWarehouseTransferRequestService.
+func (s *WhTransferRequestServiceImpl) GetByCodeTransferRequest(code string) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	result, err := s.TransferRequestRepo.GetByCodeTransferRequest(tx, code)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 // GetTransferRequestDetailLookUp implements transactionsparepartservice.ItemWarehouseTransferRequestService.
 func (s *WhTransferRequestServiceImpl) GetTransferRequestDetailLookUp(number int, pages pagination.Pagination, filter []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
