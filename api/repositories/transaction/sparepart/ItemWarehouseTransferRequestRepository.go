@@ -19,6 +19,7 @@ type ItemWarehouseTransferRequestRepository interface {
 	GetAllDetailTransferRequest(*gorm.DB, int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdTransferRequest(*gorm.DB, int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse)
 	GetByIdTransferRequestDetail(*gorm.DB, int) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestDetailResponse, *exceptions.BaseErrorResponse)
+	GetByCodeTransferRequest(*gorm.DB, string) (transactionsparepartpayloads.GetByIdItemWarehouseTransferRequestResponse, *exceptions.BaseErrorResponse)
 	GetAllWhTransferRequest(*gorm.DB, pagination.Pagination, []utils.FilterCondition, map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetTransferRequestLookUp(*gorm.DB, pagination.Pagination, []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetTransferRequestDetailLookUp(*gorm.DB, int, pagination.Pagination, []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)

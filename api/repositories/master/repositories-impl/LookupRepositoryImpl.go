@@ -32,6 +32,37 @@ func StartLookupRepositoryImpl() masterrepository.LookupRepository {
 	return &LookupRepositoryImpl{}
 }
 
+// LocationGoodsReceipt implements masterrepository.LookupRepository.
+func (*LookupRepositoryImpl) LocationItemGoodsReceive(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	// var locationItem masteritementities.ItemLocation
+	var response []masterpayloads.LocationItemGoodsReceiveResponse
+
+	query := tx.Table("mtr_location_item as it").
+		Select(
+			"distinct it.warehouse_location_id",
+			"loc.warehouse_location_code",
+			"loc.warehouse_location_name",
+		).
+		Joins("LEFT JOIN mtr_warehouse_location loc on loc.warehouse_location_id = it.warehouse_location_id").
+		Joins("Inner join mtr_warehouse_master war on war.warehouse_id = it.warehouse_id").Order("it.warehouse_location_id")
+
+	whereQ := utils.ApplyFilter(query, filterCondition)
+	paginatedQuery := whereQ.Scopes(pagination.Paginate(&pages, whereQ))
+
+	err := paginatedQuery.Scan(&response).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching lookup data 'ItemMasterForFreeAccs'",
+			Err:        err,
+		}
+	}
+
+	pages.Rows = response
+	return pages, nil
+
+}
+
 // dbo.getOprItemDisc
 // get DISCOUNT value base on line type in operation or item master
 func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, linetypeStr string, billCodeId int, oprItemCode int, agreementId int, profitCenterId int, minValue float64, companyId int, brandId int, contractServSysNo int, whsGroup int, orderTypeId int) (float64, *exceptions.BaseErrorResponse) {

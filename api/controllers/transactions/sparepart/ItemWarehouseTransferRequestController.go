@@ -32,6 +32,7 @@ type ItemWarehouseTransferRequestController interface {
 	GetAllWhTransferRequest(writer http.ResponseWriter, request *http.Request)
 	GetTransferRequestLookUp(writer http.ResponseWriter, request *http.Request)
 	GetTransferRequestLookUpDetail(writer http.ResponseWriter, request *http.Request)
+	GetByCodeTransferRequest(writer http.ResponseWriter, request *http.Request)
 	DeleteHeaderTransferRequest(writer http.ResponseWriter, request *http.Request)
 	DeleteDetail(writer http.ResponseWriter, request *http.Request)
 	Upload(writer http.ResponseWriter, request *http.Request)
@@ -53,7 +54,45 @@ type ItemWarehouseTransferRequestControllerImpl struct {
 	ItemWarehouseTransferRequestService transactionsparepartservice.ItemWarehouseTransferRequestService
 }
 
+// GetByCodeTransferRequest implements ItemWarehouseTransferRequestController.
+// @Summary Get By Code Transfer Request
+// @Description Get By Code Transfer Request
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param code query string true "Transfer Request Document Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/by-code [get]
+func (r *ItemWarehouseTransferRequestControllerImpl) GetByCodeTransferRequest(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	code := queryValues.Get("transfer_request_document_number")
+	success, err := r.ItemWarehouseTransferRequestService.GetByCodeTransferRequest(code)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "Get Data Success", http.StatusCreated)
+}
+
 // GetTransferRequestLookUpDetail implements ItemWarehouseTransferRequestController.
+// @Summary Get All Warehouse Transfer Request Look Up Detail
+// @Description Get All Warehouse Transfer Request Look Up
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param id path int true "Transfer Request System Number"
+// @Param item_code query string false "Item Code"
+// @Param item_name query string false "Item Name"
+// @Param unit_of_measurement query string false "Unit Of Measurement"
+// @Param request_quantity query float64 false "Request Quantity"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/detail/look-up/{id} [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) GetTransferRequestLookUpDetail(writer http.ResponseWriter, request *http.Request) {
 	transferRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "id"))
 	queryValues := request.URL.Query()
@@ -112,6 +151,24 @@ func (r *ItemWarehouseTransferRequestControllerImpl) GetAllWhTransferReceipt(wri
 }
 
 // GetTransferRequestLookUp implements ItemWarehouseTransferRequestController.
+// @Summary Get All Warehouse Transfer Request Look Up
+// @Description Get All Warehouse Transfer Request Look Up
+// @Tags Transaction : Sparepart Item Warehouse Transfer Request
+// @Accept json
+// @Produce json
+// @Param transfer_request_document_number query string false "Transfer Request Document Number"
+// @Param company_id query int false "Company ID"
+// @Param transfer_request_date query string false "Transfer Request Date"
+// @Param transfer_request_by_id query string false "Transfer Request By Id"
+// @Param request_from_warehouse_name query string false "Request From Warehouse Name"
+// @Param request_from_warehouse_group_name query string false "Request From Warehouse Group Name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-warehouse-transfer-request/look-up [get]
 func (r *ItemWarehouseTransferRequestControllerImpl) GetTransferRequestLookUp(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{

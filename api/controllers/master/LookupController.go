@@ -42,6 +42,7 @@ type LookupController interface {
 	ReferenceTypeSalesOrder(writer http.ResponseWriter, request *http.Request)
 	ReferenceTypeSalesOrderByID(writer http.ResponseWriter, request *http.Request)
 	LocationAvailable(writer http.ResponseWriter, request *http.Request)
+	LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request)
 	ItemDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 	GetPartNumberItemImport(writer http.ResponseWriter, request *http.Request)
@@ -63,6 +64,65 @@ func NewLookupController(LookupService masterservice.LookupService) LookupContro
 	return &LookupControllerImpl{
 		LookupService: LookupService,
 	}
+}
+
+// LocationItemGoodsReceive implements LookupController.
+// @Summary Location Item Goods Receive
+// @Description Location Item Goods Receive
+// @Tags Master Lookup :
+// @Accept json
+// @Produce json
+// @Param company_id query int true "Company ID"
+// @Param item_id query int false "Item ID"
+// @Param warehouse_id query int false "warehouse ID"
+// @Param warehouse_location_code query string false "Warehouse location Code"
+// @Param warehouse_location_name query string false "Warehouse location name"
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort_of query string false "Sort Of"
+// @Param sort_by query string false "Sort By"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/lookup/location-item-goods-receive [get]
+func (r *LookupControllerImpl) LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"war.company_id":              queryValues.Get("company_id"),
+		"it.item_id":                  queryValues.Get("item_id"),
+		"it.warehouse_id":             queryValues.Get("warehouse_id"),
+		"loc.warehouse_location_code": queryValues.Get("warehouse_location_code"),
+		"loc.warehouse_location_name": queryValues.Get("warehouse_location_name"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	lookup, baseErr := r.LookupService.LocationItemGoodsReceive(criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		lookup.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		lookup.Limit,
+		lookup.Page,
+		int64(lookup.TotalRows),
+		lookup.TotalPages,
+	)
 }
 
 // @Summary Get Opr Item Price
