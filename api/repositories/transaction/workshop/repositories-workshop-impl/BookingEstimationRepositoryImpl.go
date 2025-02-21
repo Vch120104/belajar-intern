@@ -1027,7 +1027,11 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, id int, request
 			}
 
 			// VAT Tax Rate
-			taxResponse, taxErr := financeserviceapiutils.GetTaxPercent("TAX_SERV_CODE_PPN", "TAX_TYPE_PPN", time.Now())
+			taxResponse, taxErr := financeserviceapiutils.GetTaxPercent(financeserviceapiutils.TaxPercentParams{
+				TaxServiceCode: "PPN",
+				TaxTypeCode:    "PPN",
+				EffectiveDate:  time.Now(),
+			})
 			if taxErr != nil {
 				return transactionworkshopentities.BookingEstimationDetail{}, taxErr
 			}
@@ -1146,7 +1150,11 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 
 	currentTime := time.Now()
-	taxResponse, errTax := financeserviceapiutils.GetTaxPercent("PPN", "PPN", currentTime)
+	taxResponse, errTax := financeserviceapiutils.GetTaxPercent(financeserviceapiutils.TaxPercentParams{
+		TaxServiceCode: "PPN",
+		TaxTypeCode:    "PPN",
+		EffectiveDate:  currentTime,
+	})
 	if errTax != nil {
 		return nil, errTax
 	}

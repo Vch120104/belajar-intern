@@ -633,20 +633,21 @@ func (*ItemWarehouseTransferOutRepositoryImpl) GetAllTransferOutDetail(tx *gorm.
 		return pages, nil
 	}
 
-	for _, response := range responses {
+	for i := range responses {
 
 		get, err := masterwarehouserepository.NewLocationStockRepositoryImpl().GetAvailableQuantity(tx, masterwarehousepayloads.GetAvailableQuantityPayload{
 			CompanyId:        entitiesHeader.CompanyId,
 			PeriodDate:       entitiesHeader.TransferOutDate,
 			WarehouseId:      *entitiesHeader.WarehouseId,
-			LocationId:       response.LocationIdFrom,
-			ItemId:           response.ItemId,
-			WarehouseGroupId: response.WarehouseGroupId,
+			LocationId:       responses[i].LocationIdFrom,
+			ItemId:           responses[i].ItemId,
+			WarehouseGroupId: responses[i].WarehouseGroupId,
 		})
-		response.QuantityAvailable = get.QuantityAvailable
+		responses[i].QuantityAvailable = get.QuantityAvailable
 		if err != nil {
 			return pagination.Pagination{}, err
 		}
+
 	}
 
 	pages.Rows = responses

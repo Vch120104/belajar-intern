@@ -1,6 +1,7 @@
 package financeserviceapiutils
 
 import (
+	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"errors"
@@ -9,32 +10,46 @@ import (
 	"time"
 )
 
+// TaxPercentParams untuk query parameter API tax percent
+type TaxPercentParams struct {
+	TaxServiceCode string    `json:"tax_service_code"`
+	TaxTypeCode    string    `json:"tax_type_code"`
+	EffectiveDate  time.Time `json:"effective_date"`
+}
+
+// TaxPercentResponse untuk respons API tax percent
 type TaxPercentResponse struct {
 	TaxPercent float64 `json:"tax_percent"`
 }
 
-const TaxPercentBaseUrl = "tax-fare/"
+// GetTaxPercent mengambil nilai pajak berdasarkan kode layanan pajak, tipe pajak, dan tanggal efektif
+func GetTaxPercent(params TaxPercentParams) (TaxPercentResponse, *exceptions.BaseErrorResponse) {
+	var response TaxPercentResponse
 
-func GetTaxPercent(TaxServiceCode string, TaxTypeCode string, EffectiveDate time.Time) (TaxPercentResponse, *exceptions.BaseErrorResponse) {
-	formattedTime := EffectiveDate.Format(time.RFC3339)
-	getTaxPercentUrl := TaxPercentBaseUrl + "detail/tax-percent" +
-		fmt.Sprintf("?tax_service_code=%s&tax_type_code=%s&effective_date=%s", TaxServiceCode, TaxTypeCode, formattedTime)
+	baseURL := config.EnvConfigs.FinanceServiceUrl + "tax-fare/detail/tax-percent"
 
-	TaxPercentResponse := TaxPercentResponse{}
+	formattedDate := params.EffectiveDate.Format(time.RFC3339)
+	queryParams := fmt.Sprintf("?tax_service_code=%s&tax_type_code=%s&effective_date=%s",
+		params.TaxServiceCode, params.TaxTypeCode, formattedDate)
 
-	err := utils.CallAPI("GET", getTaxPercentUrl, nil, &TaxPercentResponse)
+	url := baseURL + queryParams
+
+	err := utils.CallAPI("GET", url, nil, &response)
 	if err != nil {
-		status := http.StatusBadGateway // Default to 502
+		status := http.StatusBadGateway // Default error status 502
 		message := "Failed to retrieve tax percent due to an external service error"
+
 		if errors.Is(err, utils.ErrServiceUnavailable) {
 			status = http.StatusServiceUnavailable
-			message = "event service is temporarily unavailable"
+			message = "tax service is temporarily unavailable"
 		}
-		return TaxPercentResponse, &exceptions.BaseErrorResponse{
+
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
-			Err:        errors.New("error consuming external API while getting tax percent by tax type code"),
+			Err:        errors.New("error consuming external API while getting tax percent"),
 		}
 	}
-	return TaxPercentResponse, nil
+
+	return response, nil
 }
