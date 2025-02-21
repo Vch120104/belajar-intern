@@ -212,11 +212,23 @@ func (r *PurchasePriceRepositoryImpl) UpdatePurchasePrice(tx *gorm.DB, Id int, r
 		}
 	}
 
-	entities.IsActive = request.IsActive
-	entities.SupplierId = request.SupplierId
-	entities.CurrencyId = request.CurrencyId
-	entities.PurchasePriceEffectiveDate = request.PurchasePriceEffectiveDate
+	updates := make(map[string]interface{})
+	if request.IsActive {
+		updates["is_active"] = request.IsActive
+	}
+	if request.SupplierId != 0 {
+		updates["supplier_id"] = request.SupplierId
+	}
+	if request.CurrencyId != 0 {
+		updates["currency_id"] = request.CurrencyId
+	}
+	if !request.PurchasePriceEffectiveDate.IsZero() {
+		updates["purchase_price_effective_date"] = request.PurchasePriceEffectiveDate
+	}
 
+	if len(updates) == 0 {
+		return entities, nil
+	}
 	result = tx.Save(&entities)
 	if result.Error != nil {
 		return masteritementities.PurchasePrice{}, &exceptions.BaseErrorResponse{
@@ -483,9 +495,20 @@ func (r *PurchasePriceRepositoryImpl) UpdatePurchasePriceDetail(tx *gorm.DB, Id 
 		}
 	}
 
-	entities.IsActive = request.IsActive
-	entities.ItemId = request.ItemId
-	entities.PurchasePrice = request.PurchasePrice
+	updates := make(map[string]interface{})
+	if request.IsActive {
+		updates["is_active"] = request.IsActive
+	}
+	if request.ItemId != 0 {
+		updates["item_id"] = request.ItemId
+	}
+	if request.PurchasePrice != 0 {
+		updates["purchase_pprice"] = request.PurchasePrice
+	}
+
+	if len(updates) == 0 {
+		return entities, nil
+	}
 
 	result = tx.Save(&entities)
 	if result.Error != nil {

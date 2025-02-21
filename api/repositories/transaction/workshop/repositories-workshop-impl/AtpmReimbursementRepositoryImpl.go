@@ -186,17 +186,45 @@ func (r *AtpmReimbursementRepositoryImpl) Save(tx *gorm.DB, claimsysno int, req 
 		}
 	}
 
-	entity.ClaimSystemNumber = req.ClaimSystemNumber
-	entity.CompanyId = req.CompanyId
-	entity.ReimbursementStatusId = req.ReimbursementStatusId
-	entity.InvoiceSystemNumber = req.InvoiceSystemNumber
-	entity.InvoiceDocumentNumber = req.InvoiceDocumentNumber
-	entity.InvoiceDate = invoiceDate
-	entity.TaxInvoiceSystemNumber = req.TaxInvoiceSystemNumber
-	entity.TaxInvoiceDocumentNumber = req.TaxInvoiceDocumentNumber
-	entity.TaxInvoiceDate = taxInvoiceDate
-	entity.KwitansiSystemNumber = req.KwitansiSystemNumber
-	entity.KwitansiDocumentNumber = req.KwitansiDocumentNumber
+	updates := make(map[string]interface{})
+
+	if req.ClaimSystemNumber != 0 {
+		updates["claim_system_number"] = req.ClaimSystemNumber
+	}
+	if req.CompanyId != 0 {
+		updates["company_id"] = req.CompanyId
+	}
+	if req.ReimbursementStatusId != 0 {
+		updates["reimbursement_status_id"] = req.ReimbursementStatusId
+	}
+	if req.InvoiceSystemNumber != 0 {
+		updates["invoice_system_number"] = req.InvoiceSystemNumber
+	}
+	if req.InvoiceDocumentNumber != "" {
+		updates["invoice_document_number"] = req.InvoiceDocumentNumber
+	}
+	if !invoiceDate.IsZero() {
+		updates["invoice_date"] = invoiceDate
+	}
+	if req.TaxInvoiceSystemNumber != 0 {
+		updates["tax_invoice_system_number"] = req.TaxInvoiceSystemNumber
+	}
+	if req.TaxInvoiceDocumentNumber != "" {
+		updates["tax_invoice_document_number"] = req.TaxInvoiceDocumentNumber
+	}
+	if !taxInvoiceDate.IsZero() {
+		updates["tax_invoice_date"] = taxInvoiceDate
+	}
+	if req.KwitansiSystemNumber != 0 {
+		updates["kwitansi_system_number"] = req.KwitansiSystemNumber
+	}
+	if req.KwitansiDocumentNumber != "" {
+		updates["kwitansi_document_number"] = req.KwitansiDocumentNumber
+	}
+
+	if len(updates) == 0 {
+		return entity, nil
+	}
 
 	if err := tx.Save(&entity).Error; err != nil {
 		return transactionworkshopentities.AtpmReimbursement{}, &exceptions.BaseErrorResponse{

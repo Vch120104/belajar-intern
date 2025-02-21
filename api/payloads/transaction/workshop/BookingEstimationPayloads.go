@@ -34,6 +34,43 @@ type BookingEstimationRequest struct {
 	InsurancePic                   string    `json:"insurance_pic"`
 }
 
+type BookingEstimationDetailRequest struct {
+	EstimationDetailId                  int     `gorm:"column:estimation_detail_id" json:"estimation_detail_id" parent_entity:"trx_booking_estimation_detail" main_table:"trx_booking_estimation_detail"`
+	EstimationSystemNumber              int     `gorm:"column:estimation_system_number" json:"estimation_system_number" parent_entity:"trx_booking_estimation_detail"`
+	LineTypeId                          int     `gorm:"column:line_type_id" json:"line_type_id" parent_entity:"trx_booking_estimation_detail"`
+	TransactionTypeId                   int     `gorm:"column:transaction_type_id" json:"transaction_type_id" parent_entity:"trx_booking_estimation_detail" `
+	JobTypeId                           int     `gorm:"column:job_type_id" json:"job_type_id" parent_entity:"trx_booking_estimation_detail"`
+	FrtQuantity                         float64 `gorm:"column:frt_quantity" json:"frt_quantity" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemId                     int     `gorm:"column:operation_item_id" json:"operation_item_id" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemCode                   string  `gorm:"column:operation_item_code" json:"operation_item_code" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemPrice                  float64 `gorm:"column:operation_item_price" json:"operation_item_price" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountAmount         float64 `gorm:"column:operation_item_discount_amount" json:"operation_item_discount_amount" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountPercent        float64 `gorm:"column:operation_item_discount_percent" json:"operation_item_discount_percent" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountRequestPercent float64 `gorm:"column:operation_item_discount_request_percent" json:"operation_item_discount_request_percent" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountRequestAmount  float64 `gorm:"column:operation_item_discount_request_amount" json:"operation_item_discount_request_amount" parent_entity:"trx_booking_estimation_detail"`
+}
+type BookingEstimationDetailResponse struct {
+	EstimationSystemNumber             int     `json:"estimation_system_number"`
+	EstimationDetailId                 int     `json:"estimation_detail_id"`
+	EstimationDocumentNumber           string  `json:"estimation_document_number"`
+	EstimationLine                     int     `json:"estimation_line"`
+	LineTypeId                         int     `json:"line_type_id"`
+	LineTypeCode                       string  `json:"line_type_code"`
+	LineTypeName                       string  `json:"line_type_name"`
+	TransactionTypeId                  int     `json:"transaction_type_id"`
+	TransactionTypeCode                string  `json:"transaction_type_code"`
+	JobTypeId                          int     `json:"job_type_id"`
+	JobTypeCode                        string  `json:"job_type_code"`
+	OperationItemId                    int     `json:"operation_item_id"`
+	OperationItemCode                  string  `json:"operation_item_code"`
+	Description                        string  `json:"description"`
+	Uom                                string  `json:"uom"`
+	FrtQuantity                        float64 `json:"frt_quantity"`
+	OperationItemPrice                 float64 `json:"operation_item_price"`
+	OperationItemDiscountAmount        float64 `json:"operation_item_discount_amount"`
+	OperationItemDiscountRequestAmount float64 `json:"operation_item_discount_request_amount"`
+}
+
 type BookEstimRemarkRequest struct {
 	BookingServiceRequest string `json:"booking_service_request"`
 }
@@ -362,8 +399,8 @@ type BookEstimationAllocation struct {
 	BookingStall          string     `json:"booking_stall"`
 	BookingReminderDate   *time.Time `json:"booking_reminder_date"`
 	BookingServiceDate    *time.Time `json:"booking_service_date"`
-	BookingServiceTime    float32    `json:"booking_service_time"`
-	BookingEstimationTime float32    `json:"booking_estimation_time"`
+	BookingServiceTime    float64    `json:"booking_service_time"`
+	BookingEstimationTime float64    `json:"booking_estimation_time"`
 }
 
 type BookingEstimationFirstContractService struct {

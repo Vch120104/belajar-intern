@@ -401,14 +401,36 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request 
 		return entity, nil
 	}
 
-	entity.CustomerComplaint = request.CustomerComplaint
-	entity.TechnicianDiagnostic = request.TechnicianDiagnostic
-	entity.Countermeasure = request.Countermeasure
-	entity.RepairEndDate = request.RepairEndDate
-	entity.Fuel = request.Fuel
-	entity.CustomerId = request.CustomerId
-	entity.Vdn = request.VDN
-	entity.ClaimHeader = request.ClaimHeader
+	updates := make(map[string]interface{})
+
+	if request.CustomerComplaint != "" {
+		updates["customer_complaint"] = request.CustomerComplaint
+	}
+	if request.TechnicianDiagnostic != "" {
+		updates["technician_diagnostic"] = request.TechnicianDiagnostic
+	}
+	if request.Countermeasure != "" {
+		updates["countermeasure"] = request.Countermeasure
+	}
+	if !request.RepairEndDate.IsZero() {
+		updates["repair_end_date"] = request.RepairEndDate
+	}
+	if request.Fuel != 0 {
+		updates["fuel"] = request.Fuel
+	}
+	if request.CustomerId != 0 {
+		updates["customer_id"] = request.CustomerId
+	}
+	if request.VDN != "" {
+		updates["vdn"] = request.VDN
+	}
+	if request.ClaimHeader != "" {
+		updates["claim_header"] = request.ClaimHeader
+	}
+
+	if len(updates) == 0 {
+		return entity, nil
+	}
 
 	if err := tx.Save(&entity).Error; err != nil {
 		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{

@@ -710,10 +710,24 @@ func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 		}
 	}
 
-	entity.ServiceTypeId = request.ServiceTypeId
-	entity.ServiceCompanyId = request.ServiceCompanyId
-	entity.ServiceDate = request.ServiceDate
-	entity.ServiceRemark = request.ServiceRemark
+	updates := make(map[string]interface{})
+
+	if request.ServiceTypeId != 0 {
+		updates["service_type_id"] = request.ServiceTypeId
+	}
+	if request.ServiceCompanyId != 0 {
+		updates["service_company_id"] = request.ServiceCompanyId
+	}
+	if !request.ServiceDate.IsZero() {
+		updates["service_date"] = request.ServiceDate
+	}
+	if request.ServiceRemark != "" {
+		updates["service_remark"] = request.ServiceRemark
+	}
+
+	if len(updates) == 0 {
+		return entity, nil
+	}
 
 	err = tx.Save(&entity).Error
 	if err != nil {

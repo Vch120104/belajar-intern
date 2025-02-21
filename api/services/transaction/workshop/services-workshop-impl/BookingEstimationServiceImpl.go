@@ -404,7 +404,7 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transaction
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworkshoppayloads.BookEstimDetailReq, id int) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(id int, req transactionworkshoppayloads.BookingEstimationDetailRequest) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var errResponse *exceptions.BaseErrorResponse
 
@@ -430,7 +430,7 @@ func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworksh
 	}()
 
 	// Simpan detail booking estimation
-	result, err := s.structBookingEstimationRepo.SaveDetailBookEstim(tx, req, id)
+	result, err := s.structBookingEstimationRepo.SaveDetailBookEstim(tx, id, req)
 	if err != nil {
 		errResponse = &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -606,7 +606,7 @@ func (s *BookingEstimationServiceImpl) AddFieldAction(id int, idrecall int) (int
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(id int, LineTypeID int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(estimsysno int, id int) (transactionworkshoppayloads.BookingEstimationDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -630,9 +630,9 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(id int, LineTypeID
 			}
 		}
 	}()
-	result, err := s.structBookingEstimationRepo.GetByIdBookEstimDetail(tx, id, LineTypeID)
+	result, err := s.structBookingEstimationRepo.GetByIdBookEstimDetail(tx, estimsysno, id)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	return result, nil
 }
@@ -759,4 +759,35 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationAllocation(id int, r
 		return transactionworkshopentities.BookingEstimationAllocation{}, err
 	}
 	return result, nil
+}
+
+func (s *BookingEstimationServiceImpl) GetAllDetailBookingEstimation(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := s.structBookingEstimationRepo.GetAllDetailBookingEstimation(tx, filterCondition, pages)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
 }

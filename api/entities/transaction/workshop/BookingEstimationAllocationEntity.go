@@ -16,8 +16,8 @@ type BookingEstimationAllocation struct {
 	BookingStall                     string                             `gorm:"column:booking_stall;type:varchar(30);not null" json:"booking_stall"`
 	BookingReminderDate              *time.Time                         `gorm:"column:booking_reminder_date;default:null" json:"booking_reminder_date"`
 	BookingServiceDate               *time.Time                         `gorm:"column:booking_service_date;default:null" json:"booking_service_date"`
-	BookingServiceTime               float32                            `gorm:"column:booking_service_time;type:varchar(5);default:null" json:"booking_service_time"`
-	BookingEstimationTime            float32                            `gorm:"column:booking_estimation_time;default:null" json:"booking_estimation_time"`
+	BookingServiceTime               float64                            `gorm:"column:booking_service_time;type:varchar(5);default:null" json:"booking_service_time"`
+	BookingEstimationTime            float64                            `gorm:"column:booking_estimation_time;default:null" json:"booking_estimation_time"`
 	BookingAllocationSystemNumber    int                                `gorm:"column:booking_allocation_system_number;size:30;default:null" json:"booking_allocation_system_number"`
 	BookingCancelReason              string                             `gorm:"column:booking_cancel_reason;type:varchar(255);default:null" json:"booking_cancel_reason"`
 	BookingEstimationServiceReminder []BookingEstimationServiceReminder `gorm:"foreignKey:BookingSystemNumber;" json:"booking_estimation_service_reminder"`

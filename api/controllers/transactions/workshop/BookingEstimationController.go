@@ -36,14 +36,17 @@ type BookingEstimationController interface {
 	GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetAllBookEstimReq(writer http.ResponseWriter, request *http.Request)
 
-	SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request)
+	GetAllDetailBookingEstimation(writer http.ResponseWriter, request *http.Request)
+	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
 	SaveDetailBookEstim(writer http.ResponseWriter, request *http.Request)
+
+	SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request)
 	AddPackage(writer http.ResponseWriter, request *http.Request)
 	AddContractService(writer http.ResponseWriter, request *http.Request)
 	InputDiscount(writer http.ResponseWriter, request *http.Request)
 	CopyFromHistory(writer http.ResponseWriter, request *http.Request)
 	AddFieldAction(writer http.ResponseWriter, request *http.Request)
-	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
+
 	PostBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request)
@@ -430,21 +433,39 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReminderServ(writer http.
 	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
 }
 
+// SaveDetailBookEstim saves a booking estimation detail
+// @Summary Save Booking Estimation Detail
+// @Description Save a booking estimation detail
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param estimation_system_number path int true "Estimation System Number"
+// @Param reqBody body transactionworkshoppayloads.BookingEstimationDetailRequest true "Booking Estimation Detail Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{estimation_system_number}/detail [post]
 func (r *BookingEstimationControllerImpl) SaveDetailBookEstim(writer http.ResponseWriter, request *http.Request) {
-	var formrequest transactionworkshoppayloads.BookEstimDetailReq
+
+	estsysnoStrId := chi.URLParam(request, "estimation_system_number")
+	id, err := strconv.Atoi(estsysnoStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid estimation system ID", http.StatusBadRequest)
+		return
+	}
+
+	var formrequest transactionworkshoppayloads.BookingEstimationDetailRequest
 	helper.ReadFromRequestBody(request, &formrequest)
 	if validationErr := validation.ValidationForm(writer, request, &formrequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
-	id, _ := strconv.Atoi(chi.URLParam(request, "estimation_system_number"))
 
-	create, err := r.bookingEstimationService.SaveDetailBookEstim(formrequest, id)
-	if err != nil {
-		exceptions.NewBadRequestException(writer, request, err)
+	create, baseErr := r.bookingEstimationService.SaveDetailBookEstim(id, formrequest)
+	if baseErr != nil {
+		exceptions.NewBadRequestException(writer, request, baseErr)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
 func (r *BookingEstimationControllerImpl) AddPackage(writer http.ResponseWriter, request *http.Request) {
@@ -496,10 +517,23 @@ func (r *BookingEstimationControllerImpl) AddFieldAction(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
 }
 
+// GetByIdBookEstimDetail retrieves a booking estimation detail by ID
+// @Summary Get Booking Estimation Detail By ID
+// @Description Retrieve a booking estimation detail by ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param estimation_system_number path int true "Estimation System Number"
+// @Param estimation_detail_id path int true "Estimation Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{estimation_system_number}/detail/{estimation_detail_id} [get]
 func (r *BookingEstimationControllerImpl) GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request) {
-	bookingestiomationid, _ := strconv.Atoi(chi.URLParam(request, "booking_estimation_id"))
-	LineTypeId, _ := strconv.Atoi(chi.URLParam(request, "line_type_id"))
-	get, err := r.bookingEstimationService.GetByIdBookEstimDetail(bookingestiomationid, LineTypeId)
+
+	estiomationid, _ := strconv.Atoi(chi.URLParam(request, "estimation_detail_id"))
+	estimsysno, _ := strconv.Atoi(chi.URLParam(request, "estimation_system_number"))
+
+	get, err := r.bookingEstimationService.GetByIdBookEstimDetail(estimsysno, estiomationid)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -581,4 +615,50 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationAllocation(Writer
 		return
 	}
 	payloads.NewHandleSuccess(Writer, save, "Save Data Successfully!", http.StatusOK)
+}
+
+// GetAllDetailBookingEstimation gets all booking estimation details
+// @Summary Get All Booking Estimation Details
+// @Description Retrieve all booking estimation details with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/detail [get]
+func (r *BookingEstimationControllerImpl) GetAllDetailBookingEstimation(writer http.ResponseWriter, request *http.Request) {
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{}
+
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, baseErr := r.bookingEstimationService.GetAllDetailBookingEstimation(criteria, pagination)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
