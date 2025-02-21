@@ -931,3 +931,28 @@ func (r *WarehouseMasterImpl) DeleteMultiIdAuthorizeUser(tx *gorm.DB, id string)
 	}
 	return true, nil
 }
+
+func (r *WarehouseMasterImpl) GetWarehouseMasterById(tx *gorm.DB, id int) (masterwarehousepayloads.WarehouseMasterByIdResponse, *exceptions.BaseErrorResponse) {
+	var entities masterwarehouseentities.WarehouseMaster
+	var warehouseMasterResponse masterwarehousepayloads.WarehouseMasterByIdResponse
+
+	err := tx.Model(&entities).
+		Where("warehouse_id = ?", id).
+		First(&entities).Error
+	if err != nil {
+		return masterwarehousepayloads.WarehouseMasterByIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Warehouse not found",
+			Err:        err,
+		}
+	}
+
+	warehouseMasterResponse = masterwarehousepayloads.WarehouseMasterByIdResponse{
+
+		WarehouseId:   entities.WarehouseId,
+		WarehouseCode: entities.WarehouseCode,
+		WarehouseName: entities.WarehouseName,
+	}
+
+	return warehouseMasterResponse, nil
+}

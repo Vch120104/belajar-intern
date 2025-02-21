@@ -30,6 +30,7 @@ type WarehouseMasterController interface {
 	DropdownWarehouse(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	GetByCode(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseMasterById(writer http.ResponseWriter, request *http.Request)
 	GetWarehouseMasterByCodeCompany(writer http.ResponseWriter, request *http.Request)
 	GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
@@ -532,4 +533,29 @@ func (r *WarehouseMasterControllerImpl) InTransitWarehouseCodeDropdown(writer ht
 	}
 
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get Warehouse Master By Multi Id
+// @Description Get Warehouse Master By Multi Id
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Master
+// @Param warehouse_id path int true "warehouse_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/by-whs-id/{warehouse_id} [get]
+func (r *WarehouseMasterControllerImpl) GetWarehouseMasterById(writer http.ResponseWriter, request *http.Request) {
+	warehouseId, err := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Warehouse ID", http.StatusBadRequest)
+		return
+	}
+
+	result, baseErr := r.WarehouseMasterService.GetWarehouseMasterById(warehouseId)
+	if baseErr != nil {
+		helper.ReturnError(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

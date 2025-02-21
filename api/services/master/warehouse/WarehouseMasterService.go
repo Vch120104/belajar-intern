@@ -26,4 +26,5 @@ type WarehouseMasterService interface {
 	PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse)
 	DeleteMultiIdAuthorizeUser(id string) (bool, *exceptions.BaseErrorResponse)
 	InTransitWarehouseCodeDropdown(int, int) ([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse)
+	GetWarehouseMasterById(id int) (masterwarehousepayloads.WarehouseMasterByIdResponse, *exceptions.BaseErrorResponse)
 }
