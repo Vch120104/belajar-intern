@@ -240,7 +240,11 @@ func (r *SalesOrderRepositoryImpl) InsertSalesOrderHeader(db *gorm.DB, payload t
 		TransactionTypeSalesOrder.TransactionTypeSalesOrderCode == "SU06" {
 		payload.VATTaxPercentage = 0
 	} else {
-		GetTaxPercent, GetTaxPercentErr := financeserviceapiutils.GetTaxPercent("PPN", "PPN", payload.SalesOrderDate)
+		GetTaxPercent, GetTaxPercentErr := financeserviceapiutils.GetTaxPercent(financeserviceapiutils.TaxPercentParams{
+			TaxServiceCode: "PPN",
+			TaxTypeCode:    "PPN",
+			EffectiveDate:  payload.SalesOrderDate,
+		})
 		if GetTaxPercentErr != nil {
 			return Entities, GetTaxPercentErr
 		}

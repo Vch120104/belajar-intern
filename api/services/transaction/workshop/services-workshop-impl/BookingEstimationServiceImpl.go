@@ -61,8 +61,8 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx = s.DB.Begin()
+func (s *BookingEstimationServiceImpl) New(request transactionworkshoppayloads.BookingEstimationNormalRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
 	defer func() {
@@ -85,14 +85,15 @@ func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworks
 			}
 		}
 	}()
-	_, err = s.structBookingEstimationRepo.Post(tx, request)
+
+	results, err := s.structBookingEstimationRepo.New(tx, request)
 	if err != nil {
-		return false, err
+		return results, err
 	}
-	return true, nil
+	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppayloads.BookingEstimationResponseDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -121,9 +122,10 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, 
 		return results, err
 	}
 	return results, nil
+
 }
 
-func (s *BookingEstimationServiceImpl) Save(request transactionworkshoppayloads.BookingEstimationRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) Save(request transactionworkshoppayloads.BookingEstimationSaveRequest, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -278,7 +280,7 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshopp
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) UpdateBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) UpdateBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, booksysno int, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -302,14 +304,14 @@ func (s *BookingEstimationServiceImpl) UpdateBookEstimReq(req transactionworksho
 			}
 		}
 	}()
-	result, err := s.structBookingEstimationRepo.UpdateBookEstimReq(tx, req, id)
+	result, err := s.structBookingEstimationRepo.UpdateBookEstimReq(tx, req, booksysno, id)
 	if err != nil {
-		return 0, err
+		return transactionworkshopentities.BookingEstimationRequest{}, err
 	}
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq(id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq(booksysno int, id int) (transactionworkshoppayloads.BookEstimRemarkResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -333,14 +335,14 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq(id int) (transactionw
 			}
 		}
 	}()
-	result, err := s.structBookingEstimationRepo.GetByIdBookEstimReq(tx, id)
+	result, err := s.structBookingEstimationRepo.GetByIdBookEstimReq(tx, booksysno, id)
 	if err != nil {
-		return transactionworkshoppayloads.BookEstimRemarkRequest{}, err
+		return transactionworkshoppayloads.BookEstimRemarkResponse{}, err
 	}
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -364,14 +366,14 @@ func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(filterCondition []util
 			}
 		}
 	}()
-	result, err := s.structBookingEstimationRepo.GetAllBookEstimReq(tx, filterCondition, pages, id)
+	result, err := s.structBookingEstimationRepo.GetAllBookEstimReq(tx, filterCondition, pages)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transactionworkshoppayloads.ReminderServicePost, id int) (int, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transactionworkshoppayloads.ReminderServicePost, id int) (transactionworkshopentities.BookingEstimationServiceReminder, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -397,12 +399,12 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transaction
 	}()
 	result, err := s.structBookingEstimationRepo.SaveBookEstimReminderServ(tx, req, id)
 	if err != nil {
-		return 0, err
+		return transactionworkshopentities.BookingEstimationServiceReminder{}, err
 	}
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworkshoppayloads.BookEstimDetailReq, id int) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(id int, req transactionworkshoppayloads.BookingEstimationDetailRequest) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var errResponse *exceptions.BaseErrorResponse
 
@@ -428,7 +430,7 @@ func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworksh
 	}()
 
 	// Simpan detail booking estimation
-	result, err := s.structBookingEstimationRepo.SaveDetailBookEstim(tx, req, id)
+	result, err := s.structBookingEstimationRepo.SaveDetailBookEstim(tx, id, req)
 	if err != nil {
 		errResponse = &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -604,7 +606,7 @@ func (s *BookingEstimationServiceImpl) AddFieldAction(id int, idrecall int) (int
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(id int, LineTypeID int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(estimsysno int, id int) (transactionworkshoppayloads.BookingEstimationDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -628,9 +630,9 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(id int, LineTypeID
 			}
 		}
 	}()
-	result, err := s.structBookingEstimationRepo.GetByIdBookEstimDetail(tx, id, LineTypeID)
+	result, err := s.structBookingEstimationRepo.GetByIdBookEstimDetail(tx, estimsysno, id)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	return result, nil
 }
@@ -757,4 +759,35 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationAllocation(id int, r
 		return transactionworkshopentities.BookingEstimationAllocation{}, err
 	}
 	return result, nil
+}
+
+func (s *BookingEstimationServiceImpl) GetAllDetailBookingEstimation(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+	results, err := s.structBookingEstimationRepo.GetAllDetailBookingEstimation(tx, filterCondition, pages)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
 }

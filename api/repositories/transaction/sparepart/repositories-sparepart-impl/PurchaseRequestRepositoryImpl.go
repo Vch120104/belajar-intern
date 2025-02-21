@@ -1108,6 +1108,21 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	err = db.Model(&entities).
 		Where(masteritementities.UomItem{ItemId: response.ItemId, UomSourceTypeCode: "P"}).
 		First(&response).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+				Message:    "uom item is not found",
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get uom item",
+		}
+	}
 	UomRate := entities.TargetConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").
@@ -1217,6 +1232,22 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	err = db.Model(&entities).
 		Where(masteritementities.UomItem{ItemId: response.ItemId, UomSourceTypeCode: "P"}).
 		First(&response).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+				Message:    "uom item is not found",
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get uom item",
+		}
+	}
+
 	UomRate := entities.TargetConvertion
 	response.UnitOfMeasurementCode = ""
 	err = db.Table("mtr_uom_item A").Joins("INNER JOIN mtr_uom B ON A.source_uom_id = B.uom_id").

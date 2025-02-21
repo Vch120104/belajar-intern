@@ -30,18 +30,23 @@ type BookingEstimationController interface {
 	Submit(writer http.ResponseWriter, request *http.Request)
 	Void(writer http.ResponseWriter, request *http.Request)
 	CloseOrder(writer http.ResponseWriter, request *http.Request)
+
 	SaveBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetAllBookEstimReq(writer http.ResponseWriter, request *http.Request)
-	SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request)
+
+	GetAllDetailBookingEstimation(writer http.ResponseWriter, request *http.Request)
+	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
 	SaveDetailBookEstim(writer http.ResponseWriter, request *http.Request)
+
+	SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request)
 	AddPackage(writer http.ResponseWriter, request *http.Request)
 	AddContractService(writer http.ResponseWriter, request *http.Request)
 	InputDiscount(writer http.ResponseWriter, request *http.Request)
 	CopyFromHistory(writer http.ResponseWriter, request *http.Request)
 	AddFieldAction(writer http.ResponseWriter, request *http.Request)
-	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
+
 	PostBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request)
@@ -114,11 +119,27 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Param reqBody body transactionworkshoppayloads.BookingEstimationNormalRequest true "Booking Estimation Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/normal [post]
 func (r *BookingEstimationControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
-	// Create new booking estimation
+
+	var BookingEstimationNormalRequest transactionworkshoppayloads.BookingEstimationNormalRequest
+	helper.ReadFromRequestBody(request, &BookingEstimationNormalRequest)
+	if validationErr := validation.ValidationForm(writer, request, &BookingEstimationNormalRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	success, baseErr := r.bookingEstimationService.New(BookingEstimationNormalRequest)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Booking Created successfully", http.StatusCreated)
+
 }
 
 // NewBooking creates a new booking estimation for booking
@@ -158,11 +179,17 @@ func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWrit
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/normal/{batch_system_number} [get]
 func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-	bookestimid, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))
 
-	result, err := r.bookingEstimationService.GetById(bookestimid)
+	bookEstimIdStr := chi.URLParam(request, "batch_system_number")
+	bookEstimId, err := strconv.Atoi(bookEstimIdStr)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		payloads.NewHandleError(writer, "Invalid booking estimation ID", http.StatusBadRequest)
+		return
+	}
+
+	result, baseErr := r.bookingEstimationService.GetById(bookEstimId)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -175,20 +202,20 @@ func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
 // @Param batch_system_number path int true "Booking Estimation ID"
-// @Param reqBody body transactionworkshoppayloads.BookingEstimationRequest true "Booking Estimation Data"
+// @Param reqBody body transactionworkshoppayloads.BookingEstimationSaveRequest true "Booking Estimation Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/normal/{batch_system_number} [put]
 func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
-	// Get the Work Order ID from URL parameters and convert to int
+
 	batchSystemNumberIdStr := chi.URLParam(request, "batch_system_number")
 	batchSystemNumberId, err := strconv.Atoi(batchSystemNumberIdStr)
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		payloads.NewHandleError(writer, "Invalid Batch System ID", http.StatusBadRequest)
 		return
 	}
 
-	var BookingEstimationRequest transactionworkshoppayloads.BookingEstimationRequest
+	var BookingEstimationRequest transactionworkshoppayloads.BookingEstimationSaveRequest
 	helper.ReadFromRequestBody(request, &BookingEstimationRequest)
 	if validationErr := validation.ValidationForm(writer, request, &BookingEstimationRequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
@@ -232,9 +259,13 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	// Cancel booking estimation
 	batchSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))
-	delete, err := r.bookingEstimationService.Void(batchSystemNumber)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	delete, baseErr := r.bookingEstimationService.Void(batchSystemNumber)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
 		return
 	}
 	payloads.NewHandleSuccess(writer, delete, "Get Data Successfully!", http.StatusOK)
@@ -254,6 +285,17 @@ func (r *BookingEstimationControllerImpl) CloseOrder(writer http.ResponseWriter,
 	// Close booking estimation
 }
 
+// SaveBookEstimReq saves a booking estimation request
+// @Summary Save Booking Estimation Request
+// @Description Save a booking estimation request
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param booking_system_number path int true "Booking System Number"
+// @Param reqBody body transactionworkshoppayloads.BookEstimRemarkRequest true "Booking Estimation Request Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{booking_system_number}/request [post]
 func (r *BookingEstimationControllerImpl) SaveBookEstimReq(writer http.ResponseWriter, request *http.Request) {
 	var formrequest transactionworkshoppayloads.BookEstimRemarkRequest
 	helper.ReadFromRequestBody(request, &formrequest)
@@ -267,9 +309,21 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReq(writer http.ResponseW
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Request Data Created!", http.StatusCreated)
 }
 
+// UpdateBookEstimReq updates a booking estimation request
+// @Summary Update Booking Estimation Request
+// @Description Update a booking estimation request
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param booking_system_number path int true "Booking System Number"
+// @Param booking_estimation_request_id path int true "Booking Estimation Request ID"
+// @Param reqBody body transactionworkshoppayloads.BookEstimRemarkRequest true "Booking Estimation Request Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{booking_system_number}/request/{booking_estimation_request_id} [put]
 func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request) {
 	var formrequest transactionworkshoppayloads.BookEstimRemarkRequest
 	helper.ReadFromRequestBody(request, &formrequest)
@@ -277,8 +331,9 @@ func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.Respons
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
-	BookingEstimationRequestId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
-	update, err := r.bookingEstimationService.UpdateBookEstimReq(formrequest, BookingEstimationRequestId)
+	BookingEstimationRequestId, _ := strconv.Atoi(chi.URLParam(request, "booking_estimation_request_id"))
+	BookingSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
+	update, err := r.bookingEstimationService.UpdateBookEstimReq(formrequest, BookingSystemNumber, BookingEstimationRequestId)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -286,9 +341,22 @@ func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.Respons
 	payloads.NewHandleSuccess(writer, update, "Get Data Successfully!", http.StatusOK)
 }
 
+// GetByIdBookEstimReq retrieves a booking estimation request by ID
+// @Summary Get Booking Estimation Request By ID
+// @Description Retrieve a booking estimation request by ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param booking_system_number path int true "Booking System Number"
+// @Param booking_estimation_request_id path int true "Booking Estimation Request ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{booking_system_number}/request/{booking_estimation_request_id} [get]
 func (r *BookingEstimationControllerImpl) GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request) {
-	bookingestimationrequestid, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
-	get, err := r.bookingEstimationService.GetByIdBookEstimReq(bookingestimationrequestid)
+	bookingestimationrequestid, _ := strconv.Atoi(chi.URLParam(request, "booking_estimation_request_id"))
+	bookingsystemnumber, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
+
+	get, err := r.bookingEstimationService.GetByIdBookEstimReq(bookingsystemnumber, bookingestimationrequestid)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -296,6 +364,23 @@ func (r *BookingEstimationControllerImpl) GetByIdBookEstimReq(writer http.Respon
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
+// GetAllBookEstimReq gets all booking estimation requests
+// @Summary Get All Booking Estimation Requests
+// @Description Retrieve all booking estimation requests with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param booking_estimation_request_id query string false "Booking Estimation Request ID"
+// @Param booking_estimation_request_code query string false "Booking Estimation Request Code"
+// @Param booking_system_number query string false "Booking System Number"
+// @Param booking_service_request query string false "Booking Service Request"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/request [get]
 func (r *BookingEstimationControllerImpl) GetAllBookEstimReq(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -313,15 +398,9 @@ func (r *BookingEstimationControllerImpl) GetAllBookEstimReq(writer http.Respons
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	bookestimid, err := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid booking system number", http.StatusBadRequest)
-		return
-	}
-
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, baseErr := r.bookingEstimationService.GetAllBookEstimReq(criteria, pagination, bookestimid)
+	result, baseErr := r.bookingEstimationService.GetAllBookEstimReq(criteria, pagination)
 	if baseErr != nil {
 		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
@@ -354,21 +433,39 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReminderServ(writer http.
 	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
 }
 
+// SaveDetailBookEstim saves a booking estimation detail
+// @Summary Save Booking Estimation Detail
+// @Description Save a booking estimation detail
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param estimation_system_number path int true "Estimation System Number"
+// @Param reqBody body transactionworkshoppayloads.BookingEstimationDetailRequest true "Booking Estimation Detail Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{estimation_system_number}/detail [post]
 func (r *BookingEstimationControllerImpl) SaveDetailBookEstim(writer http.ResponseWriter, request *http.Request) {
-	var formrequest transactionworkshoppayloads.BookEstimDetailReq
+
+	estsysnoStrId := chi.URLParam(request, "estimation_system_number")
+	id, err := strconv.Atoi(estsysnoStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid estimation system ID", http.StatusBadRequest)
+		return
+	}
+
+	var formrequest transactionworkshoppayloads.BookingEstimationDetailRequest
 	helper.ReadFromRequestBody(request, &formrequest)
 	if validationErr := validation.ValidationForm(writer, request, &formrequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
-	id, _ := strconv.Atoi(chi.URLParam(request, "estimation_system_number"))
 
-	create, err := r.bookingEstimationService.SaveDetailBookEstim(formrequest, id)
-	if err != nil {
-		exceptions.NewBadRequestException(writer, request, err)
+	create, baseErr := r.bookingEstimationService.SaveDetailBookEstim(id, formrequest)
+	if baseErr != nil {
+		exceptions.NewBadRequestException(writer, request, baseErr)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
 func (r *BookingEstimationControllerImpl) AddPackage(writer http.ResponseWriter, request *http.Request) {
@@ -420,10 +517,23 @@ func (r *BookingEstimationControllerImpl) AddFieldAction(writer http.ResponseWri
 	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
 }
 
+// GetByIdBookEstimDetail retrieves a booking estimation detail by ID
+// @Summary Get Booking Estimation Detail By ID
+// @Description Retrieve a booking estimation detail by ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param estimation_system_number path int true "Estimation System Number"
+// @Param estimation_detail_id path int true "Estimation Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{estimation_system_number}/detail/{estimation_detail_id} [get]
 func (r *BookingEstimationControllerImpl) GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request) {
-	bookingestiomationid, _ := strconv.Atoi(chi.URLParam(request, "booking_estimation_id"))
-	LineTypeId, _ := strconv.Atoi(chi.URLParam(request, "line_type_id"))
-	get, err := r.bookingEstimationService.GetByIdBookEstimDetail(bookingestiomationid, LineTypeId)
+
+	estiomationid, _ := strconv.Atoi(chi.URLParam(request, "estimation_detail_id"))
+	estimsysno, _ := strconv.Atoi(chi.URLParam(request, "estimation_system_number"))
+
+	get, err := r.bookingEstimationService.GetByIdBookEstimDetail(estimsysno, estiomationid)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -505,4 +615,50 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationAllocation(Writer
 		return
 	}
 	payloads.NewHandleSuccess(Writer, save, "Save Data Successfully!", http.StatusOK)
+}
+
+// GetAllDetailBookingEstimation gets all booking estimation details
+// @Summary Get All Booking Estimation Details
+// @Description Retrieve all booking estimation details with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/detail [get]
+func (r *BookingEstimationControllerImpl) GetAllDetailBookingEstimation(writer http.ResponseWriter, request *http.Request) {
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{}
+
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, baseErr := r.bookingEstimationService.GetAllDetailBookingEstimation(criteria, pagination)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }

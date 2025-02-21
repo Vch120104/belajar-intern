@@ -34,8 +34,52 @@ type BookingEstimationRequest struct {
 	InsurancePic                   string    `json:"insurance_pic"`
 }
 
+type BookingEstimationDetailRequest struct {
+	EstimationDetailId                  int     `gorm:"column:estimation_detail_id" json:"estimation_detail_id" parent_entity:"trx_booking_estimation_detail" main_table:"trx_booking_estimation_detail"`
+	EstimationSystemNumber              int     `gorm:"column:estimation_system_number" json:"estimation_system_number" parent_entity:"trx_booking_estimation_detail"`
+	LineTypeId                          int     `gorm:"column:line_type_id" json:"line_type_id" parent_entity:"trx_booking_estimation_detail"`
+	TransactionTypeId                   int     `gorm:"column:transaction_type_id" json:"transaction_type_id" parent_entity:"trx_booking_estimation_detail" `
+	JobTypeId                           int     `gorm:"column:job_type_id" json:"job_type_id" parent_entity:"trx_booking_estimation_detail"`
+	FrtQuantity                         float64 `gorm:"column:frt_quantity" json:"frt_quantity" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemId                     int     `gorm:"column:operation_item_id" json:"operation_item_id" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemCode                   string  `gorm:"column:operation_item_code" json:"operation_item_code" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemPrice                  float64 `gorm:"column:operation_item_price" json:"operation_item_price" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountAmount         float64 `gorm:"column:operation_item_discount_amount" json:"operation_item_discount_amount" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountPercent        float64 `gorm:"column:operation_item_discount_percent" json:"operation_item_discount_percent" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountRequestPercent float64 `gorm:"column:operation_item_discount_request_percent" json:"operation_item_discount_request_percent" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountRequestAmount  float64 `gorm:"column:operation_item_discount_request_amount" json:"operation_item_discount_request_amount" parent_entity:"trx_booking_estimation_detail"`
+}
+type BookingEstimationDetailResponse struct {
+	EstimationSystemNumber             int     `json:"estimation_system_number"`
+	EstimationDetailId                 int     `json:"estimation_detail_id"`
+	EstimationDocumentNumber           string  `json:"estimation_document_number"`
+	EstimationLine                     int     `json:"estimation_line"`
+	LineTypeId                         int     `json:"line_type_id"`
+	LineTypeCode                       string  `json:"line_type_code"`
+	LineTypeName                       string  `json:"line_type_name"`
+	TransactionTypeId                  int     `json:"transaction_type_id"`
+	TransactionTypeCode                string  `json:"transaction_type_code"`
+	JobTypeId                          int     `json:"job_type_id"`
+	JobTypeCode                        string  `json:"job_type_code"`
+	OperationItemId                    int     `json:"operation_item_id"`
+	OperationItemCode                  string  `json:"operation_item_code"`
+	Description                        string  `json:"description"`
+	Uom                                string  `json:"uom"`
+	FrtQuantity                        float64 `json:"frt_quantity"`
+	OperationItemPrice                 float64 `json:"operation_item_price"`
+	OperationItemDiscountAmount        float64 `json:"operation_item_discount_amount"`
+	OperationItemDiscountRequestAmount float64 `json:"operation_item_discount_request_amount"`
+}
+
 type BookEstimRemarkRequest struct {
 	BookingServiceRequest string `json:"booking_service_request"`
+}
+
+type BookEstimRemarkResponse struct {
+	BookingServiceRequest string `json:"booking_service_request"`
+	BookingDocumentNumber string `json:"booking_document_number"`
+	BookingLine           int    `json:"booking_line"`
+	IsActive              bool   `json:"is_active"`
 }
 
 type GetBookingById struct {
@@ -340,14 +384,14 @@ type GetAllBookEstim struct {
 	BookingSystemNumber int       `json:"booking_system_number"`
 	ServiceDate         time.Time `json:"service_date"`
 	ServiceTime         float64   `json:"service_time"`
-	DocumentStatusId    int       `json:"document_status_id"`
+	BookingStatusID     int       `json:"booking_status_id"`
 	EstimationNo        string    `json:"estimation_number"`
 	EstimationDate      time.Time `json:"estimation_date"`
 	EstimationStatus    int       `json:"estimation_status"`
 }
 
 type BookEstimationAllocation struct {
-	DocumentStatusID      int        `json:"document_status_id"`
+	BookingStatusID       int        `json:"booking_status_id"`
 	CompanyID             int        `json:"company_id"`
 	PdiSystemNumber       int        `json:"pdi_system_number"`
 	BookingDocumentNumber string     `json:"booking_document_number"`
@@ -355,8 +399,8 @@ type BookEstimationAllocation struct {
 	BookingStall          string     `json:"booking_stall"`
 	BookingReminderDate   *time.Time `json:"booking_reminder_date"`
 	BookingServiceDate    *time.Time `json:"booking_service_date"`
-	BookingServiceTime    float32    `json:"booking_service_time"`
-	BookingEstimationTime float32    `json:"booking_estimation_time"`
+	BookingServiceTime    float64    `json:"booking_service_time"`
+	BookingEstimationTime float64    `json:"booking_estimation_time"`
 }
 
 type BookingEstimationFirstContractService struct {
@@ -415,21 +459,200 @@ type WorkorderTransactionType struct {
 	WorkOrderTransactionTypeCode string `json:"work_order_transaction_type_code"`
 }
 
-type DocumentStatus struct{
-	IsActive bool `json:"is_active"`
-	DocumentStatusId int `json:"document_status_id"`
-	DocumentStatusCode string `json:"document_status_code"`
+type DocumentStatus struct {
+	IsActive                  bool   `json:"is_active"`
+	DocumentStatusId          int    `json:"document_status_id"`
+	DocumentStatusCode        string `json:"document_status_code"`
 	DocumentStatusDescription string `json:"document_status_description"`
 }
 
-type ApprovalStatus struct{
-	ApprovalStatusId int `json:"approval_status_id"`
+type ApprovalStatus struct {
+	ApprovalStatusId   int    `json:"approval_status_id"`
 	ApprovalStatusCode string `json:"approval_status_code"`
 }
 
-type PdiServiceRequest struct{
-	ContactPersonName string `json:"contact_person_name"`
-	ContactPersonPhone string `json:"contact_person_phone"`
+type PdiServiceRequest struct {
+	ContactPersonName   string `json:"contact_person_name"`
+	ContactPersonPhone  string `json:"contact_person_phone"`
 	ContactPersonMobile string `json:"contact_person_mobile"`
-	ContactPersonViaId int `json:"contact_person_via_id"`
+	ContactPersonViaId  int    `json:"contact_person_via_id"`
+}
+
+type BookingEstimationNormalRequest struct {
+	BrandId                int  `json:"brand_id"`
+	ModelId                int  `json:"model_id"`
+	VariantId              int  `json:"variant_id"`
+	VehicleId              int  `json:"vehicle_id"`
+	Unregistered           bool `json:"unregistered"`
+	ProfitCenterId         int  `json:"profit_center_id"`
+	DealerRepresentativeId int  `json:"dealer_representative_id"`
+	OrderId                int  `json:"order_id"`
+	CompanyId              int  `json:"company_id"`
+	CustomerId             int  `json:"customer_id"`
+
+	// Customer contact information
+	NameCust   string `json:"name_customer"`
+	PhoneCust  string `json:"phone_customer"`
+	MobileCust string `json:"mobile_customer"`
+	ContactVia string `json:"contact_via"`
+
+	// Insurance information
+	InsuranceCheck    bool      `json:"insurance_check"`
+	InsurancePolicyNo string    `json:"insurance_policy_no"`
+	InsuranceExpired  time.Time `json:"insurance_expired_date"`
+	InsuranceClaimNo  string    `json:"insurance_claim_no"`
+	InsurancePic      string    `json:"insurance_pic"`
+
+	// Agreement information
+	AgreementId      int       `json:"agreement_id"`
+	AgreementNumber  string    `json:"agreement_number"`
+	AgreementExpired time.Time `json:"agreement_expired_date"`
+	AgreementDealer  string    `json:"agreement_dealer"`
+
+	// Campaign information
+	CampaignId int `json:"campaign_id"`
+
+	// Contract information
+	ContractSystemNumber int       `json:"contract_system_number"`
+	ContractExpiredDate  time.Time `json:"contract_expired_date"`
+	ContractDealer       string    `json:"contract_dealer"`
+
+	CallActivityId int `json:"call_activity_id"`
+
+	// page 2
+	Stall         string  `json:"stall"`
+	EstimatedTime float64 `json:"estimated_time"`
+}
+
+type BookingEstimationSaveRequest struct {
+	DealerRepresentativeId int `json:"dealer_representative_id"`
+	OrderId                int `json:"order_id"`
+	CompanyId              int `json:"company_id"`
+
+	// Customer contact information
+	NameCust     string `json:"name_customer"`
+	PhoneCust    string `json:"phone_customer"`
+	MobileCust   string `json:"mobile_customer"`
+	ContactViaId int    `json:"contact_person_via"`
+
+	// Insurance information
+	InsuranceCheck    bool      `json:"insurance_check"`
+	InsurancePolicyNo string    `json:"insurance_policy_no"`
+	InsuranceExpired  time.Time `json:"insurance_expired_date"`
+	InsuranceClaimNo  string    `json:"insurance_claim_no"`
+	InsurancePic      string    `json:"insurance_pic"`
+
+	// Campaign information
+	CampaignId int `json:"campaign_id"`
+
+	// page 2
+	Stall         string  `json:"stall"`
+	EstimatedTime float64 `json:"estimated_time"`
+}
+
+type BookingEstimationResponseDetail struct {
+	BatchSystemNumber          int       `json:"batch_system_number"`
+	BookingEstimationBatchDate time.Time `json:"booking_estimation_batch_date"`
+
+	BrandId                int    `json:"brand_id"`
+	BrandName              string `json:"brand_name"`
+	ModelId                int    `json:"model_id"`
+	ModelDescription       string `json:"model_description"`
+	VariantId              int    `json:"variant_id"`
+	VariantDescription     string `json:"variant_description"`
+	VehicleId              int    `json:"vehicle_id"`
+	Unregistered           bool   `json:"unregistered"`
+	ProfitCenterId         int    `json:"profit_center_id"`
+	DealerRepresentativeId int    `json:"dealer_representative_id"`
+	OrderId                int    `json:"order_id"`
+	CompanyId              int    `json:"company_id"`
+	CustomerId             int    `json:"customer_id"`
+
+	// Customer contact information
+	NameCust   string `json:"name_customer"`
+	PhoneCust  string `json:"phone_customer"`
+	MobileCust string `json:"mobile_customer"`
+	ContactVia string `json:"contact_via"`
+
+	// Insurance information
+	InsuranceCheck    bool      `json:"insurance_check"`
+	InsurancePolicyNo string    `json:"insurance_policy_no"`
+	InsuranceExpired  time.Time `json:"insurance_expired_date"`
+	InsuranceClaimNo  string    `json:"insurance_claim_no"`
+	InsurancePic      string    `json:"insurance_pic"`
+
+	// Agreement information
+	AgreementId      int       `json:"agreement_id"`
+	AgreementNumber  string    `json:"agreement_number"`
+	AgreementExpired time.Time `json:"agreement_expired_date"`
+	AgreementDealer  string    `json:"agreement_dealer"`
+
+	// Campaign information
+	CampaignId int `json:"campaign_id"`
+
+	// Contract information
+	ContractSystemNumber int       `json:"contract_system_number"`
+	ContractExpiredDate  time.Time `json:"contract_expired_date"`
+	ContractDealer       string    `json:"contract_dealer"`
+
+	CallActivityId int `json:"call_activity_id"`
+
+	// page 2
+	VehicleCode string `json:"vehicle_code"`
+	VehicleTnkb string `json:"vehicle_tnkb"`
+
+	BookingStatusId       int       `json:"booking_status_id"`
+	BookingDocumentNumber string    `json:"booking_document_number"`
+	BookingDate           time.Time `json:"booking_date"`
+
+	EstimationStatusId       int       `json:"estimation_status_id"`
+	EstimationDocumentNumber string    `json:"estimation_document_number"`
+	EstimationDate           time.Time `json:"estimation_date"`
+	DiscountApprovalStatusId int       `json:"discount_approval_status_id"`
+	ExpireDate               time.Time `json:"expire_date"`
+	PdiRefNo                 string    `json:"pdi_ref_no"`
+	Stall                    string    `json:"stall"`
+
+	TotalFrt      float64   `json:"total_frt"`
+	EstimatedTime float64   `json:"estimated_time"`
+	ServiceDate   time.Time `json:"service_date"`
+	ServiceTime   float64   `json:"service_time"`
+
+	BookingEstimationCampaign  BookingEstimationCampaignDetail `json:"booking_estimation_campaign"`
+	BookingEstimationContract  BookingEstimationContractDetail `json:"booking_estimation_contract"`
+	BookingEstimationAgreement BookingEstimationAgreement      `json:"booking_estimation_agreement"`
+}
+
+type BookingEstimationCampaignDetail struct {
+	DataCampaign []BookingEstimationCampaignResponse `json:"data"`
+}
+type BookingEstimationCampaignResponse struct {
+	CampaignId         int       `json:"campaign_id"`
+	CampaignCode       string    `json:"campaign_code"`
+	CampaignName       string    `json:"campaign_name"`
+	CampaignPeriodFrom time.Time `json:"campign_period_from"`
+	CampaignPeriodTo   time.Time `json:"campaign_period_to"`
+}
+
+type BookingEstimationContractDetail struct {
+	DataContract []BookingEstimationContractsResponse `json:"data"`
+}
+
+type BookingEstimationContractsResponse struct {
+	ContractServiceSystemNumber   int       `json:"contract_service_system_number"`
+	ContractServiceDocumentNumber int       `json:"contract_service_document_number"`
+	ContractServiceExpiredDate    time.Time `json:"contract_service_expired_date"`
+	CompanyId                     int       `json:"company_id"`
+}
+
+type BookingEstimationAgreement struct {
+	DataAgreement []BookingEstimationAgreementResponse `json:"data"`
+}
+
+type BookingEstimationAgreementResponse struct {
+	AgreementId       int       `json:"agreement_id"`
+	AgreementCode     string    `json:"agreement_code"`
+	AgreementDateFrom time.Time `json:"agreement_date_from"`
+	AgreementDateTo   time.Time `json:"agreement_date_to"`
+	CompanyId         int       `json:"company_id"`
 }

@@ -927,48 +927,120 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 		}
 	}
 
+	updates := make(map[string]interface{})
+
 	// Mapping request fields to entity fields
-	entity.BillableToId = request.BilltoCustomerId
-	entity.FromEra = request.FromEra
-	entity.QueueNumber = request.QueueSystemNumber
-	entity.ArrivalTime = request.WorkOrderArrivalTime
-	entity.ServiceMileage = request.WorkOrderCurrentMileage
-	entity.Storing = request.Storing
-	entity.Remark = request.WorkOrderRemark
-	entity.Unregister = request.Unregistered
-	entity.ProfitCenterId = request.WorkOrderProfitCenter
-	entity.CostCenterId = request.DealerRepresentativeId
-	entity.CompanyId = request.CompanyId
+	if request.BilltoCustomerId != 0 {
+		updates["billable_to_id"] = request.BilltoCustomerId
+	}
+	if request.FromEra {
+		updates["from_era"] = request.FromEra
+	}
+	if request.QueueSystemNumber != 0 {
+		updates["queue_number"] = request.QueueSystemNumber
+	}
+	if !request.WorkOrderArrivalTime.IsZero() {
+		updates["arrival_time"] = request.WorkOrderArrivalTime
+	}
+	if request.WorkOrderCurrentMileage != 0 {
+		updates["service_mileage"] = request.WorkOrderCurrentMileage
+	}
+	if request.Storing {
+		updates["storing"] = request.Storing
+	}
+	if request.WorkOrderRemark != "" {
+		updates["remark"] = request.WorkOrderRemark
+	}
+	if request.Unregistered {
+		updates["unregister"] = request.Unregistered
+	}
+	if request.WorkOrderProfitCenter != 0 {
+		updates["profit_center_id"] = request.WorkOrderProfitCenter
+	}
+	if request.DealerRepresentativeId != 0 {
+		updates["cost_center_id"] = request.DealerRepresentativeId
+	}
+	if request.CompanyId != 0 {
+		updates["company_id"] = request.CompanyId
+	}
 
 	// Contact person details
-	entity.CPTitlePrefix = request.Titleprefix
-	entity.ContactPersonName = request.NameCust
-	entity.ContactPersonPhone = request.PhoneCust
-	entity.ContactPersonMobile = request.MobileCust
-	entity.ContactPersonMobileAlternative = request.MobileCustAlternative
-	entity.ContactPersonMobileDriver = request.MobileCustDriver
-	entity.ContactPersonContactVia = request.ContactVia
+	if request.Titleprefix != "" {
+		updates["contact_person_title_prefix"] = request.Titleprefix
+	}
+	if request.NameCust != "" {
+		updates["contact_person_name"] = request.NameCust
+	}
+	if request.PhoneCust != "" {
+		updates["contact_person_phone"] = request.PhoneCust
+	}
+	if request.MobileCust != "" {
+		updates["contact_person_mobile"] = request.MobileCust
+	}
+	if request.MobileCustAlternative != "" {
+		updates["contact_person_mobile_alternative"] = request.MobileCustAlternative
+	}
+	if request.MobileCustDriver != "" {
+		updates["contact_person_mobile_driver"] = request.MobileCustDriver
+	}
+	if request.ContactVia != "" {
+		updates["contact_person_contact_via"] = request.ContactVia
+	}
 
 	// Insurance details
-	entity.InsuranceCheck = request.WorkOrderInsuranceCheck
-	entity.InsurancePolicyNumber = request.WorkOrderInsurancePolicyNo
-	entity.InsuranceExpiredDate = request.WorkOrderInsuranceExpiredDate
-	entity.InsuranceClaimNumber = request.WorkOrderInsuranceClaimNo
-	entity.InsurancePersonInCharge = request.WorkOrderInsurancePic
-	entity.InsuranceOwnRisk = request.WorkOrderInsuranceOwnRisk
-	entity.InsuranceWorkOrderNumber = request.WorkOrderInsuranceWONumber
+	if request.WorkOrderInsuranceCheck {
+		updates["insurance_check"] = request.WorkOrderInsuranceCheck
+	}
+	if request.WorkOrderInsurancePolicyNo != "" {
+		updates["insurance_policy_number"] = request.WorkOrderInsurancePolicyNo
+	}
+	if !request.WorkOrderInsuranceExpiredDate.IsZero() {
+		updates["insurance_expired_date"] = request.WorkOrderInsuranceExpiredDate
+	}
+	if request.WorkOrderInsuranceClaimNo != "" {
+		updates["insurance_claim_number"] = request.WorkOrderInsuranceClaimNo
+	}
+	if request.WorkOrderInsurancePic != "" {
+		updates["insurance_person_in_charge"] = request.WorkOrderInsurancePic
+	}
+	if request.WorkOrderInsuranceOwnRisk != 0 {
+		updates["insurance_own_risk"] = request.WorkOrderInsuranceOwnRisk
+	}
+	if request.WorkOrderInsuranceWONumber != "" {
+		updates["insurance_work_order_number"] = request.WorkOrderInsuranceWONumber
+	}
 
 	// Other work order details (Page 2 fields)
-	entity.EstTime = request.EstimationDuration
-	entity.CustomerExpress = request.CustomerExpress
-	entity.LeaveCar = request.LeaveCar
-	entity.CarWash = request.CarWash
-	entity.PromiseDate = request.PromiseDate
-	entity.PromiseTime = request.PromiseTime
-	entity.FSCouponNo = request.FSCouponNo
-	entity.Notes = request.Notes
-	entity.Suggestion = request.Suggestion
-	entity.DPAmount = request.DownpaymentAmount
+	if request.EstimationDuration != 0 {
+		updates["estimate_time"] = request.EstimationDuration
+	}
+	if request.CustomerExpress {
+		updates["customer_express"] = request.CustomerExpress
+	}
+	if request.LeaveCar {
+		updates["leave_car"] = request.LeaveCar
+	}
+	if request.CarWash {
+		updates["car_wash"] = request.CarWash
+	}
+	if !request.PromiseDate.IsZero() {
+		updates["promise_date"] = request.PromiseDate
+	}
+	if request.PromiseTime.IsZero() {
+		updates["promise_time"] = request.PromiseTime
+	}
+	if request.FSCouponNo != "" {
+		updates["fs_coupon_number"] = request.FSCouponNo
+	}
+	if request.Notes != "" {
+		updates["notes"] = request.Notes
+	}
+	if request.Suggestion != "" {
+		updates["suggestion"] = request.Suggestion
+	}
+	if request.DownpaymentAmount != 0 {
+		updates["downpayment_amount"] = request.DownpaymentAmount
+	}
 
 	// Handling VAT Tax Rate
 	if generalserviceapiutils.IsFTZCompany(request.CompanyId) {
@@ -989,6 +1061,10 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 			}
 		}
 		entity.VATTaxRate = &vatTaxRate
+	}
+
+	if len(updates) == 0 {
+		return entity, nil
 	}
 
 	err = tx.Save(&entity).Error
@@ -2085,8 +2161,18 @@ func (r *WorkOrderRepositoryImpl) UpdateVehicleService(tx *gorm.DB, workorderID 
 		}
 	}
 
-	entity.WorkOrderVehicleDate = request.WorkOrderVehicleDate
-	entity.WorkOrderVehicleRemark = request.WorkOrderVehicleRemark
+	updates := make(map[string]interface{})
+
+	if request.WorkOrderVehicleRemark != "" {
+		updates["work_order_vehicle_remark"] = request.WorkOrderVehicleRemark
+	}
+	if !request.WorkOrderVehicleDate.IsZero() {
+		updates["work_order_vehicle_date"] = request.WorkOrderVehicleDate
+	}
+
+	if len(updates) == 0 {
+		return entity, nil
+	}
 
 	err = tx.Save(&entity).Error
 	if err != nil {
@@ -2252,9 +2338,6 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, st
 	}
 }
 
-// uspg_wtWorkOrder2_Insert
-// IF @Option = 0
-// --USE FOR : * INSERT NEW DATA
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var tableStruct []transactionworkshoppayloads.WorkOrderDetailRequest
@@ -2518,6 +2601,9 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 	return pages, nil
 }
 
+// uspg_wtWorkOrder2_Insert
+// IF @Option = 0
+// --USE FOR : * INSERT NEW DATA
 func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderDetail
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -3497,16 +3583,41 @@ func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder
 		}
 	}
 
-	entity.LineTypeId = request.LineTypeId
-	entity.TransactionTypeId = request.TransactionTypeId
-	entity.JobTypeId = request.JobTypeId
-	entity.WarehouseGroupId = request.WarehouseGroupId
-	entity.OperationItemId = request.OperationItemId
-	entity.FrtQuantity = request.FrtQuantity
-	entity.SupplyQuantity = request.SupplyQuantity
-	entity.PriceListId = request.PriceListId
-	entity.OperationItemDiscountRequestAmount = request.OperationItemDiscountRequestAmount
-	entity.OperationItemPrice = request.OperationItemPrice
+	updates := make(map[string]interface{})
+	if request.LineTypeId != 0 {
+		updates["line_type_id"] = request.LineTypeId
+	}
+	if request.TransactionTypeId != 0 {
+		updates["transaction_type_id"] = request.TransactionTypeId
+	}
+	if request.JobTypeId != 0 {
+		updates["job_type_id"] = request.JobTypeId
+	}
+	if request.WarehouseGroupId != 0 {
+		updates["warehouse_group_id"] = request.WarehouseGroupId
+	}
+	if request.OperationItemId != 0 {
+		updates["operation_item_id"] = request.OperationItemId
+	}
+	if request.FrtQuantity != 0 {
+		updates["frt_quantity"] = request.FrtQuantity
+	}
+	if request.SupplyQuantity != 0 {
+		updates["supply_quantity"] = request.SupplyQuantity
+	}
+	if request.PriceListId != 0 {
+		updates["price_list_id"] = request.PriceListId
+	}
+	if request.OperationItemDiscountRequestAmount != 0 {
+		updates["operation_item_discount_request_amount"] = request.OperationItemDiscountRequestAmount
+	}
+	if request.OperationItemPrice != 0 {
+		updates["operation_item_price"] = request.OperationItemPrice
+	}
+
+	if len(updates) == 0 {
+		return entity, nil
+	}
 
 	if request.LineTypeId == 1 {
 		entity.OperationItemId = request.OperationItemId

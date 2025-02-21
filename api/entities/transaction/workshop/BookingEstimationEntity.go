@@ -13,7 +13,8 @@ type BookingEstimation struct {
 	VehicleId                        int                                `gorm:"column:vehicle_id;size:30;" json:"vehicle_id"`
 	EstimationSystemNumber           int                                `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`
 	PdiSystemNumber                  int                                `gorm:"column:pdi_system_number;size:30;" json:"pdi_system_number"`
-	ServiceRequestSystemNumber       int                                `gorm:"column:service_request_system_number;size:30;" json:"system_request_system_number"`
+	PdiLine                          int                                `gorm:"column:pdi_line;size:30;" json:"pdi_line"`
+	ServiceRequestSystemNumber       int                                `gorm:"column:service_request_system_number;size:30;" json:"service_request_system_number"`
 	ContractSystemNumber             int                                `gorm:"column:contract_system_number;size:30;" json:"contract_system_number"`
 	AgreementId                      int                                `gorm:"column:agreement_id;size:30;" json:"agreement_id"`
 	CampaignId                       int                                `gorm:"column:campaign_id;size:30;" json:"campaign_id"`
@@ -23,17 +24,17 @@ type BookingEstimation struct {
 	CustomerId                       int                                `gorm:"column:customer_id;size:30;" json:"customer_id"`
 	DocumentStatusId                 int                                `gorm:"column:document_status_id;size:30;" json:"document_status_id"`
 	BookingEstimationBatchDate       time.Time                          `gorm:"column:booking_estimation_batch_date" json:"booking_estimation_batch_date"`
-	BookingEstimationVehicleNumber   string                             `gorm:"column:booking_estimation_vehicle_number;type:varchar(10)" json:"booking_estimation_vehicle_number"`
-	AgreementNumberBr                string                             `gorm:"column:agreement_number_br;type:varchar(20)" json:"agreement_number_br"`
+	BookingEstimationVehicleNumber   string                             `gorm:"column:booking_estimation_vehicle_number;type:varchar(150)" json:"booking_estimation_vehicle_number"`
+	AgreementNumberBr                string                             `gorm:"column:agreement_number_br;type:varchar(150)" json:"agreement_number_br"`
 	IsUnregistered                   bool                               `gorm:"column:is_unregistered;" json:"is_unregistered"`
-	ContactPersonName                string                             `gorm:"column:contact_person_name;type:varchar(40)" json:"contact_person_name"`
-	ContactPersonPhone               string                             `gorm:"column:contact_person_phone;type:varchar(13)" json:"contact_person_phone"`
-	ContactPersonMobile              string                             `gorm:"column:contact_person_mobile;type:varchar(13)" json:"contact_person_mobile"`
-	ContactPersonViaId               int                                `gorm:"column:contact_person_via;type:varchar(5)" json:"contact_person_via"`
-	InsurancePolicyNo                string                             `gorm:"column:insurance_policy_no;type:varchar(25)" json:"insurance_policy_no"`
+	ContactPersonName                string                             `gorm:"column:contact_person_name;type:varchar(150)" json:"contact_person_name"`
+	ContactPersonPhone               string                             `gorm:"column:contact_person_phone;type:varchar(150)" json:"contact_person_phone"`
+	ContactPersonMobile              string                             `gorm:"column:contact_person_mobile;type:varchar(150)" json:"contact_person_mobile"`
+	ContactPersonViaId               int                                `gorm:"column:contact_person_via;size:30;" json:"contact_person_via"`
+	InsurancePolicyNo                string                             `gorm:"column:insurance_policy_no;type:varchar(150)" json:"insurance_policy_no"`
 	InsuranceExpiredDate             time.Time                          `gorm:"column:insurance_expired_date" json:"insurance_expired_date"`
-	InsuranceClaimNo                 string                             `gorm:"column:insurance_claim_no;type:varchar(25)" json:"insurance_claim_no"`
-	InsurancePic                     string                             `gorm:"column:insurance_pic;type:varchar(35)" json:"insurance_pic"`
+	InsuranceClaimNo                 string                             `gorm:"column:insurance_claim_no;type:varchar(150)" json:"insurance_claim_no"`
+	InsurancePic                     string                             `gorm:"column:insurance_pic;type:varchar(150)" json:"insurance_pic"`
 	BookingEstimationAllocation      []BookingEstimationAllocation      `gorm:"foreignKey:BatchSystemNumber;references:BatchSystemNumber" json:"booking_estimation_allocation_batch"`
 	BookingEstimationServiceDiscount []BookingEstimationServiceDiscount `gorm:"foreignKey:BatchSystemNumber;references:BatchSystemNumber" json:"booking_estimation_service_discount_batch"`
 }
