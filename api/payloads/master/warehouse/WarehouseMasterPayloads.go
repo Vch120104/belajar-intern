@@ -158,13 +158,19 @@ type GetLookupWarehouseMasterResponse struct {
 
 type DropdownWarehouseMasterResponse struct {
 	WarehouseId   int    `json:"warehouse_id"`
-	WarehouseCode string `json:"warehouse_code_name"`
+	WarehouseCode string `json:"warehouse_code"`
 }
 
 type DropdownWarehouseMasterByCodeResponse struct {
-	WarehouseId          int    `json:"warehouse_id"`
-	WarehouseCode        string `json:"warehouse_code_name"`
-	WarehouseDescription string `json:"warehouse_description"`
+	WarehouseId   int    `json:"warehouse_id"`
+	WarehouseCode string `json:"warehouse_code"`
+	WarehouseName string `json:"warehouse_name"`
+}
+
+type WarehouseMasterByIdResponse struct {
+	WarehouseId   int    `json:"warehouse_id"`
+	WarehouseCode string `json:"warehouse_code"`
+	WarehouseName string `json:"warehouse_name"`
 }
 
 type IsActiveWarehouseMasterResponse struct {

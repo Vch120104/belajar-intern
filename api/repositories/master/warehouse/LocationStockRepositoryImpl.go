@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 	//"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
 	"gorm.io/gorm"
 )
@@ -71,7 +72,7 @@ func (repo *LocationStockRepositoryImpl) GetViewLocationStock(db *gorm.DB, filte
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch",
-			Err:        errors.New("Failed to fetch"),
+			Err:        errors.New("failed to fetch"),
 		}
 	}
 
@@ -351,7 +352,8 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errors.New(fmt.Sprintf("location stock is not found from this period year %s and period month %s", payloads.PeriodYear, payloads.PeriodMonth)),
+				Message:    "Location Stock Data not found",
+				Err:        errors.New("location Stock Data not found"),
 			}
 		}
 		return false, &exceptions.BaseErrorResponse{
@@ -435,8 +437,7 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 	//WHERE	COMPANY_CODE = @Company_Code AND WHS_CODE = @Whs_Code AND
 	//LOC_CODE = @Loc_Code AND ITEM_CODE = @Item_Code AND
 	//PERIOD_YEAR = @Period_Year AND PERIOD_MONTH = @Period_Month	),0)
-	var QuantityEnding float64
-	QuantityEnding = CurrentLocationStock.QuantityBegin +
+	QuantityEnding := CurrentLocationStock.QuantityBegin +
 		CurrentLocationStock.QuantityPurchase -
 		CurrentLocationStock.QuantityPurchaseReturn -
 		(CurrentLocationStock.QuantitySales - CurrentLocationStock.QuantitySalesReturn) +
