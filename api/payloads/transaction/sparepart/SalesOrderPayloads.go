@@ -239,6 +239,12 @@ type SalesOrderUpdatePayload struct {
 	DownPaymentAmount float64 `json:"down_payment_amount"`
 }
 
+type GetSalesOrderTransactionType struct {
+	TransactionTypeSalesOrderId          int    `json:"transaction_type_sales_order_id"`
+	TransactionTypeSalesOrderCode        string `json:"transaction_type_sales_order_code"`
+	TransactionTypeSalesOrderDescription string `json:"transaction_type_sales_order_description"`
+}
+
 //
 //type SalesOrderProposedDiscountResponse struct {
 //	ProposedDiscount float64 `json:"proposed_discount" validate:"required"`

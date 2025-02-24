@@ -1251,7 +1251,7 @@ func LabourSellingPriceDetailRouter(
 	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
 	router.Get("/detail/{labour_selling_price_detail_id}", LabourSellingPriceDetailController.GetSellingPriceDetailById)
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
-	router.Post("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
+	router.Get("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
 	router.Post("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
 	router.Delete("/{multi_id}", LabourSellingPriceDetailController.DeleteLabourSellingPriceDetail)
 
@@ -1970,7 +1970,7 @@ func SalesOrderRouter(
 	router.Put("/proposed-discount-multi-id/{sales_order_detail_multi_id}", SalesOrderController.SalesOrderProposedDiscountMultiId)
 	router.Put("/{sales_order_system_number}", SalesOrderController.UpdateSalesOrderHeader)
 	router.Patch("/submit/{sales_order_system_number}", SalesOrderController.SubmitSalesOrderHeader)
-
+	router.Get("/transaction-type", SalesOrderController.GetSalesOrderTransactionType)
 	return router
 }
 
