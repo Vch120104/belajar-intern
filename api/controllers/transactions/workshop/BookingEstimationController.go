@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -35,6 +36,7 @@ type BookingEstimationController interface {
 	UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetAllBookEstimReq(writer http.ResponseWriter, request *http.Request)
+	DeleteBookEstimReq(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDetailBookingEstimation(writer http.ResponseWriter, request *http.Request)
 	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
@@ -661,4 +663,45 @@ func (r *BookingEstimationControllerImpl) GetAllDetailBookingEstimation(writer h
 		int64(result.TotalRows),
 		result.TotalPages,
 	)
+}
+
+// DeleteBookEstimReq deletes a booking estimation request
+// @Summary Delete Booking Estimation Request
+// @Description Delete a booking estimation request
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param booking_system_number path int true "Booking System Number"
+// @Param booking_estimation_request_id path int true "Booking Estimation Request ID"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{booking_system_number}/request/{booking_estimation_request_id} [delete]
+func (r *BookingEstimationControllerImpl) DeleteBookEstimReq(writer http.ResponseWriter, request *http.Request) {
+	// Ambil booking system number dari URL
+	bookingsystemnumber, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
+
+	bookingEstimationRequestIDsStr := chi.URLParam(request, "booking_estimation_request_id")
+	idStrings := strings.Split(bookingEstimationRequestIDsStr, ",")
+	var bookingEstimationRequestIDs []int
+
+	for _, idStr := range idStrings {
+		id, err := strconv.Atoi(strings.TrimSpace(idStr))
+		if err != nil {
+			exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid booking estimation request ID",
+				Err:        err,
+			})
+			return
+		}
+		bookingEstimationRequestIDs = append(bookingEstimationRequestIDs, id)
+	}
+
+	deleteResult, err := r.bookingEstimationService.DeleteBookEstimReq(bookingsystemnumber, bookingEstimationRequestIDs)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, deleteResult, "Delete Successful!", http.StatusNoContent)
 }

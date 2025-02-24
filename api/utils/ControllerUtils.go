@@ -259,3 +259,17 @@ func IntSliceToString(slice []int) string {
 	builder.WriteString("]")
 	return builder.String()
 }
+
+func FormatTimeForJSON(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("2006-01-02T15:04:05Z")
+}
+
+func ToTimePointer(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}

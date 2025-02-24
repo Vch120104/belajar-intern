@@ -174,9 +174,9 @@ func Migrate() {
 
 		// Transaction Workshop Entities
 		// &transactionworkshopentities.AssignTechnician{},
-		// &transactionworkshopentities.WorkOrder{},
+		&transactionworkshopentities.WorkOrder{},
 		// &transactionworkshopentities.WorkOrderRequestDescription{},
-		// &transactionworkshopentities.WorkOrderDetail{},
+		&transactionworkshopentities.WorkOrderDetail{},
 		// &transactionworkshopentities.WorkOrderHistory{},
 		// &transactionworkshopentities.WorkOrderHistoryRequest{},
 		// &transactionworkshopentities.WorkOrderHistoryDetail{},

@@ -685,33 +685,40 @@ func getJobType(profitCenterId, serviceProfitCenterId int) string {
 
 func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transactionworkshoppayloads.ServiceRequestSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ServiceRequest
-	currentDate := time.Now()
-
-	// cek service request system number
-	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).Where("service_request_system_number = ?", Id).First(&entity).Error
+	currentDate := time.Now().Truncate(24 * time.Hour)
+	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).
+		Where("service_request_system_number = ?", Id).
+		First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+			}
 		}
-		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve service request",
+			Err:        err,
+		}
 	}
 
-	// Check current service request status
 	if entity.ServiceRequestStatusId != 1 {
-		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Service request status is not in draft"}
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Service request status is not in draft",
+		}
 	}
 
-	// Check if ServiceDate is less than currentDate
-	if request.ServiceDate.Before(currentDate) {
+	serviceDate := request.ServiceDate.Truncate(24 * time.Hour)
+	if serviceDate.Before(currentDate) {
 		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Service date cannot be before the current date",
-			Err:        errors.New("service date cannot be before the current date"),
 		}
 	}
 
 	updates := make(map[string]interface{})
-
 	if request.ServiceTypeId != 0 {
 		updates["service_type_id"] = request.ServiceTypeId
 	}
@@ -729,12 +736,13 @@ func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 		return entity, nil
 	}
 
-	err = tx.Save(&entity).Error
+	err = tx.Model(&entity).Updates(updates).Error
 	if err != nil {
 		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save the service request",
-			Err:        err}
+			Message:    "Failed to update service request",
+			Err:        err,
+		}
 	}
 
 	return entity, nil

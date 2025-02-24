@@ -1481,6 +1481,7 @@ func BookingEstimationRouter(
 	router.Put("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.UpdateBookEstimReq)
 	router.Get("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.GetByIdBookEstimReq)
 	router.Get("/normal/request", BookingEstimationController.GetAllBookEstimReq)
+	router.Delete("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.DeleteBookEstimReq)
 
 	//add trx detail
 	router.Get("/normal/detail", BookingEstimationController.GetAllDetailBookingEstimation)
