@@ -70,7 +70,7 @@ func (r *LabourSellingPriceDetailControllerImpl) GetSellingPriceDetailById(write
 // @Param req body masteroperationpayloads.SaveDuplicateLabourSellingPrice true "Save Duplicate Labour Selling Price"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/labour-selling-price/save-duplicate [post]
+// @Router /v1/labour-selling-price-detail/save-duplicate [post]
 func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.SaveDuplicateLabourSellingPrice
 
@@ -105,7 +105,7 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.Respo
 // @Param labour_selling_price_id path int true "Labour Selling Price ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/labour-selling-price/duplicate/{labour_selling_price_id} [get]
+// @Router /v1/labour-selling-price-detail/duplicate/{labour_selling_price_id} [get]
 func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseWriter, request *http.Request) {
 	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
 
