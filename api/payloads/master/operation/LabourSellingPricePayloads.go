@@ -73,3 +73,7 @@ type ModelSellingPriceDetailResponse struct {
 	ModelCode        string `json:"model_code"`
 	ModelDescription string `json:"model_description"`
 }
+
+type LabourSellingSaveDuplicateResp struct {
+	LabourSellingPriceId int `json:"labour_selling_price_id"`
+}

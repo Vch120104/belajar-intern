@@ -60,9 +60,10 @@ func (s *LabourSellingPriceServiceImpl) GetSellingPriceDetailById(detailId int) 
 }
 
 // SaveDuplicate implements masteroperationservice.LabourSellingPriceService.
-func (s *LabourSellingPriceServiceImpl) SaveDuplicate(req masteroperationpayloads.SaveDuplicateLabourSellingPrice) (bool, *exceptions.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) SaveDuplicate(req masteroperationpayloads.SaveDuplicateLabourSellingPrice) (masteroperationpayloads.LabourSellingSaveDuplicateResp, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
+	response := masteroperationpayloads.LabourSellingSaveDuplicateResp{}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -85,20 +86,24 @@ func (s *LabourSellingPriceServiceImpl) SaveDuplicate(req masteroperationpayload
 		}
 	}()
 
-	_, err = s.labourSellingPriceRepo.SaveLabourSellingPrice(tx, req.Header)
+	headerId, err := s.labourSellingPriceRepo.SaveLabourSellingPrice(tx, req.Header)
 
 	if err != nil {
-		return false, err
+		return response, err
 	}
 
+	for i := 0; i < len(req.Detail); i++ {
+		req.Detail[i].LabourSellingPriceId = headerId
+	}
 	_, err = s.labourSellingPriceRepo.SaveMultipleDetail(tx, req.Detail)
 
 	if err != nil {
-		return false, err
+		return response, err
 	}
 
-	return true, nil
+	response.LabourSellingPriceId = headerId
 
+	return response, nil
 }
 
 // Duplicate implements masteroperationservice.LabourSellingPriceService.
