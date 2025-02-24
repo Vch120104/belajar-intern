@@ -26,6 +26,7 @@ type SalesOrderController interface {
 	SalesOrderProposedDiscountMultiId(writer http.ResponseWriter, request *http.Request)
 	UpdateSalesOrderHeader(writer http.ResponseWriter, request *http.Request)
 	SubmitSalesOrderHeader(writer http.ResponseWriter, request *http.Request)
+	GetSalesOrderTransactionType(writer http.ResponseWriter, request *http.Request)
 }
 
 type SalesOrderControllerImpl struct {
@@ -326,4 +327,21 @@ func (s *SalesOrderControllerImpl) SubmitSalesOrderHeader(writer http.ResponseWr
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "success to submit sales order header", http.StatusOK)
+}
+
+// @Summary Get Dropdown List Sales Order Transaction Type
+// @Description Get dropdown list for SO trasaction Type
+// @Tags Transaction : Sparepart Sales Order
+// @Accept json
+// @Produce json
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/sales-order/transaction-type [get]
+func (s *SalesOrderControllerImpl) GetSalesOrderTransactionType(writer http.ResponseWriter, request *http.Request) {
+	res, err := s.SalesOrderService.GetSalesOrderTransactionType()
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Success Get Sales Order Transaction Type", http.StatusOK)
 }

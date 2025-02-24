@@ -19,4 +19,5 @@ type SalesOrderServiceInterface interface {
 	SalesOrderProposedDiscountMultiId(multiId string, proposedDiscountPercentage float64) (bool, *exceptions.BaseErrorResponse)
 	UpdateSalesOrderHeader(payload transactionsparepartpayloads.SalesOrderUpdatePayload, SalesOrderId int) (transactionsparepartentities.SalesOrder, *exceptions.BaseErrorResponse)
 	SubmitSalesOrderHeader(salesOrderId int) (bool, *exceptions.BaseErrorResponse)
+	GetSalesOrderTransactionType() ([]transactionsparepartpayloads.GetSalesOrderTransactionType, *exceptions.BaseErrorResponse)
 }

@@ -1836,3 +1836,20 @@ func (r *SalesOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, id int) (
 	log.Printf("New document number: %s", newDocumentNumber)
 	return newDocumentNumber, nil
 }
+
+func (r *SalesOrderRepositoryImpl) GetSalesOrderTransactionType(tx *gorm.DB) ([]transactionsparepartpayloads.GetSalesOrderTransactionType, *exceptions.BaseErrorResponse) {
+
+	//get all sales order transaction type
+	var SalesOrderTransactionType []transactionsparepartpayloads.GetSalesOrderTransactionType
+	err := tx.Model(&masterentities.TransactionTypeSalesOrder{}).
+		Scan(&SalesOrderTransactionType).Error
+	if err != nil {
+		return SalesOrderTransactionType, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+			Message:    "failed to get sales order transaction type please check input",
+		}
+	}
+	return SalesOrderTransactionType, nil
+
+}
