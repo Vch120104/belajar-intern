@@ -1969,7 +1969,7 @@ func SalesOrderRouter(
 	router.Put("/proposed-discount-multi-id/{sales_order_detail_multi_id}", SalesOrderController.SalesOrderProposedDiscountMultiId)
 	router.Put("/{sales_order_system_number}", SalesOrderController.UpdateSalesOrderHeader)
 	router.Patch("/submit/{sales_order_system_number}", SalesOrderController.SubmitSalesOrderHeader)
-
+	router.Get("/transaction-type", SalesOrderController.GetSalesOrderTransactionType)
 	return router
 }
 
