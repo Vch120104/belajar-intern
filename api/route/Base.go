@@ -1487,6 +1487,8 @@ func BookingEstimationRouter(
 	router.Get("/normal/detail", BookingEstimationController.GetAllDetailBookingEstimation)
 	router.Get("/normal/{estimation_system_number}/detail/{estimation_detail_id}", BookingEstimationController.GetByIdBookEstimDetail)
 	router.Post("/normal/{estimation_system_number}/detail", BookingEstimationController.SaveDetailBookEstim)
+	router.Put("/normal/{estimation_system_number}/detail/{estimation_detail_id}", BookingEstimationController.UpdateDetailBookEstim)
+	router.Delete("/normal/{estimation_system_number}/detail/{estimation_detail_id}", BookingEstimationController.DeleteDetailBookEstim)
 
 	router.Post("/reminder-service/{booking_estimation_id}", BookingEstimationController.SaveBookEstimReminderServ)
 	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)

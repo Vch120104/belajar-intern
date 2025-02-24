@@ -278,7 +278,7 @@ func (r *WorkOrderControllerImpl) AddRequestMultiId(writer http.ResponseWriter, 
 // @Tags Transaction : Workshop Work Order Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_id path string true "Work Order Service ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/requestservice/{work_order_service_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, request *http.Request) {
@@ -293,7 +293,7 @@ func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, requ
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, delete, "Request deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Request deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -308,7 +308,7 @@ func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, requ
 // @Tags Transaction : Workshop Work Order Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @param multi_id query string true "Multiple Request ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/requestservice/{multi_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteRequestMultiId(writer http.ResponseWriter, request *http.Request) {
@@ -350,7 +350,7 @@ func (r *WorkOrderControllerImpl) DeleteRequestMultiId(writer http.ResponseWrite
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete service detail", http.StatusInternalServerError)
 	}
@@ -517,7 +517,7 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 // @Tags Transaction : Workshop Work Order Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_vehicle_id path string true "Work Order Vehicle Service ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWriter, request *http.Request) {
@@ -532,7 +532,7 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, delete, "Vehicle service deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Vehicle service deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -547,7 +547,7 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 // @Tags Transaction : Workshop Work Order Detail
 // @Param work_order_system_number path string true "Service Detail System ID"
 // @Param multi_id path string true "Service Detail ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/vehicleservice/{multi_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteVehicleServiceMultiId(writer http.ResponseWriter, request *http.Request) {
@@ -589,7 +589,7 @@ func (r *WorkOrderControllerImpl) DeleteVehicleServiceMultiId(writer http.Respon
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Vehicle service deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Vehicle service deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete Vehicle detail", http.StatusInternalServerError)
 	}
@@ -825,7 +825,7 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 // @Produce json
 // @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path int true "Work Order ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/void/{work_order_system_number} [delete]
 func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
@@ -848,7 +848,7 @@ func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Work order voided successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Work order voided successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to void work order", http.StatusInternalServerError)
 	}
@@ -1079,7 +1079,7 @@ func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter,
 // @Tags Transaction : Workshop Work Order Normal Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_detail_id path string true "Work Order Detail ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/detail/{work_order_detail_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
@@ -1094,7 +1094,7 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWrit
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, delete, "Detail deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Detail deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -1109,7 +1109,7 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWrit
 // @Tags Transaction : Workshop Work Order Normal Detail
 // @Param work_order_system_number path string true "Work Order System Number ID"
 // @Param multi_id path string true "Work Order Detail ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/detail/{multi_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteDetailWorkOrderMultiId(writer http.ResponseWriter, request *http.Request) {
@@ -1151,7 +1151,7 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrderMultiId(writer http.Respo
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Vehicle service deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Vehicle service deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete Vehicle detail", http.StatusInternalServerError)
 	}
@@ -1604,7 +1604,7 @@ func (r *WorkOrderControllerImpl) DeleteCampaign(writer http.ResponseWriter, req
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, success, "Campaign deleted successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, success, "Campaign deleted successfully", http.StatusNoContent)
 
 }
 

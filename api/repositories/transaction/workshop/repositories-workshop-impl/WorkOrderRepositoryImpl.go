@@ -2407,20 +2407,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		}
 
 		var whsGroup masterwarehouseentities.WarehouseGroup
-		if err := tx.Where("warehouse_group_id = ?", workOrderReq.WarehouseGroupId).First(&whsGroup).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return pages, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusNotFound,
-					Message:    "Warehouse group not found",
-					Err:        fmt.Errorf("warehouse group with ID %d not found", workOrderReq.WarehouseGroupId),
-				}
-			}
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Warehouse group",
-				Err:        err,
-			}
-		}
+		tx.Where("warehouse_group_id = ?", workOrderReq.WarehouseGroupId).Find(&whsGroup)
 
 		var subsTypeName string
 		if workOrderReq.SubstituteTypeId == 0 {
@@ -3011,7 +2998,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				OperationItemPrice:                  request.OperationItemPrice, // BE.OPR_ITEM_PRICE,
 				PphAmount:                           0,                          // BE.PPH_AMOUNT,
 				PphTaxRate:                          0,                          // BE.PPH_TAX_RATE,
-				AtpmWCFTypeId:                       0,                          // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
+				AtpmWCFTypeId:                       request.AtpmWCFTypeId,      // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
 				ServiceStatusId:                     utils.SrvStatDraft,
 			}

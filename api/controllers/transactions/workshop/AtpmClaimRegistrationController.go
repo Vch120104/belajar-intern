@@ -233,7 +233,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Submit(writer http.ResponseWriter,
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/atpm-claim-registration/void/{claim_system_number} [delete]
 func (r *AtpmClaimRegistrationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
@@ -251,7 +251,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Void(writer http.ResponseWriter, r
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Data has been voided successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Data has been voided successfully!", http.StatusNoContent)
 }
 
 // GetAllServiceHistory gets all service history
@@ -511,7 +511,7 @@ func (r *AtpmClaimRegistrationControllerImpl) AddDetail(writer http.ResponseWrit
 // @Tags Transaction : Workshop ATPM Claim Registration
 // @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
 // @Param claim_system_number path int true "ATPM Claim ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/atpm-claim-registration/claim_system_number/detail/{claim_detail_system_number} [delete]
 func (r *AtpmClaimRegistrationControllerImpl) DeleteDetail(writer http.ResponseWriter, request *http.Request) {
@@ -536,5 +536,5 @@ func (r *AtpmClaimRegistrationControllerImpl) DeleteDetail(writer http.ResponseW
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Data has been deleted successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Data has been deleted successfully!", http.StatusNoContent)
 }

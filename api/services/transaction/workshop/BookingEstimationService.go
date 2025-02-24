@@ -38,4 +38,6 @@ type BookingEstimationService interface {
 	GetAllDetailBookingEstimation(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SaveDetailBookEstim(id int, req transactionworkshoppayloads.BookingEstimationDetailRequest) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse)
 	GetByIdBookEstimDetail(estimsysno int, id int) (transactionworkshoppayloads.BookingEstimationDetailResponse, *exceptions.BaseErrorResponse)
+	UpdateDetailBookEstim(estimsysno int, id int, req transactionworkshoppayloads.BookingEstimationDetailRequestSave) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse)
+	DeleteDetailBookEstim(estimsysno int, id []int) (bool, *exceptions.BaseErrorResponse)
 }

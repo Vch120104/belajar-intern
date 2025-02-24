@@ -37,4 +37,6 @@ type BookingEstimationRepository interface {
 	GetAllDetailBookingEstimation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdBookEstimDetail(tx *gorm.DB, estimsysno int, id int) (transactionworkshoppayloads.BookingEstimationDetailResponse, *exceptions.BaseErrorResponse)
 	DeleteBookEstimReq(tx *gorm.DB, booksysno int, id []int) (bool, *exceptions.BaseErrorResponse)
+	UpdateDetailBookEstim(tx *gorm.DB, estimsysno int, id int, req transactionworkshoppayloads.BookingEstimationDetailRequestSave) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse)
+	DeleteDetailBookEstim(tx *gorm.DB, estimsysno int, id []int) (bool, *exceptions.BaseErrorResponse)
 }

@@ -1040,11 +1040,74 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, id int, request
 	return bookingDetail, nil
 }
 
-func (r *BookingEstimationImpl) UpdateBookEstimDetail(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailUpdate, id int, LineTypeId int) (bool, *exceptions.BaseErrorResponse) {
-	return true, nil
+func (r *BookingEstimationImpl) UpdateDetailBookEstim(tx *gorm.DB, estimsysno int, id int, request transactionworkshoppayloads.BookingEstimationDetailRequestSave) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
+	var bookingDetail transactionworkshopentities.BookingEstimationDetail
+
+	if err := tx.Where("estimation_system_number = ? AND estimation_detail_id = ?", estimsysno, id).First(&bookingDetail).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation detail not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking estimation detail from the database",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Model(&bookingDetail).Updates(map[string]interface{}{
+		"frt_quantity":                           request.FrtQuantity,
+		"operation_item_discount_request_amount": request.OperationItemDiscountRequestAmount,
+	}).Error; err != nil {
+		return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update booking estimation detail",
+			Err:        err,
+		}
+	}
+
+	return bookingDetail, nil
 }
 
-func (r *BookingEstimationImpl) DeleteBookEstimDetail(tx *gorm.DB, id, linetypeid int) (bool, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) DeleteDetailBookEstim(tx *gorm.DB, estimsysno int, ids []int) (bool, *exceptions.BaseErrorResponse) {
+	var count int64
+
+	if err := tx.Model(&transactionworkshopentities.BookingEstimationDetail{}).
+		Where("estimation_system_number = ? AND estimation_detail_id IN (?)", estimsysno, ids).
+		Count(&count).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to validate booking estimation detail",
+			Err:        err,
+		}
+	}
+
+	if count == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No matching booking estimation details found",
+		}
+	}
+
+	result := tx.Where("estimation_system_number = ? AND estimation_detail_id IN (?)", estimsysno, ids).
+		Delete(&transactionworkshopentities.BookingEstimationDetail{})
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete booking estimation details",
+			Err:        result.Error,
+		}
+	}
+
+	if result.RowsAffected == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Deletion failed, no rows affected",
+		}
+	}
 
 	return true, nil
 }
