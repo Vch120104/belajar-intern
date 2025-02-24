@@ -1481,11 +1481,14 @@ func BookingEstimationRouter(
 	router.Put("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.UpdateBookEstimReq)
 	router.Get("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.GetByIdBookEstimReq)
 	router.Get("/normal/request", BookingEstimationController.GetAllBookEstimReq)
+	router.Delete("/normal/{booking_system_number}/request/{booking_estimation_request_id}", BookingEstimationController.DeleteBookEstimReq)
 
 	//add trx detail
 	router.Get("/normal/detail", BookingEstimationController.GetAllDetailBookingEstimation)
 	router.Get("/normal/{estimation_system_number}/detail/{estimation_detail_id}", BookingEstimationController.GetByIdBookEstimDetail)
 	router.Post("/normal/{estimation_system_number}/detail", BookingEstimationController.SaveDetailBookEstim)
+	router.Put("/normal/{estimation_system_number}/detail/{estimation_detail_id}", BookingEstimationController.UpdateDetailBookEstim)
+	router.Delete("/normal/{estimation_system_number}/detail/{estimation_detail_id}", BookingEstimationController.DeleteDetailBookEstim)
 
 	router.Post("/reminder-service/{booking_estimation_id}", BookingEstimationController.SaveBookEstimReminderServ)
 	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)

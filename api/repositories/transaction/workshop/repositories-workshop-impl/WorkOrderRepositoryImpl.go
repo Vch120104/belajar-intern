@@ -314,14 +314,14 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		ContactPersonMobile:      request.MobileCust,
 		ContactPersonContactVia:  request.ContactVia,
 		EraNumber:                request.WorkOrderEraNo,
-		EraExpiredDate:           request.WorkOrderEraExpiredDate,
+		EraExpiredDate:           utils.ToTimePointer(request.WorkOrderEraExpiredDate),
 		InsuranceCheck:           request.WorkOrderInsuranceCheck,
-		InsurancePolicyNumber:    request.WorkOrderInsurancePolicyNo,
-		InsuranceExpiredDate:     request.WorkOrderInsuranceExpiredDate,
-		InsuranceClaimNumber:     request.WorkOrderInsuranceClaimNo,
-		InsurancePersonInCharge:  request.WorkOrderInsurancePic,
-		InsuranceOwnRisk:         request.WorkOrderInsuranceOwnRisk,
-		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
+		InsurancePolicyNumber:    &request.WorkOrderInsurancePolicyNo,
+		InsuranceExpiredDate:     utils.ToTimePointer(request.WorkOrderInsuranceExpiredDate),
+		InsuranceClaimNumber:     &request.WorkOrderInsuranceClaimNo,
+		InsurancePersonInCharge:  &request.WorkOrderInsurancePic,
+		InsuranceOwnRisk:         &request.WorkOrderInsuranceOwnRisk,
+		InsuranceWorkOrderNumber: &request.WorkOrderInsuranceWONumber,
 
 		// page 2
 		AdditionalDiscountStatusApprovalId: approvalStatus.ApprovalStatusId,
@@ -929,7 +929,6 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 
 	updates := make(map[string]interface{})
 
-	// Mapping request fields to entity fields
 	if request.BilltoCustomerId != 0 {
 		updates["billable_to_id"] = request.BilltoCustomerId
 	}
@@ -940,7 +939,7 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 		updates["queue_number"] = request.QueueSystemNumber
 	}
 	if !request.WorkOrderArrivalTime.IsZero() {
-		updates["arrival_time"] = request.WorkOrderArrivalTime
+		updates["arrival_time"] = utils.FormatTimeForJSON(request.WorkOrderArrivalTime)
 	}
 	if request.WorkOrderCurrentMileage != 0 {
 		updates["service_mileage"] = request.WorkOrderCurrentMileage
@@ -995,7 +994,7 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 		updates["insurance_policy_number"] = request.WorkOrderInsurancePolicyNo
 	}
 	if !request.WorkOrderInsuranceExpiredDate.IsZero() {
-		updates["insurance_expired_date"] = request.WorkOrderInsuranceExpiredDate
+		updates["insurance_expired_date"] = utils.FormatTimeForJSON(request.WorkOrderInsuranceExpiredDate)
 	}
 	if request.WorkOrderInsuranceClaimNo != "" {
 		updates["insurance_claim_number"] = request.WorkOrderInsuranceClaimNo
@@ -1024,10 +1023,10 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 		updates["car_wash"] = request.CarWash
 	}
 	if !request.PromiseDate.IsZero() {
-		updates["promise_date"] = request.PromiseDate
+		updates["promise_date"] = utils.FormatTimeForJSON(request.PromiseDate)
 	}
-	if request.PromiseTime.IsZero() {
-		updates["promise_time"] = request.PromiseTime
+	if !request.PromiseTime.IsZero() { //
+		updates["promise_time"] = utils.FormatTimeForJSON(request.PromiseTime)
 	}
 	if request.FSCouponNo != "" {
 		updates["fs_coupon_number"] = request.FSCouponNo
@@ -1044,13 +1043,9 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 
 	// Handling VAT Tax Rate
 	if generalserviceapiutils.IsFTZCompany(request.CompanyId) {
-
-		entity.VATTaxRate = &[]float64{0}[0]
-
+		vatZero := 0.0
+		updates["vat_tax_rate"] = vatZero
 	} else {
-
-		// fetch tax fare
-
 		// Call getTaxPercent
 		vatTaxRate, err := getTaxPercent(tx, 10, 11, time.Now()) // 10.PPN 11.PPN
 		if err != nil {
@@ -1060,14 +1055,16 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 				Err:        err,
 			}
 		}
-		entity.VATTaxRate = &vatTaxRate
+		updates["vat_tax_rate"] = vatTaxRate
 	}
 
+	// Jika tidak ada perubahan, langsung return entity
 	if len(updates) == 0 {
 		return entity, nil
 	}
 
-	err = tx.Save(&entity).Error
+	// Perbaikan: Gunakan Updates agar perubahan benar-benar tersimpan
+	err = tx.Model(&entity).Updates(updates).Error
 	if err != nil {
 		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2410,20 +2407,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		}
 
 		var whsGroup masterwarehouseentities.WarehouseGroup
-		if err := tx.Where("warehouse_group_id = ?", workOrderReq.WarehouseGroupId).First(&whsGroup).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return pages, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusNotFound,
-					Message:    "Warehouse group not found",
-					Err:        fmt.Errorf("warehouse group with ID %d not found", workOrderReq.WarehouseGroupId),
-				}
-			}
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Warehouse group",
-				Err:        err,
-			}
-		}
+		tx.Where("warehouse_group_id = ?", workOrderReq.WarehouseGroupId).Find(&whsGroup)
 
 		var subsTypeName string
 		if workOrderReq.SubstituteTypeId == 0 {
@@ -2523,8 +2507,8 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			SubstituteTypeName:                  subsTypeName,
 			AtpmWCFTypeId:                       workOrderReq.AtpmWCFTypeId,
 			WarrantyClaimTypeDescription:        wcfTypeResponse.WarrantyClaimTypeDescription,
-			QualityControlPassDatetime:          time.Time{},
-			InvoiceDate:                         time.Time{},
+			QualityControlPassDatetime:          nil,
+			InvoiceDate:                         nil,
 			ClaimNumber:                         "",
 			Package:                             "",
 			WarehouseGroupId:                    workOrderReq.WarehouseGroupId,
@@ -2925,41 +2909,43 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				maxWoOprItemLine++
 			}
 
-			// var bookingEstim21 []transactionworkshopentities.BookingEstimation
-			// err := tx.Model(&bookingEstim21).
-			// 	Select("BE.ESTIM_LINE, BE.LINE_TYPE, BE.OPR_ITEM_CODE, BE.DESCRIPTION, I.SELLING_UOM, BE.FRT_QTY, BE.OPR_ITEM_PRICE, BE.OPR_ITEM_DISC_AMOUNT, BE.OPR_ITEM_DISC_REQ_AMOUNT, BE.OPR_ITEM_DISC_PERCENT, BE.OPR_ITEM_DISC_REQ_PERCENT, BE.PPH_AMOUNT, BE.PPH_TAX_CODE, BE.PPH_TAX_RATE").
-			// 	Joins("LEFT OUTER JOIN wtBookEstim0 BE0 ON BE0.ESTIM_SYSTEM_NO = BE.ESTIM_SYSTEM_NO").
-			// 	Joins("LEFT OUTER JOIN gmItem0 I ON I.ITEM_CODE = BE.OPR_ITEM_CODE").
-			// 	Where("BE.ESTIM_SYSTEM_NO = ?", estimSystemNo).
-			// 	Find(&bookingEstim21).Error
+			var bookingEstim transactionworkshopentities.BookingEstimation
+			var bookingEstimDetail transactionworkshopentities.BookingEstimationDetail
 
-			// if err != nil {
-			// 	return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
-			// 		StatusCode: http.StatusInternalServerError,
-			// 		Message:    "Failed to retrieve booking estimation data",
-			// 		Err:        err,
-			// 	}
-			// }
+			err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
+				Select("trx_booking_estimation.*, trx_booking_estimation_detail.line_type_id, trx_booking_estimation_detail.transaction_type_id, trx_booking_estimation_detail.job_type_id, trx_booking_estimation_detail.operation_item_code, trx_booking_estimation_detail.frt_quantity, trx_booking_estimation_detail.operation_item_price, trx_booking_estimation_detail.operation_item_discount_amount, trx_booking_estimation_detail.operation_item_discount_request_amount, trx_booking_estimation_detail.operation_item_discount_percent, trx_booking_estimation_detail.operation_item_discount_request_percent, trx_booking_estimation_detail.estimation_line").
+				Joins("LEFT JOIN trx_booking_estimation_detail ON trx_booking_estimation.estimation_system_number = trx_booking_estimation_detail.estimation_system_number").
+				Where("trx_booking_estimation.estimation_system_number = ?", estimSystemNo).
+				First(&bookingEstim).Error
+
+			if err != nil {
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve booking estimation data",
+					Err:        err,
+				}
+			}
 
 			workOrderDetail = transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:               id,
-				LineTypeId:                          0,  // BE0.LineTypeId,
-				TransactionTypeId:                   0,  // utils.TrxTypeWoExternal,
-				JobTypeId:                           0,  // CASE WHEN BE0.CPC_CODE = @Profit_Center_BR THEN @JobTypeBR ELSE @JobTypePM END,
-				OperationItemCode:                   "", //BE.OPR_ITEM_CODE,
-				WarehouseGroupId:                    0,  //Whs_Group_Sp
-				FrtQuantity:                         0,  //BE.FrtQuantity,
-				SupplyQuantity:                      0,  //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
+				LineTypeId:                          bookingEstimDetail.LineTypeId,        // BE0.LineTypeId,
+				TransactionTypeId:                   bookingEstimDetail.TransactionTypeId, // utils.TrxTypeWoExternal,
+				JobTypeId:                           bookingEstimDetail.JobTypeId,         // CASE WHEN BE0.CPC_CODE = @Profit_Center_BR THEN @JobTypeBR ELSE @JobTypePM END,
+				OperationItemId:                     bookingEstimDetail.OperationItemId,   // BE0.OperationItemCode,
+				OperationItemCode:                   bookingEstimDetail.OperationItemCode, //BE.OPR_ITEM_CODE,
+				WarehouseGroupId:                    0,                                    //Whs_Group_Sp
+				FrtQuantity:                         bookingEstimDetail.FRTQuantity,       //BE.FrtQuantity,
+				SupplyQuantity:                      0,                                    //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
 				WorkorderStatusId:                   utils.WoStatDraft,
-				OperationItemDiscountAmount:         0,                //BE.OPR_ITEM_DISC_AMOUNT,
-				OperationItemDiscountRequestAmount:  0,                //BE.OPR_ITEM_DISC_REQ_AMOUNT,
-				OperationItemDiscountPercent:        0,                //BE.OPR_ITEM_DISC_PERCENT,
-				OperationItemDiscountRequestPercent: 0,                //BE.OPR_ITEM_DISC_REQ_PERCENT,
-				OperationItemPrice:                  0,                //BE.OPR_ITEM_PRICE,
-				PphAmount:                           0,                //BE.PPH_AMOUNT,
-				PphTaxRate:                          0,                //BE.PPH_TAX_RATE,
-				AtpmWCFTypeId:                       0,                //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
-				WorkOrderOperationItemLine:          maxWoOprItemLine, //BE.ESTIM_LINE,
+				OperationItemDiscountAmount:         bookingEstimDetail.OperationItemDiscountAmount,         //BE.OPR_ITEM_DISC_AMOUNT,
+				OperationItemDiscountRequestAmount:  bookingEstimDetail.OperationItemDiscountRequestAmount,  //BE.OPR_ITEM_DISC_REQ_AMOUNT,
+				OperationItemDiscountPercent:        bookingEstimDetail.OperationItemDiscountPercent,        //BE.OPR_ITEM_DISC_PERCENT,
+				OperationItemDiscountRequestPercent: bookingEstimDetail.OperationItemDiscountRequestPercent, //BE.OPR_ITEM_DISC_REQ_PERCENT,
+				OperationItemPrice:                  bookingEstimDetail.OperationItemPrice,                  //BE.OPR_ITEM_PRICE,
+				PphAmount:                           0,                                                      //BE.PPH_AMOUNT,
+				PphTaxRate:                          0,                                                      //BE.PPH_TAX_RATE,
+				AtpmWCFTypeId:                       0,                                                      //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
+				WorkOrderOperationItemLine:          maxWoOprItemLine,                                       //BE.ESTIM_LINE,
 				ServiceStatusId:                     utils.SrvStatDraft,
 			}
 
@@ -3012,7 +2998,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				OperationItemPrice:                  request.OperationItemPrice, // BE.OPR_ITEM_PRICE,
 				PphAmount:                           0,                          // BE.PPH_AMOUNT,
 				PphTaxRate:                          0,                          // BE.PPH_TAX_RATE,
-				AtpmWCFTypeId:                       0,                          // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
+				AtpmWCFTypeId:                       request.AtpmWCFTypeId,      // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
 				ServiceStatusId:                     utils.SrvStatDraft,
 			}

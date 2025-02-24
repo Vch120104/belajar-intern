@@ -170,8 +170,8 @@ type WorkOrderResponseDetail struct {
 	WorkOrderProfitCenterId int       `json:"profit_center_id"`
 
 	// Work order status and details
-	WorkOrderEraNo          string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
+	WorkOrderEraNo          string     `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate *time.Time `json:"work_order_era_expired_date"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -183,13 +183,13 @@ type WorkOrderResponseDetail struct {
 	ContactVia            string `json:"contact_via"`
 
 	// Insurance details
-	WorkOrderInsuranceCheck       bool      `json:"insurance_check"`
-	WorkOrderInsurancePolicyNo    string    `json:"insurance_policy_no"`
-	WorkOrderInsuranceExpiredDate time.Time `json:"insurance_expired_date"`
-	WorkOrderInsuranceClaimNo     string    `json:"insurance_claim_no"`
-	WorkOrderInsurancePic         string    `json:"insurance_pic"`
-	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
-	WorkOrderInsuranceOwnRisk     float64   `json:"insurance_own_risk"`
+	WorkOrderInsuranceCheck       bool       `json:"insurance_check"`
+	WorkOrderInsurancePolicyNo    *string    `json:"insurance_policy_no"`
+	WorkOrderInsuranceExpiredDate *time.Time `json:"insurance_expired_date"`
+	WorkOrderInsuranceClaimNo     *string    `json:"insurance_claim_no"`
+	WorkOrderInsurancePic         *string    `json:"insurance_pic"`
+	WorkOrderInsuranceWONumber    *string    `json:"insurance_workorder_number"`
+	WorkOrderInsuranceOwnRisk     *float64   `json:"insurance_own_risk"`
 
 	// Estimation and service details
 	EstimationDuration float64   `json:"estimation_duration"`
@@ -491,9 +491,9 @@ type WorkOrderBookingRequest struct {
 	WorkOrderProfitCenterId int       `json:"work_order_profit_center"`
 
 	// Work order status and details
-	WorkOrderEraNo          string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
-	WorkOrderStatusId       int       `json:"work_order_status_id"`
+	WorkOrderEraNo          string     `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate *time.Time `json:"work_order_era_expired_date"`
+	WorkOrderStatusId       int        `json:"work_order_status_id"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -505,13 +505,13 @@ type WorkOrderBookingRequest struct {
 	ContactVia            string `json:"contact_via"`
 
 	// Insurance details
-	WorkOrderInsuranceCheck       bool      `json:"insurance_check"`
-	WorkOrderInsurancePolicyNo    string    `json:"insurance_policy_no"`
-	WorkOrderInsuranceExpiredDate time.Time `json:"insurance_expired_date"`
-	WorkOrderInsuranceClaimNo     string    `json:"insurance_claim_no"`
-	WorkOrderInsurancePic         string    `json:"insurance_pic"`
-	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
-	WorkOrderInsuranceOwnRisk     float64   `json:"insurance_own_risk"`
+	WorkOrderInsuranceCheck       bool       `json:"insurance_check"`
+	WorkOrderInsurancePolicyNo    *string    `json:"insurance_policy_no"`
+	WorkOrderInsuranceExpiredDate *time.Time `json:"insurance_expired_date"`
+	WorkOrderInsuranceClaimNo     *string    `json:"insurance_claim_no"`
+	WorkOrderInsurancePic         *string    `json:"insurance_pic"`
+	WorkOrderInsuranceWONumber    *string    `json:"insurance_workorder_number"`
+	WorkOrderInsuranceOwnRisk     *float64   `json:"insurance_own_risk"`
 
 	// Estimation and service details
 	EstimationDuration float64   `json:"estimation_duration"`
@@ -592,14 +592,14 @@ type WorkOrderBookingResponse struct {
 	MobileCustDriver                string                          `json:"mobile_customer_driver"`
 	ContactVia                      string                          `json:"contact_via"`
 	WorkOrderInsuranceCheck         bool                            `json:"insurance_check"`
-	WorkOrderInsurancePolicyNo      string                          `json:"insurance_policy_no"`
-	WorkOrderInsuranceExpiredDate   time.Time                       `json:"insurance_expired_date"`
-	WorkOrderInsuranceClaimNo       string                          `json:"insurance_claim_no"`
-	WorkOrderEraExpiredDate         time.Time                       `json:"work_order_era_expired_date"`
+	WorkOrderInsurancePolicyNo      *string                         `json:"insurance_policy_no"`
+	WorkOrderInsuranceExpiredDate   *time.Time                      `json:"insurance_expired_date"`
+	WorkOrderInsuranceClaimNo       *string                         `json:"insurance_claim_no"`
+	WorkOrderEraExpiredDate         *time.Time                      `json:"work_order_era_expired_date"`
 	PromiseDate                     time.Time                       `json:"promise_date"`
 	PromiseTime                     time.Time                       `json:"promise_time"`
 	EstimationDuration              float64                         `json:"estimation_duration"`
-	WorkOrderInsuranceOwnRisk       float64                         `json:"insurance_own_risk"`
+	WorkOrderInsuranceOwnRisk       *float64                        `json:"insurance_own_risk"`
 	CustomerExpress                 bool                            `json:"customer_express"`
 	LeaveCar                        bool                            `json:"leave_car"`
 	CarWash                         bool                            `json:"car_wash"`
@@ -607,8 +607,8 @@ type WorkOrderBookingResponse struct {
 	Notes                           string                          `json:"notes"`
 	Suggestion                      string                          `json:"suggestion"`
 	DownpaymentAmount               float64                         `json:"dp_amount"`
-	WorkOrderInsurancePic           string                          `json:"insurance_pic"`
-	WorkOrderInsuranceWONumber      string                          `json:"insurance_workorder_number"`
+	WorkOrderInsurancePic           *string                         `json:"insurance_pic"`
+	WorkOrderInsuranceWONumber      *string                         `json:"insurance_workorder_number"`
 	WorkOrderEraNo                  string                          `json:"work_order_era_no"`
 	WorkOrderCampaign               WorkOrderCampaignDetail         `json:"work_order_campaign"`
 	WorkOrderGeneralRepairAgreement WorkOrderGeneralRepairAgreement `json:"work_order_general_repair_agreement"`
@@ -759,14 +759,14 @@ type WorkOrderAffiliateResponse struct {
 	MobileCustDriver              string                          `json:"mobile_customer_driver"`
 	ContactVia                    string                          `json:"contact_via"`
 	WorkOrderInsuranceCheck       bool                            `json:"insurance_check"`
-	WorkOrderInsurancePolicyNo    string                          `json:"insurance_policy_no"`
-	WorkOrderInsuranceExpiredDate time.Time                       `json:"insurance_expired_date"`
-	WorkOrderInsuranceClaimNo     string                          `json:"insurance_claim_no"`
-	WorkOrderEraExpiredDate       time.Time                       `json:"work_order_era_expired_date"`
+	WorkOrderInsurancePolicyNo    *string                         `json:"insurance_policy_no"`
+	WorkOrderInsuranceExpiredDate *time.Time                      `json:"insurance_expired_date"`
+	WorkOrderInsuranceClaimNo     *string                         `json:"insurance_claim_no"`
+	WorkOrderEraExpiredDate       *time.Time                      `json:"work_order_era_expired_date"`
 	PromiseDate                   time.Time                       `json:"promise_date"`
 	PromiseTime                   time.Time                       `json:"promise_time"`
 	EstimationDuration            float64                         `json:"estimation_duration"`
-	WorkOrderInsuranceOwnRisk     float64                         `json:"insurance_own_risk"`
+	WorkOrderInsuranceOwnRisk     *float64                        `json:"insurance_own_risk"`
 	CustomerExpress               bool                            `json:"customer_express"`
 	LeaveCar                      bool                            `json:"leave_car"`
 	CarWash                       bool                            `json:"car_wash"`
@@ -774,8 +774,8 @@ type WorkOrderAffiliateResponse struct {
 	Notes                         string                          `json:"notes"`
 	Suggestion                    string                          `json:"suggestion"`
 	DownpaymentAmount             float64                         `json:"dp_amount"`
-	WorkOrderInsurancePic         string                          `json:"insurance_pic"`
-	WorkOrderInsuranceWONumber    string                          `json:"insurance_workorder_number"`
+	WorkOrderInsurancePic         *string                         `json:"insurance_pic"`
+	WorkOrderInsuranceWONumber    *string                         `json:"insurance_workorder_number"`
 	WorkOrderEraNo                string                          `json:"work_order_era_no"`
 	WorkOrderDetailService        WorkOrderDetailsResponseRequest `json:"work_order_details_service"`
 	WorkOrderDetailVehicle        WorkOrderDetailsResponseVehicle `json:"work_order_details_vehicle"`
@@ -1020,72 +1020,72 @@ type WorkOrderDetailRequest struct {
 }
 
 type WorkOrderDetailResponse struct {
-	WorkOrderDetailId                   int       `json:"work_order_detail_id"`
-	WorkOrderSystemNumber               int       `json:"work_order_system_number"`
-	WorkOrderStatusId                   int       `json:"work_order_status_id"`
-	WorkOrderStatusName                 string    `json:"work_order_status_name"`
-	LineTypeId                          int       `json:"line_type_id"`
-	LineTypeCode                        string    `json:"line_type_code"`
-	LineTypeName                        string    `json:"line_type_name"`
-	TransactionTypeId                   int       `json:"transaction_type_id"`
-	TransactionTypeCode                 string    `json:"transaction_type_code"`
-	JobTypeId                           int       `json:"job_type_id"`
-	JobTypeCode                         string    `json:"job_type_code"`
-	WarehouseGroupId                    int       `json:"warehouse_group_id"`
-	OperationItemId                     int       `json:"operation_item_id"`
-	FrtQuantity                         float64   `json:"frt_quantity"`
-	SupplyQuantity                      float64   `json:"supply_quantity"`
-	Description                         string    `json:"description"`
-	Uom                                 string    `json:"uom"`
-	OperationItemPrice                  float64   `json:"operation_item_price"`
-	OperationItemDiscountAmount         float64   `json:"operation_item_discount_amount"`
-	OperationItemDiscountRequestAmount  float64   `json:"operation_item_discount_request_amount"`
-	OperationItemDiscountPercent        float64   `json:"operation_item_discount_percent"`
-	OperationItemDiscountRequestPercent float64   `json:"operation_item_discount_request_percent"`
-	OperationItemCode                   string    `json:"operation_item_code"`
-	AtpmWCFTypeId                       int       `json:"warranty_claim_type_id"`
-	WarrantyClaimTypeDescription        string    `json:"warranty_claim_type_description"`
-	TotalCostOfGoodsSold                float64   `json:"total_cost_of_goods_sold"`
-	ServiceCategoryId                   int       `json:"service_category_id"`
-	PphAmount                           float64   `json:"pph_amount"`
-	TaxId                               int       `json:"tax_id"`
-	PphTaxRate                          float64   `json:"pph_tax_rate"`
-	LastApprovalBy                      string    `json:"last_approval_by"`
-	LastApprovalDate                    time.Time `json:"last_approval_date"`
-	QualityControlStatus                string    `json:"quality_control_status"`
-	QualityControlExtraFrt              float64   `json:"quality_control_extra_frt"`
-	QualityControlExtraReason           string    `json:"quality_control_extra_reason"`
-	SubstituteTypeId                    int       `json:"substitute_type_id"`
-	SubstituteTypeName                  string    `json:"substitute_type_description"`
-	AtpmClaimNumber                     string    `json:"atpm_claim_number"`
-	AtpmClaimDate                       time.Time `json:"atpm_claim_date"`
-	Package                             string    `json:"package"`
-	PurchaseRequestSystemNumber         int       `json:"purchase_request_system_number"`
-	PurchaseRequestDetailId             int       `json:"purchase_request_detail_id"`
-	PurchaseOrderSystemNumber           int       `json:"purchase_order_system_number"`
-	PurchaseOrderLine                   int       `json:"purchase_order_line"`
-	InvoiceSystemNumber                 int       `json:"invoice_system_number"`
-	InvoiceDate                         time.Time `json:"invoice_date"`
-	GoodsReceiveQuantity                float64   `json:"goods_receive_quantity"`
-	QualityControlTotalExtraFrt         float64   `json:"quality_control_total_extra_frt"`
-	ReorderNumber                       float64   `json:"reorder_number"`
-	BinningQuantity                     float64   `json:"binning_quantity"`
-	IncentiveSystemNumber               int       `json:"incentive_system_number"`
-	Bypass                              bool      `json:"bypass"`
-	TechnicianId                        int       `json:"technician_id"`
-	TechnicianName                      string    `json:"technician_name"`
-	ForemanId                           int       `json:"foreman_id"`
-	ForemanName                         string    `json:"foreman_name"`
-	RecSystemNumber                     int       `json:"recall_system_number"`
-	Request                             string    `json:"request"`
-	FrtQuantityExpress                  float64   `json:"frt_quantity_express"`
-	PriceListId                         int       `json:"price_list_id"`
-	ClaimNumber                         string    `json:"claim_number"`
-	QualityControlPassDatetime          time.Time `json:"quality_control_pass_datetime"`
-	ExtendedWarranty                    bool      `json:"extended_warranty"`
-	RemarkExtendedWarranty              string    `json:"remark_extended_warranty"`
-	WarehouseGroupName                  string    `json:"warehouse_group_name"`
-	PendingReason                       string    `json:"pending_reason"`
+	WorkOrderDetailId                   int        `json:"work_order_detail_id"`
+	WorkOrderSystemNumber               int        `json:"work_order_system_number"`
+	WorkOrderStatusId                   int        `json:"work_order_status_id"`
+	WorkOrderStatusName                 string     `json:"work_order_status_name"`
+	LineTypeId                          int        `json:"line_type_id"`
+	LineTypeCode                        string     `json:"line_type_code"`
+	LineTypeName                        string     `json:"line_type_name"`
+	TransactionTypeId                   int        `json:"transaction_type_id"`
+	TransactionTypeCode                 string     `json:"transaction_type_code"`
+	JobTypeId                           int        `json:"job_type_id"`
+	JobTypeCode                         string     `json:"job_type_code"`
+	WarehouseGroupId                    int        `json:"warehouse_group_id"`
+	OperationItemId                     int        `json:"operation_item_id"`
+	FrtQuantity                         float64    `json:"frt_quantity"`
+	SupplyQuantity                      float64    `json:"supply_quantity"`
+	Description                         string     `json:"description"`
+	Uom                                 string     `json:"uom"`
+	OperationItemPrice                  float64    `json:"operation_item_price"`
+	OperationItemDiscountAmount         float64    `json:"operation_item_discount_amount"`
+	OperationItemDiscountRequestAmount  float64    `json:"operation_item_discount_request_amount"`
+	OperationItemDiscountPercent        float64    `json:"operation_item_discount_percent"`
+	OperationItemDiscountRequestPercent float64    `json:"operation_item_discount_request_percent"`
+	OperationItemCode                   string     `json:"operation_item_code"`
+	AtpmWCFTypeId                       int        `json:"warranty_claim_type_id"`
+	WarrantyClaimTypeDescription        string     `json:"warranty_claim_type_description"`
+	TotalCostOfGoodsSold                float64    `json:"total_cost_of_goods_sold"`
+	ServiceCategoryId                   int        `json:"service_category_id"`
+	PphAmount                           float64    `json:"pph_amount"`
+	TaxId                               int        `json:"tax_id"`
+	PphTaxRate                          float64    `json:"pph_tax_rate"`
+	LastApprovalBy                      string     `json:"last_approval_by"`
+	LastApprovalDate                    time.Time  `json:"last_approval_date"`
+	QualityControlStatus                string     `json:"quality_control_status"`
+	QualityControlExtraFrt              float64    `json:"quality_control_extra_frt"`
+	QualityControlExtraReason           string     `json:"quality_control_extra_reason"`
+	SubstituteTypeId                    int        `json:"substitute_type_id"`
+	SubstituteTypeName                  string     `json:"substitute_type_description"`
+	AtpmClaimNumber                     string     `json:"atpm_claim_number"`
+	AtpmClaimDate                       time.Time  `json:"atpm_claim_date"`
+	Package                             string     `json:"package"`
+	PurchaseRequestSystemNumber         int        `json:"purchase_request_system_number"`
+	PurchaseRequestDetailId             int        `json:"purchase_request_detail_id"`
+	PurchaseOrderSystemNumber           int        `json:"purchase_order_system_number"`
+	PurchaseOrderLine                   int        `json:"purchase_order_line"`
+	InvoiceSystemNumber                 int        `json:"invoice_system_number"`
+	InvoiceDate                         *time.Time `json:"invoice_date"`
+	GoodsReceiveQuantity                float64    `json:"goods_receive_quantity"`
+	QualityControlTotalExtraFrt         float64    `json:"quality_control_total_extra_frt"`
+	ReorderNumber                       float64    `json:"reorder_number"`
+	BinningQuantity                     float64    `json:"binning_quantity"`
+	IncentiveSystemNumber               int        `json:"incentive_system_number"`
+	Bypass                              bool       `json:"bypass"`
+	TechnicianId                        int        `json:"technician_id"`
+	TechnicianName                      string     `json:"technician_name"`
+	ForemanId                           int        `json:"foreman_id"`
+	ForemanName                         string     `json:"foreman_name"`
+	RecSystemNumber                     int        `json:"recall_system_number"`
+	Request                             string     `json:"request"`
+	FrtQuantityExpress                  float64    `json:"frt_quantity_express"`
+	PriceListId                         int        `json:"price_list_id"`
+	ClaimNumber                         string     `json:"claim_number"`
+	QualityControlPassDatetime          *time.Time `json:"quality_control_pass_datetime"`
+	ExtendedWarranty                    bool       `json:"extended_warranty"`
+	RemarkExtendedWarranty              string     `json:"remark_extended_warranty"`
+	WarehouseGroupName                  string     `json:"warehouse_group_name"`
+	PendingReason                       string     `json:"pending_reason"`
 }
 
 type WorkOrderAffiliate struct {

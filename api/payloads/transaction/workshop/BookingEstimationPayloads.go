@@ -49,6 +49,12 @@ type BookingEstimationDetailRequest struct {
 	OperationItemDiscountRequestPercent float64 `gorm:"column:operation_item_discount_request_percent" json:"operation_item_discount_request_percent" parent_entity:"trx_booking_estimation_detail"`
 	OperationItemDiscountRequestAmount  float64 `gorm:"column:operation_item_discount_request_amount" json:"operation_item_discount_request_amount" parent_entity:"trx_booking_estimation_detail"`
 }
+
+type BookingEstimationDetailRequestSave struct {
+	FrtQuantity                        float64 `gorm:"column:frt_quantity" json:"frt_quantity" parent_entity:"trx_booking_estimation_detail"`
+	OperationItemDiscountRequestAmount float64 `gorm:"column:operation_item_discount_request_amount" json:"operation_item_discount_request_amount" parent_entity:"trx_booking_estimation_detail"`
+}
+
 type BookingEstimationDetailResponse struct {
 	EstimationSystemNumber             int     `json:"estimation_system_number"`
 	EstimationDetailId                 int     `json:"estimation_detail_id"`

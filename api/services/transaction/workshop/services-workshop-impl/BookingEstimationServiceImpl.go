@@ -429,7 +429,6 @@ func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(id int, req transacti
 		}
 	}()
 
-	// Simpan detail booking estimation
 	result, err := s.structBookingEstimationRepo.SaveDetailBookEstim(tx, id, req)
 	if err != nil {
 		errResponse = &exceptions.BaseErrorResponse{
@@ -439,8 +438,48 @@ func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(id int, req transacti
 		return transactionworkshopentities.BookingEstimationDetail{}, errResponse
 	}
 
-	// Update perhitungan estimasi
 	if _, err = s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx, result.EstimationSystemNumber); err != nil {
+		errResponse = &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        fmt.Errorf("failed to update booking estimation calculation: %w", err),
+		}
+		return transactionworkshopentities.BookingEstimationDetail{}, errResponse
+	}
+
+	return result, nil
+}
+
+func (s *BookingEstimationServiceImpl) UpdateDetailBookEstim(estimsysno int, id int, req transactionworkshoppayloads.BookingEstimationDetailRequestSave) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var errResponse *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			errResponse = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if errResponse != nil {
+			tx.Rollback()
+			logrus.WithError(errResponse.Err).Info("Transaction rollback due to error")
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				errResponse = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	result, err := s.structBookingEstimationRepo.UpdateDetailBookEstim(tx, estimsysno, id, req)
+	if err != nil {
+		return transactionworkshopentities.BookingEstimationDetail{}, err
+	}
+
+	if _, err = s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx, estimsysno); err != nil {
 		errResponse = &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        fmt.Errorf("failed to update booking estimation calculation: %w", err),
@@ -790,4 +829,69 @@ func (s *BookingEstimationServiceImpl) GetAllDetailBookingEstimation(filterCondi
 		return results, err
 	}
 	return results, nil
+}
+
+func (s *BookingEstimationServiceImpl) DeleteBookEstimReq(booksysno int, id []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	result, err := s.structBookingEstimationRepo.DeleteBookEstimReq(tx, booksysno, id)
+	if err != nil {
+		return false, err
+	}
+	return result, nil
+}
+
+func (s *BookingEstimationServiceImpl) DeleteDetailBookEstim(estimsysno int, id []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	result, err := s.structBookingEstimationRepo.DeleteDetailBookEstim(tx, estimsysno, id)
+	if err != nil {
+		return false, err
+	}
+
+	return result, nil
 }

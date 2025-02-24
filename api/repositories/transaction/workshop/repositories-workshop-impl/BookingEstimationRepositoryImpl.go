@@ -15,8 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -78,7 +76,7 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 			"document_status_id":                entity.DocumentStatusId,
 			"booking_estimation_batch_date":     entity.BookingEstimationBatchDate,
 			"booking_estimation_vehicle_number": entity.BookingEstimationVehicleNumber,
-			"agreement_number_br":               entity.AgreementNumberBr,
+			"agreement_number":                  entity.AgreementNumber,
 			"is_unregistered":                   entity.IsUnregistered,
 			"contact_person_name":               entity.ContactPersonName,
 			"contact_person_phone":              entity.ContactPersonPhone,
@@ -291,15 +289,13 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 	var entity transactionworkshopentities.BookingEstimation
 
 	err := tx.Where("batch_system_number = ?", id).First(&entity).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Booking estimation not found",
-			Err:        err,
-		}
-	}
-
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation not found",
+			}
+		}
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve booking from the database",
@@ -334,7 +330,7 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 		updates["insurance_policy_no"] = request.InsurancePolicyNo
 	}
 	if !request.InsuranceExpired.IsZero() {
-		updates["insurance_expired_date"] = request.InsuranceExpired
+		updates["insurance_expired_date"] = request.InsuranceExpired.Truncate(24 * time.Hour)
 	}
 	if request.InsuranceClaimNo != "" {
 		updates["insurance_claim_no"] = request.InsuranceClaimNo
@@ -347,7 +343,7 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 		return entity, nil
 	}
 
-	err = tx.Save(&entity).Error
+	err = tx.Model(&entity).Updates(updates).Error
 	if err != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -681,71 +677,26 @@ func (r *BookingEstimationImpl) UpdateBookEstimReq(tx *gorm.DB, req transactionw
 	return model, nil
 }
 
-func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, ids string) ([]string, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, booksysno int, ids []int) (bool, *exceptions.BaseErrorResponse) {
+	result := tx.Where("booking_system_number = ? AND booking_estimation_request_id IN (?)", booksysno, ids).
+		Delete(&transactionworkshopentities.BookingEstimationRequest{})
 
-	idSlice := strings.Split(ids, ",")
-
-	var models []transactionworkshopentities.BookingEstimationRequest
-	if err := tx.Where("booking_estimation_request_id IN (?)", idSlice).Find(&models).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch booking estimation requests",
-			Err:        err,
+			Message:    "Failed to delete booking estimation request",
+			Err:        result.Error,
 		}
 	}
 
-	if len(models) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
+	if result.RowsAffected == 0 {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "No booking estimation requests found to delete",
-			Err:        nil,
+			Message:    "No matching booking estimation request found",
 		}
 	}
 
-	var deletedIds []string
-	for _, model := range models {
-		deletedIds = append(deletedIds, strconv.Itoa(model.BookingEstimationRequestID))
-	}
-
-	if err := tx.Delete(&models).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete booking estimation requests",
-			Err:        err,
-		}
-	}
-
-	if err := updateLineNumbers(tx); err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update line numbers",
-			Err:        err,
-		}
-	}
-
-	return deletedIds, nil
-}
-
-func updateLineNumbers(tx *gorm.DB) error {
-	var records []transactionworkshopentities.BookingEstimationRequest
-
-	if err := tx.Model(&transactionworkshopentities.BookingEstimationRequest{}).
-		Order("booking_estimation_request_code ASC").
-		Find(&records).Error; err != nil {
-		return err
-	}
-
-	for i := range records {
-		records[i].BookingLine = i + 1
-	}
-
-	if len(records) > 0 {
-		if err := tx.Save(&records).Error; err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return true, nil
 }
 
 func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
@@ -1089,11 +1040,74 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, id int, request
 	return bookingDetail, nil
 }
 
-func (r *BookingEstimationImpl) UpdateBookEstimDetail(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailUpdate, id int, LineTypeId int) (bool, *exceptions.BaseErrorResponse) {
-	return true, nil
+func (r *BookingEstimationImpl) UpdateDetailBookEstim(tx *gorm.DB, estimsysno int, id int, request transactionworkshoppayloads.BookingEstimationDetailRequestSave) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
+	var bookingDetail transactionworkshopentities.BookingEstimationDetail
+
+	if err := tx.Where("estimation_system_number = ? AND estimation_detail_id = ?", estimsysno, id).First(&bookingDetail).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Booking estimation detail not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve booking estimation detail from the database",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Model(&bookingDetail).Updates(map[string]interface{}{
+		"frt_quantity":                           request.FrtQuantity,
+		"operation_item_discount_request_amount": request.OperationItemDiscountRequestAmount,
+	}).Error; err != nil {
+		return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update booking estimation detail",
+			Err:        err,
+		}
+	}
+
+	return bookingDetail, nil
 }
 
-func (r *BookingEstimationImpl) DeleteBookEstimDetail(tx *gorm.DB, id, linetypeid int) (bool, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) DeleteDetailBookEstim(tx *gorm.DB, estimsysno int, ids []int) (bool, *exceptions.BaseErrorResponse) {
+	var count int64
+
+	if err := tx.Model(&transactionworkshopentities.BookingEstimationDetail{}).
+		Where("estimation_system_number = ? AND estimation_detail_id IN (?)", estimsysno, ids).
+		Count(&count).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to validate booking estimation detail",
+			Err:        err,
+		}
+	}
+
+	if count == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No matching booking estimation details found",
+		}
+	}
+
+	result := tx.Where("estimation_system_number = ? AND estimation_detail_id IN (?)", estimsysno, ids).
+		Delete(&transactionworkshopentities.BookingEstimationDetail{})
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete booking estimation details",
+			Err:        result.Error,
+		}
+	}
+
+	if result.RowsAffected == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Deletion failed, no rows affected",
+		}
+	}
 
 	return true, nil
 }

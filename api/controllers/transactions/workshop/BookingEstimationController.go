@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -35,10 +36,13 @@ type BookingEstimationController interface {
 	UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request)
 	GetAllBookEstimReq(writer http.ResponseWriter, request *http.Request)
+	DeleteBookEstimReq(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDetailBookingEstimation(writer http.ResponseWriter, request *http.Request)
 	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
 	SaveDetailBookEstim(writer http.ResponseWriter, request *http.Request)
+	UpdateDetailBookEstim(writer http.ResponseWriter, request *http.Request)
+	DeleteDetailBookEstim(writer http.ResponseWriter, request *http.Request)
 
 	SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request)
 	AddPackage(writer http.ResponseWriter, request *http.Request)
@@ -253,7 +257,7 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
 // @Param batch_system_number path int true "Booking Estimation ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/void/{batch_system_number} [delete]
 func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
@@ -468,6 +472,95 @@ func (r *BookingEstimationControllerImpl) SaveDetailBookEstim(writer http.Respon
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusCreated)
 }
 
+// UpdateDetailBookEstim updates a booking estimation detail
+// @Summary Update Booking Estimation Detail
+// @Description Update a booking estimation detail
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param estimation_system_number path int true "Estimation System Number"
+// @Param estimation_detail_id path int true "Estimation Detail ID"
+// @Param reqBody body transactionworkshoppayloads.BookingEstimationDetailRequestSave true "Booking Estimation Detail Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{estimation_system_number}/detail/{estimation_detail_id} [put]
+func (r *BookingEstimationControllerImpl) UpdateDetailBookEstim(writer http.ResponseWriter, request *http.Request) {
+
+	estsysnoStrId := chi.URLParam(request, "estimation_system_number")
+	id, err := strconv.Atoi(estsysnoStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid estimation system ID", http.StatusBadRequest)
+		return
+	}
+
+	estdetailStrId := chi.URLParam(request, "estimation_detail_id")
+	estdetailId, err := strconv.Atoi(estdetailStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid estimation detail ID", http.StatusBadRequest)
+		return
+	}
+
+	var formrequest transactionworkshoppayloads.BookingEstimationDetailRequestSave
+	helper.ReadFromRequestBody(request, &formrequest)
+	if validationErr := validation.ValidationForm(writer, request, &formrequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	update, baseErr := r.bookingEstimationService.UpdateDetailBookEstim(id, estdetailId, formrequest)
+	if baseErr != nil {
+		exceptions.NewBadRequestException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
+}
+
+// DeleteDetailBookEstim deletes booking estimation details (supports multiple IDs)
+// @Summary Delete Booking Estimation Details
+// @Description Delete multiple booking estimation details
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param estimation_system_number path int true "Estimation System Number"
+// @Param estimation_detail_id query string true "Comma-separated list of Estimation Detail IDs"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{estimation_system_number}/detail [delete]
+func (r *BookingEstimationControllerImpl) DeleteDetailBookEstim(writer http.ResponseWriter, request *http.Request) {
+
+	estsysnoStrId := chi.URLParam(request, "estimation_system_number")
+	estimsysno, err := strconv.Atoi(estsysnoStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid estimation system ID", http.StatusBadRequest)
+		return
+	}
+
+	estdetailStrIds := request.URL.Query().Get("estimation_detail_id")
+	if estdetailStrIds == "" {
+		payloads.NewHandleError(writer, "Estimation detail IDs are required", http.StatusBadRequest)
+		return
+	}
+
+	var estdetailIds []int
+	for _, idStr := range strings.Split(estdetailStrIds, ",") {
+		id, err := strconv.Atoi(strings.TrimSpace(idStr))
+		if err != nil {
+			payloads.NewHandleError(writer, "Invalid estimation detail ID format", http.StatusBadRequest)
+			return
+		}
+		estdetailIds = append(estdetailIds, id)
+	}
+
+	delete, baseErr := r.bookingEstimationService.DeleteDetailBookEstim(estimsysno, estdetailIds)
+	if baseErr != nil {
+		exceptions.NewBadRequestException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, delete, "Delete Data Successfully!", http.StatusNoContent)
+}
+
 func (r *BookingEstimationControllerImpl) AddPackage(writer http.ResponseWriter, request *http.Request) {
 	bookingestiomationid, _ := strconv.Atoi(chi.URLParam(request, "booking_estimation_id"))
 	packageid, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
@@ -661,4 +754,49 @@ func (r *BookingEstimationControllerImpl) GetAllDetailBookingEstimation(writer h
 		int64(result.TotalRows),
 		result.TotalPages,
 	)
+}
+
+// DeleteBookEstimReq deletes booking estimation requests (supports multiple IDs)
+// @Summary Delete Booking Estimation Requests
+// @Description Delete multiple booking estimation requests
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Booking Estimation
+// @Param booking_system_number path int true "Booking System Number"
+// @Param booking_estimation_request_id query string true "Comma-separated list of Booking Estimation Request IDs"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/booking-estimation/normal/{booking_system_number}/request [delete]
+func (r *BookingEstimationControllerImpl) DeleteBookEstimReq(writer http.ResponseWriter, request *http.Request) {
+
+	bookingsystemnumberStr := chi.URLParam(request, "booking_system_number")
+	bookingsystemnumber, err := strconv.Atoi(bookingsystemnumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid booking system number", http.StatusBadRequest)
+		return
+	}
+
+	bookingEstimationRequestIDsStr := request.URL.Query().Get("booking_estimation_request_id")
+	if bookingEstimationRequestIDsStr == "" {
+		payloads.NewHandleError(writer, "Booking estimation request IDs are required", http.StatusBadRequest)
+		return
+	}
+
+	var bookingEstimationRequestIDs []int
+	for _, idStr := range strings.Split(bookingEstimationRequestIDsStr, ",") {
+		id, err := strconv.Atoi(strings.TrimSpace(idStr))
+		if err != nil {
+			payloads.NewHandleError(writer, "Invalid booking estimation request ID format", http.StatusBadRequest)
+			return
+		}
+		bookingEstimationRequestIDs = append(bookingEstimationRequestIDs, id)
+	}
+
+	delete, baseErr := r.bookingEstimationService.DeleteBookEstimReq(bookingsystemnumber, bookingEstimationRequestIDs)
+	if baseErr != nil {
+		exceptions.NewBadRequestException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, delete, "Delete Successful!", http.StatusNoContent)
 }

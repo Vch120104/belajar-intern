@@ -25,7 +25,7 @@ type BookingEstimation struct {
 	DocumentStatusId                 int                                `gorm:"column:document_status_id;size:30;" json:"document_status_id"`
 	BookingEstimationBatchDate       time.Time                          `gorm:"column:booking_estimation_batch_date" json:"booking_estimation_batch_date"`
 	BookingEstimationVehicleNumber   string                             `gorm:"column:booking_estimation_vehicle_number;type:varchar(150)" json:"booking_estimation_vehicle_number"`
-	AgreementNumberBr                string                             `gorm:"column:agreement_number_br;type:varchar(150)" json:"agreement_number_br"`
+	AgreementNumber                  string                             `gorm:"column:agreement_number;type:varchar(150)" json:"agreement_number"`
 	IsUnregistered                   bool                               `gorm:"column:is_unregistered;" json:"is_unregistered"`
 	ContactPersonName                string                             `gorm:"column:contact_person_name;type:varchar(150)" json:"contact_person_name"`
 	ContactPersonPhone               string                             `gorm:"column:contact_person_phone;type:varchar(150)" json:"contact_person_phone"`

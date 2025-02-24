@@ -9,7 +9,7 @@ type WorkOrder struct {
 	CompanyId                          int               `gorm:"column:company_id;size:30;" json:"company_id"`
 	WorkOrderDocumentNumber            string            `gorm:"column:work_order_document_number;size:50;" json:"work_order_document_number"`
 	WorkOrderStatusId                  int               `gorm:"column:work_order_status_id;size:30;" json:"work_order_status_id"`
-	WorkOrderDate                      time.Time         `gorm:"column:work_order_date;default:null" json:"work_order_date"`
+	WorkOrderDate                      time.Time         `gorm:"column:work_order_date;" json:"work_order_date"`
 	WorkOrderCloseDate                 *time.Time        `gorm:"column:work_order_close_date;default:null" json:"work_order_close_date"`
 	WorkOrderTypeId                    int               `gorm:"column:work_order_type_id;size:30;" json:"work_order_type_id"`
 	RepeatedSystemNumber               int               `gorm:"column:repeated_system_number;size:30;" json:"repeated_system_number"`
@@ -27,12 +27,12 @@ type WorkOrder struct {
 	PayType                            string            `gorm:"column:pay_type;size:50;" json:"pay_type"`
 	FromEra                            bool              `gorm:"column:from_era;default:false;" json:"from_era"`
 	QueueNumber                        int               `gorm:"column:queue_number;size:50;" json:"queue_number"`
-	ArrivalTime                        time.Time         `gorm:"column:arrival_time;default:null" json:"arrival_time"`
+	ArrivalTime                        time.Time         `gorm:"column:arrival_time;" json:"arrival_time"`
 	ServiceMileage                     int               `gorm:"column:service_mileage;size:50;" json:"service_mileage"`
 	LeaveCar                           bool              `gorm:"column:leave_car;default:false;" json:"leave_car"`
 	Storing                            bool              `gorm:"column:storing;default:false;" json:"storing"`
 	EraNumber                          string            `gorm:"column:era_number;size:50;" json:"era_number"`
-	EraExpiredDate                     time.Time         `gorm:"column:era_expired_date;default:null" json:"era_expired_date"`
+	EraExpiredDate                     *time.Time        `gorm:"column:era_expired_date;default:null" json:"era_expired_date"`
 	Unregister                         bool              `gorm:"column:unregister;size:50;" json:"unregister"`
 	ContactPersonName                  string            `gorm:"column:contact_person_name;size:50;" json:"contact_person_name"`
 	ContactPersonPhone                 string            `gorm:"column:contact_person_phone;size:50;" json:"contact_person_phone"`
@@ -52,12 +52,12 @@ type WorkOrder struct {
 	CampaignId                         int               `gorm:"column:campaign_id;size:30;" json:"campaign_id"`
 	CampaignCode                       int               `gorm:"column:campaign_code;size:30;" json:"campaign_code"`
 	InsuranceCheck                     bool              `gorm:"column:insurance_check;default:false;" json:"insurance_check"`
-	InsurancePolicyNumber              string            `gorm:"column:insurance_policy_number;size:50;" json:"insurance_policy_number"`
-	InsuranceExpiredDate               time.Time         `gorm:"column:insurance_expired_date;default:null" json:"insurance_expired_date"`
-	InsuranceClaimNumber               string            `gorm:"column:insurance_claim_number;size:50;" json:"insurance_claim_number"`
-	InsurancePersonInCharge            string            `gorm:"column:insurance_person_in_charge;size:50;" json:"insurance_person_in_charge"`
-	InsuranceOwnRisk                   float64           `gorm:"column:insurance_own_risk;default:null" json:"insurance_own_risk"`
-	InsuranceWorkOrderNumber           string            `gorm:"column:insurance_work_order_number;size:50;" json:"insurance_work_order_number"`
+	InsurancePolicyNumber              *string           `gorm:"column:insurance_policy_number;size:50;" json:"insurance_policy_number"`
+	InsuranceExpiredDate               *time.Time        `gorm:"column:insurance_expired_date;default:null" json:"insurance_expired_date"`
+	InsuranceClaimNumber               *string           `gorm:"column:insurance_claim_number;size:50;" json:"insurance_claim_number"`
+	InsurancePersonInCharge            *string           `gorm:"column:insurance_person_in_charge;size:50;" json:"insurance_person_in_charge"`
+	InsuranceOwnRisk                   *float64          `gorm:"column:insurance_own_risk;default:null" json:"insurance_own_risk"`
+	InsuranceWorkOrderNumber           *string           `gorm:"column:insurance_work_order_number;size:50;" json:"insurance_work_order_number"`
 	TotalPackage                       *float64          `gorm:"column:total_package;default:null" json:"total_package"`
 	TotalOperation                     *float64          `gorm:"column:total_operation;default:null" json:"total_operation"`
 	TotalPart                          *float64          `gorm:"column:total_part;default:null" json:"total_part"`
@@ -110,8 +110,8 @@ type WorkOrder struct {
 	DPOverpay                          *float64          `gorm:"column:downpayment_overpay;default:null" json:"downpayment_overpay"`
 	SiteTypeId                         int               `gorm:"column:work_order_site_type_id;size:30;" json:"work_order_site_type_id"`
 	CostCenterId                       int               `gorm:"column:cost_center_id;size:30;" json:"cost_center_id"`
-	PromiseDate                        time.Time         `gorm:"column:promise_date;default:null" json:"promise_date"`
-	PromiseTime                        time.Time         `gorm:"column:promise_time;default:null" json:"promise_time"`
+	PromiseDate                        time.Time         `gorm:"column:promise_date;" json:"promise_date"`
+	PromiseTime                        time.Time         `gorm:"column:promise_time;" json:"promise_time"`
 	CarWash                            bool              `gorm:"column:car_wash;default:false;" json:"car_wash"`
 	JobOnHoldReason                    string            `gorm:"column:job_on_hold_reason;size:50;" json:"job_on_hold_reason"`
 	CustomerExpress                    bool              `gorm:"column:customer_express;default:false;" json:"customer_express"`

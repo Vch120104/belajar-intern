@@ -148,33 +148,32 @@ func (r *AtpmReimbursementRepositoryImpl) New(tx *gorm.DB, req transactionworksh
 // IF @Option = 1
 func (r *AtpmReimbursementRepositoryImpl) Save(tx *gorm.DB, claimsysno int, req transactionworkshoppayloads.AtpmReimbursementUpdate) (transactionworkshopentities.AtpmReimbursement, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.AtpmReimbursement
-	var invoiceDate, taxInvoiceDate time.Time
-
-	if !req.InvoiceDate.IsZero() {
-		invoiceDate = req.InvoiceDate
-	} else {
-		invoiceDate = time.Time{}
-	}
-
-	if !req.TaxInvoiceDate.IsZero() {
-		taxInvoiceDate = req.TaxInvoiceDate
-	} else {
-		taxInvoiceDate = time.Time{}
-	}
 
 	if err := tx.Where("claim_system_number = ?", claimsysno).First(&entity).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.AtpmReimbursement{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Reimbursement data not found",
+			}
+		}
 		return transactionworkshopentities.AtpmReimbursement{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Reimbursement data not found",
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve reimbursement data",
 			Err:        err,
 		}
 	}
 
 	var claimVehicle transactionworkshopentities.AtpmClaimVehicle
 	if err := tx.Where("claim_system_number = ?", claimsysno).First(&claimVehicle).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshopentities.AtpmReimbursement{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Claim vehicle data not found",
+			}
+		}
 		return transactionworkshopentities.AtpmReimbursement{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "Claim vehicle data not found",
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve claim vehicle data",
 			Err:        err,
 		}
 	}
@@ -203,8 +202,8 @@ func (r *AtpmReimbursementRepositoryImpl) Save(tx *gorm.DB, claimsysno int, req 
 	if req.InvoiceDocumentNumber != "" {
 		updates["invoice_document_number"] = req.InvoiceDocumentNumber
 	}
-	if !invoiceDate.IsZero() {
-		updates["invoice_date"] = invoiceDate
+	if !req.InvoiceDate.IsZero() {
+		updates["invoice_date"] = req.InvoiceDate.Truncate(24 * time.Hour)
 	}
 	if req.TaxInvoiceSystemNumber != 0 {
 		updates["tax_invoice_system_number"] = req.TaxInvoiceSystemNumber
@@ -212,8 +211,8 @@ func (r *AtpmReimbursementRepositoryImpl) Save(tx *gorm.DB, claimsysno int, req 
 	if req.TaxInvoiceDocumentNumber != "" {
 		updates["tax_invoice_document_number"] = req.TaxInvoiceDocumentNumber
 	}
-	if !taxInvoiceDate.IsZero() {
-		updates["tax_invoice_date"] = taxInvoiceDate
+	if !req.TaxInvoiceDate.IsZero() {
+		updates["tax_invoice_date"] = req.TaxInvoiceDate.Truncate(24 * time.Hour)
 	}
 	if req.KwitansiSystemNumber != 0 {
 		updates["kwitansi_system_number"] = req.KwitansiSystemNumber
@@ -226,7 +225,7 @@ func (r *AtpmReimbursementRepositoryImpl) Save(tx *gorm.DB, claimsysno int, req 
 		return entity, nil
 	}
 
-	if err := tx.Save(&entity).Error; err != nil {
+	if err := tx.Model(&entity).Updates(updates).Error; err != nil {
 		return transactionworkshopentities.AtpmReimbursement{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update reimbursement data",

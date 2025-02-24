@@ -355,13 +355,12 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Message:    "Data not found",
-				Err:        err,
+				Message:    "Claim data not found",
 			}
 		}
 		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch data",
+			Message:    "Failed to fetch claim data",
 			Err:        err,
 		}
 	}
@@ -370,38 +369,13 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request 
 		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusForbidden,
 			Message:    "Update header failed, claim document is already submitted",
-			Err:        errors.New("update header failed, claim document is already submitted"),
 		}
 	}
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		updateData := map[string]interface{}{
-			"symptom_code": request.SymptomCode,
-			"trouble_code": request.TroubleCode,
-		}
-
-		if err := tx.Model(&transactionworkshopentities.AtpmClaimVehicle{}).
-			Where("claim_system_number = ?", id).
-			Updates(updateData).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to update SymptomCode and TroubleCode",
-				Err:        err,
-			}
-		}
-
-		if err := tx.Where("claim_system_number = ?", id).First(&entity).Error; err != nil {
-			return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch updated data",
-				Err:        err,
-			}
-		}
-
-		return entity, nil
+	updates := map[string]interface{}{
+		"symptom_code": request.SymptomCode,
+		"trouble_code": request.TroubleCode,
 	}
-
-	updates := make(map[string]interface{})
 
 	if request.CustomerComplaint != "" {
 		updates["customer_complaint"] = request.CustomerComplaint
@@ -413,7 +387,7 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request 
 		updates["countermeasure"] = request.Countermeasure
 	}
 	if !request.RepairEndDate.IsZero() {
-		updates["repair_end_date"] = request.RepairEndDate
+		updates["repair_end_date"] = request.RepairEndDate.Truncate(24 * time.Hour)
 	}
 	if request.Fuel != 0 {
 		updates["fuel"] = request.Fuel
@@ -432,10 +406,10 @@ func (r *AtpmClaimRegistrationRepositoryImpl) Save(tx *gorm.DB, id int, request 
 		return entity, nil
 	}
 
-	if err := tx.Save(&entity).Error; err != nil {
+	if err := tx.Model(&entity).Updates(updates).Error; err != nil {
 		return transactionworkshopentities.AtpmClaimVehicle{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update data",
+			Message:    "Failed to update claim data",
 			Err:        err,
 		}
 	}

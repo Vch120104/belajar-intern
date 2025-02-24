@@ -321,7 +321,7 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
-// @Success 200 {object}  payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/void/{service_request_system_number} [delete]
 func (r *ServiceRequestControllerImp) Void(writer http.ResponseWriter, request *http.Request) {
@@ -343,7 +343,7 @@ func (r *ServiceRequestControllerImp) Void(writer http.ResponseWriter, request *
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Service Request voided successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Service Request voided successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to void service request", http.StatusInternalServerError)
 	}
@@ -556,7 +556,7 @@ func (r *ServiceRequestControllerImp) UpdateServiceDetail(writer http.ResponseWr
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
 // @Param service_request_detail_id path string true "Service Detail ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/detail/{service_request_system_number}/{service_request_detail_id} [delete]
 func (r *ServiceRequestControllerImp) DeleteServiceDetail(writer http.ResponseWriter, request *http.Request) {
@@ -586,7 +586,7 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetail(writer http.ResponseWr
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete service detail", http.StatusInternalServerError)
 	}
@@ -600,7 +600,7 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetail(writer http.ResponseWr
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
 // @Param multi_id path string true "Service Detail ID"
-// @Success 200 {object} payloads.Response
+// @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/detail/{service_request_system_number}/{multi_id} [delete]
 func (r *ServiceRequestControllerImp) DeleteServiceDetailMultiId(writer http.ResponseWriter, request *http.Request) {
@@ -642,7 +642,7 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetailMultiId(writer http.Res
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete service detail", http.StatusInternalServerError)
 	}
