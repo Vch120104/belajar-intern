@@ -150,7 +150,7 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 }
 
 func ExtractToken(r *http.Request) string {
-	authHeader := r.Header.Get("Authorization")
+	authHeader := r.Header.Get("Authorization-Key")
 	if authHeader == "" {
 		return "No Authorization header found"
 	}
