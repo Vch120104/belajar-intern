@@ -39,7 +39,7 @@ func NewItemOperationController(ItemOperationService masterservice.MappingItemOp
 // @Accept json
 // @Produce json
 // @Tags Master : Item Operation
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param item_operation_id query string false "item_operation_id"
 // @Param item_id query string false "item_id"
 // @Param operation_id query string false "operation_id"
@@ -86,7 +86,7 @@ func (r *ItemOperationControllerImpl) GetAllItemOperation(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Operation
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param item_operation_id path string true "item_operation_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -108,7 +108,7 @@ func (r *ItemOperationControllerImpl) GetByIdItemOperation(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Item Operation
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param request body masterpayloads.ItemOperationPost true "Item Operation Post Payloads"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -146,7 +146,7 @@ func (r *ItemOperationControllerImpl) DeleteItemOperation(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Operation
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param item_operation_id path string true "item_operation_id"
 // @Param request body masterpayloads.ItemOperationPost true "Item Operation Post Payloads"
 // @Success 200 {object} payloads.Response

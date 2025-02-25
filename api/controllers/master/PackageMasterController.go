@@ -43,7 +43,7 @@ func NewPackageMasterController(packageMasterService masterservice.PackageMaster
 // @Summary Get All Package Master
 // @Description Get All Package Master
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_name query string false "package_name"
@@ -109,7 +109,7 @@ func (r *PackageMasterControllerImpl) GetAllPackageMaster(writer http.ResponseWr
 // @Summary Get All Package Master Detail
 // @Description Get All Package Master Detail
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_id path int true "package_id"
@@ -154,7 +154,7 @@ func (r *PackageMasterControllerImpl) GetAllPackageMasterDetail(writer http.Resp
 // @Summary Get By Id Package Master
 // @Description Get By Id Package Master
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_id path int true "package_id"
@@ -178,7 +178,7 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMaster(writer http.ResponseW
 // @Summary Get By Id Package Master Detail
 // @Description Get By Id Package Master Detail
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_detail_id path int true "package_detail_id"
@@ -202,7 +202,7 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMasterDetail(writer http.Res
 // @Summary Get By Code Package Master
 // @Description Get By Code Package Master
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_code path string true "package_code"
@@ -223,7 +223,7 @@ func (r *PackageMasterControllerImpl) GetByCodePackageMaster(writer http.Respons
 // @Summary Save Package Master
 // @Description Save Package Master
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body masterpayloads.PackageMasterResponse true "PackageMasterResponse"
@@ -257,7 +257,7 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 // @Summary Save Package Master Detail
 // @Description Save Package Master Detail
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_id path int true "package_id"
@@ -286,7 +286,7 @@ func (r *PackageMasterControllerImpl) SavePackageMasterDetail(writer http.Respon
 // @Summary Change Status Package Master
 // @Description Change Status Package Master
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_id path int true "package_id"
@@ -310,7 +310,7 @@ func (r *PackageMasterControllerImpl) ChangeStatusPackageMaster(writer http.Resp
 // @Summary Activate Multi Id Package Master Detail
 // @Description Activate Multi Id Package Master Detail
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_detail_id path int true "package_detail_id"
@@ -333,7 +333,7 @@ func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer 
 // @Summary Deactivate Multi Id Package Master Detail
 // @Description Deactivate Multi Id Package Master Detail
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_detail_id path int true "package_detail_id"
@@ -356,7 +356,7 @@ func (r *PackageMasterControllerImpl) DeactivateMultiIdPackageMasterDetail(write
 // @Summary Copy To Other Model
 // @Description Copy To Other Model
 // @Tags Master : Package Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_id path int true "package_id"

@@ -45,7 +45,7 @@ func NewSkillLevelController(SkillLevelService masterservice.SkillLevelService) 
 // @Accept json
 // @Produce json
 // @Tags Master : Skill Level
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -87,7 +87,7 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Skill Level
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @param skill_level_id path int true "skill_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -114,7 +114,7 @@ func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Skill Level
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @param reqBody body masterpayloads.SkillLevelResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -156,7 +156,7 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Skill Level
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @param skill_level_id path int true "skill_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -184,7 +184,7 @@ func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Skill Level
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @param skill_level_id path int true "skill_level_id"
 // @param reqBody body masterpayloads.SkillLevelResponse true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -213,7 +213,7 @@ func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Skill Level
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @param skill_level_code path string true "skill_level_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

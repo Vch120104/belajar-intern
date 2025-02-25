@@ -55,7 +55,7 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param field_action_system_number query string false "field_action_system_number"
@@ -100,7 +100,7 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masterpayloads.FieldActionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -135,7 +135,7 @@ func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "field_action_system_number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -161,7 +161,7 @@ func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "Field Action Eligible Vehicle System Number" // Define the path parameter
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -205,7 +205,7 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer ht
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "Field Action System Number" // Define the path parameter
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -238,7 +238,7 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param field_action_eligible_vehicle_system_number path int true "Field Action Vehicle Detail ID"
@@ -283,7 +283,7 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemOperationDetailB
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param field_action_eligible_vehicle_item_system_number path int true "Field Action Vehicle Detail ID"
@@ -318,7 +318,7 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer h
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_eligible_vehicle_system_number path int true "Field Action Eligible Vehicle System Number" // Define the path parameter
 // @Param reqBody body masterpayloads.FieldActionItemDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -358,7 +358,7 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "Field Action System Number"
 // @Param reqBody body masterpayloads.FieldActionDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -398,7 +398,7 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.Res
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "Field Action System Number"
 // @Param multi_id query string true "Multiple IDs separated by comma"
 // @Param reqBody body masterpayloads.FieldActionDetailResponse true "Form Request"
@@ -446,7 +446,7 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "Field Action System Number" // Define the path parameter
 // @Param reqBody body masterpayloads.FieldActionItemDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -489,7 +489,7 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_system_number path int true "Field Action System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -516,7 +516,7 @@ func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_eligible_vehicle_system_number path int true "Field Action Eligible Vehicle System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -543,7 +543,7 @@ func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.R
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param field_action_eligible_vehicle_item_system_number path int true "Field Action Eligible Vehicle Item System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

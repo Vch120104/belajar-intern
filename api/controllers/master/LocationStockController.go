@@ -34,7 +34,7 @@ func NewLocationStockController(LocationStockService masterservice.LocationStock
 //	@Produce		json
 //
 // @Tags Master : Location Stock
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 //
 //	@Param			page					query		string	true	"page"
 //	@Param			limit					query		string	true	"limit"
@@ -83,7 +83,7 @@ func (l *LocationStockControlerImpl) GetViewLocationStock(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Location Stock
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param request body masterwarehousepayloads.LocationStockUpdatePayloads true "Location Stock Update Payloads"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -113,7 +113,7 @@ func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Location Stock
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param period_date query string true "period_date"
 // @Param company_id query string false "company_id"
 // @Param warehouse_id query string false "warehouse_id"

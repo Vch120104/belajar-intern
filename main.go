@@ -19,7 +19,7 @@ import (
 //
 // @BasePath /aftersales-service
 // @schemes https http
-// @securityDefinitions.apikey BearerAuth
+// @securityDefinitions.apikey AuthorizationKeyAuth
 // @in            header
 // @name          Authorization-Key
 func main() {
