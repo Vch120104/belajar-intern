@@ -43,6 +43,7 @@ type ItemImportControllerImpl struct {
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.ItemImportUploadRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -79,6 +80,7 @@ func (r *ItemImportControllerImpl) ProcessDataUpload(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param ItemImportMaster-File formData file true "File to upload"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -134,6 +136,7 @@ func (r *ItemImportControllerImpl) UploadTemplate(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/download-template [get]
@@ -169,6 +172,7 @@ func (r *ItemImportControllerImpl) DownloadTemplate(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param supplier_id path int true "Supplier ID"
 // @Success 200 {object} payloads.Response
@@ -202,6 +206,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyItemIdandSupplierId(writer htt
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param item_import_id path int true "Item Import ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -231,6 +236,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param item_code query string false "Item code"
@@ -292,6 +298,7 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -328,6 +335,7 @@ func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Item Import
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

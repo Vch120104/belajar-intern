@@ -28,6 +28,7 @@ func NewItemQueryAllCompanyController(
 // @Summary Get All Item Query All Company
 // @Description Get All Item Query All Company
 // @Tags Transaction : Sparepart Item Query All Company
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"

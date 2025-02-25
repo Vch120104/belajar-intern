@@ -61,6 +61,7 @@ func NewPurchasePriceController(PurchasePriceService masteritemservice.PurchaseP
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_name query int false "item_name"
@@ -115,6 +116,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
@@ -151,6 +153,7 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePrice(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -184,6 +187,7 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -220,6 +224,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -251,6 +256,7 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -300,6 +306,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.ResponsePagination
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -326,6 +333,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.Res
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
 // @param purchase_price_detail_id path int true "purchase_price_detail_id"
 // @Success 200 {object} payloads.Response
@@ -361,6 +369,7 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePriceDetail(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -393,6 +402,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
@@ -449,6 +459,7 @@ func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
@@ -501,6 +512,7 @@ func (r *PurchasePriceControllerImpl) ActivatePurchasePriceDetail(writer http.Re
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
@@ -556,6 +568,7 @@ func (r *PurchasePriceControllerImpl) DeactivatePurchasePriceDetail(writer http.
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/download-template [get]
@@ -608,6 +621,7 @@ func (r *PurchasePriceControllerImpl) DownloadTemplate(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param file formData file true "File"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -695,6 +709,7 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param file formData file true "File"
 // @Param data formData string true "Data"
 // @Success 200 {object} payloads.Response
@@ -785,6 +800,7 @@ func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/download [get]
@@ -859,6 +875,7 @@ func (r *PurchasePriceControllerImpl) Download(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
+// @Security AuthorizationKeyAuth
 // @Param currency_id query int true "currency_id"
 // @Param supplier_id query int true "supplier_id"
 // @Param effective_date query string true "effective_date"

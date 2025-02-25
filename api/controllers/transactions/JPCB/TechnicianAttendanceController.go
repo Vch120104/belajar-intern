@@ -37,6 +37,7 @@ func NewTechnicianAttendanceController(technicianAttendanceService transactionjp
 // @Summary Get All Technician Attendance
 // @Description Get All Technician Attendance
 // @Tags Transaction : JPCB Technician Attendance
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -70,6 +71,7 @@ func (r *TechnicianAttendanceControllerImpl) GetAllTechnicianAttendance(writer h
 // @Summary Get Add Line Technician
 // @Description Get Add Line Technician
 // @Tags Transaction : JPCB Technician Attendance
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Date"
@@ -116,6 +118,7 @@ func (r *TechnicianAttendanceControllerImpl) GetAddLineTechnician(writer http.Re
 // @Summary Save Technician Attendance
 // @Description Save Technician Attendance
 // @Tags Transaction : JPCB Technician Attendance
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body transactionjpcbpayloads.TechnicianAttendanceSaveRequest true "Technician Attendance Save Request"
@@ -147,6 +150,7 @@ func (r *TechnicianAttendanceControllerImpl) SaveTechnicianAttendance(writer htt
 // @Summary Change Status Technician Attendance
 // @Description Change Status Technician Attendance
 // @Tags Transaction : JPCB Technician Attendance
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param technician_attendance_id path int true "Technician Attendance ID"

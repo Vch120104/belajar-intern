@@ -43,6 +43,7 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 // @Accept json
 // @Produce	json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @Param uom_id path string true "uom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -70,6 +71,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.R
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @Param			page					query		string	true	"page"
 // @Param			limit					query		string	true	"limit"
 // @Param			is_active				query		string	false	"is_active"	Enums(true, false)
@@ -114,6 +116,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 // @Router			/v1/unit-of-measurement/drop-down [get]
@@ -134,6 +137,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @Param			uom_code				path		string	true	"uom_code"
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -156,6 +160,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @param			reqBody					body		masteritempayloads.UomResponse	true	"Form Request"
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -198,6 +203,7 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @param			uom_id					path		int	true	"uom_id"
 // @Success		200						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
@@ -225,6 +231,7 @@ func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer h
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @Param			item_id					path		string	true	"item_id"
 // @Param			source_type				path		string	true	"source_type"
 // @Success		200						{object}	masteritempayloads.UomItemResponses
@@ -255,6 +262,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementItem(writer http.R
 // @Accept			json
 // @Produce		json
 // @Tags Master : Unit Of Measurement
+// @Security AuthorizationKeyAuth
 // @Param			source_type				query		string	true	"source_type"
 // @Param			item_id					query		int		true	"item_id"
 // @Param			quantity				query		float64	true	"quantity"

@@ -38,6 +38,7 @@ func NewSupplySlipReturnController(supplySlipReturnService transactionspareparts
 // @Summary Save Supply Slip Return
 // @Description Save Supply Slip Return
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body transactionsparepartentities.SupplySlipReturn true "Supply Slip Return Object"
@@ -68,6 +69,7 @@ func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturn(writer http.Respon
 // @Summary Save Supply Slip Return Detail
 // @Description Save Supply Slip Return Detail
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body transactionsparepartentities.SupplySlipReturnDetail true "Supply Slip Return Detail Object"
@@ -98,6 +100,7 @@ func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturnDetail(writer http.
 // @Summary Get All Supply Slip Detail
 // @Description Get All Supply Slip Detail
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param supply_return_document_number query string false "Supply Return Document Number"
@@ -163,6 +166,7 @@ func (r *SupplySlipReturnControllerImpl) GetAllSupplySlipDetail(writer http.Resp
 // @Summary Get Supply Slip Return By Id
 // @Description Get Supply Slip Return By Id
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param supply_return_system_number path int true "Supply Return System Number"
@@ -199,6 +203,7 @@ func (r *SupplySlipReturnControllerImpl) GetSupplySlipReturnById(writer http.Res
 // @Summary Get Supply Slip Return Detail By Id
 // @Description Get Supply Slip Return Detail By Id
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param supply_return_detail_system_number path int true "Supply Return Detail System Number"
@@ -222,6 +227,7 @@ func (r *SupplySlipReturnControllerImpl) GetSupplySlipReturnDetailById(writer ht
 // @Summary Update Supply Slip Return
 // @Description Update Supply Slip Return
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param supply_return_system_number path int true "Supply Return System Number"
@@ -249,6 +255,7 @@ func (r *SupplySlipReturnControllerImpl) UpdateSupplySlipReturn(writer http.Resp
 // @Summary Update Supply Slip Return Detail
 // @Description Update Supply Slip Return Detail
 // @Tags Transaction : Sparepart Supply Slip Return
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param supply_return_detail_system_number path int true "Supply Return Detail System Number"

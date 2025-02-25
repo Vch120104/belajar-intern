@@ -55,6 +55,7 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param brand_id query int true "brand_id"
 // @Param currency_id query int true "currency_id"
 // @Param effective_date query string true "effective_date"
@@ -103,6 +104,7 @@ func (r *PriceListControllerImpl) Duplicate(writer http.ResponseWriter, request 
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param brand_id query int true "brand_id"
 // @Param currency_id query int true "currency_id"
 // @Param effective_date query string true "effective_date"
@@ -156,6 +158,7 @@ func (r *PriceListControllerImpl) Download(writer http.ResponseWriter, request *
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param brand_id query int true "brand_id"
 // @Param currency_id query int true "currency_id"
 // @Param effective_date query string true "effective_date"
@@ -213,6 +216,7 @@ func (r *PriceListControllerImpl) CheckPriceListItem(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param data formData string true "data"
 // @Param PriceList-File formData file true "PriceList-File"
 // @Success 200 {object} payloads.Response
@@ -287,6 +291,7 @@ func (r *PriceListControllerImpl) UploadFile(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/price-list/download-template [get]
@@ -320,6 +325,7 @@ func (r *PriceListControllerImpl) GenerateDownloadTemplateFile(writer http.Respo
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -354,6 +360,7 @@ func (r *PriceListControllerImpl) GetPriceListById(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/price-list/pop-up/ [get]
@@ -417,6 +424,7 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.PriceListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -454,6 +462,7 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -477,6 +486,7 @@ func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param brand_id query int false "brand_id"
 // @Param item_group_id query int false "item_group_id"
 // @Param price_list_code_id query int false "price_list_code_id"
@@ -543,6 +553,7 @@ func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -562,6 +573,7 @@ func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -581,6 +593,7 @@ func (r *PriceListControllerImpl) DeactivatePriceList(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -600,6 +613,7 @@ func (r *PriceListControllerImpl) DeletePriceList(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Price List
+// @Security AuthorizationKeyAuth
 // @Param price_list_code_id path string true "price_list_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

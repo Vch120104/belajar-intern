@@ -40,6 +40,7 @@ func StartSalesOrderControllerImpl(SalesOrderService transactionsparepartservice
 // @Summary Insert Sales Order Header
 // @Description Insert Sales Order Header
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body transactionsparepartpayloads.SalesOrderInsertHeaderPayload true "Body"
@@ -68,6 +69,7 @@ func (s *SalesOrderControllerImpl) InsertSalesOrderHeader(writer http.ResponseWr
 // @Summary Get Sales Order By ID
 // @Description Get Sales Order By ID
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
@@ -96,6 +98,7 @@ func (s *SalesOrderControllerImpl) GetSalesOrderByID(writer http.ResponseWriter,
 // @Summary Get All Sales Order
 // @Description Get All Sales Order
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param item_group_id query string false "Item Group ID"
@@ -154,6 +157,7 @@ func (s *SalesOrderControllerImpl) GetAllSalesOrder(writer http.ResponseWriter, 
 // @Summary Void Sales Order
 // @Description Void Sales Order
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
@@ -181,6 +185,7 @@ func (s *SalesOrderControllerImpl) VoidSalesOrder(writer http.ResponseWriter, re
 // @Summary Insert Sales Order Detail
 // @Description Insert Sales Order Detail
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body transactionsparepartpayloads.SalesOrderDetailInsertPayload true "Body"
@@ -205,6 +210,7 @@ func (s *SalesOrderControllerImpl) InsertSalesOrderDetail(writer http.ResponseWr
 // @Summary Delete Sales Order Detail
 // @Description Delete Sales Order Detail
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param sales_order_detail_system_number path string true "Sales Order Detail System Number"
@@ -242,6 +248,7 @@ func (s *SalesOrderControllerImpl) DeleteSalesOrderDetail(writer http.ResponseWr
 // @Summary Sales Order Proposed Discount Multi Id
 // @Description Sales Order Proposed Discount Multi Id
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param sales_order_detail_multi_id path string true "Sales Order Detail Multi Id"
@@ -266,6 +273,7 @@ func (s *SalesOrderControllerImpl) SalesOrderProposedDiscountMultiId(writer http
 // @Summary Update Sales Order Header
 // @Description Update Sales Order Header
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
@@ -304,6 +312,7 @@ func (s *SalesOrderControllerImpl) UpdateSalesOrderHeader(writer http.ResponseWr
 // @Summary Submit Sales Order Header
 // @Description Submit Sales Order Header
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param sales_order_system_number path string true "Sales Order System Number"
@@ -332,6 +341,7 @@ func (s *SalesOrderControllerImpl) SubmitSalesOrderHeader(writer http.ResponseWr
 // @Summary Get Dropdown List Sales Order Transaction Type
 // @Description Get dropdown list for SO trasaction Type
 // @Tags Transaction : Sparepart Sales Order
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Success 200 {object} payloads.Response

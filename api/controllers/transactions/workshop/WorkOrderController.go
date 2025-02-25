@@ -85,7 +85,8 @@ func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrde
 // @Description Retrieve all services of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -144,7 +145,8 @@ func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, requ
 // @Description Retrieve a service of a work order by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_id path string true "Work Order Service ID"
 // @Success 200 {object} payloads.Response
@@ -169,7 +171,8 @@ func (r *WorkOrderControllerImpl) GetRequestById(writer http.ResponseWriter, req
 // @Description Update a request of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_id path string true "Work Order Service ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
@@ -203,7 +206,8 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 // @Description Add a new request to a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -238,7 +242,8 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 // @Description Add multiple request to a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -275,7 +280,8 @@ func (r *WorkOrderControllerImpl) AddRequestMultiId(writer http.ResponseWriter, 
 // @Description Delete a request from a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_id path string true "Work Order Service ID"
 // @Success 204 {object} payloads.Response
@@ -305,7 +311,8 @@ func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, requ
 // @Description Delete multiple request from a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @param multi_id query string true "Multiple Request ID"
 // @Success 204 {object} payloads.Response
@@ -362,7 +369,8 @@ func (r *WorkOrderControllerImpl) DeleteRequestMultiId(writer http.ResponseWrite
 // @Description Retrieve all vehicle services of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -421,7 +429,8 @@ func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWrite
 // @Description Retrieve a vehicle service of a work order by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_vehicle_id path string true "Work Order Vehicle Service ID"
 // @Success 200 {object} payloads.Response
@@ -446,7 +455,8 @@ func (r *WorkOrderControllerImpl) GetVehicleServiceById(writer http.ResponseWrit
 // @Description Update a vehicle service of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_vehicle_id path string true "Work Order Vehicle Service ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceVehicleRequest true "Work Order Data"
@@ -479,7 +489,8 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 // @Description Add a new vehicle service to a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceVehicleRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -514,7 +525,8 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 // @Description Delete a vehicle service from a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_vehicle_id path string true "Work Order Vehicle Service ID"
 // @Success 204 {object} payloads.Response
@@ -544,7 +556,8 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 // @Description  Delete multiple vehicle service
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Service Detail System ID"
 // @Param multi_id path string true "Service Detail ID"
 // @Success 204 {object} payloads.Response
@@ -601,7 +614,8 @@ func (r *WorkOrderControllerImpl) DeleteVehicleServiceMultiId(writer http.Respon
 // @Description Retrieve all work orders with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number query string false "Work Order System Number"
 // @Param work_order_type_id query string false "Work Order Type ID"
 // @Param brand_id query string false "Brand ID"
@@ -671,7 +685,8 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Description Create a new work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param reqBody body transactionworkshoppayloads.WorkOrderNormalRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -704,7 +719,8 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 // @Description Retrieve work order by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -744,7 +760,8 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Description Save a new work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderNormalSaveRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
@@ -781,7 +798,8 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Description Submit a new work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path int true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -823,7 +841,8 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 // @Description Delete or cancel a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path int true "Work Order ID"
 // @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -859,7 +878,8 @@ func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http
 // @Description Close an existing work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path int true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -910,7 +930,8 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 // @Description Retrieve the detail of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal Detail
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -965,7 +986,8 @@ func (r *WorkOrderControllerImpl) GetAllDetailWorkOrder(writer http.ResponseWrit
 // @Description Retrieve the detail of a work order by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_detail_id path string true "Work Order Detail ID"
 // @Success 200 {object} payloads.Response
@@ -1003,7 +1025,8 @@ func (r *WorkOrderControllerImpl) GetDetailByIdWorkOrder(writer http.ResponseWri
 // @Description Update the detail of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_detail_id path string true "Work Order Detail ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderDetailRequest true "Work Order Data"
@@ -1040,7 +1063,8 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 // @Description Add a new detail to a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderDetailRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
@@ -1076,7 +1100,8 @@ func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter,
 // @Description Delete a detail from a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal Detail
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_detail_id path string true "Work Order Detail ID"
 // @Success 204 {object} payloads.Response
@@ -1106,7 +1131,8 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWrit
 // @Description  Delete multiple Work Order Detail
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal Detail
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal Detail
 // @Param work_order_system_number path string true "Work Order System Number ID"
 // @Param multi_id path string true "Work Order Detail ID"
 // @Success 204 {object} payloads.Response
@@ -1163,7 +1189,8 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrderMultiId(writer http.Respo
 // @Description Retrieve all work order bookings
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Booking
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Booking
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -1216,7 +1243,8 @@ func (r *WorkOrderControllerImpl) GetAllBooking(writer http.ResponseWriter, requ
 // @Description Retrieve a work order booking by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Booking
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Booking
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param booking_system_number path string true "Work Order Booking ID"
 // @Success 200 {object} payloads.Response
@@ -1253,7 +1281,8 @@ func (r *WorkOrderControllerImpl) GetBookingById(writer http.ResponseWriter, req
 // @Description Update a work order booking
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Booking
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Booking
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param booking_system_number path string true "Work Order Booking ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderBookingRequest true "Work Order Data"
@@ -1287,7 +1316,8 @@ func (r *WorkOrderControllerImpl) SaveBooking(writer http.ResponseWriter, reques
 // @Description Add a new work order booking
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Booking
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Booking
 // @Param reqBody body transactionworkshoppayloads.WorkOrderBookingRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -1312,7 +1342,8 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 // @Description Retrieve all affiliated work orders
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Affiliated
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -1358,7 +1389,8 @@ func (r *WorkOrderControllerImpl) GetAllAffiliated(writer http.ResponseWriter, r
 // @Description Retrieve an affiliated work order by ID
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Affiliated
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param service_request_system_number path string true "Affiliated Work Order ID"
 // @Success 200 {object} payloads.Response
@@ -1396,7 +1428,8 @@ func (r *WorkOrderControllerImpl) GetAffiliatedById(writer http.ResponseWriter, 
 // @Description Create a new affiliated work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Affiliated
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/affiliated [post]
@@ -1420,7 +1453,8 @@ func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, requ
 // @Description Update an affiliated work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Affiliated
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderAffiliatedRequest true "Work Order Data"
@@ -1449,7 +1483,8 @@ func (r *WorkOrderControllerImpl) SaveAffiliated(writer http.ResponseWriter, req
 // @Description Generate a new work order document number
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -1473,7 +1508,8 @@ func (r *WorkOrderControllerImpl) GenerateDocumentNumber(writer http.ResponseWri
 // @Description Change the bill to of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.ChangeBillToRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -1505,7 +1541,8 @@ func (r *WorkOrderControllerImpl) ChangeBillTo(writer http.ResponseWriter, reque
 // @Description Change the phone number of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.ChangePhoneNoRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -1536,7 +1573,8 @@ func (r *WorkOrderControllerImpl) ChangePhoneNo(writer http.ResponseWriter, requ
 // @Description Confirm the price list of a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order Normal
+// @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -1586,6 +1624,7 @@ func (r *WorkOrderControllerImpl) ConfirmPrice(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order Campaign ID"
 // @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -1614,6 +1653,7 @@ func (r *WorkOrderControllerImpl) DeleteCampaign(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderContractServiceRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
@@ -1644,6 +1684,7 @@ func (r *WorkOrderControllerImpl) AddContractService(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
@@ -1674,6 +1715,7 @@ func (r *WorkOrderControllerImpl) AddGeneralRepairPackage(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderFieldActionRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
@@ -1704,6 +1746,7 @@ func (r *WorkOrderControllerImpl) AddFieldAction(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

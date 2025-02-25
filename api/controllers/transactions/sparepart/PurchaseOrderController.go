@@ -44,6 +44,7 @@ func NewPurchaseOrderControllerImpl(PurchaseOrderService transactionsparepartser
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -106,6 +107,7 @@ func (controller *PurchaseOrderControllerImpl) GetAllPurchaserOrderWithPaginatio
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			purchase_order_system_number		path		string	false	"purchase_order_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.PurchaseOrderGetByIdResponses
@@ -130,6 +132,7 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrder(writer http.
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -165,6 +168,7 @@ func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailByHeaderId(
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -196,6 +200,7 @@ func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderHeader(writer htt
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			purchase_order_system_number	path		int	true	"purchase_order_system_number"
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads	true	"Purchase Request Header Data"
@@ -227,6 +232,7 @@ func (controller *PurchaseOrderControllerImpl) UpdatePurchaseOrderHeader(writer 
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			purchase_order_detail_system_number	path		int	true	"purchase_order_detail_system_number"	true	"Purchase Request Header Data"
 //	@Success		200						{object}	transactionsparepartpayloads.PurchaseOrderGetDetail
@@ -253,6 +259,7 @@ func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailById(writer
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderDetailPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities
@@ -312,6 +319,7 @@ func (controller *PurchaseOrderControllerImpl) DeletePurchaseOrderDetailMultiId(
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Purchase Order
+// @Security AuthorizationKeyAuth
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads	true	"Purchase Request Detail Data"
 //	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities

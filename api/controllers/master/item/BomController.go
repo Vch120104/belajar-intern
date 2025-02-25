@@ -59,6 +59,7 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -114,6 +115,7 @@ func (r *BomControllerImpl) GetBomList(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -139,6 +141,7 @@ func (r *BomControllerImpl) GetBomById(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @param item_id path int true "item_id"
 // @param effective_date path string true "effective_date"
 // @Success 200 {object} payloads.Response
@@ -171,6 +174,7 @@ func (r *BomControllerImpl) GetBomByUn(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -350,6 +354,7 @@ func (r *BomControllerImpl) GetBomDetailMaxSeq(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.BomMasterNewRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -376,6 +381,7 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Param bom_id path int true "bom_id"
 // @Param reqBody body masteritempayloads.BomMasterSaveRequest true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -484,6 +490,7 @@ func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request 
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/bom/download-template [get]
@@ -536,6 +543,7 @@ func (r *BomControllerImpl) DownloadTemplate(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Param file formData file true "file"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -613,6 +621,7 @@ func (r *BomControllerImpl) Upload(writer http.ResponseWriter, request *http.Req
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.BomDetailUpload true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -640,6 +649,7 @@ func (r *BomControllerImpl) ProcessDataUpload(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
+// @Security AuthorizationKeyAuth
 // @Param bom_id path int true "bom_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

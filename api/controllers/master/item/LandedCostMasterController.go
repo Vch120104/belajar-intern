@@ -40,6 +40,7 @@ func NewLandedCostMasterController(LandedCostService masteritemservice.LandedCos
 // @Accept json
 // @Produce json
 // @Tags Master : Landed Cost Master
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param company_id query string false "company_id"
@@ -87,6 +88,7 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Landed Cost Master
+// @Security AuthorizationKeyAuth
 // @Param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -115,6 +117,7 @@ func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Landed Cost Master
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.LandedCostMasterPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -148,6 +151,7 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Landed Cost Master
+// @Security AuthorizationKeyAuth
 // @param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -167,6 +171,7 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 // @Accept json
 // @Produce json
 // @Tags Master : Landed Cost Master
+// @Security AuthorizationKeyAuth
 // @param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

@@ -52,6 +52,7 @@ func NewServiceRequestController(service transactionworkshopservice.ServiceReque
 // @Summary Generate document number for service request
 // @Description Generate document number for service request
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
@@ -91,6 +92,7 @@ func (r *ServiceRequestControllerImp) GenerateDocumentNumberServiceRequest(write
 // @Summary Get all service request
 // @Description Get all service request
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number query string false "Service Request System Number"
@@ -151,6 +153,7 @@ func (r *ServiceRequestControllerImp) GetAll(writer http.ResponseWriter, request
 // @Summary Get service request by id
 // @Description Get service request by id
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
@@ -191,6 +194,7 @@ func (r *ServiceRequestControllerImp) GetById(writer http.ResponseWriter, reques
 // @Summary Create new service request
 // @Description Create new service request
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param reqBody body transactionworkshoppayloads.ServiceRequestSaveRequest true "Service Request Data"
@@ -228,6 +232,7 @@ func (r *ServiceRequestControllerImp) New(writer http.ResponseWriter, request *h
 // @Summary Save service request
 // @Description Save service request
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
@@ -263,6 +268,7 @@ func (r *ServiceRequestControllerImp) Save(writer http.ResponseWriter, request *
 // @Summary Submit service request
 // @Description Submit service request
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
@@ -318,6 +324,7 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 // @Summary Void service request
 // @Description Void service request
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
@@ -353,6 +360,7 @@ func (r *ServiceRequestControllerImp) Void(writer http.ResponseWriter, request *
 // @Summary Close order
 // @Description Close order
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
@@ -383,7 +391,8 @@ func (r *ServiceRequestControllerImp) CloseOrder(writer http.ResponseWriter, req
 // GetAllServiceDetail gets all service detail
 // @Summary Get all service detail
 // @Description Get all service detail
-// @Tags Transaction : Workshop Service Request Detail
+// @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth Detail
 // @Accept json
 // @Produce json
 // @Param page query string true "Page number"
@@ -431,7 +440,8 @@ func (r *ServiceRequestControllerImp) GetAllServiceDetail(writer http.ResponseWr
 // GetServiceDetailById gets service detail by id
 // @Summary Get service detail by id
 // @Description Get service detail by id
-// @Tags Transaction : Workshop Service Request Detail
+// @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth Detail
 // @Accept json
 // @Produce json
 // @Param service_request_detail_id path string true "Service Detail ID"
@@ -463,7 +473,8 @@ func (r *ServiceRequestControllerImp) GetServiceDetailById(writer http.ResponseW
 // AddServiceDetail adds service detail
 // @Summary Add service detail
 // @Description Add service detail
-// @Tags Transaction : Workshop Service Request Detail
+// @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth Detail
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
@@ -499,7 +510,8 @@ func (r *ServiceRequestControllerImp) AddServiceDetail(writer http.ResponseWrite
 // UpdateServiceDetail updates service detail
 // @Summary Update service detail
 // @Description Update service detail
-// @Tags Transaction : Workshop Service Request Detail
+// @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth Detail
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
@@ -551,7 +563,8 @@ func (r *ServiceRequestControllerImp) UpdateServiceDetail(writer http.ResponseWr
 // DeleteServiceDetail deletes service detail
 // @Summary Delete service detail
 // @Description Delete service detail
-// @Tags Transaction : Workshop Service Request Detail
+// @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth Detail
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
@@ -595,7 +608,8 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetail(writer http.ResponseWr
 // DeleteServiceDetailMultiId deletes multiple service detail
 // @Summary Delete multiple service detail
 // @Description Delete multiple service detail
-// @Tags Transaction : Workshop Service Request Detail
+// @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth Detail
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
@@ -653,6 +667,7 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetailMultiId(writer http.Res
 // @Summary Get dropdown status
 // @Description Get dropdown status
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Success 200 {object} payloads.Response
@@ -685,6 +700,7 @@ func (r *ServiceRequestControllerImp) NewStatus(writer http.ResponseWriter, requ
 // @Summary Get dropdown service type
 // @Description Get dropdown service type
 // @Tags Transaction : Workshop Service Request
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Success 200 {object} payloads.Response

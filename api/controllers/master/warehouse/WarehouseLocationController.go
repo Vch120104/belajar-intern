@@ -55,6 +55,7 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @param company_id path int true "Company Id"
 // @param reqBody body masterwarehousepayloads.ProcessWarehouseLocationTemplate true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -101,6 +102,7 @@ func (r *WarehouseLocationControllerImpl) ProcessWarehouseLocationTemplate(write
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @param company_id path int true "Company Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -163,6 +165,7 @@ func (r *WarehouseLocationControllerImpl) UploadPreviewFile(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/download-template [get]
@@ -196,6 +199,7 @@ func (r *WarehouseLocationControllerImpl) DownloadTemplate(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -258,6 +262,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_id path int true "warehouse_location_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -286,6 +291,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_code path string true "warehouse_location_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -306,6 +312,7 @@ func (r *WarehouseLocationControllerImpl) GetByCode(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @param reqBody body masterwarehousepayloads.GetWarehouseLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -336,6 +343,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

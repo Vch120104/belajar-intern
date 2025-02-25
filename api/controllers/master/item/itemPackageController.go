@@ -43,6 +43,7 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param item_package_code path string true "Item Package Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -64,6 +65,7 @@ func (r *ItemPackageControllerImpl) GetItemPackageByCode(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param item_package_code query string false "Item Package Code"
 // @Param item_package_name query string false "Item Package Name"
 // @Param item_package_set query string false "Item Package Set"
@@ -127,6 +129,7 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param item_package_id path int true "Item Package ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -153,6 +156,7 @@ func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.SaveItemPackageRequest true "Form Request"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -195,6 +199,7 @@ func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param item_package_id path int true "Item Package ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -223,6 +228,7 @@ func (r *ItemPackageControllerImpl) ChangeStatusItemPackage(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param item_package_id path int true "Item ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -249,6 +255,7 @@ func (r *ItemPackageControllerImpl) GetItemPackageByItemId(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package
+// @Security AuthorizationKeyAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_by query string false "Field to sort by"

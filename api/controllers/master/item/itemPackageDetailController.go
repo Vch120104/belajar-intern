@@ -42,6 +42,7 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -64,6 +65,7 @@ func (r *ItemPackageDetailControllerImpl) ActivateItemPackageDetail(writer http.
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -86,6 +88,7 @@ func (r *ItemPackageDetailControllerImpl) DeactivateItemPackageDetail(writer htt
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -113,6 +116,7 @@ func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer h
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param item_package_id path int true "Item Package ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -152,6 +156,7 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(wr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -180,6 +185,7 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.R
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -216,6 +222,7 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 // @Accept json
 // @Produce json
 // @Tags Master : Item Package Detail
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

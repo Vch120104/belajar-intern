@@ -37,6 +37,7 @@ func NewGoodsReceiveController(service transactionsparepartservice.GoodsReceiveS
 // @Summary Get All Goods Receive
 // @Description Get All Goods Receive
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -85,6 +86,7 @@ func (controller *GoodsReceiveControllerImpl) GetAllGoodsReceive(writer http.Res
 // @Summary Get Goods Receive By ID
 // @Description Get Goods Receive By ID
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param goods_receive_id path string true "Goods Receive ID"
@@ -105,6 +107,7 @@ func (controller *GoodsReceiveControllerImpl) GetGoodsReceiveById(writer http.Re
 // @Summary Insert Goods Receive
 // @Description Insert Goods Receive
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param GoodsReceiveInsertPayloads body transactionsparepartpayloads.GoodsReceiveInsertPayloads true "Goods Receive Insert Payloads"
@@ -125,6 +128,7 @@ func (controller *GoodsReceiveControllerImpl) InsertGoodsReceive(writer http.Res
 // @Summary Update Goods Receive
 // @Description Update Goods Receive
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param goods_receive_id path string true "Goods Receive ID"
@@ -147,6 +151,7 @@ func (controller *GoodsReceiveControllerImpl) UpdateGoodsReceive(writer http.Res
 // @Summary Insert Goods Receive Detail
 // @Description Insert Goods Receive Detail
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param GoodsReceiveDetailInsertPayloads body transactionsparepartpayloads.GoodsReceiveDetailInsertPayloads true "Goods Receive Detail Insert Payloads"
@@ -167,6 +172,7 @@ func (controller *GoodsReceiveControllerImpl) InsertGoodsReceiveDetail(writer ht
 // @Summary Update Goods Receive Detail
 // @Description Update Goods Receive Detail
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param goods_receive_detail_system_number path string true "Goods Receive Detail System Number"
@@ -194,6 +200,7 @@ func (controller *GoodsReceiveControllerImpl) UpdateGoodsReceiveDetail(writer ht
 // @Summary Location Item Goods Receive
 // @Description Location Item Goods Receive
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param warehouse_location_name query string false "Warehouse Location Name"
@@ -235,6 +242,7 @@ func (controller *GoodsReceiveControllerImpl) LocationItemGoodsReceive(writer ht
 // @Summary Delete Goods Receive
 // @Description Delete Goods Receive
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param goods_receive_id path string true "Goods Receive ID"
@@ -254,6 +262,7 @@ func (controller *GoodsReceiveControllerImpl) DeleteGoodsReceive(writer http.Res
 // @Summary Delete Goods Receive Detail
 // @Description Delete Goods Receive Detail
 // @Tags Transaction : Sparepart Goods Receive
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param goods_receive_detail_id path string true "Goods Receive Detail ID"

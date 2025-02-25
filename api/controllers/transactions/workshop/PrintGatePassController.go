@@ -34,6 +34,7 @@ func NewPrintGatePassController(service transactionworkshopservice.PrintGatePass
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Print Gate Pass
+// @Security AuthorizationKeyAuth
 // @Param work_order_system_number query string false "Work Order System Number"
 // @Param work_order_date query string false "Work Order Date"
 // @Param customer_id query string false "Customer ID"
@@ -90,6 +91,7 @@ func (r *PrintGatePassControllerImpl) GetAll(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Print Gate Pass
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Print Gate Pass ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

@@ -48,6 +48,7 @@ func NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -93,6 +94,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_definition_level_id path int true "Warehouse Location Definition Level ID"
 // @Param warehouse_location_definition_level_code path string true "Warehouse Location Definition ID"
 // @Success 200 {object} payloads.Response
@@ -120,6 +122,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.Respo
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_definition_id path int true "warehouse_location_definition_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -148,6 +151,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -181,6 +185,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_definition_id path int true "Warehouse Location ID"
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -230,6 +235,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @Param warehouse_location_definition_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -262,6 +268,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param warehouse_location_definition_level_id query string false "warehouse_location_definition_level_id"

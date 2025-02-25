@@ -33,6 +33,7 @@ type ItemModelMappingControllerImpl struct {
 // @Accept json
 // @Produce json
 // @Tags Master : Item Model Mapping
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param page query int false "Page number"
 // @Param limit query int false "Items per page"
@@ -80,6 +81,7 @@ func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http
 // @Accept json
 // @Produce json
 // @Tags Master : Item Model Mapping
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -116,6 +118,7 @@ func (r *ItemModelMappingControllerImpl) UpdateItemModelMapping(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Item Model Mapping
+// @Security AuthorizationKeyAuth
 // @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
