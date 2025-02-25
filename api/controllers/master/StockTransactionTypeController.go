@@ -29,7 +29,7 @@ func NewStockTransactionTypeController(service masterservice.StockTransactionTyp
 // @Accept json
 // @Produce json
 // @Tags Master : Stock Transaction Type
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param stock_transaction_type_code path string true "stock_transaction_type_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -49,7 +49,7 @@ func (controller *StockTransactionTypeControllerImpl) GetStockTransactionTypeByC
 // @Accept json
 // @Produce json
 // @Tags Master : Stock Transaction Type
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Param limit query int false "limit"
 // @Param page query int false "page"
 // @Param sort_of query string false "sort_of"

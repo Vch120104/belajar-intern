@@ -49,7 +49,7 @@ func NewCampaignMasterController(campaignmasterservice masterservice.CampaignMas
 // @Summary Save Campaign Master
 // @Description Save Campaign Master
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body masterpayloads.CampaignMasterPost true "Campaign Master"
@@ -86,7 +86,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 // @Summary Save Campaign Master Detail
 // @Description Save Campaign Master Detail
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_id path int true "Campaign ID"
@@ -114,7 +114,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 // @Summary Save Campaign Master Detail From History
 // @Description Save Campaign Master Detail From History
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_id_1 path int true "Campaign ID 1"
@@ -149,7 +149,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 // @Summary Save Campaign Master Detail From Package
 // @Description Save Campaign Master Detail From Package
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param body body masterpayloads.CampaignMasterDetailPostFromPackageRequest true "Campaign Master Detail From Package"
@@ -175,7 +175,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromPackage(write
 // @Summary Change Status Campaign Master
 // @Description Change Status Campaign Master
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_id path int true "Campaign ID"
@@ -199,7 +199,7 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 // @Summary Activate Campaign Master Detail
 // @Description Activate Campaign Master Detail
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_detail_id path int true "Campaign Detail ID"
@@ -220,7 +220,7 @@ func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.
 // @Summary Deactivate Campaign Master Detail
 // @Description Deactivate Campaign Master Detail
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_detail_id path int true "Campaign Detail ID"
@@ -241,7 +241,7 @@ func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer htt
 // @Summary Get Campaign Master By ID
 // @Description Get Campaign Master By ID
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_id path int true "Campaign ID"
@@ -274,7 +274,7 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.Respons
 // @Summary Get Campaign Master Detail By ID
 // @Description Get Campaign Master Detail By ID
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_detail_id path int true "Campaign Detail ID"
@@ -303,7 +303,7 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 // @Summary Get Campaign Master By Code
 // @Description Get Campaign Master By Code
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_code path string true "Campaign Code"
@@ -337,7 +337,7 @@ func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.Respo
 // @Summary Get All Campaign Master
 // @Description Get All Campaign Master
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param is_active query string false "Is Active"
@@ -404,7 +404,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 // @Summary Get All Campaign Master Detail
 // @Description Get All Campaign Master Detail
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_id path int true "Campaign ID"
@@ -453,7 +453,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.Re
 // @Summary Get All Campaign Master Code And Name
 // @Description Get All Campaign Master Code And Name
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param limit query int false "Limit"
@@ -484,7 +484,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 // @Summary Update Campaign Master Detail
 // @Description Update Campaign Master Detail
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param campaign_detail_id path int true "Campaign Detail ID"
@@ -518,7 +518,7 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 // @Summary Get All Package Master To Copy
 // @Description Get All Package Master To Copy
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param limit query int false "Limit"
@@ -548,7 +548,7 @@ func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.Res
 // @Summary Select From Package Master
 // @Description Select From Package Master
 // @Tags Master : Campaign Master
-// @Security BearerAuth
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param package_id path int true "Package ID"
