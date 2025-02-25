@@ -17,6 +17,9 @@ import (
 //	@license		AGPLv3
 //	@description	This is a DMS After-Sales API Server.
 //
+// @securityDefinitions.apikey BearerAuth
+// @in            header
+// @name          Authorization-Key
 // @BasePath /aftersales-service
 // @schemes https
 func main() {

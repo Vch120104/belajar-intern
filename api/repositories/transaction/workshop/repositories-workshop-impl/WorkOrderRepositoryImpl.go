@@ -2656,18 +2656,22 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	}
 
 	var whsGroup masterwarehouseentities.WarehouseGroup
-	if err := tx.Where("warehouse_group_id = ?", entity.WarehouseGroupId).First(&whsGroup).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "Warehouse group not found",
-				Err:        fmt.Errorf("warehouse group with ID %d not found", entity.WarehouseGroupId),
+	warehouseGroupName := ""
+	if entity.WarehouseGroupId != 0 {
+		if err := tx.Where("warehouse_group_id = ?", entity.WarehouseGroupId).First(&whsGroup).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+
+				warehouseGroupName = ""
+			} else {
+
+				return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch Warehouse group",
+					Err:        err,
+				}
 			}
-		}
-		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Warehouse group",
-			Err:        err,
+		} else {
+			warehouseGroupName = whsGroup.WarehouseGroupName
 		}
 	}
 
@@ -2753,7 +2757,7 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		SupplyQuantity:                      entity.SupplyQuantity,
 		PriceListId:                         entity.PriceListId,
 		WarehouseGroupId:                    entity.WarehouseGroupId,
-		WarehouseGroupName:                  whsGroup.WarehouseGroupName,
+		WarehouseGroupName:                  warehouseGroupName,
 		OperationItemId:                     entity.OperationItemId,
 		OperationItemCode:                   OperationItemCode,
 		Description:                         Description,
