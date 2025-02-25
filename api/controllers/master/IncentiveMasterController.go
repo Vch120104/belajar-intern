@@ -39,6 +39,7 @@ func NewIncentiveMasterController(incentiveMasterService masterservice.Incentive
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Master
+// @Security BearerAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -95,6 +96,7 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Master
+// @Security BearerAuth
 // @Param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -122,6 +124,7 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Master
+// @Security BearerAuth
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -152,6 +155,7 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Master
+// @Security BearerAuth
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
 // @param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
@@ -185,6 +189,7 @@ func (r *IncentiveMasterControllerImpl) UpdateIncentiveMaster(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Master
+// @Security BearerAuth
 // @param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

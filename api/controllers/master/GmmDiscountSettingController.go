@@ -26,6 +26,7 @@ func NewGmmDiscountSettingControllerImpl(gmmDiscountSettingService masterservice
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Discount Setting
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/gmm-discount-setting [get]

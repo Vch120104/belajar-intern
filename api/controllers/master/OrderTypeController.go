@@ -39,6 +39,7 @@ func NewOrderTypeControllerImpl(orderTypeService masterservice.OrderTypeService)
 // @Summary Get All Order Type
 // @Description Get All Order Type
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param is_active query string false "is_active"
@@ -72,6 +73,7 @@ func (r *OrderTypeControllerImpl) GetAllOrderType(writer http.ResponseWriter, re
 // @Summary Get Order Type By ID
 // @Description Get Order Type By ID
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param order_type_id path string true "order_type_id"
@@ -106,6 +108,7 @@ func (r *OrderTypeControllerImpl) GetOrderTypeById(writer http.ResponseWriter, r
 // @Summary Get Order Type By Name
 // @Description Get Order Type By Name
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param order_type_name query string true "order_type_name"
@@ -131,6 +134,7 @@ func (r *OrderTypeControllerImpl) GetOrderTypeByName(writer http.ResponseWriter,
 // @Summary Save Order Type
 // @Description Save Order Type
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Success 201 {object} payloads.Response
@@ -161,6 +165,7 @@ func (r *OrderTypeControllerImpl) SaveOrderType(writer http.ResponseWriter, requ
 // @Summary Update Order Type
 // @Description Update Order Type
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param order_type_id path string true "order_type_id"
@@ -208,6 +213,7 @@ func (r *OrderTypeControllerImpl) UpdateOrderType(writer http.ResponseWriter, re
 // @Summary Change Status Order Type
 // @Description Change Status Order Type
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param order_type_id path string true "order_type_id"
@@ -242,6 +248,7 @@ func (r *OrderTypeControllerImpl) ChangeStatusOrderType(writer http.ResponseWrit
 // @Summary Delete Order Type
 // @Description Delete Order Type
 // @Tags Master : Order Type
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param order_type_id path string true "order_type_id"

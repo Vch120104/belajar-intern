@@ -40,6 +40,7 @@ func NewGmmPriceCodeControllerImpl(gmmPriceCodeService masterservice.GmmPriceCod
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/gmm-price-code [get]
@@ -57,6 +58,7 @@ func (c *GmmPriceCodeControllerImpl) GetAllGmmPriceCode(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Param gmm_price_code_id path int true "gmm_price_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -91,6 +93,7 @@ func (c *GmmPriceCodeControllerImpl) GetGmmPriceCodeById(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/gmm-price-code/dropdown [get]
@@ -108,6 +111,7 @@ func (c *GmmPriceCodeControllerImpl) GetGmmPriceCodeDropdown(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Param body body masterpayloads.GmmPriceCodeSaveRequest true "body"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -139,6 +143,7 @@ func (c *GmmPriceCodeControllerImpl) SaveGmmPriceCode(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Param gmm_price_code_id path int true "gmm_price_code_id"
 // @Param body body masterpayloads.GmmPriceCodeUpdateRequest true "body"
 // @Success 200 {object} payloads.Response
@@ -187,6 +192,7 @@ func (c *GmmPriceCodeControllerImpl) UpdateGmmPriceCode(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Param gmm_price_code_id path int true "gmm_price_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -221,6 +227,7 @@ func (c *GmmPriceCodeControllerImpl) ChangeStatusGmmPriceCode(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Gmm Price Code
+// @Security BearerAuth
 // @Param gmm_price_code_id path int true "gmm_price_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

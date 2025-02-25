@@ -45,6 +45,7 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @Param id path string true "id"
 // @param reqBody body masterpayloads.DiscountUpdate true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -87,6 +88,7 @@ func (r *DiscountControllerImpl) UpdateDiscount(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -128,6 +130,7 @@ func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount/drop-down/ [get]
@@ -147,6 +150,7 @@ func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @Param id path string true "id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -171,6 +175,7 @@ func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @Param discount_code path string true "discount_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -197,6 +202,7 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @param reqBody body masterpayloads.DiscountResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -237,6 +243,7 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Discount
+// @Security BearerAuth
 // @param discount_code_id path int true "discount_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
