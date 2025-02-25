@@ -39,6 +39,7 @@ func NewWarrantyFreeServiceController(warrantyFreeServiceService masterservice.W
 // @Accept json
 // @Produce json
 // @Tags Master : Warranty Free Service
+// @Security BearerAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param is_active query string false "Is active" Enums(true,false)
@@ -95,6 +96,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 // @Accept json
 // @Produce json
 // @Tags Master : Warranty Free Service
+// @Security BearerAuth
 // @Param warranty_free_services_id path int true "Warranty Free Service ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -122,6 +124,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer ht
 // @Accept json
 // @Produce json
 // @Tags Master : Warranty Free Service
+// @Security BearerAuth
 // @Param reqBody body masterpayloads.WarrantyFreeServiceRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -156,6 +159,7 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 // @Accept json
 // @Produce json
 // @Tags Master : Warranty Free Service
+// @Security BearerAuth
 // @Param warranty_free_services_id path int true "Warranty Free Service ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -183,6 +187,7 @@ func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writ
 // @Accept json
 // @Produce json
 // @Tags Master : Warranty Free Service
+// @Security BearerAuth
 // @Param warranty_free_services_id path int true "Warranty Free Service ID"
 // @Param reqBody body masterentities.WarrantyFreeService true "Form Request"
 // @Success 200 {object} payloads.Response

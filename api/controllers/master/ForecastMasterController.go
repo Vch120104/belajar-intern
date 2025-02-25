@@ -41,6 +41,7 @@ func NewForecastMasterController(forecastMasterService masterservice.ForecastMas
 // @Accept json
 // @Produce json
 // @Tags Master : Forecast Master
+// @Security BearerAuth
 // @Param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -67,6 +68,7 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Forecast Master
+// @Security BearerAuth
 // @param reqBody body masterpayloads.ForecastMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -92,6 +94,7 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Forecast Master
+// @Security BearerAuth
 // @param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -118,6 +121,7 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 // @Accept json
 // @Produce json
 // @Tags Master : Forecast Master
+// @Security BearerAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -178,6 +182,7 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Forecast Master
+// @Security BearerAuth
 // @param forecast_master_id path int true "forecast_master_id"
 // @param reqBody body masterpayloads.ForecastMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response

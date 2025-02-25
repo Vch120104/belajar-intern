@@ -47,6 +47,7 @@ func NewIncentiveGroupController(IncentiveGroupService masterservice.IncentiveGr
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Param incentive_group_id query string false "incentive_group_id"
 // @Param incentive_group_code query string false "incentive_group_code"
 // @Param incentive_group_name query string false "incentive_group_name"
@@ -91,6 +92,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/is-active [get]
@@ -110,6 +112,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Param incentive_group_id path string true "incentive_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -134,6 +137,7 @@ func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Param incentive_group_id body object true "incentive_group_id"
 // @Param incentive_group_code body string true "incentive_group_code"
 // @Param incentive_group_name body string true "incentive_group_name"
@@ -176,6 +180,7 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Param incentive_group_id path string true "incentive_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -202,6 +207,7 @@ func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.Re
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Param incentive_group_id path string true "incentive_group_id"
 // @Param incentive_group_code body string true "incentive_group_code"
 // @Param incentive_group_name body string true "incentive_group_name"
@@ -246,6 +252,7 @@ func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/dropdown [get]

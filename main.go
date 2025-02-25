@@ -17,11 +17,11 @@ import (
 //	@license		AGPLv3
 //	@description	This is a DMS After-Sales API Server.
 //
+// @BasePath /aftersales-service
+// @schemes https http
 // @securityDefinitions.apikey BearerAuth
 // @in            header
 // @name          Authorization-Key
-// @BasePath /aftersales-service
-// @schemes https
 func main() {
 	args := os.Args
 	env := ""

@@ -69,6 +69,7 @@ func NewAgreementController(AgreementService masterservice.AgreementService) Agr
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -96,6 +97,7 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param reqBody body masterpayloads.AgreementRequest true "Agreement Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -131,6 +133,7 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param reqBody body masterpayloads.AgreementRequest true "Agreement Data"
 // @Success 200 {object} payloads.Response
@@ -166,6 +169,7 @@ func (r *AgreementControllerImpl) UpdateAgreement(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -193,6 +197,7 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param is_active query string false "Agreement status"
@@ -263,6 +268,7 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param reqBody body masterpayloads.DiscountGroupRequest true "Discount Group Data"
 // @Success 200 {object} payloads.Response
@@ -296,6 +302,7 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_discount_group_id path int true "Group ID"
 // @Param reqBody body masterpayloads.DiscountGroupRequest true "Discount Group Data"
@@ -335,6 +342,7 @@ func (r *AgreementControllerImpl) UpdateDiscountGroup(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_discount_group_id path int true "Group ID"
 // @Success 200 {object} payloads.Response
@@ -365,6 +373,7 @@ func (r *AgreementControllerImpl) DeleteDiscountGroup(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param reqBody body masterpayloads.ItemDiscountRequest true "Item Discount Data"
 // @Success 200 {object} payloads.Response
@@ -398,6 +407,7 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_item_id path int true "Item ID"
 // @Param reqBody body masterpayloads.ItemDiscountRequest true "Item Discount Data"
@@ -437,6 +447,7 @@ func (r *AgreementControllerImpl) UpdateItemDiscount(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_item_id path int true "Item ID"
 // @Success 200 {object} payloads.Response
@@ -467,6 +478,7 @@ func (r *AgreementControllerImpl) DeleteItemDiscount(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param reqBody body masterpayloads.DiscountValueRequest true "Discount Value Data"
 // @Success 200 {object} payloads.Response
@@ -500,6 +512,7 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_discount_id path int true "Value ID"
 // @Param reqBody body masterpayloads.DiscountValueRequest true "Discount Value Data"
@@ -539,6 +552,7 @@ func (r *AgreementControllerImpl) UpdateDiscountValue(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_discount_id path int true "Value ID"
 // @Success 200 {object} payloads.Response
@@ -569,6 +583,7 @@ func (r *AgreementControllerImpl) DeleteDiscountValue(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -616,6 +631,7 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_discount_group_id path int true "Group ID"
 // @Success 200 {object} payloads.Response
@@ -647,6 +663,7 @@ func (r *AgreementControllerImpl) GetDiscountGroupAgreementById(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -694,6 +711,7 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_item_id path int true "Item ID"
 // @Success 200 {object} payloads.Response
@@ -725,6 +743,7 @@ func (r *AgreementControllerImpl) GetDiscountItemAgreementById(writer http.Respo
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -772,6 +791,7 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param agreement_discount_id path int true "Value ID"
 // @Success 200 {object} payloads.Response
@@ -803,6 +823,7 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_code path string true "Agreement Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -838,6 +859,7 @@ func (r *AgreementControllerImpl) GetAgreementByCode(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_header_id path int true "Agreement Header ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -891,6 +913,7 @@ func (r *AgreementControllerImpl) GetDiscountGroupAgreementByHeaderId(writer htt
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_header_id path int true "Agreement Header ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -944,6 +967,7 @@ func (r *AgreementControllerImpl) GetDiscountItemAgreementByHeaderId(writer http
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_header_id path int true "Agreement Header ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -997,6 +1021,7 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementByHeaderId(writer htt
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param multi_id path int true "Group ID"
 // @Success 200 {object} payloads.Response
@@ -1047,6 +1072,7 @@ func (r *AgreementControllerImpl) DeleteMultiIdDiscountGroup(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param multi_id path int true "Item ID"
 // @Success 200 {object} payloads.Response
@@ -1097,6 +1123,7 @@ func (r *AgreementControllerImpl) DeleteMultiIdItemDiscount(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
+// @Security BearerAuth
 // @Param agreement_id path int true "Agreement ID"
 // @Param multi_id path int true "Value ID"
 // @Success 200 {object} payloads.Response

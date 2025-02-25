@@ -44,6 +44,7 @@ func NewShiftScheduleController(ShiftScheduleService masterservice.ShiftSchedule
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param shift_schedule_code query string false "shift_schedule_code"
@@ -102,6 +103,7 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // // @Accept json
 // // @Produce json
 // // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // // @Success 200 {object} payloads.Response
 // // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // // @Router /aftersales-service/api/aftersales/shift-schedule/drop-down [get]
@@ -117,6 +119,7 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // @Param shift_schedule_id path string true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -144,6 +147,7 @@ func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // @param reqBody body masterpayloads.ShiftScheduleResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -178,6 +182,7 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // @param shift_schedule_id path int true "shift_schedule_id"
 // @param reqBody body masterpayloads.ShiftScheduleUpdate true "Form Request"
 // @Success 200 {object} payloads.Response
@@ -207,6 +212,7 @@ func (r *ShiftScheduleControllerImpl) UpdateShiftSchedule(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // @param shift_schedule_id path int true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -233,6 +239,7 @@ func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
+// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/shift-schedule/drop-down [get]

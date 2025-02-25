@@ -28,7 +28,8 @@ func NewItemCycleController(ItemCycleService masterservice.ItemCycleService) Ite
 // @Description		Item Cycle Insert
 // @Accept			json
 // @Produce			json
-// @Tags			Master : Item Cycle
+// @Tags Master : Item Cycle
+// @Security BearerAuth
 // @Param			reqBody					body	masterpayloads.ItemCycleInsertPayloads	true	"Item Cycle Insert"
 // @Success		201						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse

@@ -36,6 +36,7 @@ func StartStockTransactionReasonController(service masterservice.StockTransactio
 // @Accept json
 // @Produce json
 // @Tags Master : Stock Transaction Reason
+// @Security BearerAuth
 // @Param stock_transaction_reason_code path string true "stock_transaction_reason_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -55,6 +56,7 @@ func (controller *StockTransactionReasonControllerImpl) GetStockTransactionReaso
 // @Accept json
 // @Produce json
 // @Tags Master : Stock Transaction Reason
+// @Security BearerAuth
 // @Param request body masterpayloads.StockTransactionReasonInsertPayloads true "Stock Transaction Reason Insert Payloads"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -86,6 +88,7 @@ func (controller *StockTransactionReasonControllerImpl) InsertStockTransactionRe
 // @Accept json
 // @Produce json
 // @Tags Master : Stock Transaction Reason
+// @Security BearerAuth
 // @Param stock_transaction_reason_id path string true "stock_transaction_reason_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -106,6 +109,7 @@ func (controller *StockTransactionReasonControllerImpl) GetStockTransactionReaso
 // @Accept json
 // @Produce json
 // @Tags Master : Stock Transaction Reason
+// @Security BearerAuth
 // @Param limit query int false "limit"
 // @Param page query int false "page"
 // @Param sort_of query string false "sort_of"

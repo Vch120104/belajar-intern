@@ -43,6 +43,7 @@ func NewDeductionController(deductionService masterservice.DeductionService) Ded
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param deduction_code query string false "deduction_code"
@@ -87,6 +88,7 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @Param deduction_detail_id path int true "deduction_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -112,6 +114,7 @@ func (r *DeductionControllerImpl) GetByIdDeductionDetail(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @Param id path int true "id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -146,6 +149,7 @@ func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @Param deduction_id path int true "deduction_id"
 // @Param page query string true "page"
 // @Param limit query string true "limit"
@@ -179,6 +183,7 @@ func (r *DeductionControllerImpl) GetAllDeductionDetail(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @param reqBody body masterpayloads.DeductionListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -215,6 +220,7 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @param reqBody body masterpayloads.DeductionDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -252,6 +258,7 @@ func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @param deduction_list_id path int true "deduction_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -277,6 +284,7 @@ func (r *DeductionControllerImpl) ChangeStatusDeduction(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Deduction
+// @Security BearerAuth
 // @param id path int true "id"
 // @param reqBody body masterpayloads.DeductionDetailUpdate true "Form Request"
 // @Success 200 {object} payloads.Response

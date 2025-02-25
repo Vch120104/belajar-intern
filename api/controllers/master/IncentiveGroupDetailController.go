@@ -41,6 +41,7 @@ func NewIncentiveGroupDetailController(IncentiveGroupDetailService masterservice
 // @Summary Get All Incentive Group Detail
 // @Description Get All Incentive Group Detail
 // @Tags Master : Incentive Group Detail
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Incentive Group Id"
@@ -78,6 +79,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 // @Summary Save Incentive Group Detail
 // @Description Save Incentive Group Detail
 // @Tags Master : Incentive Group Detail
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Incentive Group Id"
@@ -118,6 +120,7 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 // @Summary Get Incentive Group Detail By Id
 // @Description Get Incentive Group Detail By Id
 // @Tags Master : Incentive Group Detail
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param incentive_group_detail_id path int true "Incentive Group Detail Id"
@@ -145,6 +148,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer 
 // @Summary Update Incentive Group Detail
 // @Description Update Incentive Group Detail
 // @Tags Master : Incentive Group Detail
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param incentive_group_detail_id path int true "Incentive Group Detail Id"

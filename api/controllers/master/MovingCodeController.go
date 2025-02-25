@@ -38,6 +38,7 @@ type MovingCodeControllerImpl struct {
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param moving_code_id path string true "moving_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -60,6 +61,7 @@ func (r *MovingCodeControllerImpl) ActivateMovingCode(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param moving_code_id path string true "moving_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -82,6 +84,7 @@ func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param company_id path string true "company_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -109,6 +112,7 @@ func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param moving_code_id path string true "moving_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -136,6 +140,7 @@ func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param company_id path string true "company_id"
 // @Param Request body masterpayloads.MovingCodeListRequest true "Request Body"
 // @Success 200 {object} payloads.Response
@@ -172,6 +177,7 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param company_id path string true "company_id"
 // @Param limit query int false "limit"
 // @Param page query int false "page"
@@ -212,6 +218,7 @@ func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param moving_code_id path string true "moving_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -239,6 +246,7 @@ func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param moving_code_id path string true "moving_code_id"
 // @Param company_id path string true "company_id"
 // @Success 200 {object} payloads.Response
@@ -273,6 +281,7 @@ func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Moving Code
+// @Security BearerAuth
 // @Param Request body masterpayloads.MovingCodeListUpdate true "Request Body"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
