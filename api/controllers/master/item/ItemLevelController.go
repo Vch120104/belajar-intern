@@ -46,6 +46,7 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @Param item_level_1_id path string true "item_level_1_id"
 // @Param item_level_2_id query string false "item_level_2_id"
 // @Param item_level_3_id query string false "item_level_3_id"
@@ -85,6 +86,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUpbyId(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @Param item_class_id path string true "item_class_id"
 // @Param item_level_1_code query string false "Item Level 1 Code"
 // @Param item_level_1_name query string false "Item Level 1 Name"
@@ -147,6 +149,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @Param item_level path string true "item_level"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -175,6 +178,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -224,6 +228,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -256,6 +261,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -302,6 +308,7 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
+// @Security AuthorizationKeyAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

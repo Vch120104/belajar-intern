@@ -47,6 +47,7 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Master
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param markup_master_code query string false "markup_master_code"
@@ -89,6 +90,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Master
+// @Security AuthorizationKeyAuth
 // @Param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -117,6 +119,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Master
+// @Security AuthorizationKeyAuth
 // @Param markup_master_code path string true "markup_master_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -140,6 +143,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Master
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/markup-master/dropdown [get]
@@ -160,6 +164,7 @@ func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Master
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.MarkupMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -201,6 +206,7 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Master
+// @Security AuthorizationKeyAuth
 // @param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

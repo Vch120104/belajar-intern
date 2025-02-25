@@ -32,6 +32,7 @@ func NewItemInquiryController(itemInquiryService transactionsparepartservice.Ite
 // @Summary Get All Item Inquiry
 // @Description Get All Item Inquiry
 // @Tags Transaction : Sparepart Item Inquiry
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string true "Company ID"
@@ -107,6 +108,7 @@ func (i *ItemInquiryControllerImpl) GetAllItemInquiry(writer http.ResponseWriter
 // @Summary Get Item Inquiry By ID
 // @Description Get Item Inquiry By ID
 // @Tags Transaction : Sparepart Item Inquiry
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param item_id query string true "Item ID"

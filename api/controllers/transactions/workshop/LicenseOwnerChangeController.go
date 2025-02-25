@@ -30,6 +30,7 @@ func NewLicenseOwnerChangeController(LicenseOwnerChangeService transactionworksh
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop License Owner Change
+// @Security AuthorizationKeyAuth
 // @Param vehicle_brand query string false "Vehicle Brand"
 // @Param model_code query string false "Model Code"
 // @Param vehicle_id query string false "Vehicle ID"
@@ -94,6 +95,7 @@ func (l *LicenseOwnerChangeControllerImpl) GetAll(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop License Owner Change
+// @Security AuthorizationKeyAuth
 // @Param vehicle_chassis_number path string true "Vehicle Chassis Number"
 // @Param change_type query string false "Change Type"
 // @Param limit query string true "Items per page"

@@ -39,6 +39,7 @@ func NewLabourSellingPriceDetailController(LabourSellingPriceService masteropera
 // @Summary Get Selling Price Detail By ID
 // @Description Get Selling Price Detail By ID
 // @Tags Master : Labour Selling Price
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param labour_selling_price_detail_id path int true "Labour Selling Price Detail ID"
@@ -65,6 +66,7 @@ func (r *LabourSellingPriceDetailControllerImpl) GetSellingPriceDetailById(write
 // @Summary Save Duplicate
 // @Description Save Duplicate
 // @Tags Master : Labour Selling Price
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param req body masteroperationpayloads.SaveDuplicateLabourSellingPrice true "Save Duplicate Labour Selling Price"
@@ -100,6 +102,7 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.Respo
 // @Summary Duplicate
 // @Description Duplicate
 // @Tags Master : Labour Selling Price
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param labour_selling_price_id path int true "Labour Selling Price ID"
@@ -126,6 +129,7 @@ func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseW
 // @Summary Get All Selling Price Detail By Header ID
 // @Description Get All Selling Price Detail By Header ID
 // @Tags Master : Labour Selling Price
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param labour_selling_price_id path int true "Labour Selling Price ID"
@@ -172,6 +176,7 @@ func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeade
 // @Summary Save Labour Selling Price Detail
 // @Description Save Labour Selling Price Detail
 // @Tags Master : Labour Selling Price
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param req body masteroperationpayloads.LabourSellingPriceDetailRequest true "Save Labour Selling Price Detail"
@@ -209,6 +214,7 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveLabourSellingPriceDetail(wr
 // @Summary Delete Labour Selling Price Detail
 // @Description Delete Labour Selling Price Detail
 // @Tags Master : Labour Selling Price
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param multi_id path string true "Multi ID"

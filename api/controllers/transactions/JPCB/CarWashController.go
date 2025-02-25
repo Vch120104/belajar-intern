@@ -43,6 +43,7 @@ func NewCarWashController(carWashService transactionjpcbservice.CarWashService) 
 // @Summary Get All Car Wash
 // @Description Get All Car Wash
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -104,6 +105,7 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 // @Summary Update Car Wash Priority
 // @Description Update Car Wash Priority
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param work_order_system_number path string true "Work Order System Number"
@@ -130,6 +132,7 @@ func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, reque
 // @Summary Get All Car Wash Priority Drop Down
 // @Description Get All Car Wash Priority Drop Down
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Success 200 {object} payloads.Response
@@ -147,6 +150,7 @@ func (r *CarWashControllerImpl) GetAllCarWashPriorityDropDown(writer http.Respon
 // @Summary Delete Car Wash
 // @Description Delete Car Wash
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param work_order_system_number path int true "Work Order System Number"
@@ -172,6 +176,7 @@ func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, reques
 // @Summary Post Car Wash
 // @Description Post Car Wash
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.CarWashPostRequestProps true "Car Wash Post Request"
@@ -203,6 +208,7 @@ func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request 
 // @Summary Car Wash Screen
 // @Description Car Wash Screen
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string false "Company ID"
@@ -240,6 +246,7 @@ func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, reques
 // @Summary Update Bay Number Car Wash Screen
 // @Description Update Bay Number Car Wash Screen
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest true "Car Wash Screen Update Bay Number Request"
@@ -270,6 +277,7 @@ func (r *CarWashControllerImpl) UpdateBayNumberCarWashScreenn(writer http.Respon
 // @Summary Start Car Wash
 // @Description Start Car Wash
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest true "Car Wash Screen Update Bay Number Request"
@@ -301,6 +309,7 @@ func (r *CarWashControllerImpl) StartCarWash(writer http.ResponseWriter, request
 // @Summary Stop Car Wash
 // @Description Stop Car Wash
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.StopCarWashScreenRequest true "Stop Car Wash Screen Request"
@@ -332,6 +341,7 @@ func (r *CarWashControllerImpl) StopCarWash(writer http.ResponseWriter, request 
 // @Summary Cancel Car Wash
 // @Description Cancel Car Wash
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body transactionjpcbpayloads.StopCarWashScreenRequest true "Stop Car Wash Screen Request"
@@ -363,6 +373,7 @@ func (r *CarWashControllerImpl) CancelCarWash(writer http.ResponseWriter, reques
 // @Summary Get Car Wash By Work Order System Number
 // @Description Get Car Wash By Work Order System Number
 // @Tags Transaction : JPCB Car Wash
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param work_order_system_number path int true "Work Order System Number"

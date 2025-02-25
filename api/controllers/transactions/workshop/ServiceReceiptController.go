@@ -36,7 +36,8 @@ func NewServiceReceiptController(service transactionworkshopservice.ServiceRecei
 // GetAll gets all service receipts
 // @Summary Get all service receipts
 // @Description Get all service receipts
-// @Tags Transaction : Workshop Service Receipts
+// @Tags Transaction : Workshop Service Receipt
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number query string false "Service receipts System Number"
@@ -95,7 +96,8 @@ func (r *ServiceReceiptControllerImp) GetAll(writer http.ResponseWriter, request
 // GetById gets service receipt by id
 // @Summary Get service receipt by id
 // @Description Get service receipt by id
-// @Tags Transaction : Workshop Service Receipts
+// @Tags Transaction : Workshop Service Receipt
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param id path string true "Service receipt ID"
@@ -138,7 +140,8 @@ func (r *ServiceReceiptControllerImp) GetById(writer http.ResponseWriter, reques
 // Save saves service receipt
 // @Summary Save service receipt
 // @Description Save service receipt
-// @Tags Transaction : Workshop Service Receipts
+// @Tags Transaction : Workshop Service Receipt
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"

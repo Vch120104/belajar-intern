@@ -42,6 +42,7 @@ func NewItemPriceCodeController(itemPriceCodeService masteritemservice.ItemPrice
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param is_active query string false "Is Active"
 // @Param item_price_code query string false "Item Price Code"
 // @Param item_price_code_id query string false "Item Price Code ID"
@@ -93,6 +94,7 @@ func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -121,6 +123,7 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param item_price_code path string true "Item Price Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -142,6 +145,7 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param body body masteritempayloads.SaveItemPriceCode true "Save Item Price Code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -168,6 +172,7 @@ func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -196,6 +201,7 @@ func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Param body body masteritempayloads.UpdateItemPriceCode true "Update Item Price Code"
 // @Success 200 {object} payloads.Response
@@ -231,6 +237,7 @@ func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Param item_price_code_id path int true "Item Price Code ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -259,6 +266,7 @@ func (r *ItemPriceCodeControllerImpl) ChangeStatusItemPriceCode(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Item Price Code
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-price-code/drop-down [get]

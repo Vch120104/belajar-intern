@@ -45,6 +45,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @Param warehouse_group_code path string true "warehouse_group_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -65,6 +66,7 @@ func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -90,6 +92,7 @@ func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-group/drop-down [get]
@@ -108,6 +111,7 @@ func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropDown(writer http.Res
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -148,6 +152,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -175,6 +180,7 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -209,6 +215,7 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
+// @Security AuthorizationKeyAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

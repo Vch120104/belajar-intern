@@ -57,6 +57,7 @@ func NewItemController(ItemService masteritemservice.ItemService) ItemController
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
@@ -131,6 +132,7 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
@@ -183,6 +185,7 @@ func (r *ItemControllerImpl) GetAllItemInventory(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_code query string true "item_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -205,6 +208,7 @@ func (r *ItemControllerImpl) GetItemInventoryByCode(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "item_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -231,6 +235,7 @@ func (r *ItemControllerImpl) GetItembyId(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param uom_type_id path int true "uom_type_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -258,6 +263,7 @@ func (r *ItemControllerImpl) GetUomDropDown(writer http.ResponseWriter, request 
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/uom-type/drop-down [get]
@@ -278,6 +284,7 @@ func (r *ItemControllerImpl) GetUomTypeDropDown(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
@@ -336,6 +343,7 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_ids path string true "item_ids"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -366,6 +374,7 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_code path string true "item_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -391,6 +400,7 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.ItemRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -426,6 +436,7 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @param item_id path int true "item_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -452,6 +463,7 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param page query int true "Page number"
 // @Param limit query int true "Items per page"
 // @Param sort_by query string false "Field to sort by"
@@ -509,6 +521,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param item_detail_id path int true "Item Detail ID"
 // @Success 200 {object} payloads.Response
@@ -540,6 +553,7 @@ func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param reqBody body masteritempayloads.ItemDetailRequest true "Item Detail Data"
 // @Success 200 {object} payloads.Response
@@ -571,6 +585,7 @@ func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param item_detail_id path int true "Item Detail ID"
 // @Success 200 {object} payloads.Response
@@ -621,6 +636,7 @@ func (r *ItemControllerImpl) DeleteItemDetails(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param reqBody body masteritempayloads.ItemUpdateRequest true "Item Data"
 // @Success 200 {object} payloads.Response
@@ -648,6 +664,7 @@ func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *htt
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "Item ID"
 // @Param item_detail_id path int true "Item Detail ID"
 // @Param reqBody body masteritempayloads.ItemDetailUpdateRequest true "Item Detail Data"
@@ -687,6 +704,7 @@ func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/principal-brand-dropdown [get]
@@ -704,6 +722,7 @@ func (r *ItemControllerImpl) GetPrincipalBrandDropdown(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param principal_catalog_id path int true "principal_catalog_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -727,6 +746,7 @@ func (r *ItemControllerImpl) GetPrincipalBrandParent(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param item_id path int true "item_id"
 // @Param brand_id path string true "brand_id"
 // @Success 200 {object} payloads.Response
@@ -752,6 +772,7 @@ func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Security AuthorizationKeyAuth
 // @Param principal_catalog_id path int true "principal_catalog_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

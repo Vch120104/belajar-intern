@@ -33,6 +33,7 @@ func NewClaimSupplierControllerImpl(service transactionsparepartservice.ClaimSup
 // @Summary Insert Item Claim
 // @Description Insert Item Claim
 // @Tags Transaction : Sparepart Claim Supplier
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemClaim body transactionsparepartpayloads.ClaimSupplierInsertPayload true "Insert Item Claim"
@@ -53,6 +54,7 @@ func (controller *ClaimSupplierControllerImpl) InsertItemClaim(writer http.Respo
 // @Summary Insert Item Claim Detail
 // @Description Insert Item Claim Detail
 // @Tags Transaction : Sparepart Claim Supplier
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemClaimDetail body transactionsparepartpayloads.ClaimSupplierInsertDetailPayload true "Insert Item Claim Detail"
@@ -75,6 +77,7 @@ func (controller *ClaimSupplierControllerImpl) InsertItemClaimDetail(writer http
 // @Summary Get Item Claim By ID
 // @Description Get Item Claim By ID
 // @Tags Transaction : Sparepart Claim Supplier
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param claim_system_number path string true "Claim System Number"
@@ -99,6 +102,7 @@ func (controller *ClaimSupplierControllerImpl) GetItemClaimById(writer http.Resp
 // @Summary Submit Item Claim
 // @Description Submit Item Claim
 // @Tags Transaction : Sparepart Claim Supplier
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param claim_system_number path string true "Claim System Number"
@@ -125,6 +129,7 @@ func (controller *ClaimSupplierControllerImpl) SubmitItemClaim(writer http.Respo
 // @Summary Get All Item Claim
 // @Description Get All Item Claim
 // @Tags Transaction : Sparepart Claim Supplier
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param claim_system_number query string false "Claim System Number"
@@ -170,6 +175,7 @@ func (controller *ClaimSupplierControllerImpl) GetAllItemClaim(writer http.Respo
 // @Summary Get Item Claim Detail By Header ID
 // @Description Get Item Claim Detail By Header ID
 // @Tags Transaction : Sparepart Claim Supplier
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param claim_system_number query string false "Claim System Number"

@@ -40,6 +40,7 @@ func NewContractServiceController(ContractServiceService transactionworkshopserv
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Contract Service
+// @Security AuthorizationKeyAuth
 // @Param company_code query string false "Company Code"
 // @Param contract_serv_doc_no query string false "Contract Service Document Number"
 // @Param date_from query string false "Date From"
@@ -104,6 +105,7 @@ func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Contract Service
+// @Security AuthorizationKeyAuth
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Param contract_service_system_number query string false "Contract Service System Number"
 // @Param page query string true "Page number"
@@ -156,6 +158,7 @@ func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Contract Service
+// @Security AuthorizationKeyAuth
 // @Param body body transactionworkshoppayloads.ContractServiceInsert true "Contract Service Insert"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -182,6 +185,7 @@ func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Contract Service
+// @Security AuthorizationKeyAuth
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -216,6 +220,7 @@ func (r *ContractServiceControllerImpl) Void(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Contract Service
+// @Security AuthorizationKeyAuth
 // @Param contract_service_system_number path string true "Contract Service System Number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

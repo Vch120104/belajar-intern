@@ -39,6 +39,7 @@ func NewQualityControlController(QualityControlService transactionworkshopservic
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param quality_control_system_number query string false "Quality Control System Number"
 // @Param quality_control_document_number query string false "Quality Control Document Number"
 // @Param page query string true "Page number"
@@ -95,6 +96,7 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -144,6 +146,7 @@ func (r *QualityControlControllerImpl) GetById(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -186,6 +189,7 @@ func (r *QualityControlControllerImpl) Qcpass(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

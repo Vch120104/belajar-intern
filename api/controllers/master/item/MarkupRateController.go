@@ -44,6 +44,7 @@ func NewMarkupRateController(markupRateService masteritemservice.MarkupRateServi
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Rate
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -101,6 +102,7 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Rate
+// @Security AuthorizationKeyAuth
 // @Param markup_rate_id path int true "markup_rate_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -129,6 +131,7 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Rate
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.MarkupRateRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -170,6 +173,7 @@ func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Rate
+// @Security AuthorizationKeyAuth
 // @param markup_rate_id path int true "markup_rate_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -198,6 +202,7 @@ func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Markup Rate
+// @Security AuthorizationKeyAuth
 // @Param markup_master_id path int true "markup_master_id"
 // @Param order_type_id path int true "order_type_id"
 // @Success 200 {object} payloads.Response

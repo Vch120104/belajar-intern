@@ -41,6 +41,7 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Key
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_section_code query string false "operation_section_code"
@@ -96,6 +97,7 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Key
+// @Security AuthorizationKeyAuth
 // @Param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -122,6 +124,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Key
+// @Security AuthorizationKeyAuth
 // @Param operation_group_id query int true "operation_group_id"
 // @Param operation_section_id query int true "operation_section_id"
 // @Param operation_key_code query string true "operation_key_code"
@@ -154,6 +157,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Key
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteroperationpayloads.OperationKeyResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -197,6 +201,7 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Key
+// @Security AuthorizationKeyAuth
 // @param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -224,6 +229,7 @@ func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Key
+// @Security AuthorizationKeyAuth
 // @Param operation_group_id path int true "operation_group_id"
 // @Param operation_section_id path int true "operation_section_id"
 // @Success 200 {object} payloads.Response

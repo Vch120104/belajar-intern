@@ -39,6 +39,7 @@ func NewQualityControlBodyshopController(QualityControlBodyshopService transacti
 // @Accept json
 // @Produce json
 // @Tags Transaction : Bodyshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param quality_control_system_number query string false "Quality Control System Number"
 // @Param quality_control_document_number query string false "Quality Control Document Number"
 // @Param page query string true "Page number"
@@ -89,6 +90,7 @@ func (r *QualityControlBodyshopControllerImpl) GetAll(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Transaction : Bodyshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -143,6 +145,7 @@ func (r *QualityControlBodyshopControllerImpl) GetById(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Transaction : Bodyshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -185,6 +188,7 @@ func (r *QualityControlBodyshopControllerImpl) Qcpass(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Transaction : Bodyshop Quality Control
+// @Security AuthorizationKeyAuth
 // @Param id path string true "Quality Control Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

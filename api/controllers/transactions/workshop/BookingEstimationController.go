@@ -69,6 +69,7 @@ func NewBookingEstimationController(BookingEstimationService transactionworkshop
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param brand_id query string false "Brand ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -123,6 +124,7 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationNormalRequest true "Booking Estimation Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -152,6 +154,7 @@ func (r *BookingEstimationControllerImpl) New(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/booking [post]
@@ -165,6 +168,7 @@ func (r *BookingEstimationControllerImpl) NewBooking(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/affiliated [post]
@@ -178,6 +182,7 @@ func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -205,6 +210,7 @@ func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param batch_system_number path int true "Booking Estimation ID"
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationSaveRequest true "Booking Estimation Data"
 // @Success 200 {object} payloads.Response
@@ -242,6 +248,7 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -256,6 +263,7 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -281,6 +289,7 @@ func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param batch_system_number path int true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -295,6 +304,7 @@ func (r *BookingEstimationControllerImpl) CloseOrder(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param booking_system_number path int true "Booking System Number"
 // @Param reqBody body transactionworkshoppayloads.BookEstimRemarkRequest true "Booking Estimation Request Data"
 // @Success 200 {object} payloads.Response
@@ -322,6 +332,7 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReq(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param booking_system_number path int true "Booking System Number"
 // @Param booking_estimation_request_id path int true "Booking Estimation Request ID"
 // @Param reqBody body transactionworkshoppayloads.BookEstimRemarkRequest true "Booking Estimation Request Data"
@@ -351,6 +362,7 @@ func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param booking_system_number path int true "Booking System Number"
 // @Param booking_estimation_request_id path int true "Booking Estimation Request ID"
 // @Success 200 {object} payloads.Response
@@ -374,6 +386,7 @@ func (r *BookingEstimationControllerImpl) GetByIdBookEstimReq(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param booking_estimation_request_id query string false "Booking Estimation Request ID"
 // @Param booking_estimation_request_code query string false "Booking Estimation Request Code"
 // @Param booking_system_number query string false "Booking System Number"
@@ -443,6 +456,7 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReminderServ(writer http.
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param estimation_system_number path int true "Estimation System Number"
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationDetailRequest true "Booking Estimation Detail Data"
 // @Success 201 {object} payloads.Response
@@ -478,6 +492,7 @@ func (r *BookingEstimationControllerImpl) SaveDetailBookEstim(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param estimation_system_number path int true "Estimation System Number"
 // @Param estimation_detail_id path int true "Estimation Detail ID"
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationDetailRequestSave true "Booking Estimation Detail Data"
@@ -522,6 +537,7 @@ func (r *BookingEstimationControllerImpl) UpdateDetailBookEstim(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param estimation_system_number path int true "Estimation System Number"
 // @Param estimation_detail_id query string true "Comma-separated list of Estimation Detail IDs"
 // @Success 204 {object} payloads.Response
@@ -616,6 +632,7 @@ func (r *BookingEstimationControllerImpl) AddFieldAction(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param estimation_system_number path int true "Estimation System Number"
 // @Param estimation_detail_id path int true "Estimation Detail ID"
 // @Success 200 {object} payloads.Response
@@ -716,6 +733,7 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationAllocation(Writer
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -762,6 +780,7 @@ func (r *BookingEstimationControllerImpl) GetAllDetailBookingEstimation(writer h
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
+// @Security AuthorizationKeyAuth
 // @Param booking_system_number path int true "Booking System Number"
 // @Param booking_estimation_request_id query string true "Comma-separated list of Booking Estimation Request IDs"
 // @Success 204 {object} payloads.Response

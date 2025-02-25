@@ -44,6 +44,7 @@ type ItemWarehouseTransferOutControllerImpl struct {
 // @Summary Delete Header Transfer Out
 // @Description Delete Header Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Out System Number"
@@ -65,6 +66,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) DeleteTransferOut(writer http.R
 // @Summary Delete Detail Transfer Out
 // @Description Delete Detail Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param id path string true "Detail Multi ID"
@@ -102,6 +104,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) DeleteTransferOutDetail(writer 
 // @Summary Get All Warehouse Transfer Out
 // @Description Get All Warehouse Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_out_status_id query int false "Transfer Out Status ID"
@@ -153,6 +156,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) GetAllTransferOut(writer http.R
 // @Summary Get All Detail Transfer Out
 // @Description Get All Detail Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_out_system_number query int true "Transfer out System Number"
@@ -185,6 +189,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) GetAllTransferOutDetail(writer 
 // GetTransferOutById implements ItemWarehouseTransferOutController
 // @Description Get By ID Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Out System Number"
@@ -210,6 +215,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) GetTransferOutById(writer http.
 // @Summary Insert Item Warehouse Transfer Out Detail
 // @Description Insert Item Warehouse Transfer Out Detail
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemWarehouseTransferOutDetail body transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailRequest true "Insert Item Warehouse Transfer Out Detail"
@@ -237,6 +243,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertDetail(writer http.Respon
 // @Summary Insert Item Warehouse Transfer Out Detail From Receipt
 // @Description Insert Item Warehouse Transfer Out Detail From Receipt
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemWarehouseTransferOut body transactionsparepartpayloads.InsertItemWarehouseTransferOutDetailCopyReceiptRequest true "Insert Item Warehouse Transfer Out Detail From Receipt"
@@ -267,6 +274,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertDetailFromReceipt(writer 
 // @Summary Insert Item Warehouse Transfer Out Header
 // @Description Insert Item Warehouse Transfer Out Header
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemWarehouseTransferOut body transactionsparepartpayloads.InsertItemWarehouseHeaderTransferOutRequest true "Insert Item Warehouse Transfer Out"
@@ -293,6 +301,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) InsertHeader(writer http.Respon
 // SubmitTransferOut implements ItemWarehouseTransferOutController.
 // @Description Submit Item Warehouse Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Out System Number"
@@ -318,6 +327,7 @@ func (r *ItemWarehouseTransferOutControllerImpl) SubmitTransferOut(writer http.R
 // @Summary Update Item Warehouse Transfer Out
 // @Description Update Item Warehouse Transfer Out
 // @Tags Transaction Sparepart: Item Warehouse Transfer Out
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "Transfer Out System Number"

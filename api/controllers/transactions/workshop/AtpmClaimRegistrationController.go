@@ -48,6 +48,7 @@ func NewAtpmClaimRegistrationController(AtpmClaimRegistrationService transaction
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param atpm_claim_registration_number query string false "ATPM Claim Registration Number"
 // @Param atpm_claim_registration_document_number query string false "ATPM Claim Registration Document Number"
 // @Param page query string true "Page number"
@@ -99,6 +100,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAll(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path string true "ATPM Claim Registration ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -140,6 +142,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetById(writer http.ResponseWriter
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param body body transactionworkshoppayloads.AtpmClaimRegistrationRequest true "Atpm Claim Registration Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -168,6 +171,7 @@ func (r *AtpmClaimRegistrationControllerImpl) New(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path string true "ATPM Claim Registration ID"
 // @Param body body transactionworkshoppayloads.AtpmClaimRegistrationRequestSave true "Atpm Claim Registration Request"
 // @Success 200 {object} payloads.Response
@@ -204,6 +208,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Save(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path string true "ATPM Claim Registration ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -232,6 +237,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Submit(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Success 204 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -260,6 +266,7 @@ func (r *AtpmClaimRegistrationControllerImpl) Void(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -309,6 +316,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllServiceHistory(writer http.R
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -358,6 +366,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllClaimHistory(writer http.Res
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
@@ -414,6 +423,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetAllDetail(writer http.ResponseW
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
 // @Param claim_system_number path int true "ATPM Claim ID"
 // @Success 200 {object} payloads.Response
@@ -473,6 +483,7 @@ func (r *AtpmClaimRegistrationControllerImpl) GetDetailById(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Claim Registration ID"
 // @Param body body transactionworkshoppayloads.AtpmClaimDetailRequest true "Atpm Claim Detail Request"
 // @Success 200 {object} payloads.Response
@@ -509,6 +520,7 @@ func (r *AtpmClaimRegistrationControllerImpl) AddDetail(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Claim Registration
+// @Security AuthorizationKeyAuth
 // @Param claim_detail_system_number path int true "ATPM Claim Detail ID"
 // @Param claim_system_number path int true "ATPM Claim ID"
 // @Success 204 {object} payloads.Response

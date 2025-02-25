@@ -49,6 +49,7 @@ func NewItemLocationTransferController(
 // @Summary Get All Item Location Transfer
 // @Description Get All Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param company_id query string true "Company ID"
@@ -108,6 +109,7 @@ func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransfer(writer h
 // @Summary Get Item Location Transfer By ID
 // @Description Get Item Location Transfer By ID
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number path string true "Transfer Request System Number"
@@ -129,6 +131,7 @@ func (c *ItemLocationTransferControllerImpl) GetItemLocationTransferById(writer 
 // @Summary Insert Item Location Transfer
 // @Description Insert Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemLocationTransferRequest body transactionsparepartpayloads.InsertItemLocationTransferRequest true "Insert Item Location Transfer Request"
@@ -160,6 +163,7 @@ func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransfer(writer h
 // @Summary Update Item Location Transfer
 // @Description Update Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number path string true "Transfer Request System Number"
@@ -194,6 +198,7 @@ func (c *ItemLocationTransferControllerImpl) UpdateItemLocationTransfer(writer h
 // @Summary Accept Item Location Transfer
 // @Description Accept Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number path string true "Transfer Request System Number"
@@ -228,6 +233,7 @@ func (c *ItemLocationTransferControllerImpl) AcceptItemLocationTransfer(writer h
 // @Summary Reject Item Location Transfer
 // @Description Reject Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number path string true "Transfer Request System Number"
@@ -262,6 +268,7 @@ func (c *ItemLocationTransferControllerImpl) RejectItemLocationTransfer(writer h
 // @Summary Submit Item Location Transfer
 // @Description Submit Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number path string true "Transfer Request System Number"
@@ -296,6 +303,7 @@ func (c *ItemLocationTransferControllerImpl) SubmitItemLocationTransfer(writer h
 // @Summary Delete Item Location Transfer
 // @Description Delete Item Location Transfer
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number path string true "Transfer Request System Number"
@@ -317,6 +325,7 @@ func (c *ItemLocationTransferControllerImpl) DeleteItemLocationTransfer(writer h
 // @Summary Get All Item Location Transfer Detail
 // @Description Get All Item Location Transfer Detail
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_system_number query string true "Transfer Request System Number"
@@ -364,6 +373,7 @@ func (c *ItemLocationTransferControllerImpl) GetAllItemLocationTransferDetail(wr
 // @Summary Get Item Location Transfer Detail By ID
 // @Description Get Item Location Transfer Detail By ID
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_detail_system_number path string true "Transfer Request Detail System Number"
@@ -385,6 +395,7 @@ func (c *ItemLocationTransferControllerImpl) GetItemLocationTransferDetailById(w
 // @Summary Insert Item Location Transfer Detail
 // @Description Insert Item Location Transfer Detail
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param InsertItemLocationTransferDetailRequest body transactionsparepartpayloads.InsertItemLocationTransferDetailRequest true "Insert Item Location Transfer Detail Request"
@@ -416,6 +427,7 @@ func (c *ItemLocationTransferControllerImpl) InsertItemLocationTransferDetail(wr
 // @Summary Update Item Location Transfer Detail
 // @Description Update Item Location Transfer Detail
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param transfer_request_detail_system_number path string true "Transfer Request Detail System Number"
@@ -450,6 +462,7 @@ func (c *ItemLocationTransferControllerImpl) UpdateItemLocationTransferDetail(wr
 // @Summary Delete Item Location Transfer Detail
 // @Description Delete Item Location Transfer Detail
 // @Tags Transaction : Sparepart Item Location Transfer
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param multi_id path string true "Multi ID"

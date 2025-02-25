@@ -37,6 +37,7 @@ type BinningListControllerImpl struct {
 // @Summary Get Reference Number Typo PO With Pagination
 // @Description Get Reference Number Typo PO With Pagination
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param purchase_order_status_id query string false "Purchase Order Status ID"
@@ -80,6 +81,7 @@ func NewBinningListControllerImpl(service transactionsparepartservice.BinningLis
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 //
 //	@Param			binning_stock_system_number		path		string	false	"binning_stock_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.BinningListGetByIdResponse
@@ -103,6 +105,7 @@ func (controller *BinningListControllerImpl) GetBinningListById(writer http.Resp
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -156,6 +159,7 @@ func (controller *BinningListControllerImpl) GetAllBinningListWithPagination(wri
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.BinningListInsertPayloads	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -184,6 +188,7 @@ func (controller *BinningListControllerImpl) InsertBinningListHeader(writer http
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 //
 //	@Param			reqBody					body		transactionsparepartpayloads.BinningListSavePayload	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
@@ -213,6 +218,7 @@ func (controller *BinningListControllerImpl) UpdateBinningListHeader(writer http
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 //
 //	@Param			binning_stock_detail_system_number		path		string	false	"binning_stock_detail_system_number"
 //	@Success		200									{object}	transactionsparepartpayloads.BinningListGetByIdResponses
@@ -237,6 +243,7 @@ func (controller *BinningListControllerImpl) GetBinningDetailById(writer http.Re
 //	@Produce		json
 //
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 //
 //	@Param			page								query		string	true	"page"
 //	@Param			limit								query		string	true	"limit"
@@ -286,6 +293,7 @@ func (controller *BinningListControllerImpl) InsertBinningListDetail(writer http
 // @Summary Update Binning List Detail
 // @Description Update Binning List Detail
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param reqBody body transactionsparepartpayloads.BinningListDetailUpdatePayloads true "Binning List Detail Update Payloads"
@@ -310,6 +318,7 @@ func (controller *BinningListControllerImpl) UpdateBinningListDetail(writer http
 // @Summary Submit Binning List
 // @Description Submit Binning List
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param binning_system_number path int true "Binning System Number"
@@ -330,6 +339,7 @@ func (controller *BinningListControllerImpl) SubmitBinningList(writer http.Respo
 // @Summary Delete Binning List
 // @Description Delete Binning List
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param binning_system_number path int true "Binning System Number"
@@ -349,6 +359,7 @@ func (controller *BinningListControllerImpl) DeleteBinningList(writer http.Respo
 // @Summary Delete Binning List Detail Multi Id
 // @Description Delete Binning List Detail Multi Id
 // @Tags Transaction : Sparepart Binning List
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param binning_detail_multi_id path string true "Binning Detail Multi Id"

@@ -45,6 +45,7 @@ func NewWorkOrderAllocationController(service transactionworkshopservice.WorkOrd
 // @Summary Get all datagrid workorder allocation
 // @Description Get all datagrid workorder allocation
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param page query string true "Page number"
@@ -120,6 +121,7 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 // @Summary Get all allocated work orders
 // @Description Get all allocated work orders
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -196,6 +198,7 @@ func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWrite
 // @Summary Get all allocated work orders detail
 // @Description Get all allocated work orders detail
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -246,6 +249,7 @@ func (r *WorkOrderAllocationControllerImp) GetAllocateDetail(writer http.Respons
 // @Summary Get all assigned technicians
 // @Description Get all assigned technicians
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -298,6 +302,7 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnician(writer http.Respo
 // @Summary Get all assigned technicians by ID
 // @Description Get all assigned technicians by ID
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date path string true "Service Request Date"
@@ -352,6 +357,7 @@ func (r *WorkOrderAllocationControllerImp) GetAssignTechnicianById(writer http.R
 // @Summary Assign a new technician
 // @Description Assign a new technician
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest true "Request body"
@@ -380,6 +386,7 @@ func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.Respo
 // @Summary Save assigned technician
 // @Description Save assigned technician
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param assign_technician_id query int true "Assign Technician ID"
@@ -416,6 +423,7 @@ func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.Resp
 // @Summary Get all work order allocation header data
 // @Description Get all work order allocation header data
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Success 200 {object}  payloads.Response
@@ -462,6 +470,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 // @Summary Save allocated work order detail
 // @Description Save allocated work order detail
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"
@@ -525,6 +534,7 @@ func (r *WorkOrderAllocationControllerImp) SaveAllocateDetail(writer http.Respon
 // @Summary Get allocated work order by system number
 // @Description Get allocated work order by system number
 // @Tags Transaction : Workshop Work Order Allocation
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param service_date query string true "Service Request Date"

@@ -21,6 +21,7 @@ type StockTransactionControllerImpl struct {
 // @Summary Insert Stock Transaction
 // @Description Insert Stock Transaction
 // @Tags Transaction : Sparepart Stock Transaction
+// @Security AuthorizationKeyAuth
 // @Accept json
 // @Produce json
 // @Param StockTransactionInsertPayloads body transactionsparepartpayloads.StockTransactionInsertPayloads true "Stock Transaction Insert Payloads"

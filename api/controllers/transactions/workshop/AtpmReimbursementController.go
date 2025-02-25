@@ -38,6 +38,7 @@ func NewAtpmReimbursementController(AtpmReimbursementService transactionworkshop
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Reimbursement
+// @Security AuthorizationKeyAuth
 // @Param atpm_reimbursement_number query string false "ATPM Reimbursement Number"
 // @Param atpm_reimbursement_document_number query string false "ATPM Reimbursement Document Number"
 // @Param page query string true "Page number"
@@ -88,6 +89,7 @@ func (r *AtpmReimbursementControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Reimbursement
+// @Security AuthorizationKeyAuth
 // @Param body body transactionworkshoppayloads.AtpmReimbursementRequest true "Atpm Reimbursement Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -116,6 +118,7 @@ func (r *AtpmReimbursementControllerImpl) New(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Reimbursement
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Reimbursement ID"
 // @Param body body transactionworkshoppayloads.AtpmReimbursementUpdate true "Atpm Reimbursement Request"
 // @Success 200 {object} payloads.Response
@@ -152,6 +155,7 @@ func (r *AtpmReimbursementControllerImpl) Save(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop ATPM Reimbursement
+// @Security AuthorizationKeyAuth
 // @Param claim_system_number path int true "ATPM Reimbursement ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

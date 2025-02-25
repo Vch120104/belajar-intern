@@ -42,6 +42,7 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @Param item_group_id path int true "item_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -69,6 +70,7 @@ func (r *ItemClassControllerImpl) GetItemClassDropDownbyGroupId(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @Param item_class_code path string true "item_class_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -91,6 +93,7 @@ func (r *ItemClassControllerImpl) GetItemClassByCode(writer http.ResponseWriter,
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @Param item_class_id path int true "item_class_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -118,6 +121,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
@@ -173,6 +177,7 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param item_class_id query int false "item_class_id"
 // @Param item_class_code query string false "item_class_code"
@@ -197,6 +202,7 @@ func (r *ItemClassControllerImpl) GetItemClassDropdown(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-class/mfg/drop-down [get]
@@ -215,6 +221,7 @@ func (r *ItemClassControllerImpl) GetItemClassMfgDropdown(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteritempayloads.ItemClassResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -257,6 +264,7 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Item Class
+// @Security AuthorizationKeyAuth
 // @param item_class_id path int true "item_class_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

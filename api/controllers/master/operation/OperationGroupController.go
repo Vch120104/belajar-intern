@@ -44,6 +44,7 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Group
+// @Security AuthorizationKeyAuth
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param operation_group_code query string false "operation_group_code"
@@ -86,6 +87,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Group
+// @Security AuthorizationKeyAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/drop-down [get]
@@ -104,6 +106,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupDropDown(writer http.Res
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Group
+// @Security AuthorizationKeyAuth
 // @Param operation_group_code path string true "operation_group_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -125,6 +128,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.Respo
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Group
+// @Security AuthorizationKeyAuth
 // @param reqBody body masteroperationpayloads.OperationGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -166,6 +170,7 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Group
+// @Security AuthorizationKeyAuth
 // @param operation_group_id path int true "operation_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
@@ -194,6 +199,7 @@ func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.Re
 // @Accept json
 // @Produce json
 // @Tags Master : Operation Group
+// @Security AuthorizationKeyAuth
 // @param operation_group_id path int true "operation_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
