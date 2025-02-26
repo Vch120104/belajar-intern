@@ -53,7 +53,7 @@ func (*LookupRepositoryImpl) LocationItemGoodsReceive(tx *gorm.DB, filterConditi
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Error fetching lookup data 'ItemMasterForFreeAccs'",
+			Message:    "Error fetching lookup data 'LocationItemGoodsReceive'",
 			Err:        err,
 		}
 	}
@@ -5030,26 +5030,10 @@ func (r *LookupRepositoryImpl) GetCampaignMaster(tx *gorm.DB, companyId int, pag
 
 // usp_comLookUp
 // IF @strEntity = 'WorkOrderService'--WO SERVICE
-func (r *LookupRepositoryImpl) WorkOrderService(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var (
-		results   []map[string]interface{}
-		totalRows int64
-	)
+func (r *LookupRepositoryImpl) WorkOrderService(tx *gorm.DB, pages pagination.Pagination, filterConditions []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	response := []map[string]interface{}{}
 
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	// Prepare filters
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
-
-	query := tx.Table("trx_work_order_allocation AS A").
+	baseModelQuery := tx.Table("trx_work_order_allocation AS A").
 		Select(`
 			A.work_order_document_number AS work_order_document_number,
 			B.work_order_date AS work_order_date,
@@ -5063,41 +5047,31 @@ func (r *LookupRepositoryImpl) WorkOrderService(tx *gorm.DB, paginate pagination
 		Joins("LEFT JOIN trx_work_order AS B ON B.work_order_system_number = A.work_order_system_number").
 		Where("A.service_status_id NOT IN (?, ?, ?, ?)", utils.SrvStatStop, utils.SrvStatAutoRelease, utils.SrvStatTransfer, utils.SrvStatQcPass)
 
-	// Apply additional filters
-	if len(filterStrings) > 0 {
-		query = query.Where(filterQuery, filterValues...)
-	}
+	filteredQuery := utils.ApplyFilter(baseModelQuery, filterConditions)
 
-	// Count total rows
-	err := query.Count(&totalRows).Error
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+	var totalRows int64
+	if err := filteredQuery.Count(&totalRows).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count total work orders",
 			Err:        err,
 		}
 	}
 
-	// Paginate the results
-	err = query.
-		Scopes(pagination.Paginate(&paginate, query)).
-		Order("A.work_order_document_number").
-		Find(&results).Error
-
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+	paginatedQuery := filteredQuery.Scopes(pagination.Paginate(&pages, filteredQuery)).Order("A.work_order_document_number")
+	if err := paginatedQuery.Scan(&response).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get work order data",
 			Err:        err,
 		}
 	}
 
-	// Finalize pagination details
-	paginate.Rows = results
-	paginate.TotalRows = totalRows
-	paginate.TotalPages = int(math.Ceil(float64(totalRows) / float64(paginate.GetLimit())))
+	pages.Rows = response
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
 
-	return paginate, nil
+	return pages, nil
 }
 
 // usp_comLookUp
@@ -5167,27 +5141,10 @@ func (r *LookupRepositoryImpl) WorkOrderAtpmRegistration(tx *gorm.DB, paginate p
 
 // usp_comLookUp
 // IF @strEntity =  'CustomerByTypeAndAddress'--CUSTOMER MASTER
-func (r *LookupRepositoryImpl) CustomerByTypeAndAddress(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var (
-		customerMasters []map[string]interface{}
-		totalRows       int64
-	)
+func (r *LookupRepositoryImpl) CustomerByTypeAndAddress(tx *gorm.DB, pages pagination.Pagination, filterConditions []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	response := []map[string]interface{}{}
 
-	if paginate.Limit <= 0 {
-		paginate.Limit = 10
-	}
-
-	// Prepare filters
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
-
-	// Query construction
-	query := tx.Table("dms_microservices_general_dev.dbo.mtr_customer C").
+	baseModelQuery := tx.Table("dms_microservices_general_dev.dbo.mtr_customer AS C").
 		Select(`
 			C.customer_id AS customer_id,
 			C.customer_code AS customer_code,
@@ -5202,41 +5159,19 @@ func (r *LookupRepositoryImpl) CustomerByTypeAndAddress(tx *gorm.DB, paginate pa
 		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_address AS A ON C.id_address_id = A.address_id").
 		Where("C.is_active = 1")
 
-	// Apply filters if provided
-	if len(filterStrings) > 0 {
-		query = query.Where(filterQuery, filterValues...)
-	}
+	filteredQuery := utils.ApplyFilter(baseModelQuery, filterConditions)
+	paginatedQuery := filteredQuery.Scopes(pagination.Paginate(&pages, filteredQuery)).Order("C.customer_id")
 
-	// Count total rows
-	err := query.Count(&totalRows).Error
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
+	if err := paginatedQuery.Scan(&response).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to count total customers",
+			Message:    "Error fetching lookup data 'CustomerByTypeAndAddress'",
 			Err:        err,
 		}
 	}
 
-	// Fetch data with pagination
-	err = query.
-		Scopes(pagination.Paginate(&paginate, query)).
-		Order("C.customer_id").
-		Find(&customerMasters).Error
-
-	if err != nil {
-		return pagination.Pagination{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to get customer data",
-			Err:        err,
-		}
-	}
-
-	// Set pagination details
-	paginate.Rows = customerMasters
-	paginate.TotalRows = totalRows
-	paginate.TotalPages = int(math.Ceil(float64(totalRows) / float64(paginate.GetLimit())))
-
-	return paginate, nil
+	pages.Rows = response
+	return pages, nil
 }
 
 // usp_comLookUp
@@ -7152,27 +7087,48 @@ func (r *LookupRepositoryImpl) ItemLocUOMByCode(tx *gorm.DB, companyId int, item
 
 // usp_comLookUp
 // IF @strEntity = 'ItemMasterForFreeAccs'
-func (r *LookupRepositoryImpl) ItemMasterForFreeAccs(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemMasterForFreeAccs(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	response := []masterpayloads.ItemMasterForFreeAccsResponse{}
+
+	brandID := utils.GetFilterValue(filterConditions, "mtr_item_detail.brand_id")
+	modelID := utils.GetFilterValue(filterConditions, "mtr_item_detail.model_id")
+	variantID := utils.GetFilterValue(filterConditions, "mtr_item_detail.variant_id")
+	effectiveDate := utils.GetFilterValue(filterConditions, "mtr_item_price_list.effective_date")
+	companyID := utils.GetFilterValue(filterConditions, "company_id")
 
 	baseModelQuery := tx.Table("mtr_item").
 		Select(`mtr_item.item_id, mtr_item.item_code, mtr_item.item_name, 
-                 mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
-                 mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
-                 mtr_item_price_list.price_list_amount as price, mtr_item.is_active`).
+            mtr_item.item_class_id, mtr_item_class.item_class_code, mtr_item_class.item_class_name, 
+            mtr_uom.uom_id, mtr_uom.uom_code, mtr_uom.uom_description, 
+            mtr_item_price_list.price_list_amount AS price, mtr_item.is_active, 
+            mtr_item_detail.brand_id, mtr_item_detail.model_id, mtr_item_detail.variant_id`).
 		Joins("INNER JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id").
 		Joins("INNER JOIN mtr_item_detail ON mtr_item.item_id = mtr_item_detail.item_id").
 		Joins("INNER JOIN mtr_uom ON mtr_item.unit_of_measurement_stock_id = mtr_uom.uom_id").
-		Joins("INNER JOIN mtr_item_price_list ON mtr_item.item_id = mtr_item_price_list.item_id " +
-			"AND mtr_item_detail.brand_id = mtr_item_price_list.brand_id " +
-			"AND mtr_item_price_list.price_list_code_id = 1")
+		Joins(`INNER JOIN mtr_item_price_list ON mtr_item.item_id = mtr_item_price_list.item_id 
+            AND mtr_item_detail.brand_id = mtr_item_price_list.brand_id 
+            AND mtr_item_price_list.price_list_code_id = 1`).
+		Where("mtr_item_detail.brand_id = ?", brandID).
+		Where("mtr_item_detail.model_id = ? OR EXISTS (	SELECT 1 FROM dms_microservices_sales_dev.dbo.mtr_model_variant_colour 	WHERE brand_id = ? AND model_id = mtr_item_detail.model_id)", modelID, brandID).
+		Where("mtr_item_detail.variant_id = ? OR EXISTS ( SELECT 1 FROM dms_microservices_sales_dev.dbo.mtr_model_variant_colour WHERE model_id = ? AND variant_id = mtr_item_detail.variant_id)", variantID, modelID).
+		Where(`mtr_item_price_list.effective_date = (
+            SELECT MAX(PL.effective_date) 
+            FROM mtr_item_price_list PL 
+            WHERE PL.effective_date <= ? 
+            AND PL.currency_id = ? 
+            AND PL.company_id = mtr_item_price_list.company_id 
+            AND PL.item_id = mtr_item_detail.item_id 
+            AND PL.brand_id = mtr_item_detail.brand_id 
+            GROUP BY PL.item_id, PL.brand_id
+        )`, effectiveDate, 11). // 11 = IDR
+		Where(`mtr_item_price_list.company_id = CASE 
+            WHEN mtr_item.common_pricelist = 1 THEN ? 
+            ELSE ? 
+        END`, companyID, companyID)
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	paginatedQuery := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery))
 
-	paginatedQuery := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery))
-
-	err := paginatedQuery.Scan(&response).Error
-	if err != nil {
+	if err := paginatedQuery.Scan(&response).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Error fetching lookup data 'ItemMasterForFreeAccs'",

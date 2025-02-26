@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -122,16 +123,16 @@ func DefineInternalExternalFilter(filterCondition []FilterCondition, tableStruct
 	return internalFilter, externalFilter
 }
 
-// func ApplyBrandModelVehicleFilters(db *gorm.DB, filters []FilterCondition) *gorm.DB {
-// 	for _, filter := range filters {
-// 		switch filter.ColumnField {
-// 		case "brand_id":
-// 			db = db.Where("omm.brand_id = ?", filter.ColumnValue)
-// 		case "model_id":
-// 			db = db.Where("omm.model_id = ?", filter.ColumnValue)
-// 		case "variant_id":
-// 			db = db.Where("ofrt.variant_id = ?", filter.ColumnValue)
-// 		}
-// 	}
-// 	return db
-// }
+func GetFilterValue(filters []FilterCondition, field string) interface{} {
+	for _, filter := range filters {
+		if filter.ColumnField == field {
+			if strings.HasSuffix(field, "_id") {
+				if intValue, err := strconv.Atoi(filter.ColumnValue); err == nil {
+					return intValue
+				}
+			}
+			return filter.ColumnValue
+		}
+	}
+	return nil
+}
