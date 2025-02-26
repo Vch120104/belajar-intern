@@ -112,7 +112,7 @@ func (r *TechnicianAttendanceControllerImpl) GetAddLineTechnician(writer http.Re
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result.Rows), "Get Data Successfully", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Save Technician Attendance
