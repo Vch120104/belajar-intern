@@ -2130,15 +2130,24 @@ func (r *LookupControllerImpl) GetOprItemPrice(writer http.ResponseWriter, reque
 func (r *LookupControllerImpl) ItemMasterForFreeAccs(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	filterCondition := map[string]string{
-		"company_id":                 queryValues.Get("company_id"),
-		"mtr_item.item_id":           queryValues.Get("item_id"),
-		"mtr_item.item_code":         queryValues.Get("item_code"),
-		"mtr_item.item_name":         queryValues.Get("item_name"),
-		"mtr_uom.uom_code":           queryValues.Get("uom_code"),
-		"mtr_item.is_active":         queryValues.Get("is_active"),
-		"mtr_item_detail.brand_id":   queryValues.Get("brand_id"),
-		"mtr_item_detail.model_id":   queryValues.Get("model_id"),
-		"mtr_item_detail.variant_id": queryValues.Get("variant_id"),
+		"company_id":                         queryValues.Get("company_id"),
+		"mtr_item.item_id":                   queryValues.Get("item_id"),
+		"mtr_item.item_code":                 queryValues.Get("item_code"),
+		"mtr_item.item_name":                 queryValues.Get("item_name"),
+		"mtr_uom.uom_code":                   queryValues.Get("uom_code"),
+		"mtr_item.is_active":                 queryValues.Get("is_active"),
+		"mtr_item_detail.brand_id":           queryValues.Get("brand_id"),
+		"mtr_item_detail.model_id":           queryValues.Get("model_id"),
+		"mtr_item_detail.variant_id":         queryValues.Get("variant_id"),
+		"mtr_item_price_list.effective_date": queryValues.Get("effective_date"),
+	}
+
+	requiredParams := []string{"brand_id", "model_id", "variant_id", "effective_date"}
+	for _, param := range requiredParams {
+		if queryValues.Get(param) == "" {
+			payloads.NewHandleError(writer, "Missing required parameter: "+param, http.StatusBadRequest)
+			return
+		}
 	}
 
 	criteria := utils.BuildFilterCondition(filterCondition)
