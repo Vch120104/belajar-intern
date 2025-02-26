@@ -1,13 +1,13 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
+	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"encoding/json"
@@ -29,13 +29,16 @@ import (
 
 type PurchasePriceServiceImpl struct {
 	PurchasePriceRepo masteritemrepository.PurchasePriceRepository
+	ItemRepo          masteritemrepository.ItemRepository
 	DB                *gorm.DB
 	RedisClient       *redis.Client // Redis client
 }
 
 func StartPurchasePriceService(PurchasePriceRepo masteritemrepository.PurchasePriceRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.PurchasePriceService {
+	ItemRepo := masteritemrepositoryimpl.StartItemRepositoryImpl()
 	return &PurchasePriceServiceImpl{
 		PurchasePriceRepo: PurchasePriceRepo,
+		ItemRepo:          ItemRepo,
 		DB:                db,
 		RedisClient:       redisClient,
 	}
@@ -544,47 +547,43 @@ func ConvertPurchasePriceMapToStruct(maps []map[string]interface{}) ([]masterite
 }
 
 func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exceptions.BaseErrorResponse) {
-	resp, err := http.Get(config.EnvConfigs.AfterSalesServiceUrl + "item/by-code?item_code=" + itemCode)
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			}
+		}
+	}()
+
+	resp, err := s.ItemRepo.GetItemCode(tx, itemCode)
 	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error fetching item ID",
-			Err:        err,
-		}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: resp.StatusCode,
-			Message:    "Error fetching item ID, item code: " + itemCode + " not found in master item service",
-		}
+		return 0, err
 	}
 
-	var result struct {
-		StatusCode int    `json:"status_code"`
-		Message    string `json:"message"`
-		Data       struct {
-			ItemId int `json:"item_id"`
-		} `json:"data"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error decoding item ID response",
-			Err:        err,
-		}
-	}
-
-	if result.Data.ItemId == 0 {
+	if resp.ItemId == 0 {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Item not found for item code: " + itemCode,
 		}
 	}
 
-	return result.Data.ItemId, nil
+	return resp.ItemId, nil
 }
 
 func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {

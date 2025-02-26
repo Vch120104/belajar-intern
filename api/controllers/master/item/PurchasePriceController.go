@@ -711,7 +711,7 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 // @Tags Master : Purchase Price
 // @Security AuthorizationKeyAuth
 // @Param file formData file true "File"
-// @Param data formData string true "Data"
+// @Param purchase_price_id formData string true "purchase_price_id "
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/process [post]
