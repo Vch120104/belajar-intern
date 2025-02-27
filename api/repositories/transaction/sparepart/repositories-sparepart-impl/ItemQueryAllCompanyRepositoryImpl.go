@@ -10,6 +10,7 @@ import (
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
 	"strconv"
 	"strings"
@@ -141,4 +142,104 @@ func (r *ItemQueryAllCompanyRepositoryImpl) GetAllItemQueryAllCompany(tx *gorm.D
 
 	return pages, nil
 
+}
+
+// exec USP_comEXPORTDATA @Entity=N'ItemQueryAllCompany',@strFilter=N'@Option=1
+// uspg_ItemInquiryAllComp_Select @Option=1
+func (r *ItemQueryAllCompanyRepositoryImpl) GetItemQueryAllCompanyDownload(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]transactionsparepartpayloads.GetItemQueryAllCompanyDownloadResponse, *exceptions.BaseErrorResponse) {
+	responses := []transactionsparepartpayloads.GetItemQueryAllCompanyDownloadResponse{}
+
+	var companyId int
+	var itemCodes []string
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "company_id") {
+			companyId, _ = strconv.Atoi(filter.ColumnValue)
+		}
+		if strings.Contains(filter.ColumnField, "item_code_") {
+			itemCodes = append(itemCodes, filter.ColumnValue)
+		}
+	}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if periodError != nil {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching company current period",
+			Err:        periodError.Err,
+		}
+	}
+
+	baseModelQuery := tx.
+		Table("(?) as query_item", tx.
+			Model(&masterentities.LocationStock{}).
+			Select(
+				"TOP 50 mtr_location_stock.company_id",
+				"mtr_location_stock.item_id",
+				"mi.item_code",
+				"mi.item_name",
+				"(ISNULL(mtr_location_stock.quantity_ending, 0) - ISNULL(mtr_location_stock.quantity_allocated, 0)) quantity_on_hand",
+				"ISNULL((SELECT TOP 1 mmc.moving_code FROM mtr_moving_code_item mmci INNER JOIN mtr_moving_code mmc ON mmc.moving_code_id = mmci.moving_code_id WHERE mmci.company_id = mtr_location_stock.company_id AND mmci.item_id = mtr_location_stock.item_id ORDER BY mmci.process_date DESC), '') moving_code",
+			).
+			Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_location_stock.item_id").
+			Where("mtr_location_stock.period_year = ?", periodResponse.PeriodYear).
+			Where("mtr_location_stock.period_month = ?", periodResponse.PeriodMonth).
+			Where("mi.item_code IN ?", itemCodes).
+			Where("(ISNULL(mtr_location_stock.quantity_ending, 0) - ISNULL(mtr_location_stock.quantity_allocated, 0)) > 0").
+			Where("mtr_location_stock.warehouse_id NOT IN (?)", tx.
+				Model(&masterwarehouseentities.WarehouseMaster{}).
+				Joins("INNER JOIN mtr_warehouse_costing_type mwct ON mwct.warehouse_costing_type_id = mtr_warehouse_master.warehouse_costing_type_id").
+				Select("mtr_warehouse_master.warehouse_id").
+				Where("mwct.warehouse_costing_type_code = 'NON'"),
+			),
+		).
+		Select(
+			"company_id",
+			"item_id",
+			"item_code",
+			"item_name",
+			"moving_code",
+			"SUM(quantity_on_hand) quantity_on_hand",
+		).
+		Group("company_id").
+		Group("item_id").
+		Group("item_code").
+		Group("item_name").
+		Group("moving_code")
+
+	err := baseModelQuery.Scan(&responses).Error
+	if err != nil {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching item query all company download",
+			Err:        err,
+		}
+	}
+
+	if len(responses) > 0 {
+		var companyIds []int
+		for _, data := range responses {
+			companyIds = append(companyIds, data.CompanyId)
+		}
+
+		companyResponse, companyErr := generalserviceapiutils.GetCompanyByMultiId(companyIds)
+		if companyErr != nil {
+			return responses, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching company data",
+				Err:        companyErr,
+			}
+		}
+
+		for i := 0; i < len(responses); i++ {
+			for j := 0; j < len(companyResponse); j++ {
+				if responses[i].CompanyId == companyResponse[j].CompanyId {
+					responses[i].CompanyCode = companyResponse[j].CompanyCode
+					responses[i].CompanyName = companyResponse[j].CompanyName
+					break
+				}
+			}
+		}
+	}
+
+	return responses, nil
 }
