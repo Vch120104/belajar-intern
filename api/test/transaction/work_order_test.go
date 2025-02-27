@@ -437,9 +437,9 @@ func (m *MockWorkOrderService) GetSupplyByWO(workOrderId int, filterCondition []
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) CalculateWorkOrderTotal(workOrderId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) CalculateWorkOrderTotal(workOrderId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId)
-	return args.Get(0).([]map[string]interface{}), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(map[string]interface{}), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Get All Normal Work Order

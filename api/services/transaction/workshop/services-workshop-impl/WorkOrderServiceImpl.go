@@ -1416,7 +1416,7 @@ func (s *WorkOrderServiceImpl) AddFieldAction(workOrderId int, request transacti
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) CalculateWorkOrderTotal(workOrderId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) CalculateWorkOrderTotal(workOrderId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 	defer func() {

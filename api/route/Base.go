@@ -1557,6 +1557,7 @@ func WorkOrderRouter(
 
 	//add trx detail
 	router.Get("/normal/detail", WorkOrderController.GetAllDetailWorkOrder)
+	router.Get("/normal/total/{work_order_system_number}", WorkOrderController.CalculateWorkOrderTotal)
 	router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailByIdWorkOrder)
 	router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetailWorkOrder)
 	router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetailWorkOrder)

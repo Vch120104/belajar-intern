@@ -2528,13 +2528,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			return pages, totalErr
 		}
 
-		var totalValue float64
-		for _, total := range totalDetails {
-			if val, ok := total["total"].(float64); ok {
-				totalValue = val
-				break
-			}
-		}
+		totalValue, _ := totalDetails["total"].(float64)
 
 		responseMap := map[string]interface{}{
 			"work_order_detail_id":                   response.WorkOrderDetailId,
@@ -2780,8 +2774,7 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	return payload, nil
 }
 
-func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrderSystemNumber int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-
+func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrderSystemNumber int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	type Result struct {
 		TotalPackage            float64
 		TotalOperation          float64
@@ -2842,20 +2835,20 @@ func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrder
 		return nil, &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to update work order: %v", err)}
 	}
 
-	workOrderDetailResponses := []map[string]interface{}{
-		{"total_package": result.TotalPackage},
-		{"total_operation": result.TotalOperation},
-		{"total_part": result.TotalSparePart},
-		{"total_oil": result.TotalOil},
-		{"total_material": result.TotalMaterial},
-		{"total_sublet": result.TotalSublet},
-		{"total_accessories": result.TotalAccessories},
-		{"total_consumable_material": result.TotalConsumableMaterial},
-		{"total_souvenir": result.TotalSouvenir},
-		{"total": grandTotal},
+	workOrderTotal := map[string]interface{}{
+		"total_package":             result.TotalPackage,
+		"total_operation":           result.TotalOperation,
+		"total_part":                result.TotalSparePart,
+		"total_oil":                 result.TotalOil,
+		"total_material":            result.TotalMaterial,
+		"total_sublet":              result.TotalSublet,
+		"total_accessories":         result.TotalAccessories,
+		"total_consumable_material": result.TotalConsumableMaterial,
+		"total_souvenir":            result.TotalSouvenir,
+		"total":                     grandTotal,
 	}
 
-	return workOrderDetailResponses, nil
+	return workOrderTotal, nil
 }
 
 // uspg_wtWorkOrder2_Insert
