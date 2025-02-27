@@ -173,7 +173,7 @@ func (r *ItemQueryAllCompanyRepositoryImpl) GetItemQueryAllCompanyDownload(tx *g
 		Table("(?) as query_item", tx.
 			Model(&masterentities.LocationStock{}).
 			Select(
-				"TOP 50 mtr_location_stock.company_id",
+				"mtr_location_stock.company_id",
 				"mtr_location_stock.item_id",
 				"mi.item_code",
 				"mi.item_name",
