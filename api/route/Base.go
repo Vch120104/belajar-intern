@@ -2071,6 +2071,7 @@ func ItemQueryAllCompanyRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemQueryAllCompanyController.GetAllItemQueryAllCompany)
+	router.Get("/download", itemQueryAllCompanyController.GetItemQueryAllCompanyDownload)
 
 	return router
 }
