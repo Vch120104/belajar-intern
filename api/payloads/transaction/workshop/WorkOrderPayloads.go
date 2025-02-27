@@ -1017,6 +1017,7 @@ type WorkOrderDetailRequest struct {
 	TechnicianId                        int     `gorm:"column:technician_id" json:"technician_id" parent_entity:"trx_work_order_detail"`
 	SubstituteTypeId                    int     `gorm:"column:substitute_type_id" json:"substitute_type_id" parent_entity:"trx_work_order_detail"`
 	AtpmWCFTypeId                       int     `gorm:"column:warranty_claim_type_id" json:"warranty_claim_type_id" parent_entity:"trx_work_order_detail"`
+	ServiceCategoryId                   int     `gorm:"column:service_category_id" json:"service_category_id" parent_entity:"trx_work_order_detail"`
 }
 
 type WorkOrderDetailResponse struct {
