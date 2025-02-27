@@ -1481,6 +1481,23 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 					// @Vehicle_Brand = @Vehicle_Brand
 					// --End Generate DP Other--
 
+					_, GenctDPInErr := financeserviceapiutils.PostAllocationDpInPayment(financeserviceapiutils.CreateAllocationDPInRequest{
+						CompanyId:                   entity.CompanyId,
+						BrandId:                     entity.BrandId,
+						ProfitCenterId:              entity.ProfitCenterId,
+						Remark:                      "DP Other Payment",
+						AllocationCustomerId:        entity.CustomerId,
+						DownPaymentInSystemNumber:   entity.InvoiceSystemNumber,
+						AllocationDownPaymentInDate: time.Now(),
+					})
+					if GenctDPInErr != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: GenctDPInErr.StatusCode,
+							Message:    "Failed to generate DP Other Payment",
+							Err:        GenctDPInErr.Err,
+						}
+					}
+
 					// update work order
 					err = tx.Model(&transactionworkshopentities.WorkOrder{}).
 						UpdateColumns(map[string]interface{}{
@@ -2944,6 +2961,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				AtpmWCFTypeId:                       0,                                                      //CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine,                                       //BE.ESTIM_LINE,
 				ServiceStatusId:                     utils.SrvStatDraft,
+				ServiceCategoryId:                   request.ServiceCategoryId,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -2998,6 +3016,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				AtpmWCFTypeId:                       request.AtpmWCFTypeId,      // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN '' ELSE ATPM_WCF_TYPE END
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
 				ServiceStatusId:                     utils.SrvStatDraft,
+				ServiceCategoryId:                   request.ServiceCategoryId,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3112,6 +3131,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					AtpmWCFTypeId:                       0,
 					WorkOrderOperationItemLine:          maxWoOprItemLine, // 0
 					ServiceStatusId:                     utils.SrvStatDraft,
+					ServiceCategoryId:                   request.ServiceCategoryId,
 				}
 			} else {
 				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
@@ -3246,6 +3266,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				AtpmWCFTypeId:                       0,                        // 0
 				WorkOrderOperationItemLine:          maxWoOprItemLine,
 				ServiceStatusId:                     utils.SrvStatDraft,
+				ServiceCategoryId:                   request.ServiceCategoryId,
 			}
 
 			if err := tx.Create(&workOrderDetail).Error; err != nil {
@@ -3596,6 +3617,9 @@ func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder
 	}
 	if request.OperationItemPrice != 0 {
 		updates["operation_item_price"] = request.OperationItemPrice
+	}
+	if request.ServiceCategoryId != 0 {
+		updates["service_category_id"] = request.ServiceCategoryId
 	}
 
 	if len(updates) == 0 {
