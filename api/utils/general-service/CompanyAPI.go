@@ -43,8 +43,7 @@ type CompanyMasterResponse struct {
 	IsDistbutor bool   `json:"is_distributor"`
 	BizCategory string `json:"biz_category"`
 }
-type GetCompanyDetailById struct {
-}
+
 type GetCompanyByIdResponses struct {
 	CompanyName            string  `json:"company_name"`
 	RegionId               int     `json:"region_id"`
@@ -70,6 +69,16 @@ type GetCompanyByIdResponses struct {
 	VatCompanyId           int     `json:"vat_company_id"`
 	CompanyOwnershipId     int     `json:"company_ownership_id"`
 	CompanyOfficeAddressId int     `json:"company_office_address_id"`
+}
+
+type GetCompanyByMultiIdResponse struct {
+	CompanyId              int    `json:"company_id"`
+	CompanyCode            string `json:"company_code"`
+	CompanyName            string `json:"company_name"`
+	CompanyTypeId          int    `json:"company_type_id"`
+	CompanyTypeCode        string `json:"company_type_code"`
+	CompanyTypeDescription string `json:"company_type_description"`
+	RegionName             string `json:"region_name"`
 }
 
 type CompanyParams struct {
@@ -171,7 +180,8 @@ func GetCompanyDataById(companyId int) (GetCompanyByIdResponses, *exceptions.Bas
 	return companyResponse, nil
 }
 
-func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorResponse {
+func GetCompanyByMultiId(ids []int) ([]GetCompanyByMultiIdResponse, *exceptions.BaseErrorResponse) {
+	var response []GetCompanyByMultiIdResponse
 
 	ids = utils.RemoveDuplicateIds(ids)
 	validIds := make([]string, 0, len(ids))
@@ -185,7 +195,7 @@ func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 	strIds := "[" + strings.Join(validIds, ",") + "]"
 	url := config.EnvConfigs.GeneralServiceUrl + "company-multi-id/" + strIds
 
-	err := utils.CallAPI("GET", url, nil, response)
+	err := utils.CallAPI("GET", url, nil, &response)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve company  due to an external service error"
@@ -195,13 +205,13 @@ func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 			message = "company service is temporarily unavailable"
 		}
 
-		return &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
 			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
-	return nil
+	return response, nil
 }
 
 func GetCompanyDataByCode(companyCode string) (GetCompanyByIdResponses, *exceptions.BaseErrorResponse) {
