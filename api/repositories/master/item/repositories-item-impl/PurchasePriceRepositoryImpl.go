@@ -138,7 +138,16 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
 	pages.TotalPages = totalPages
 
-	err := baseModelQuery.Order("purchase_price_id ASC").Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&responses).Error
+	if pages.SortBy != "" {
+		if strings.ToLower(pages.SortOf) != "desc" {
+			pages.SortOf = "asc"
+		}
+		baseModelQuery = baseModelQuery.Order(pages.SortBy + " " + pages.SortOf)
+	} else {
+		baseModelQuery = baseModelQuery.Order("purchase_price_id asc")
+	}
+
+	err := baseModelQuery.Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
