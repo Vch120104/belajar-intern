@@ -2997,6 +2997,16 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 
 		} else {
 
+			operationItemResponse, operationItemErr := r.GetOperationItemById(request.LineTypeId, request.OperationItemId)
+			if operationItemErr != nil {
+				return transactionworkshopentities.WorkOrderDetail{}, operationItemErr
+			}
+
+			OperationItemCode, Description, errResp := r.HandleLineTypeResponse(request.LineTypeId, operationItemResponse)
+			if errResp != nil {
+				return transactionworkshopentities.WorkOrderDetail{}, errResp
+			}
+
 			var maxWoOprItemLine int
 			if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 				Select("COALESCE(MAX(work_order_operation_item_line), 0)").
@@ -3021,6 +3031,8 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				TransactionTypeId:                   request.TransactionTypeId,
 				JobTypeId:                           request.JobTypeId,
 				OperationItemId:                     request.OperationItemId,
+				OperationItemCode:                   OperationItemCode,
+				Description:                         Description,
 				WarehouseGroupId:                    request.WarehouseGroupId, // Whs_Group_Sp
 				FrtQuantity:                         request.FrtQuantity,      // BE.FrtQuantity,
 				SupplyQuantity:                      request.SupplyQuantity,   // CASE WHEN BE.LINE_TYPE = @LINETYPE_OPR OR BE.LINE_TYPE = @LINETYPE_PACKAGE THEN BE.FRT_QTY ELSE CASE WHEN I.ITEM_TYPE = @ItemTypeService AND I.ITEM_GROUP <> @ItemGrpOJ THEN BE.FRT_QTY ELSE 0 END END
