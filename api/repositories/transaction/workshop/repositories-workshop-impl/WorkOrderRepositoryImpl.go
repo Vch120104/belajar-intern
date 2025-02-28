@@ -2319,6 +2319,7 @@ func (r *WorkOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, workOrderI
 
 func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, string, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
+
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", workOrderId).First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -2327,29 +2328,47 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, st
 		return false, "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve work order from the database: %v", err)}
 	}
 
-	if entity.WorkOrderDocumentNumber == "" && entity.WorkOrderStatusId == utils.WoStatDraft {
-		//Generate new document number
-		newDocumentNumber, genErr := r.GenerateDocumentNumber(tx, entity.WorkOrderSystemNumber)
-		if genErr != nil {
-			return false, "", genErr
-		}
-		//newDocumentNumber := "WSWO/1/21/21/00001"
-
-		entity.WorkOrderDocumentNumber = newDocumentNumber
-
-		// Update work order status to 2 (New Submitted)
-		entity.WorkOrderStatusId = utils.WoStatNew
-
-		err = tx.Save(&entity).Error
-		if err != nil {
-			return false, "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to submit the work order: %v", err)}
-		}
-
-		return true, newDocumentNumber, nil
-	} else {
-
+	if entity.WorkOrderDocumentNumber != "" {
 		return false, "", &exceptions.BaseErrorResponse{Message: "Document number has already been generated"}
 	}
+
+	if entity.WorkOrderStatusId != utils.WoStatDraft {
+		return false, "", &exceptions.BaseErrorResponse{Message: "Work order is not in draft status"}
+	}
+
+	request := generalserviceapiutils.DocumentMasterRequest{
+		CompanyId:         entity.CompanyId,
+		TransactionDate:   time.Now(),
+		DocumentTypeId:    285, // id source doc wswo
+		BrandId:           entity.BrandId,
+		ProfitCenterId:    entity.ProfitCenterId,
+		TransactionTypeId: 0,
+		BankCompanyId:     0,
+	}
+
+	if request.CompanyId == 0 || request.DocumentTypeId == 0 {
+		return false, "", &exceptions.BaseErrorResponse{Message: "Invalid company ID or document type ID"}
+	}
+
+	documentResponse, genErr := generalserviceapiutils.GetDocumentNumber(request)
+	if genErr != nil {
+		return false, "", genErr
+	}
+
+	entity.WorkOrderDocumentNumber = documentResponse.GeneratedDocumentNumber
+
+	// Update work order status to 2 (New Submitted)
+	entity.WorkOrderStatusId = utils.WoStatNew
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, "", &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message: fmt.Sprintf("Failed to submit the work order: %v",
+				err)}
+	}
+
+	return true, documentResponse.GeneratedDocumentNumber, nil
 }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

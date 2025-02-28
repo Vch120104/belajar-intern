@@ -101,10 +101,11 @@ var CarWashPriorityNormal int = 2
 // Suggor Demand Period
 var SuggorDemandPeriod int = 6
 
+// Time Format
+const RFC3339 = "2006-01-02T15:04:05"
+
 // Status
-
 var Draft int = 1
-
 var Revise int = 99
 
 // Login
