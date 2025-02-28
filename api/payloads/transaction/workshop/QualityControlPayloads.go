@@ -30,6 +30,7 @@ type QualityControlRequest struct {
 	CustomerId            int `json:"customer_id" parent_entity:"trx_work_order"`
 	ForemanId             int `json:"foreman_id" parent_entity:"trx_work_order"`
 	ServiceAdvisorId      int `json:"service_advisor_id" parent_entity:"trx_work_order"`
+	WorkOrderStatusId     int `json:"work_order_status_id" parent_entity:"trx_work_order"`
 }
 
 type QualityControlRequestId struct {
