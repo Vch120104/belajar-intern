@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type DocumentStatusPayloads struct {
@@ -86,4 +87,54 @@ func GetDocumentTypeByCode(code string) (SourceDocumentTypeMasterResponse, *exce
 		}
 	}
 	return SourceDocType, nil
+}
+
+type DocumentMasterRequest struct {
+	CompanyId         int       `json:"company_id"`
+	TransactionDate   time.Time `json:"transaction_date"`
+	DocumentTypeId    int       `json:"document_type_id"`
+	BrandId           int       `json:"brand_id"`
+	ProfitCenterId    int       `json:"profit_center_id"`
+	TransactionTypeId int       `json:"transaction_type_id"`
+	BankCompanyId     int       `json:"bank_company_id"`
+}
+
+type DocumentMasterResponse struct {
+	GeneratedDocumentNumber string `json:"generated_document_number"`
+}
+
+func GetDocumentNumber(request DocumentMasterRequest) (DocumentMasterResponse, *exceptions.BaseErrorResponse) {
+	var response DocumentMasterResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "last-document-number?company_id=" + strconv.Itoa(request.CompanyId) +
+		"&transaction_date=" + request.TransactionDate.Format(utils.RFC3339) + "&document_type_id=" + strconv.Itoa(request.DocumentTypeId)
+	if request.ProfitCenterId != 0 {
+		url = url + "&profit_center_id=" + strconv.Itoa(request.ProfitCenterId)
+	}
+	if request.BrandId != 0 {
+		url = url + "&brand_id=" + strconv.Itoa(request.BrandId)
+	}
+	if request.BankCompanyId != 0 {
+		url = url + "&bank_company_id=" + strconv.Itoa(request.BankCompanyId)
+	}
+	if request.TransactionTypeId != 0 {
+		url = url + "&transaction_type_id=" + strconv.Itoa(request.TransactionTypeId)
+	}
+
+	err := utils.CallAPI("GET", url, nil, &response)
+	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve source document status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "source document status service is temporarily unavailable"
+		}
+
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting source document status by ID"),
+		}
+	}
+	return response, nil
 }

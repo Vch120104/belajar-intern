@@ -757,37 +757,57 @@ func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string
 	err := tx.Where("service_request_system_number = ?", Id).First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-
-			return false, "", &exceptions.BaseErrorResponse{Message: "Data not found", StatusCode: http.StatusNotFound}
+			return false, "", &exceptions.BaseErrorResponse{
+				Message:    "Data not found",
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
 		}
-
-		return false, "", &exceptions.BaseErrorResponse{Message: "Failed to retrieve service request from the database", StatusCode: http.StatusInternalServerError}
+		return false, "", &exceptions.BaseErrorResponse{
+			Message:    "Failed to retrieve service request from the database",
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	if entity.ServiceRequestStatusId != 1 {
-
-		return false, "", &exceptions.BaseErrorResponse{Message: "Service Request cannot be submitted", StatusCode: http.StatusConflict}
+		return false, "", &exceptions.BaseErrorResponse{
+			Message:    "Service Request cannot be submitted",
+			StatusCode: http.StatusConflict,
+			Err:        errors.New("service request cannot be submitted"),
+		}
 	}
 
 	if entity.BrandId == 0 {
-
-		return false, "", &exceptions.BaseErrorResponse{Message: "Brand must be filled", StatusCode: http.StatusBadRequest}
+		return false, "", &exceptions.BaseErrorResponse{
+			Message:    "Brand must be filled",
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("brand must be filled"),
+		}
 	}
 	if entity.ModelId == 0 {
-
-		return false, "", &exceptions.BaseErrorResponse{Message: "Model must be filled", StatusCode: http.StatusBadRequest}
+		return false, "", &exceptions.BaseErrorResponse{
+			Message:    "Model must be filled",
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("model must be filled"),
+		}
 	}
 	if entity.VariantId == 0 {
-
-		return false, "", &exceptions.BaseErrorResponse{Message: "Variant must be filled", StatusCode: http.StatusBadRequest}
+		return false, "", &exceptions.BaseErrorResponse{
+			Message:    "Variant must be filled",
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("variant must be filled"),
+		}
 	}
 	if entity.VehicleId == 0 {
-
-		return false, "", &exceptions.BaseErrorResponse{Message: "Vehicle must be filled", StatusCode: http.StatusBadRequest}
+		return false, "", &exceptions.BaseErrorResponse{
+			Message:    "Vehicle must be filled",
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("vehicle must be filled"),
+		}
 	}
 
 	if entity.ServiceRequestDocumentNumber == "" && entity.ServiceRequestStatusId == 1 {
-
 		var serviceItemCount int64
 		err = tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
 			Joins("JOIN mtr_item IT ON IT.item_id = trx_service_request_detail.operation_item_id").
@@ -795,50 +815,67 @@ func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string
 			Where("trx_service_request_detail.line_type_id IS NULL OR trx_service_request_detail.line_type_id = ''").
 			Count(&serviceItemCount).Error
 		if err != nil {
-
-			return false, "", &exceptions.BaseErrorResponse{Message: "Failed to validate service items", StatusCode: http.StatusInternalServerError}
+			return false, "", &exceptions.BaseErrorResponse{
+				Message:    "Failed to validate service items",
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
-
 		if serviceItemCount > 0 {
-
-			return false, "", &exceptions.BaseErrorResponse{Message: "Service Request has Item Type Service in details", StatusCode: http.StatusConflict}
+			return false, "", &exceptions.BaseErrorResponse{
+				Message:    "Service Request has Item Type Service in details",
+				StatusCode: http.StatusConflict,
+				Err:        errors.New("service request has item type service in details"),
+			}
 		}
 
 		var detailCount int64
 		err = tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
 			Where("service_request_system_number = ?", Id).
-			Where("frt_quantity <= ?", 0). // Checking if FRT quantity is less than or equal to 0
+			Where("frt_quantity <= ?", 0).
 			Count(&detailCount).Error
 		if err != nil {
-
-			return false, "", &exceptions.BaseErrorResponse{Message: "Failed to count service request details", StatusCode: http.StatusInternalServerError}
+			return false, "", &exceptions.BaseErrorResponse{
+				Message:    "Failed to count service request details",
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		if detailCount > 0 {
+			return false, "", &exceptions.BaseErrorResponse{
+				Message:    "Cannot submit service request; FRT / qty must be bigger than 0",
+				StatusCode: http.StatusConflict,
+				Err:        errors.New("cannot submit service request; FRT / qty must be bigger than 0"),
+			}
 		}
 
-		if detailCount > 0 { // Updated to check if detailCount is greater than 0
-
-			return false, "", &exceptions.BaseErrorResponse{Message: "Cannot submit service request; FRT / qty must be bigger than 0", StatusCode: http.StatusConflict}
+		docRequest := generalserviceapiutils.DocumentMasterRequest{
+			CompanyId:       entity.CompanyId,
+			TransactionDate: time.Now(),
+			DocumentTypeId:  283, // document type ID
+			BrandId:         entity.BrandId,
+		}
+		docResponse, docErr := generalserviceapiutils.GetDocumentNumber(docRequest)
+		if docErr != nil {
+			return false, "", docErr
 		}
 
-		newDocumentNumber, genErr := s.GenerateDocumentNumberServiceRequest(tx, entity.ServiceRequestSystemNumber)
-		if genErr != nil {
-
-			return false, "", genErr
-		}
-
-		entity.ServiceRequestDocumentNumber = newDocumentNumber
+		entity.ServiceRequestDocumentNumber = docResponse.GeneratedDocumentNumber
 		entity.ServiceRequestStatusId = 2 // Ready
 
 		err = tx.Save(&entity).Error
 		if err != nil {
-
-			return false, "", &exceptions.BaseErrorResponse{Message: "Failed to submit the service request", StatusCode: http.StatusInternalServerError}
+			return false, "", &exceptions.BaseErrorResponse{
+				Message:    "Failed to submit the service request",
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 
-		return true, newDocumentNumber, nil
-	} else {
-
-		return false, entity.ServiceRequestDocumentNumber, &exceptions.BaseErrorResponse{Message: "Service request has been submitted or the document number is already generated", StatusCode: http.StatusConflict}
+		return true, entity.ServiceRequestDocumentNumber, nil
 	}
+
+	return false, entity.ServiceRequestDocumentNumber, &exceptions.BaseErrorResponse{Message: "Service request has been submitted or the document number is already generated", StatusCode: http.StatusConflict}
 }
 
 func (s *ServiceRequestRepositoryImpl) Void(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
