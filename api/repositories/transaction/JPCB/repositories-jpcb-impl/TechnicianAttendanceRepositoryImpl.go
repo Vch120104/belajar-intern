@@ -92,7 +92,7 @@ func (t *TechnicianAttendanceImpl) GetAddLineTechnician(tx *gorm.DB, filterCondi
 		Page:        pages.Page,
 		Limit:       10000000,
 		UserIdNotIn: utils.IntSliceToString(userIds),
-		CompanyId:   companyId,
+		CompanyId:   strconv.Itoa(companyId),
 		RoleName:    "Technician",
 	}
 	employeeResponse, _ := generalserviceapiutils.GetAllUserDetail(params)
