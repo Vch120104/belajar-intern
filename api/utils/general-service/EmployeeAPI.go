@@ -15,9 +15,9 @@ import (
 type UserDetailParams struct {
 	Page           int    `json:"page"`
 	Limit          int    `json:"limit"`
-	CompanyId      int    `json:"company_id"`
-	UserEmployeeId int    `json:"user_employee_id"`
-	UserId         int    `json:"user_id"`
+	CompanyId      string `json:"company_id"`
+	UserEmployeeId string `json:"user_employee_id"`
+	UserId         string `json:"user_id"`
 	UserIdNotIn    string `json:"user_id_not_in"`
 	EmployeeName   string `json:"employee_name"`
 	RoleName       string `json:"role_name"`
