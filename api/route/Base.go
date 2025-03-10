@@ -8,10 +8,11 @@ import (
 	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionbodyshopcontroller "after-sales/api/controllers/transactions/bodyshop"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
+	pointprospectingtranscontroller "after-sales/api/controllers/transactions/unit"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	_ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -2170,6 +2171,58 @@ func ItemWarehouseTransferOutRouter(
 	router.Delete("/{id}", itemWarehouseTransferOutController.DeleteTransferOut)
 	router.Put("/detail/{id}", itemWarehouseTransferOutController.UpdateTransferOutDetail)
 	router.Put("/submit/{id}", itemWarehouseTransferOutController.SubmitTransferOut)
+
+	return router
+}
+
+func PointProspectingMasterRouter(
+	pointProspectingMasterController mastercontroller.PointProspectingController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", pointProspectingMasterController.GetAllPointProspecting)
+	router.Get("/{pointVariable}/{pointValue}", pointProspectingMasterController.GetOnePointProspecting)
+	router.Put("/{pointVariable}/{pointValue}", pointProspectingMasterController.UpdatePointProspectingData)
+	router.Patch("/{pointVariable}/{pointValue}", pointProspectingMasterController.UpdatePointProspectingStatus)
+	router.Post("/", pointProspectingMasterController.CreatePointProspecting)
+
+	return router
+}
+
+func PointProspectingTransactionRouter(
+	pointProspectingTransactionController pointprospectingtranscontroller.PointProspectingTransactionController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/data", pointProspectingTransactionController.GetAllCompanyData)
+	router.Get("/sales", pointProspectingTransactionController.GetAllSalesRepresentative)
+	router.Get("/sales/{companyCode}", pointProspectingTransactionController.GetSalesByCompanyCode)
+	router.Post("/", pointProspectingTransactionController.Process)
+
+	return router
+}
+
+func StockOpnameRouter(
+	stockOpnameController transactionsparepartcontroller.StockOpnameController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{companyCode}", stockOpnameController.GetAllStockOpname)
+	router.Get("/locationlist/{companyCode}/{warehouseGroup}/{warehouseCode}", stockOpnameController.GetLocationList)
+	router.Get("/person-in-charge/{companyCode}", stockOpnameController.GetPersonInChargeList)
+	router.Get("/item-list/{whsCode}/{itemGroup}", stockOpnameController.GetItemList)
+	router.Get("/{companyCode}/{sysNo}", stockOpnameController.GetOnGoingStockOpname)
+	router.Post("/", stockOpnameController.InsertNewStockOpname)
+	router.Put("/{sysNo}", stockOpnameController.UpdateOnGoingStockOpname)
 
 	return router
 }

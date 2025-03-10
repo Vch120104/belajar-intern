@@ -20,14 +20,17 @@ import (
 	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionbodyshopcontroller "after-sales/api/controllers/transactions/bodyshop"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
+	pointprospectingtranscontroller "after-sales/api/controllers/transactions/unit"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	transactionjpcbrepositoryimpl "after-sales/api/repositories/transaction/JPCB/repositories-jpcb-impl"
 	transactionbodyshoprepositoryimpl "after-sales/api/repositories/transaction/bodyshop/repositories-bodyshop-impl"
 	transactionsparepartrepositoryimpl "after-sales/api/repositories/transaction/sparepart/repositories-sparepart-impl"
+	repositoriespointprospectingimpl "after-sales/api/repositories/transaction/unit/repositories-pointprospecting-impl"
 	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
 	transactionjpcbserviceimpl "after-sales/api/services/transaction/JPCB/services-jpcb-impl"
 	transactionbodyshopserviceimpl "after-sales/api/services/transaction/bodyshop/services-bodyshop-impl"
 	transactionsparepartserviceimpl "after-sales/api/services/transaction/sparepart/services-sparepart-impl"
+	unitserviceimpl "after-sales/api/services/transaction/unit/unit-service-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
 
@@ -503,6 +506,21 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	PrintGatePassService := transactionworkshopserviceimpl.OpenPrintGatePassServiceImpl(PrintGatePassRepository, db, rdb)
 	PrintGatePassController := transactionworkshopcontroller.NewPrintGatePassController(PrintGatePassService)
 
+	//PointProspectingMaster
+	PointProspectingMasterRepository := masterrepositoryimpl.NewPointProspectingRepositoryImpl()
+	PointProspectingMasterService := masterserviceimpl.NewPointProspectingServiceImpl(PointProspectingMasterRepository, db, rdb)
+	PointProspectingMasterController := mastercontroller.NewPointProspectingControllerImpl(PointProspectingMasterService)
+
+	//Point Prospecting Transaction
+	PointProspectingTransactionRepository := repositoriespointprospectingimpl.NewPointProspectingTransactionRepositoryImpl()
+	PointProspectingTransactionService := unitserviceimpl.NewPointProspectingTransactionServiceImpl(PointProspectingTransactionRepository, db, rdb)
+	PointProspectingTransactionController := pointprospectingtranscontroller.NewPointProspectingTransactionControllerImpl(PointProspectingTransactionService)
+
+	//Stock Opname Transaction
+	StockOpnameRepository := transactionsparepartrepositoryimpl.NewStockOpnameRepositoryImpl()
+	StockOpnameService := transactionsparepartserviceimpl.NewStockOpnameServiceImpl(StockOpnameRepository, db, rdb)
+	StockOpnameController := transactionsparepartcontroller.NewStockOpnameControllerImpl(StockOpnameService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -561,7 +579,10 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 	LocationStockRouter := LocationStockRouter(LocationStockController)
 	ItemOperationRouter := ItemOperationRouter(ItemOperationController)
 	ItemCycleRouter := ItemCycleRouter(ItemCycleController)
+	PointProspectingMaster := PointProspectingMasterRouter(PointProspectingMasterController)
 	/* Transaction */
+	PointProspectingTransaction := PointProspectingTransactionRouter(PointProspectingTransactionController)
+	StockOpnameRouter := StockOpnameRouter(StockOpnameController)
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
 	SupplySlipReturnRouter := SupplySlipReturnRouter(SupplySlipReturnController)
 	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
@@ -670,7 +691,11 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/item-cycle", ItemCycleRouter)
 		r.Mount("/stock-transaction-type", StockTransactionTypeRouter)
 		r.Mount("/stock-transaction-reason", StockTransactionReasonRouter)
+		r.Mount("/point-prospecting-master", PointProspectingMaster)
 		/* Transaction */
+
+		/* Transaction Unit */
+		r.Mount("/point-prospecting-transaction", PointProspectingTransaction)
 
 		/* Transaction JPCB */
 		r.Mount("/bay", CarWashBayRouter)
@@ -702,6 +727,7 @@ func StartRouting(db *gorm.DB, rdb *redis.Client) {
 		r.Mount("/quality-control-bodyshop", QualityControlBodyshopRouter)
 
 		/* Transaction Sparepart */
+		r.Mount("/stock-opname", StockOpnameRouter)
 		r.Mount("/supply-slip", SupplySlipRouter)
 		r.Mount("/supply-slip-return", SupplySlipReturnRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
