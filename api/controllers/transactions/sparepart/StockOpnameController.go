@@ -226,18 +226,6 @@ func (c *StockOpnameControllerImpl) GetItemList(writer http.ResponseWriter, requ
 	)
 }
 
-// func (c *StockOpnameControllerImpl) GetListForOnGoing(writer http.ResponseWriter, request *http.Request) {
-
-// 	sysNo := chi.URLParam(request, "sysNo")
-
-// 	err := c.Service.GetListForOnGoing(sysNo)
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
-// 	payloads.NewHandleSuccess(writer, nil, "Stock Opname is ongoing", http.StatusOK)
-// }
-
 func (c *StockOpnameControllerImpl) GetOnGoingStockOpname(writer http.ResponseWriter, request *http.Request) {
 
 	companyCodeStr := chi.URLParam(request, "companyCode")

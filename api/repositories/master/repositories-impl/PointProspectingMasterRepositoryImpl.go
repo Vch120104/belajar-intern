@@ -107,3 +107,5 @@ func (r *PointProspectingRepositoryImpl) UpdatePointProspectingData(tx *gorm.DB,
 	}
 	return true, nil
 }
+
+

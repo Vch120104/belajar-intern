@@ -2,15 +2,6 @@ package transactionsparepartpayloads
 
 import "time"
 
-// type GetAllStockOpnameResponse struct {
-// 	StockOpnameNo     string    `json:"stock_opname_no"`
-// 	StockOpnameStatus string    `json:"stock_opname_status"`
-// 	StockOpnameFrom   time.Time `json:"stock_opname_from"`
-// 	StockOpnameTo     time.Time `json:"stock_opname_to"`
-// 	WarehouseGroup    string    `json:"warehouse_group"`
-// 	WarehouseCode     string    `json:"warehouse_code"`
-// }
-
 type GetAllStockOpnameResponse struct {
 	StockOpnameNo   string    `json:"stock_opname_no"`
 	StockOpnameFrom time.Time `json:"stock_opname_from"`

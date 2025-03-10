@@ -33,38 +33,6 @@ func NewStockOpnameServiceImpl(
 	}
 }
 
-// func (s *StockOpnameServiceImpl) GetAllStockOpname(filteredCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	pages, err = s.Repository.GetAllStockOpname(tx, filteredCondition, pages)
-// 	if err != nil {
-// 		return pages, err
-// 	}
-// 	return pages, nil
-// }
-
 func (s *StockOpnameServiceImpl) GetAllStockOpname(filteredCondition []utils.FilterCondition, pages pagination.Pagination, companyCode float64, dateParams map[string]interface{}) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
@@ -194,38 +162,6 @@ func (s *StockOpnameServiceImpl) GetItemList(pages pagination.Pagination, whsCod
 	}
 	return pages, nil
 }
-
-// func (s *StockOpnameServiceImpl) GetListForOnGoing(sysNo string) *exceptions.BaseErrorResponse {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	err = s.Repository.GetListForOnGoing(tx, sysNo)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 func (s *StockOpnameServiceImpl) GetOnGoingStockOpname(companyCode float64, sysNo float64) ([]transactionsparepartpayloads.GetOnGoingStockOpnameResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
