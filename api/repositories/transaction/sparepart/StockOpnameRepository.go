@@ -10,11 +10,15 @@ import (
 )
 
 type StockOpnameRepository interface {
-	GetAllStockOpname(*gorm.DB, []utils.FilterCondition, pagination.Pagination, float64, map[string]interface{}) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetLocationList(*gorm.DB, []utils.FilterCondition, pagination.Pagination, float64, string, string) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetPersonInChargeList(*gorm.DB, []utils.FilterCondition, pagination.Pagination, float64) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetItemList(*gorm.DB, pagination.Pagination, string, string) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetOnGoingStockOpname(*gorm.DB, float64, float64) ([]transactionsparepartpayloads.GetOnGoingStockOpnameResponse, *exceptions.BaseErrorResponse)
-	InsertNewStockOpname(*gorm.DB, transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse)
-	UpdateOnGoingStockOpname(*gorm.DB, float64, transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllStockOpname(*gorm.DB, []utils.FilterCondition, pagination.Pagination, map[string]interface{}) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllStockOpnameDetail(*gorm.DB, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetStockOpnameByStockOpnameSystemNumber(*gorm.DB, int) (
+		[]transactionsparepartpayloads.GetStockOpnameByStockOpnameSystemNumberResponse, *exceptions.BaseErrorResponse)
+	GetStockOpnameAllDetailByStockOpnameSystemNumber(*gorm.DB, int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	InsertStockOpname(*gorm.DB, transactionsparepartpayloads.StockOpnameInsertRequest) (bool, *exceptions.BaseErrorResponse)
+	SubmitStockOpname(*gorm.DB, int, transactionsparepartpayloads.StockOpnameSubmitRequest) (bool, *exceptions.BaseErrorResponse)
+	InsertStockOpnameDetail(*gorm.DB, transactionsparepartpayloads.StockOpnameInsertDetailRequest, int) (bool, *exceptions.BaseErrorResponse)
+	UpdateStockOpname(*gorm.DB, transactionsparepartpayloads.StockOpnameInsertRequest, int) (bool, *exceptions.BaseErrorResponse)
+	UpdateStockOpnameDetail(*gorm.DB, transactionsparepartpayloads.StockOpnameUpdateDetailRequest, int) (bool, *exceptions.BaseErrorResponse)
+	DeleteStockOpname(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }

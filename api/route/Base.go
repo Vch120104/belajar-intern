@@ -2216,13 +2216,15 @@ func StockOpnameRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/{companyCode}", stockOpnameController.GetAllStockOpname)
-	router.Get("/locationlist/{companyCode}/{warehouseGroup}/{warehouseCode}", stockOpnameController.GetLocationList)
-	router.Get("/person-in-charge/{companyCode}", stockOpnameController.GetPersonInChargeList)
-	router.Get("/item-list/{whsCode}/{itemGroup}", stockOpnameController.GetItemList)
-	router.Get("/{companyCode}/{sysNo}", stockOpnameController.GetOnGoingStockOpname)
-	router.Post("/", stockOpnameController.InsertNewStockOpname)
-	router.Put("/{sysNo}", stockOpnameController.UpdateOnGoingStockOpname)
+	router.Get("/", stockOpnameController.GetAllStockOpname)
+	router.Get("/detail", stockOpnameController.GetAllStockOpnameDetail)
+	
+	// router.Get("/locationlist/{companyCode}/{warehouseGroup}/{warehouseCode}", stockOpnameController.GetLocationList)
+	// router.Get("/person-in-charge/{companyCode}", stockOpnameController.GetPersonInChargeList)
+	// router.Get("/item-list/{whsCode}/{itemGroup}", stockOpnameController.GetItemList)
+	// router.Get("/{companyCode}/{sysNo}", stockOpnameController.GetOnGoingStockOpname)
+	// router.Post("/", stockOpnameController.InsertNewStockOpname)
+	// router.Put("/{sysNo}", stockOpnameController.UpdateOnGoingStockOpname)
 
 	return router
 }

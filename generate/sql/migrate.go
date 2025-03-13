@@ -171,6 +171,7 @@ func Migrate() {
 	// &transactionsparepartentities.SupplySlipDetail{},
 	// &transactionsparepartpentities.SupplySlipReturn{},
 	// &transactionsparepartpentities.SupplySlipReturnDetail{},
+	// &transactionsparepartentities.StockOpnameDetail{},
 
 	// Transaction Workshop Entities
 	// &transactionworkshopentities.AssignTechnician{},
