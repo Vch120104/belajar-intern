@@ -2226,6 +2226,8 @@ func StockOpnameRouter(
 	router.Put("/header/{stock_opname_system_number}", stockOpnameController.UpdateStockOpname)
 	router.Put("/detail/{stock_opname_system_number}", stockOpnameController.UpdateStockOpnameDetail)
 	router.Delete("/header/{stock_opname_system_number}", stockOpnameController.DeleteStockOpname)
+	router.Delete("/detail/{stock_opname_system_number}/{line_number}", stockOpnameController.DeleteStockOpnameDetailByLineNumber)
+	router.Delete("/detail/{stock_opname_system_number}", stockOpnameController.DeleteStockOpnameDetailBySystemNumber)
 
 	return router
 }

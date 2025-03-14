@@ -335,7 +335,7 @@ func (s *StockOpnameServiceImpl) DeleteStockOpname(systemNumber int) (bool, *exc
 	return true, nil
 }
 
-func(s *StockOpnameServiceImpl) DeleteStockOpnameDetailByLineNumber(systemNumber int, lineNumber int) (bool, *exceptions.BaseErrorResponse) {
+func (s *StockOpnameServiceImpl) DeleteStockOpnameDetailByLineNumber(systemNumber int, lineNumber int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -364,228 +364,31 @@ func(s *StockOpnameServiceImpl) DeleteStockOpnameDetailByLineNumber(systemNumber
 	return true, nil
 }
 
-// func (s *StockOpnameServiceImpl) GetAllStockOpname(filteredCondition []utils.FilterCondition, pages pagination.Pagination, companyCode float64, dateParams map[string]interface{}) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
+func (s *StockOpnameServiceImpl) DeleteStockOpnameDetailBySystemNumber(systemNumber int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	pages, err = s.Repository.GetAllStockOpname(tx, filteredCondition, pages, companyCode, dateParams)
-// 	if err != nil {
-// 		return pages, err
-// 	}
-// 	return pages, nil
-// }
-
-// func (s *StockOpnameServiceImpl) GetLocationList(filteredCondition []utils.FilterCondition, pages pagination.Pagination,
-// 	companyCode float64, warehouseGroup string, warehouseCode string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	pages, err = s.Repository.GetLocationList(tx, filteredCondition, pages, companyCode, warehouseGroup, warehouseCode)
-// 	if err != nil {
-// 		return pages, err
-// 	}
-// 	return pages, nil
-// }
-
-// func (s *StockOpnameServiceImpl) GetPersonInChargeList(filteredCondition []utils.FilterCondition, pages pagination.Pagination, companyCode float64) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	pages, err = s.Repository.GetPersonInChargeList(tx, filteredCondition, pages, companyCode)
-// 	if err != nil {
-// 		return pages, err
-// 	}
-// 	return pages, nil
-// }
-
-// func (s *StockOpnameServiceImpl) GetItemList(pages pagination.Pagination, whsCode string,
-// 	itemGroup string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	pages, err = s.Repository.GetItemList(tx, pages, whsCode, itemGroup)
-// 	if err != nil {
-// 		return pages, err
-// 	}
-// 	return pages, nil
-// }
-
-// func (s *StockOpnameServiceImpl) GetOnGoingStockOpname(companyCode float64, sysNo float64) ([]transactionsparepartpayloads.GetOnGoingStockOpnameResponse, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	datas, err := s.Repository.GetOnGoingStockOpname(tx, companyCode, sysNo)
-// 	if err != nil {
-// 		return datas, err
-// 	}
-// 	return datas, nil
-// }
-
-// func (s *StockOpnameServiceImpl) InsertNewStockOpname(request transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	_, err = s.Repository.InsertNewStockOpname(tx, request)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return true, nil
-// }
-
-// func (s *StockOpnameServiceImpl) UpdateOnGoingStockOpname(sysNo float64, request transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
-// 	var err *exceptions.BaseErrorResponse
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			tx.Rollback()
-// 			err = &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        fmt.Errorf("panic recovered: %v", r),
-// 			}
-// 		} else if err != nil {
-// 			tx.Rollback()
-// 			logrus.Info("Transaction rollback due to error:", err)
-// 		} else {
-// 			if commitErr := tx.Commit().Error; commitErr != nil {
-// 				logrus.WithError(commitErr).Error("Transaction commit failed")
-// 				err = &exceptions.BaseErrorResponse{
-// 					StatusCode: http.StatusInternalServerError,
-// 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-// 				}
-// 			}
-// 		}
-// 	}()
-
-// 	_, err = s.Repository.UpdateOnGoingStockOpname(tx, sysNo, request)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return true, nil
-// }
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: 500,
+				Err:        r.(error),
+			}
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: 500,
+					Err:        commitErr,
+				}
+			}
+		}
+	}()
+	_, err = s.Repository.DeleteStockOpnameDetailBySystemNumber(tx, systemNumber)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}

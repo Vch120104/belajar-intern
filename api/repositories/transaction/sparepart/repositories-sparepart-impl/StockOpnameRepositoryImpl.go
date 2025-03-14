@@ -170,14 +170,14 @@ func (r *StockOpnameRepositoryImpl) GetStockOpnameAllDetailByStockOpnameSystemNu
 	trx_stock_opname_detail.stock_opname_system_number,
 	trx_stock_opname_detail.stock_opname_line,
 	trx_stock_opname_detail.item_id,
-	b.item_type_name,
-	trx_stock_opname_detail.location_id,
+	b.item_name,
+	trx_stock_opname_detail.location_id as location,
 	trx_stock_opname_detail.system_quantity,
 	trx_stock_opname_detail.found_quantity,
 	trx_stock_opname_detail.broken_quantity,
 	trx_stock_opname_detail.need_adjustment,
 	trx_stock_opname_detail.remark`).
-		Joins("left outer join mtr_item_type b on b.item_type_id = trx_stock_opname_detail.item_id").
+		Joins("left outer join mtr_item b on b.item_id = trx_stock_opname_detail.item_id").
 		Where("trx_stock_opname_detail.stock_opname_system_number = ?", stockOpnameSystemNumber)
 
 	if query.Error != nil {
@@ -288,13 +288,6 @@ func (r *StockOpnameRepositoryImpl) SubmitStockOpname(tx *gorm.DB, systemNumber 
 		}
 	}
 
-	// if entities.StockOpnameStatusId != &status.StockOpnameStatusId {
-	// 	return false, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusBadRequest,
-	// 		Message:    "stock opname status is not draft",
-	// 	}
-	// }
-
 	entities.StockOpnameStatusId = &approvalStatus.StockOpnameStatusId
 	entities.ApprovalRequestedById = &request.StockOpnameApprovalRequestId
 	now := time.Now()
@@ -379,6 +372,7 @@ func (r *StockOpnameRepositoryImpl) UpdateStockOpname(tx *gorm.DB,
 
 	entities.CompanyID = &request.CompanyId
 	entities.StockOpnameStatusId = &status.StockOpnameStatusId
+	entities.StockOpnameDocumentNumber = request.StockOpnameDocumentNumber
 	entities.WarehouseGroupId = &request.WarehouseGroup
 	entities.WarehouseId = &request.WarehouseCode
 	entities.LocationRangeFromId = &request.FromLocation
@@ -520,7 +514,7 @@ func (r *StockOpnameRepositoryImpl) DeleteStockOpnameDetailByLineNumber(tx *gorm
 
 	getEntitiesBySystemNumber := tx.Model(&entitiesBySystemNumber).Where(transactionsparepartentities.StockOpnameDetail{
 		StockOpnameSystemNumber: systemNumber,
-	}).Scan(&entities)
+	}).Order("stock_opname_line asc").Scan(&entitiesBySystemNumber)
 
 	if getEntitiesBySystemNumber.Error != nil {
 		if errors.Is(getEntitiesBySystemNumber.Error, gorm.ErrRecordNotFound) {
@@ -540,9 +534,9 @@ func (r *StockOpnameRepositoryImpl) DeleteStockOpnameDetailByLineNumber(tx *gorm
 	newLine := 1
 	for _, detail := range entitiesBySystemNumber {
 		if detail.StockOpnameLine != newLine {
-			updateQuery := tx.Model(&entities).Where(transactionsparepartentities.StockOpnameDetail{
-				StockOpnameDetailSystemNumber: detail.StockOpnameDetailSystemNumber,
-			}).Update("stock_opname_line", newLine)
+			detail.StockOpnameLine = newLine
+			updateQuery := tx.Save(&detail)
+
 			if updateQuery.Error != nil {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: 500,
@@ -558,312 +552,15 @@ func (r *StockOpnameRepositoryImpl) DeleteStockOpnameDetailByLineNumber(tx *gorm
 }
 
 func (r *StockOpnameRepositoryImpl) DeleteStockOpnameDetailBySystemNumber(tx *gorm.DB, systemNumber int) (bool, *exceptions.BaseErrorResponse) {
-	panic("implement me")
+	var entities transactionsparepartentities.StockOpnameDetail
+
+	deleteQuery := tx.Model(&entities).Where("stock_opname_system_number = ?", systemNumber).Delete(&entities)
+	if deleteQuery.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: 500,
+			Message:    "error when deleting data",
+			Err:        deleteQuery.Error,
+		}
+	}
+	return true, nil
 }
-
-// func (r *StockOpnameRepositoryImpl) GetItemList(tx *gorm.DB, pages pagination.Pagination, whsCode string, itemGroup string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	var datas []transactionsparepartpayloads.GetItemListResponse
-
-// 	query := tx.Model(&transactionsparepartentities.AtStockOpname1{}).
-// 		Select(`atstockopname1.record_status,
-// 	atstockopname1.stock_opname_sys_no,
-// 	atstockopname1.stock_opname_line,
-// 	atstockopname1.line_status,
-// 	atstockopname1.item_code,
-// 	b.item_name,
-// 	atstockopname1.loc_code as location,
-// 	atstockopname1.sys_qty,
-// 	atstockopname1.found_qty,
-// 	atstockopname1.broke_qty,
-// 	atstockopname1.broken_loc_code,
-// 	atstockopname1.need_adjustment,
-// 	atstockopname1.remark,
-// 	atstockopname1.change_no,
-// 	atstockopname1.creation_user_id,
-// 	atstockopname1.creation_datetime,
-// 	atstockopname1.change_user_id,
-// 	atstockopname1.change_datetime`).
-// 		Joins("left outer join gmitem0 b on b.item_code = atstockopname1.item_code").
-// 		Where("atstockopname1.whs_code = ? and b.item_group = ?", whsCode, itemGroup)
-
-// 	if query.Error != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when selecting data",
-// 			Err:        query.Error,
-// 		}
-// 	}
-
-// 	paginatedQ := query.Scopes(pagination.Paginate(&pages, query)).Order("atstockopname1.loc_code")
-// 	err := paginatedQ.Scan(&datas).Error
-// 	if err != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when scanning data",
-// 			Err:        err,
-// 		}
-// 	}
-// 	pages.Rows = datas
-// 	return pages, nil
-
-// }
-
-// func (r *StockOpnameRepositoryImpl) GetAllStockOpname(tx *gorm.DB, filteredCondition []utils.FilterCondition, pages pagination.Pagination, companyCode float64, dateParams map[string]interface{}) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	var datas []transactionsparepartpayloads.GetAllStockOpnameResponse
-
-// 	query := tx.Model(&transactionsparepartentities.AtStockOpname0{}).
-// 		Select(`atstockopname0.COMPANY_CODE ,
-// 	atstockopname0.STOCK_OPNAME_SYS_NO ,
-// 	atstockopname0.STOCK_OPNAME_DOC_NO as stock_opname_no,
-// 	atstockopname0.STOCK_OPNAME_STATUS ,
-// 	B.DESCRIPTION as warehouse_group,
-// 	C.WAREHOUSE_NAME as warehouse_name,
-// 	atstockopname0.LOC_RANGE_FROM ,
-// 	atstockopname0.LOC_RANGE_TO ,
-// 	atstockopname0.SHOW_DETAIL ,
-// 	CASE atstockopname0.STOCK_OPNAME_STATUS
-// 		WHEN ?  THEN  ?
-// 		WHEN ? 	THEN  ?
-// 		WHEN  ?  THEN  ?
-// 		WHEN  ?  THEN  ?
-// 	END AS status,
-// 	atstockopname0.PIC ,
-// 	atstockopname0.REMARK ,
-// 	atstockopname0.EXEC_DATE_FROM as stock_opname_from,
-// 	atstockopname0.EXEC_DATE_TO as stock_opname_to,
-// 	atstockopname0.Include_Zero_Onhand`,
-// 			"01", "Draft", "02", "In Progress", "15", "Wait Approve", "20", "Approved").
-// 		Joins("LEFT OUTER JOIN dbo.gmLoc0 B ON	B.WAREHOUSE_GROUP = atstockopname0.WHS_GROUP").
-// 		Joins("LEFT OUTER JOIN dbo.gmLoc1 C ON	C.WAREHOUSE_CODE = atstockopname0.WHS_CODE AND C.COMPANY_CODE = atstockopname0.COMPANY_CODE").
-// 		Where("atstockopname0.record_status = ? AND atstockopname0.company_code = ?", "A", companyCode)
-
-// 	if query.Error != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when selecting data",
-// 			Err:        query.Error,
-// 		}
-// 	}
-// 	whereQ := utils.ApplyFilter(query, filteredCondition)
-
-// 	for key, value := range dateParams {
-// 		whereQ = whereQ.Where(key, value)
-// 	}
-
-// 	paginatedQ := whereQ.Scopes(pagination.Paginate(&pages, query))
-
-// 	err := paginatedQ.Scan(&datas).Error
-// 	if err != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when scanning data",
-// 			Err:        err,
-// 		}
-// 	}
-
-// 	pages.Rows = datas
-// 	fmt.Printf("Retrieved data: %+v\n", datas)
-// 	return pages, nil
-
-// }
-
-// func (r *StockOpnameRepositoryImpl) GetLocationList(tx *gorm.DB, filteredCondition []utils.FilterCondition, pages pagination.Pagination,
-// 	companyCode float64, warehouseGroup string, warehouseCode string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	var datas []transactionsparepartpayloads.GetAllLocationList
-
-// 	query := tx.Model(&transactionsparepartentities.GmLoc2{}).
-// 		Select(`LOCATION_CODE as location_code, LOCATION_NAME as location_name,
-// 			CASE record_status
-// 			WHEN  ? THEN ?
-// 			WHEN ? THEN ?
-// 			END as status`, "A", "Active", "D", "Deactive").
-// 		Where("company_code = ? and warehouse_group = ? and warehouse_code = ?", companyCode, warehouseGroup, warehouseCode)
-
-// 	if query.Error != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when selecting data",
-// 			Err:        query.Error,
-// 		}
-// 	}
-
-// 	whereQ := utils.ApplyFilter(query, filteredCondition)
-// 	paginatedQ := whereQ.Scopes(pagination.Paginate(&pages, whereQ)).Order("LOCATION_CODE")
-
-// 	err := paginatedQ.Find(&datas).Error
-// 	if err != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when scanning data",
-// 			Err:        err,
-// 		}
-// 	}
-// 	pages.Rows = datas
-// 	return pages, nil
-// }
-
-// func (r *StockOpnameRepositoryImpl) GetOnGoingStockOpname(tx *gorm.DB, companyCode float64, sysNo float64) ([]transactionsparepartpayloads.GetOnGoingStockOpnameResponse, *exceptions.BaseErrorResponse) {
-// 	var datas []transactionsparepartpayloads.GetOnGoingStockOpnameResponse
-// 	var list []transactionsparepartpayloads.GetItemListResponse
-
-// 	lists := tx.Model(&transactionsparepartentities.AtStockOpname1{}).
-// 		Select(`atstockopname1.record_status,
-// 		atstockopname1.stock_opname_sys_no,
-// 		atstockopname1.stock_opname_line,
-// 		atstockopname1.line_status,
-// 		atstockopname1.item_code,
-// 		b.item_name,
-// 		atstockopname1.loc_code as location,
-// 		atstockopname1.sys_qty,
-// 		atstockopname1.found_qty,
-// 		atstockopname1.broke_qty,
-// 		atstockopname1.broken_loc_code,
-// 		atstockopname1.need_adjustment,
-// 		atstockopname1.remark,
-// 		atstockopname1.change_no,
-// 		atstockopname1.creation_user_id,
-// 		atstockopname1.creation_datetime,
-// 		atstockopname1.change_user_id,
-// 		atstockopname1.change_datetime`).
-// 		Joins("left outer join gmitem0 b on b.item_code = atstockopname1.item_code").
-// 		Where("atstockopname1.stock_opname_sys_no = ?", sysNo)
-
-// 	if lists.Error != nil {
-// 		return datas, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when selecting data",
-// 			Err:        lists.Error,
-// 		}
-// 	}
-
-// 	err := lists.Scan(&list).Error
-// 	if err != nil {
-// 		return datas, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when scanning data",
-// 			Err:        err,
-// 		}
-// 	}
-
-// 	query := tx.Model(&transactionsparepartentities.AtStockOpname0{}).
-// 		Select(`atstockopname0.COMPANY_CODE ,
-// 	atstockopname0.STOCK_OPNAME_SYS_NO as stock_opname_sys_no,
-// 	atstockopname0.STOCK_OPNAME_DOC_NO,
-// 	atstockopname0.STOCK_OPNAME_STATUS ,
-// 	B.DESCRIPTION as warehouse_group,
-// 	C.WAREHOUSE_NAME as warehouse_code,
-// 	atstockopname0.LOC_RANGE_FROM as from_location,
-// 	atstockopname0.LOC_RANGE_TO as to_location ,
-// 	atstockopname0.SHOW_DETAIL ,
-// 	CASE atstockopname0.STOCK_OPNAME_STATUS
-// 		WHEN ?  THEN  ?
-// 		WHEN ? 	THEN  ?
-// 		WHEN  ?  THEN  ?
-// 		WHEN  ?  THEN  ?
-// 	END AS status,
-// 	atstockopname0.PIC as person_in_charge,
-// 	atstockopname0.REMARK ,
-// 	atstockopname0.ITEM_GROUP as item_group,
-// 	atstockopname0.EXEC_DATE_FROM as stock_opname_date_from,
-// 	atstockopname0.EXEC_DATE_TO as stock_opname_date_to,
-// 	atstockopname0.Include_Zero_Onhand`,
-// 			"01", "Draft", "02", "In Progress", "15", "Wait Approve", "20", "Approved").
-// 		Joins("LEFT OUTER JOIN dbo.gmLoc0 B ON	B.WAREHOUSE_GROUP = atstockopname0.WHS_GROUP").
-// 		Joins("LEFT OUTER JOIN dbo.gmLoc1 C ON	C.WAREHOUSE_CODE = atstockopname0.WHS_CODE AND C.COMPANY_CODE = atstockopname0.COMPANY_CODE").
-// 		Where("atstockopname0.record_status = ? AND atstockopname0.company_code = ? and atstockopname0.stock_opname_sys_no = ?", "A", companyCode, sysNo)
-
-// 	if query.Error != nil {
-// 		return datas, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when selecting data",
-// 			Err:        query.Error,
-// 		}
-// 	}
-
-// 	err = query.Scan(&datas).Error
-// 	if err != nil {
-// 		return datas, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when scanning data",
-// 			Err:        err,
-// 		}
-// 	}
-
-// 	for i := range datas {
-// 		datas[i].GetItemListResponse = list
-// 	}
-
-// 	fmt.Printf("Retrieved data: %+v\n", datas)
-// 	return datas, nil
-
-// }
-
-// func (r *StockOpnameRepositoryImpl) InsertNewStockOpname(tx *gorm.DB, request transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse) {
-
-// 	datas := transactionsparepartentities.AtStockOpname0{
-// 		RecordStatus:      request.Status,
-// 		CompanyCode:       request.CompanyCode,
-// 		StockOpnameStatus: request.StockOpnameStatus,
-// 		WhsGroup:          request.WarehouseGroup,
-// 		WhsCode:           request.WarehouseCode,
-// 		LocRangeFrom:      request.FromLocation,
-// 		LocRangeTo:        request.ToLocation,
-// 		ExecDateFrom:      request.StockOpnameDateFrom,
-// 		ExecDateTo:        request.StockOpnameDateTo,
-// 		Pic:               request.PersonInCharge,
-// 		ItemGroup:         request.ItemGroup,
-// 		Remark:            request.Remark,
-// 		CreationUserId:    request.UserIdCreated,
-// 		CreationDatetime:  time.Now(),
-// 		TotalAdjCost:      request.TotalAdjCost,
-// 		ChangeUserId:      request.UserIdCreated,
-// 		ChangeDatetime:    time.Now(),
-// 	}
-
-// 	fmt.Println("date", datas.CreationDatetime)
-
-// 	query := tx.Create(&datas)
-// 	if query.Error != nil {
-// 		return false, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when inserting data",
-// 			Err:        query.Error,
-// 		}
-// 	}
-
-// 	return true, nil
-// }
-
-// func (r *StockOpnameRepositoryImpl) UpdateOnGoingStockOpname(tx *gorm.DB, sysNo float64, request transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse) {
-// 	query := tx.Model(&transactionsparepartentities.AtStockOpname0{}).
-// 		Where("stock_opname_sys_no = ?", sysNo).
-// 		Updates(map[string]interface{}{
-// 			"record_status":       request.Status,
-// 			"company_code":        request.CompanyCode,
-// 			"stock_opname_doc_no": request.StockOpnameDocNo,
-// 			"stock_opname_status": request.StockOpnameStatus,
-// 			"whs_group":           request.WarehouseGroup,
-// 			"whs_code":            request.WarehouseCode,
-// 			"loc_range_from":      request.FromLocation,
-// 			"loc_range_to":        request.ToLocation,
-// 			"exec_date_from":      request.StockOpnameDateFrom,
-// 			"exec_date_to":        request.StockOpnameDateTo,
-// 			"pic":                 request.PersonInCharge,
-// 			"item_group":          request.ItemGroup,
-// 			"remark":              request.Remark,
-// 			"total_adj_cost":      request.TotalAdjCost,
-// 			"change_user_id":      request.UserIdCreated,
-// 			"change_datetime":     time.Now(),
-// 			"change_no":           gorm.Expr("change_no + ?", 1),
-// 		})
-
-// 	if query.Error != nil {
-// 		return false, &exceptions.BaseErrorResponse{
-// 			StatusCode: 500,
-// 			Message:    "error when updating data",
-// 			Err:        query.Error,
-// 		}
-// 	}
-
-// 	return true, nil
-// }

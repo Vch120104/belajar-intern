@@ -19,14 +19,5 @@ type StockOpnameService interface {
 	UpdateStockOpnameDetail(transactionsparepartpayloads.StockOpnameUpdateDetailRequest, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteStockOpname(int) (bool, *exceptions.BaseErrorResponse)
 	DeleteStockOpnameDetailByLineNumber(int, int) (bool, *exceptions.BaseErrorResponse)
+	DeleteStockOpnameDetailBySystemNumber(int) (bool, *exceptions.BaseErrorResponse)
 }
-
-// type StockOpnameService interface {
-// 	GetAllStockOpname([]utils.FilterCondition, pagination.Pagination, float64, map[string]interface{}) (pagination.Pagination, *exceptions.BaseErrorResponse)
-// 	GetLocationList([]utils.FilterCondition, pagination.Pagination, float64, string, string) (pagination.Pagination, *exceptions.BaseErrorResponse)
-// 	GetPersonInChargeList([]utils.FilterCondition, pagination.Pagination, float64) (pagination.Pagination, *exceptions.BaseErrorResponse)
-// 	GetItemList(pagination.Pagination, string, string) (pagination.Pagination, *exceptions.BaseErrorResponse)
-// 	GetOnGoingStockOpname(float64, float64) ([]transactionsparepartpayloads.GetOnGoingStockOpnameResponse, *exceptions.BaseErrorResponse)
-// 	InsertNewStockOpname(transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse)
-// 	UpdateOnGoingStockOpname(float64, transactionsparepartpayloads.InsertNewStockOpnameRequest) (bool, *exceptions.BaseErrorResponse)
-// }

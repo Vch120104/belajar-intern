@@ -6,8 +6,8 @@ type StockOpnameInsertRequest struct {
 	CompanyId                 int       `json:"company_id"`
 	StockOpnameSystemNumber   int       `json:"stock_opname_system_number"`
 	StockOpnameDocumentNumber string    `json:"stock_opname_document_number"`
-	WarehouseGroup            int       `json:"warehouse_group" validate:"required"`
-	WarehouseCode             int       `json:"warehouse_code" validate:"required"`
+	WarehouseGroup            int       `json:"warehouse_group_id" validate:"required"`
+	WarehouseCode             int       `json:"warehouse_id" validate:"required"`
 	FromLocation              int       `json:"from_location" validate:"required"`
 	ToLocation                int       `json:"to_location" validate:"required"`
 	ItemGroup                 int       `json:"item_group" validate:"required"`
@@ -26,8 +26,8 @@ type StockOpnameInsertRequest struct {
 type StockOpnameUpdateRequest struct {
 	CompanyId                 int       `json:"company_id"`
 	StockOpnameDocumentNumber string    `json:"stock_opname_document_number"`
-	WarehouseGroup            int       `json:"warehouse_group"`
-	WarehouseCode             int       `json:"warehouse_code"`
+	WarehouseGroup            int       `json:"warehouse_group_id"`
+	WarehouseCode             int       `json:"warehouse_id"`
 	FromLocation              int       `json:"from_location"`
 	ToLocation                int       `json:"to_location"`
 	ItemGroup                 int       `json:"item_group"`
