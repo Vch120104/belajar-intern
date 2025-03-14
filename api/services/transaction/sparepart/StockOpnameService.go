@@ -14,10 +14,11 @@ type StockOpnameService interface {
 	GetStockOpnameAllDetailByStockOpnameSystemNumber(int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SubmitStockOpname(int, transactionsparepartpayloads.StockOpnameSubmitRequest) (bool, *exceptions.BaseErrorResponse)
 	InsertStockOpname(transactionsparepartpayloads.StockOpnameInsertRequest) (bool, *exceptions.BaseErrorResponse)
-	InsertStockOpnameDetail(transactionsparepartpayloads.StockOpnameInsertDetailRequest, int) (bool, *exceptions.BaseErrorResponse)
+	InsertStockOpnameDetail(transactionsparepartpayloads.StockOpnameInsertDetailRequest) (bool, *exceptions.BaseErrorResponse)
 	UpdateStockOpname(transactionsparepartpayloads.StockOpnameInsertRequest, int) (bool, *exceptions.BaseErrorResponse)
 	UpdateStockOpnameDetail(transactionsparepartpayloads.StockOpnameUpdateDetailRequest, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteStockOpname(int) (bool, *exceptions.BaseErrorResponse)
+	DeleteStockOpnameDetailByLineNumber(int, int) (bool, *exceptions.BaseErrorResponse)
 }
 
 // type StockOpnameService interface {

@@ -133,7 +133,7 @@ func (c *StockOpnameControllerImpl) GetAllStockOpnameDetail(writer http.Response
 }
 
 func (c *StockOpnameControllerImpl) GetStockOpnameByStockOpnameSystemNumber(writer http.ResponseWriter, request *http.Request) {
-	stockOpnameSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "stockOpnameSystemNumber"))
+	stockOpnameSystemNumber, errA := strconv.Atoi(chi.URLParam(request, "stock_opname_system_number"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -153,7 +153,7 @@ func (c *StockOpnameControllerImpl) GetStockOpnameByStockOpnameSystemNumber(writ
 }
 
 func (c *StockOpnameControllerImpl) GetStockOpnameAllDetailByStockOpnameSystemNumber(writer http.ResponseWriter, request *http.Request) {
-	stockOpnameSystemNumberStr := chi.URLParam(request, "stockOpnameSystemNumber")
+	stockOpnameSystemNumberStr := chi.URLParam(request, "stock_opname_system_number")
 	stockOpnameSystemNumber, errA := strconv.Atoi(stockOpnameSystemNumberStr)
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
@@ -214,8 +214,8 @@ func (c *StockOpnameControllerImpl) SubmitStockOpname(writer http.ResponseWriter
 		return
 	}
 
-	stockOpnameApprovalRequestIdStr := chi.URLParam(request, "stockOpnameApprovalRequestId")
-	stockOpnameApprovalRequestId, errA := strconv.Atoi(stockOpnameApprovalRequestIdStr)
+	systemNumberStr := chi.URLParam(request, "stock_opname_system_number")
+	systemNumber, errA := strconv.Atoi(systemNumberStr)
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -224,7 +224,7 @@ func (c *StockOpnameControllerImpl) SubmitStockOpname(writer http.ResponseWriter
 		return
 	}
 
-	isTrue, err := c.Service.SubmitStockOpname(stockOpnameApprovalRequestId, submitRequest)
+	isTrue, err := c.Service.SubmitStockOpname(systemNumber, submitRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -242,17 +242,7 @@ func (c *StockOpnameControllerImpl) InsertStockOpnameDetail(writer http.Response
 		return
 	}
 
-	systemNumberStr := chi.URLParam(request, "systemNumber")
-	systemNumber, errA := strconv.Atoi(systemNumberStr)
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errA,
-		})
-		return
-	}
-
-	isTrue, err := c.Service.InsertStockOpnameDetail(insertRequest, systemNumber)
+	isTrue, err := c.Service.InsertStockOpnameDetail(insertRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -265,7 +255,7 @@ func (c *StockOpnameControllerImpl) UpdateStockOpname(writer http.ResponseWriter
 	var updateRequest transactionsparepartpayloads.StockOpnameInsertRequest
 	helper.ReadFromRequestBody(request, &updateRequest)
 
-	systemNumberStr := chi.URLParam(request, "systemNumber")
+	systemNumberStr := chi.URLParam(request, "stock_opname_system_number")
 	systemNumber, errA := strconv.Atoi(systemNumberStr)
 
 	if errA != nil {
@@ -289,7 +279,7 @@ func (c *StockOpnameControllerImpl) UpdateStockOpnameDetail(writer http.Response
 	var updateRequest transactionsparepartpayloads.StockOpnameUpdateDetailRequest
 	helper.ReadFromRequestBody(request, &updateRequest)
 
-	systemNumberStr := chi.URLParam(request, "systemNumber")
+	systemNumberStr := chi.URLParam(request, "stock_opname_system_number")
 	systemNumber, errA := strconv.Atoi(systemNumberStr)
 
 	if errA != nil {
@@ -309,7 +299,7 @@ func (c *StockOpnameControllerImpl) UpdateStockOpnameDetail(writer http.Response
 }
 
 func (c *StockOpnameControllerImpl) DeleteStockOpname(writer http.ResponseWriter, request *http.Request) {
-	systemNumberStr := chi.URLParam(request, "systemNumber")
+	systemNumberStr := chi.URLParam(request, "stock_opname_system_number")
 	systemNumber, errA := strconv.Atoi(systemNumberStr)
 
 	if errA != nil {

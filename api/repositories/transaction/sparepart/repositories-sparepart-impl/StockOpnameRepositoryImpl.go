@@ -9,6 +9,7 @@ import (
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -32,26 +33,19 @@ func (r *StockOpnameRepositoryImpl) GetAllStockOpname(
 		Select(`trx_stock_opname.company_id ,
 		trx_stock_opname.stock_opname_system_number ,
 		trx_stock_opname.stock_opname_document_number,
-		trx_stock_opname.stock_opname_status_id ,
+		trx_stock_opname.stock_opname_status_id as stock_opname_status ,
 		B.warehouse_group_name,
 		C.warehouse_name,
 		trx_stock_opname.location_range_from_id ,
 		trx_stock_opname.location_range_to_id ,
 		trx_stock_opname.show_detail,
-		CASE trx_stock_opname.stock_opname_status_id
-			WHEN ?  THEN  ?
-			WHEN ? 	THEN  ?
-			WHEN  ?  THEN  ?
-			WHEN  ?  THEN  ?
-		END AS stock_opname_status,
 		trx_stock_opname.person_in_charge_id,
 		trx_stock_opname.remark ,
 		trx_stock_opname.execution_date_from,
 		trx_stock_opname.execution_date_to,
-		trx_stock_opname.include_zero_onhand`,
-			"01", "Draft", "02", "In Progress", "15", "Wait Approve", "20", "Approved").
-		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_group B ON	B.warehouse_group_code = trx_stock_opname.warehouse_group_id").
-		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_master C ON C.warehouse_code = trx_stock_opname.warehouse_id AND C.company_id = trx_stock_opname.company_id")
+		trx_stock_opname.include_zero_onhand`).
+		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_group B ON	B.warehouse_group_id = trx_stock_opname.warehouse_group_id").
+		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_master C ON C.warehouse_id = trx_stock_opname.warehouse_id AND C.company_id = trx_stock_opname.company_id")
 
 	if query.Error != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -91,14 +85,14 @@ func (r *StockOpnameRepositoryImpl) GetAllStockOpnameDetail(tx *gorm.DB, pages p
 	trx_stock_opname_detail.stock_opname_system_number,
 	trx_stock_opname_detail.stock_opname_line,
 	trx_stock_opname_detail.item_id,
-	b.item_type_name,
+	b.item_name,
 	trx_stock_opname_detail.location_id,
 	trx_stock_opname_detail.system_quantity,
 	trx_stock_opname_detail.found_quantity,
 	trx_stock_opname_detail.broken_quantity,
 	trx_stock_opname_detail.need_adjustment,
 	trx_stock_opname_detail.remark`).
-		Joins("left outer join mtr_item_type b on b.item_type_id = trx_stock_opname_detail.item_id")
+		Joins("left outer join mtr_item b on b.item_id = trx_stock_opname_detail.item_id")
 
 	if query.Error != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -131,25 +125,19 @@ func (r *StockOpnameRepositoryImpl) GetStockOpnameByStockOpnameSystemNumber(tx *
 	trx_stock_opname.stock_opname_system_number ,
 	trx_stock_opname.stock_opname_document_number,
 	trx_stock_opname.stock_opname_status_id ,
+	trx_stock_opname.item_group_id as item_group,
 	B.warehouse_group_name,
 	C.warehouse_name,
 	trx_stock_opname.location_range_from_id ,
 	trx_stock_opname.location_range_to_id ,
 	trx_stock_opname.show_detail,
-	CASE trx_stock_opname.stock_opname_status_id
-		WHEN ?  THEN  ?
-		WHEN ? 	THEN  ?
-		WHEN  ?  THEN  ?
-		WHEN  ?  THEN  ?
-	END AS stock_opname_status,
-	trx_stock_opname.person_in_charge_id,
+	trx_stock_opname.person_in_charge_id as person_in_charge,
 	trx_stock_opname.remark ,
 	trx_stock_opname.execution_date_from,
 	trx_stock_opname.execution_date_to,
-	trx_stock_opname.include_zero_onhand`,
-			"01", "Draft", "02", "In Progress", "15", "Wait Approve", "20", "Approved").
-		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_group B ON	B.warehouse_group_code = trx_stock_opname.warehouse_group_id").
-		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_master C ON C.warehouse_code = trx_stock_opname.warehouse_id AND C.company_id = trx_stock_opname.company_id").
+	trx_stock_opname.include_zero_onhand`).
+		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_group B ON	B.warehouse_group_id = trx_stock_opname.warehouse_group_id").
+		Joins("LEFT OUTER JOIN dbo.mtr_warehouse_master C ON C.warehouse_id = trx_stock_opname.warehouse_id AND C.company_id = trx_stock_opname.company_id").
 		Where("trx_stock_opname.stock_opname_system_number = ?", stockOpnameSystemNumber)
 
 	if query.Error != nil {
@@ -227,8 +215,9 @@ func (r *StockOpnameRepositoryImpl) InsertStockOpname(tx *gorm.DB,
 		}
 	}
 
+	fmt.Println("status ", status.StockOpnameStatusId)
+
 	entities.CompanyID = &request.CompanyId
-	entities.StockOpnameSystemNumber = request.StockOpnameSystemNumber
 	entities.StockOpnameDocumentNumber = request.StockOpnameDocumentNumber
 	entities.StockOpnameStatusId = &status.StockOpnameStatusId
 	entities.WarehouseGroupId = &request.WarehouseGroup
@@ -299,12 +288,12 @@ func (r *StockOpnameRepositoryImpl) SubmitStockOpname(tx *gorm.DB, systemNumber 
 		}
 	}
 
-	if entities.StockOpnameStatusId != &status.StockOpnameStatusId {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "stock opname status is not draft",
-		}
-	}
+	// if entities.StockOpnameStatusId != &status.StockOpnameStatusId {
+	// 	return false, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusBadRequest,
+	// 		Message:    "stock opname status is not draft",
+	// 	}
+	// }
 
 	entities.StockOpnameStatusId = &approvalStatus.StockOpnameStatusId
 	entities.ApprovalRequestedById = &request.StockOpnameApprovalRequestId
@@ -323,10 +312,10 @@ func (r *StockOpnameRepositoryImpl) SubmitStockOpname(tx *gorm.DB, systemNumber 
 }
 
 func (r *StockOpnameRepositoryImpl) InsertStockOpnameDetail(tx *gorm.DB,
-	request transactionsparepartpayloads.StockOpnameInsertDetailRequest, systemNumber int) (bool, *exceptions.BaseErrorResponse) {
+	request transactionsparepartpayloads.StockOpnameInsertDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.StockOpname
 
-	query := tx.Model(&entities).Where(transactionsparepartentities.StockOpname{StockOpnameSystemNumber: systemNumber}).First(&entities)
+	query := tx.Model(&entities).Where(transactionsparepartentities.StockOpname{StockOpnameSystemNumber: request.StockOpnameSystemNumber}).First(&entities)
 	if query.Error != nil {
 		if errors.Is(query.Error, gorm.ErrRecordNotFound) {
 			return false, &exceptions.BaseErrorResponse{
@@ -349,6 +338,7 @@ func (r *StockOpnameRepositoryImpl) InsertStockOpnameDetail(tx *gorm.DB,
 			StockOpnameSystemNumber: entities.StockOpnameSystemNumber,
 			ItemId:                  &itemId,
 			StockOpnameLine:         lineNumber,
+			WarehouseId:             entities.WarehouseId,
 		}
 
 		insertQuery := tx.Create(&detailEntities)
@@ -493,6 +483,82 @@ func (r *StockOpnameRepositoryImpl) DeleteStockOpname(tx *gorm.DB, systemNumber 
 		}
 	}
 	return true, nil
+}
+
+func (r *StockOpnameRepositoryImpl) DeleteStockOpnameDetailByLineNumber(tx *gorm.DB, systemNumber int, lineNumber int) (bool, *exceptions.BaseErrorResponse) {
+	var entities transactionsparepartentities.StockOpnameDetail
+	var entitiesBySystemNumber []transactionsparepartentities.StockOpnameDetail
+
+	getSystemNumber := tx.Model(&entities).Where(transactionsparepartentities.StockOpnameDetail{
+		StockOpnameSystemNumber: systemNumber,
+		StockOpnameLine:         lineNumber,
+	}).First(&entities)
+
+	if getSystemNumber.Error != nil {
+		if errors.Is(getSystemNumber.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        getSystemNumber.Error,
+				Message:    "stock opname with that id is not found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        getSystemNumber.Error,
+			Message:    "failed to get stock opname entity",
+		}
+	}
+
+	deleteQuery := tx.Delete(&entities)
+	if deleteQuery.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: 500,
+			Message:    "error when deleting data",
+			Err:        deleteQuery.Error,
+		}
+	}
+
+	getEntitiesBySystemNumber := tx.Model(&entitiesBySystemNumber).Where(transactionsparepartentities.StockOpnameDetail{
+		StockOpnameSystemNumber: systemNumber,
+	}).Scan(&entities)
+
+	if getEntitiesBySystemNumber.Error != nil {
+		if errors.Is(getEntitiesBySystemNumber.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        getEntitiesBySystemNumber.Error,
+				Message:    "stock opname with that id is not found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        getEntitiesBySystemNumber.Error,
+			Message:    "failed to get stock opname entity",
+		}
+	}
+
+	newLine := 1
+	for _, detail := range entitiesBySystemNumber {
+		if detail.StockOpnameLine != newLine {
+			updateQuery := tx.Model(&entities).Where(transactionsparepartentities.StockOpnameDetail{
+				StockOpnameDetailSystemNumber: detail.StockOpnameDetailSystemNumber,
+			}).Update("stock_opname_line", newLine)
+			if updateQuery.Error != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: 500,
+					Message:    "error when updating data",
+					Err:        updateQuery.Error,
+				}
+			}
+		}
+		newLine++
+	}
+
+	return true, nil
+}
+
+func (r *StockOpnameRepositoryImpl) DeleteStockOpnameDetailBySystemNumber(tx *gorm.DB, systemNumber int) (bool, *exceptions.BaseErrorResponse) {
+	panic("implement me")
 }
 
 // func (r *StockOpnameRepositoryImpl) GetItemList(tx *gorm.DB, pages pagination.Pagination, whsCode string, itemGroup string) (pagination.Pagination, *exceptions.BaseErrorResponse) {

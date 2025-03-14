@@ -212,8 +212,7 @@ func (s *StockOpnameServiceImpl) SubmitStockOpname(systemNumber int, request tra
 	return true, nil
 }
 
-func (s *StockOpnameServiceImpl) InsertStockOpnameDetail(request transactionsparepartpayloads.StockOpnameInsertDetailRequest,
-	systemNumber int) (bool, *exceptions.BaseErrorResponse) {
+func (s *StockOpnameServiceImpl) InsertStockOpnameDetail(request transactionsparepartpayloads.StockOpnameInsertDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 
@@ -236,7 +235,7 @@ func (s *StockOpnameServiceImpl) InsertStockOpnameDetail(request transactionspar
 		}
 	}()
 
-	_, err = s.Repository.InsertStockOpnameDetail(tx, request, systemNumber)
+	_, err = s.Repository.InsertStockOpnameDetail(tx, request)
 	if err != nil {
 		return false, err
 	}
@@ -330,6 +329,35 @@ func (s *StockOpnameServiceImpl) DeleteStockOpname(systemNumber int) (bool, *exc
 		}
 	}()
 	_, err = s.Repository.DeleteStockOpname(tx, systemNumber)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func(s *StockOpnameServiceImpl) DeleteStockOpnameDetailByLineNumber(systemNumber int, lineNumber int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: 500,
+				Err:        r.(error),
+			}
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: 500,
+					Err:        commitErr,
+				}
+			}
+		}
+	}()
+	_, err = s.Repository.DeleteStockOpnameDetailByLineNumber(tx, systemNumber, lineNumber)
 	if err != nil {
 		return false, err
 	}

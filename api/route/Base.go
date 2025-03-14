@@ -2216,15 +2216,16 @@ func StockOpnameRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", stockOpnameController.GetAllStockOpname)
+	router.Get("/header", stockOpnameController.GetAllStockOpname)
 	router.Get("/detail", stockOpnameController.GetAllStockOpnameDetail)
-	
-	// router.Get("/locationlist/{companyCode}/{warehouseGroup}/{warehouseCode}", stockOpnameController.GetLocationList)
-	// router.Get("/person-in-charge/{companyCode}", stockOpnameController.GetPersonInChargeList)
-	// router.Get("/item-list/{whsCode}/{itemGroup}", stockOpnameController.GetItemList)
-	// router.Get("/{companyCode}/{sysNo}", stockOpnameController.GetOnGoingStockOpname)
-	// router.Post("/", stockOpnameController.InsertNewStockOpname)
-	// router.Put("/{sysNo}", stockOpnameController.UpdateOnGoingStockOpname)
+	router.Get("/header/{stock_opname_system_number}", stockOpnameController.GetStockOpnameByStockOpnameSystemNumber)
+	router.Get("/detail/{stock_opname_system_number}", stockOpnameController.GetStockOpnameAllDetailByStockOpnameSystemNumber)
+	router.Post("/header", stockOpnameController.InsertStockOpname)
+	router.Post("/detail", stockOpnameController.InsertStockOpnameDetail)
+	router.Put("/submit/{stock_opname_system_number}", stockOpnameController.SubmitStockOpname)
+	router.Put("/header/{stock_opname_system_number}", stockOpnameController.UpdateStockOpname)
+	router.Put("/detail/{stock_opname_system_number}", stockOpnameController.UpdateStockOpnameDetail)
+	router.Delete("/header/{stock_opname_system_number}", stockOpnameController.DeleteStockOpname)
 
 	return router
 }
